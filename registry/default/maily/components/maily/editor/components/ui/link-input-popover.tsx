@@ -1,7 +1,7 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
 import { Link, LucideIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { BaseButton } from '../base-button';
+import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
@@ -62,7 +62,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
 
   const popoverButton = (
     <PopoverTrigger asChild>
-      <BaseButton
+      <Button
         variant="ghost"
         size="sm"
         type="button"
@@ -70,7 +70,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
         data-state={!!defaultValue}
       >
         <Icon className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]" />
-      </BaseButton>
+      </Button>
     </PopoverTrigger>
   );
 

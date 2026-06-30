@@ -1,9 +1,9 @@
 import { AlignCenter, AlignLeft, AlignRight } from 'lucide-react';
-import { BubbleMenuButton } from './bubble-menu-button';
 import { AllowedLogoAlignment, allowedLogoAlignment } from '../nodes/logo/logo';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { cn } from '../utils/classname';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { useMailyContext } from '../provider';
 
 type AlignmentSwitchProps = {
@@ -24,23 +24,14 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
     left: {
       icon: AlignLeft,
       tooltip: t('alignment.left'),
-      onClick: () => {
-        onAlignmentChange('left');
-      },
     },
     center: {
       icon: AlignCenter,
       tooltip: t('alignment.center'),
-      onClick: () => {
-        onAlignmentChange('center');
-      },
     },
     right: {
       icon: AlignRight,
       tooltip: t('alignment.right'),
-      onClick: () => {
-        onAlignmentChange('right');
-      },
     },
   };
 
@@ -72,17 +63,32 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
           e.preventDefault();
         }}
       >
-        {Object.entries(alignments).map(([key, value]) => {
-          return (
-            <BubbleMenuButton
-              key={key}
-              icon={value.icon}
-              tooltip={value.tooltip}
-              command={value.onClick}
-              isActive={() => key === alignment}
-            />
-          );
-        })}
+        <ToggleGroup
+          type="single"
+          value={alignment}
+          onValueChange={(value) => {
+            if (value) {
+              onAlignmentChange(value as AllowedLogoAlignment);
+            }
+          }}
+        >
+          {Object.entries(alignments).map(([key, value]) => {
+            return (
+              <Tooltip key={key}>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem
+                    value={key}
+                    aria-label={value.tooltip}
+                    className="size-7! px-2.5"
+                  >
+                    <value.icon className="h-3 w-3 stroke-[2.5]" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </ToggleGroup>
       </PopoverContent>
     </Popover>
   );

@@ -47,7 +47,20 @@ playground/                   — local dev harness: a Vite + shadcn app that in
 
 The build step also rewrites hardcoded `lucide-react` icon JSX into a shadcn-friendly `<IconPlaceholder>` so installers can swap in their preferred icon library. See `.sisyphus/plans/` and `.sisyphus/evidence/` for the icon-conversion design notes.
 
-The build step **externalizes modules the consumer already owns** rather than shipping a private copy. These are listed in `EXTERNALIZED_MODULES` in `scripts/build-shadcn-registry.mjs`, keyed by package-source path; for each, the source file is excluded from the emitted registry and every import of it (`@/…` or relative) is rewritten to the consumer's shadcn alias. Today this covers `cn` (`editor/utils/classname` → `@/lib/utils`), so the editor uses the consumer's own `cn` instead of a bundled duplicate. The source file stays in `packages/core` for standalone builds — only the registry output defers to the consumer. Note: most of `editor/components/ui/` is **not** externalizable — `select` is a custom native `<select>`, `popover` is a fork with editor-specific inline (`portal`/`mly-editor`) rendering, and `divider` is a trivial token `<div>` with no stock equivalent — so those stay bundled. `tooltip` is API-compatible with stock shadcn but kept bundled deliberately to preserve the editor's tuned styling.
+The build step **externalizes modules the consumer already owns** rather than shipping a private copy. These are listed in `EXTERNALIZED_MODULES` in `scripts/build-shadcn-registry.mjs`, keyed by package-source path; for each, the source file is excluded from the emitted registry and every import of it (`@/…` or relative) is rewritten to the consumer's shadcn alias. The source file stays in `packages/core` for standalone builds — only the registry output defers to the consumer. Today this covers:
+
+- `cn` (`editor/utils/classname` → `@/lib/utils`)
+- the `Button` primitive (`editor/components/base-button` → `@/components/ui/button` — the source export was renamed `BaseButton` → `Button` so the name matches stock shadcn, since the rewrite only swaps the import path)
+- `Input` (`editor/components/input` → `@/components/ui/input`)
+- `Textarea` (`editor/components/textarea` → `@/components/ui/textarea`)
+- `Toggle` (`editor/components/ui/toggle` → `@/components/ui/toggle`)
+- `ToggleGroup` / `ToggleGroupItem` (`editor/components/ui/toggle-group` → `@/components/ui/toggle-group`)
+
+For an externalized component to resolve in the consumer's project, the registry item must declare the matching stock item in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `toggle-group`) so `shadcn add` installs it; the build emits these from `REGISTRY_DEPENDENCIES`. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
+
+**Toggle state uses real primitives, not faked `data-state`.** The old toolbar buttons simulated active/pressed state with a `data-[state=true]` class on a bundled button; that hack is gone. Toggle-style controls now use stock shadcn `Toggle` / `ToggleGroup`: the text-marks bar (bold/italic/underline/strike/code) is a `ToggleGroup type="multiple"`, the alignment and text-direction popovers are `ToggleGroup type="single"`, and lock-aspect-ratio is a standalone `Toggle`. Plain actions (lists, duplicate, delete, the cycle/vertical-align switch, and all popover triggers) stay `Button`.
+
+Note: the rest of `editor/components/ui/` is **not** externalizable — `select` is a custom native `<select>`, `popover` is a fork with editor-specific inline (`portal`) rendering, and `divider` is a trivial token `<div>` with no stock equivalent — so those stay bundled. `tooltip` is API-compatible with stock shadcn but kept bundled deliberately to preserve the editor's tuned styling.
 
 ## Tech stack
 

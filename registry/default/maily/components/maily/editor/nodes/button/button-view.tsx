@@ -1,5 +1,5 @@
 import { AlignmentSwitch } from '../../components/alignment-switch';
-import { BaseButton } from '../../components/base-button';
+import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
@@ -301,7 +301,7 @@ function BackgroundColorPickerPopup(props: ColorPickerProps) {
       onColorChange={onChange}
       tooltip="Background Color"
     >
-      <BaseButton variant="ghost" size="sm" type="button" className="size-7">
+      <Button variant="ghost" size="sm" type="button" className="size-7">
         <div
           className="h-4 w-4 shrink-0 rounded-full shadow"
           style={{
@@ -311,7 +311,7 @@ function BackgroundColorPickerPopup(props: ColorPickerProps) {
             borderColor: variant === 'filled' ? 'white' : color,
           }}
         />
-      </BaseButton>
+      </Button>
     </ColorPicker>
   );
 }
@@ -321,7 +321,7 @@ function TextColorPickerPopup(props: ColorPickerProps) {
 
   return (
     <ColorPicker color={color} onColorChange={onChange} tooltip="Text Color">
-      <BaseButton variant="ghost" size="sm" type="button" className="size-7">
+      <Button variant="ghost" size="sm" type="button" className="size-7">
         <div className="flex flex-col items-center justify-center gap-px">
           <span className="font-bolder text-foreground font-mono text-xs">
             A
@@ -331,7 +331,7 @@ function TextColorPickerPopup(props: ColorPickerProps) {
             style={{ backgroundColor: color }}
           />
         </div>
-      </BaseButton>
+      </Button>
     </ColorPicker>
   );
 }

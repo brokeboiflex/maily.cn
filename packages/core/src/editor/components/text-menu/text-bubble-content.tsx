@@ -17,7 +17,9 @@ import { useTextMenuState } from './use-text-menu-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { Divider } from '../ui/divider';
 import { ColorPicker } from '../ui/color-picker';
-import { BaseButton } from '../base-button';
+import { Button } from '../base-button';
+import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useMailyContext } from '../../provider';
 
 type TextBubbleContentProps = {
@@ -73,9 +75,37 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
 
   return (
     <>
-      {items.map((item, index) => (
-        <BubbleMenuButton key={index} {...item} />
-      ))}
+      <ToggleGroup
+        type="multiple"
+        value={items
+          .filter((item) => item.isActive?.())
+          .map((item) => item.name!)}
+      >
+        {items.map((item) => (
+          <Tooltip key={item.name}>
+            <TooltipTrigger asChild>
+              <ToggleGroupItem
+                value={item.name!}
+                aria-label={item.name}
+                onClick={item.command}
+                disabled={item.disbabled}
+                className="size-7! px-2.5 disabled:cursor-not-allowed"
+              >
+                {item.icon ? (
+                  <item.icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                ) : (
+                  <span className="text-muted-foreground text-sm font-medium">
+                    {item.name}
+                  </span>
+                )}
+              </ToggleGroupItem>
+            </TooltipTrigger>
+            {item.tooltip ? (
+              <TooltipContent sideOffset={8}>{item.tooltip}</TooltipContent>
+            ) : null}
+          </Tooltip>
+        ))}
+      </ToggleGroup>
 
       <AlignmentSwitch
         alignment={state.textAlign}
@@ -157,7 +187,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         tooltip={t('toolbar.textColor')}
         suggestedColors={suggestedColors}
       >
-        <BaseButton
+        <Button
           variant="ghost"
           size="sm"
           type="button"
@@ -172,7 +202,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
               style={{ backgroundColor: state.currentTextColor }}
             />
           </div>
-        </BaseButton>
+        </Button>
       </ColorPicker>
     </>
   );

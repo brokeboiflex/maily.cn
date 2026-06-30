@@ -1,4 +1,3 @@
-import { BubbleMenuButton } from './bubble-menu-button';
 import {
   AllowedTextDirection,
   allowedTextDirection,
@@ -6,6 +5,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { cn } from '../utils/classname';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { LtrIcon, RtlIcon } from './icons/text-direction-icon';
 import { useMailyContext } from '../provider';
 
@@ -27,16 +27,10 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
     ltr: {
       icon: LtrIcon,
       tooltip: t('direction.ltr'),
-      onClick: () => {
-        onDirectionChange('ltr');
-      },
     },
     rtl: {
       icon: RtlIcon,
       tooltip: t('direction.rtl'),
-      onClick: () => {
-        onDirectionChange('rtl');
-      },
     },
   };
 
@@ -68,17 +62,32 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
           e.preventDefault();
         }}
       >
-        {Object.entries(directions).map(([key, value]) => {
-          return (
-            <BubbleMenuButton
-              key={key}
-              icon={value.icon}
-              tooltip={value.tooltip}
-              command={value.onClick}
-              isActive={() => key === direction}
-            />
-          );
-        })}
+        <ToggleGroup
+          type="single"
+          value={direction}
+          onValueChange={(value) => {
+            if (value) {
+              onDirectionChange(value as AllowedTextDirection);
+            }
+          }}
+        >
+          {Object.entries(directions).map(([key, value]) => {
+            return (
+              <Tooltip key={key}>
+                <TooltipTrigger asChild>
+                  <ToggleGroupItem
+                    value={key}
+                    aria-label={value.tooltip}
+                    className="size-7! px-2.5"
+                  >
+                    <value.icon className="h-3 w-3 stroke-[2.5]" />
+                  </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </ToggleGroup>
       </PopoverContent>
     </Popover>
   );

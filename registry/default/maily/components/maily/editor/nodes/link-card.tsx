@@ -1,8 +1,9 @@
 import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { Input } from '../components/input';
+import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/popover';
-import { Textarea } from '../components/textarea';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
 
 export function LinkCardComponent(props: NodeViewProps) {
   const { title, description, link, linkTitle, image, badgeText, subTitle } =
@@ -78,6 +79,7 @@ export function LinkCardComponent(props: NodeViewProps) {
               Image
             </span>
             <Input
+              {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
               placeholder="Add Image"
               type="url"
               value={image}
@@ -94,6 +96,7 @@ export function LinkCardComponent(props: NodeViewProps) {
               Title
             </span>
             <Input
+              {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
               placeholder="Add title"
               value={title}
               onChange={(e) => {
@@ -125,6 +128,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 Link Title
               </span>
               <Input
+                {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                 placeholder="Add link title here"
                 value={linkTitle}
                 onChange={(e) => {
@@ -140,6 +144,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 Link
               </span>
               <Input
+                {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                 placeholder="Add link here"
                 value={link}
                 onChange={(e) => {
@@ -157,6 +162,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 Badge Text
               </span>
               <Input
+                {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                 placeholder="Add badge text here"
                 value={badgeText}
                 onChange={(e) => {
@@ -172,6 +178,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 Sub Title
               </span>
               <Input
+                {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                 placeholder="Add sub title here"
                 value={subTitle}
                 onChange={(e) => {

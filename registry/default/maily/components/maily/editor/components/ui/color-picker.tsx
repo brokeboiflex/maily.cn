@@ -2,7 +2,7 @@
 
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { BaseButton } from '../base-button';
+import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from '@/lib/utils';
 import { ReactNode } from 'react';
@@ -54,7 +54,7 @@ export function ColorPicker(props: ColorPickerProps) {
   const popoverButton = (
     <PopoverTrigger asChild>
       {children || (
-        <BaseButton
+        <Button
           variant="ghost"
           className="h-7 w-7 shrink-0"
           size="sm"
@@ -70,7 +70,7 @@ export function ColorPicker(props: ColorPickerProps) {
               backgroundColor: backgroundColor || 'transparent',
             }}
           />
-        </BaseButton>
+        </Button>
       )}
     </PopoverTrigger>
   );
@@ -120,7 +120,7 @@ export function ColorPicker(props: ColorPickerProps) {
 
               <div className="mt-2 flex flex-wrap gap-0.5">
                 {suggestedColors.map((suggestedColor) => (
-                  <BaseButton
+                  <Button
                     key={suggestedColor}
                     variant="ghost"
                     size="sm"
@@ -134,7 +134,7 @@ export function ColorPicker(props: ColorPickerProps) {
                         backgroundColor: suggestedColor,
                       }}
                     />
-                  </BaseButton>
+                  </Button>
                 ))}
               </div>
             </div>

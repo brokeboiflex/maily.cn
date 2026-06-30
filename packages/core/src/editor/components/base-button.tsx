@@ -15,7 +15,7 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
-const BaseButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
@@ -28,7 +28,7 @@ const BaseButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
     const baseClass =
-      'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:relative focus-visible:z-10 disabled:opacity-50 ';
+      'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 ';
     const variantClasses = {
       default: 'bg-primary text-primary-foreground hover:bg-primary/90',
       destructive:
@@ -36,8 +36,7 @@ const BaseButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
       outline:
         'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
       secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      ghost:
-        'bg-transparent hover:bg-accent hover:text-accent-foreground data-[state=true]:bg-accent data-[state=true]:text-accent-foreground',
+      ghost: 'bg-transparent hover:bg-accent hover:text-accent-foreground',
       link: 'text-primary underline-offset-4 hover:underline',
     };
     const sizeClasses = {
@@ -48,7 +47,6 @@ const BaseButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const classes = cn(
-      'mly-editor',
       baseClass,
       variantClasses[variant],
       sizeClasses[size],
@@ -59,6 +57,6 @@ const BaseButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 
-BaseButton.displayName = 'BaseButton';
+Button.displayName = 'Button';
 
-export { BaseButton };
+export { Button };

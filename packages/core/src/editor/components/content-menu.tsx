@@ -5,7 +5,7 @@ import type { NodeSelection } from '@tiptap/pm/state';
 
 import type { Node } from '@tiptap/pm/model';
 import { Copy, GripVertical, Plus, Trash2 } from 'lucide-react';
-import { BaseButton } from './base-button';
+import { Button } from './base-button';
 import {
   Tooltip,
   TooltipContent,
@@ -132,7 +132,7 @@ export function ContentMenu(props: ContentMenuProps) {
         <div className="flex items-center pr-1.5">
           <Tooltip>
             <TooltipTrigger asChild>
-              <BaseButton
+              <Button
                 variant="ghost"
                 size="icon"
                 className="text-muted-foreground hover:text-foreground size-5! cursor-grab"
@@ -140,15 +140,17 @@ export function ContentMenu(props: ContentMenuProps) {
                 type="button"
               >
                 <Plus className="size-3.5 shrink-0" />
-              </BaseButton>
+              </Button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>{t('contentMenu.addNode')}</TooltipContent>
+            <TooltipContent sideOffset={8}>
+              {t('contentMenu.addNode')}
+            </TooltipContent>
           </Tooltip>
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
             <div className="relative flex flex-col">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <BaseButton
+                  <Button
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-foreground relative z-1 size-5! cursor-grab"
@@ -160,9 +162,11 @@ export function ContentMenu(props: ContentMenuProps) {
                     type="button"
                   >
                     <GripVertical className="size-3.5 shrink-0" />
-                  </BaseButton>
+                  </Button>
                 </TooltipTrigger>
-                <TooltipContent sideOffset={8}>{t('contentMenu.nodeActions')}</TooltipContent>
+                <TooltipContent sideOffset={8}>
+                  {t('contentMenu.nodeActions')}
+                </TooltipContent>
               </Tooltip>
               <PopoverTrigger className="absolute top-0 left-0 z-0 h-5 w-5" />
             </div>
@@ -173,22 +177,22 @@ export function ContentMenu(props: ContentMenuProps) {
               sideOffset={8}
               className="flex w-max flex-col rounded-md p-1"
             >
-              <BaseButton
+              <Button
                 variant="ghost"
                 onClick={duplicateNode}
                 className="h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal"
               >
                 <Copy className="size-[15px] shrink-0" />
                 {t('contentMenu.duplicate')}
-              </BaseButton>
+              </Button>
               <Divider type="horizontal" />
-              <BaseButton
+              <Button
                 onClick={deleteCurrentNode}
                 className="bg-destructive/10 text-destructive h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal hover:bg-red-200 focus:bg-red-200"
               >
                 <Trash2 className="size-[15px] shrink-0" />
                 {t('contentMenu.delete')}
-              </BaseButton>
+              </Button>
             </PopoverContent>
           </Popover>
         </div>

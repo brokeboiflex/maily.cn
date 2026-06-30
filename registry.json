@@ -8,6 +8,13 @@
       "type": "registry:block",
       "title": "Maily",
       "description": "A local, shadcn-installable Maily email editor with HTML email rendering.",
+      "registryDependencies": [
+        "button",
+        "input",
+        "textarea",
+        "toggle",
+        "toggle-group"
+      ],
       "dependencies": [
         "@radix-ui/react-popover@^1.1.6",
         "@radix-ui/react-slot@^1.1.2",
@@ -111,11 +118,6 @@
           "path": "registry/default/maily/components/maily/editor/components/alignment-switch.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/alignment-switch.tsx"
-        },
-        {
-          "path": "registry/default/maily/components/maily/editor/components/base-button.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/base-button.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/bubble-menu-button.tsx",
@@ -238,11 +240,6 @@
           "target": "@components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx"
         },
         {
-          "path": "registry/default/maily/components/maily/editor/components/input.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/input.tsx"
-        },
-        {
           "path": "registry/default/maily/components/maily/editor/components/popover.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/popover.tsx"
@@ -311,11 +308,6 @@
           "path": "registry/default/maily/components/maily/editor/components/text-menu/use-turn-into-block-options.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/text-menu/use-turn-into-block-options.tsx"
-        },
-        {
-          "path": "registry/default/maily/components/maily/editor/components/textarea.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/textarea.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/ui/color-picker.tsx",

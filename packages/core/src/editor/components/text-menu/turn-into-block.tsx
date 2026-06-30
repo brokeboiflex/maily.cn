@@ -6,7 +6,7 @@ import {
   TurnIntoOptions,
 } from './use-turn-into-block-options';
 import { useMemo } from 'react';
-import { BaseButton } from '../base-button';
+import { Button } from '../base-button';
 import { cn } from '@/editor/utils/classname';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useMailyContext } from '../../provider';
@@ -57,7 +57,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
         {options.map((option, index) => {
           if (isOption(option)) {
             return (
-              <BaseButton
+              <Button
                 key={option.id}
                 onClick={option.onClick}
                 variant="ghost"
@@ -65,7 +65,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
               >
                 <option.icon className="size-[15px] shrink-0" />
                 {option.label}
-              </BaseButton>
+              </Button>
             );
           } else if (isCategory(option)) {
             return (

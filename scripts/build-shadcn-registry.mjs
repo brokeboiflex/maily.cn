@@ -1,34 +1,33 @@
-import fs from "node:fs"
-import path from "node:path"
-import { iconMap, iconMapMeta } from "./icon-map.mjs"
+import fs from 'node:fs';
+import path from 'node:path';
+import { iconMap, iconMapMeta } from './icon-map.mjs';
 
 const iconPlaceholderImport =
-  'import { IconPlaceholder } from "@/components/icon-placeholder"'
+  'import { IconPlaceholder } from "@/components/icon-placeholder"';
 
 // Accumulated icon-conversion data, populated during the build and emitted as a report.
 const report = {
   files: [],
   totals: { converted: 0, preserved: 0, unmapped: 0, filesWithIcons: 0 },
-}
+};
 
+const root = process.cwd();
 
-const root = process.cwd()
+const registryRoot = path.join(root, 'registry/default');
+const itemRoot = path.join(registryRoot, 'maily');
+const registryPath = path.join(root, 'registry.json');
 
-const registryRoot = path.join(root, "registry/default")
-const itemRoot = path.join(registryRoot, "maily")
-const registryPath = path.join(root, "registry.json")
+const coreSourceDir = path.join(root, 'packages/core/src');
+const renderSourceDir = path.join(root, 'packages/render/src');
+const sharedSourceDir = path.join(root, 'packages/shared/src');
 
-const coreSourceDir = path.join(root, "packages/core/src")
-const renderSourceDir = path.join(root, "packages/render/src")
-const sharedSourceDir = path.join(root, "packages/shared/src")
+const coreOutDir = path.join(itemRoot, 'components/maily');
+const renderOutDir = path.join(itemRoot, 'lib/maily-render');
+const sharedOutDir = path.join(renderOutDir, 'shared');
 
-const coreOutDir = path.join(itemRoot, "components/maily")
-const renderOutDir = path.join(itemRoot, "lib/maily-render")
-const sharedOutDir = path.join(renderOutDir, "shared")
-
-const corePackagePath = path.join(root, "packages/core/package.json")
-const renderPackagePath = path.join(root, "packages/render/package.json")
-const sharedPackagePath = path.join(root, "packages/shared/package.json")
+const corePackagePath = path.join(root, 'packages/core/package.json');
+const renderPackagePath = path.join(root, 'packages/render/package.json');
+const sharedPackagePath = path.join(root, 'packages/shared/package.json');
 
 // Modules the installed editor should resolve from the consumer's OWN shadcn
 // files instead of bundling a private copy. Keyed by path relative to
@@ -42,103 +41,127 @@ const sharedPackagePath = path.join(root, "packages/shared/package.json")
 // IconPlaceholder transform: don't hardcode a choice the consumer already owns.)
 const EXTERNALIZED_MODULES = {
   // cn() — every shadcn project already ships an identical one at @/lib/utils.
-  "editor/utils/classname": "@/lib/utils",
-}
+  'editor/utils/classname': '@/lib/utils',
+  // shadcn UI primitives the consumer already owns. The registry defers to the
+  // consumer's stock components (installed via `registryDependencies`) instead
+  // of bundling Maily forks; the source files stay for standalone package builds.
+  'editor/components/base-button': '@/components/ui/button',
+  'editor/components/input': '@/components/ui/input',
+  'editor/components/textarea': '@/components/ui/textarea',
+  'editor/components/ui/toggle': '@/components/ui/toggle',
+  'editor/components/ui/toggle-group': '@/components/ui/toggle-group',
+};
+
+// shadcn registry items the consumer must have for the externalized imports
+// above to resolve. `shadcn add` installs these from the default registry.
+const REGISTRY_DEPENDENCIES = [
+  'button',
+  'input',
+  'textarea',
+  'toggle',
+  'toggle-group',
+];
 
 function externalizedModuleKey(relativePosixPath) {
-  return relativePosixPath.replace(/\.(tsx?|jsx?)$/, "")
+  return relativePosixPath.replace(/\.(tsx?|jsx?)$/, '');
 }
 
 // Tests are dev-only — never ship them into the installable registry (they also
 // import vitest, which consumers don't have).
 function isTestFile(relativePosixPath) {
-  return /\.(test|spec)(-d)?\.(tsx?|jsx?)$/.test(relativePosixPath)
+  return /\.(test|spec)(-d)?\.(tsx?|jsx?)$/.test(relativePosixPath);
 }
 
 const textExtensions = new Set([
-  ".ts",
-  ".tsx",
-  ".js",
-  ".jsx",
-  ".css",
-  ".json",
-  ".md",
-])
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.css',
+  '.json',
+  '.md',
+]);
 
 function toPosix(value) {
-  return value.split(path.sep).join("/")
+  return value.split(path.sep).join('/');
 }
 
 function ensureDir(dir) {
-  fs.mkdirSync(dir, { recursive: true })
+  fs.mkdirSync(dir, { recursive: true });
 }
 
 function walk(dir) {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const fullPath = path.join(dir, entry.name)
+    const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
-      return walk(fullPath)
+      return walk(fullPath);
     }
 
-    return [fullPath]
-  })
+    return [fullPath];
+  });
 }
 
 function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"))
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
 function makeRelativeImport(fromFile, toPath) {
-  let relativePath = toPosix(path.relative(path.dirname(fromFile), toPath))
+  let relativePath = toPosix(path.relative(path.dirname(fromFile), toPath));
 
-  if (!relativePath.startsWith(".")) {
-    relativePath = `./${relativePath}`
+  if (!relativePath.startsWith('.')) {
+    relativePath = `./${relativePath}`;
   }
 
-  return relativePath
+  return relativePath;
 }
 
 function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function buildIconPlaceholder(iconName, props = "") {
-  const mapped = iconMap[iconName]
+function buildIconPlaceholder(iconName, props = '') {
+  const mapped = iconMap[iconName];
 
   if (!mapped) {
     throw new Error(
       [
         `Missing icon map for Lucide icon "${iconName}".`,
-        "",
-        "Add it to iconMap before building the registry.",
-        "Do not guess names. Verify the icon names in each target icon package.",
-      ].join("\n")
-    )
+        '',
+        'Add it to iconMap before building the registry.',
+        'Do not guess names. Verify the icon names in each target icon package.',
+      ].join('\n')
+    );
   }
 
-  const requiredKeys = ["lucide", "tabler", "hugeicons", "phosphor", "remixicon"]
+  const requiredKeys = [
+    'lucide',
+    'tabler',
+    'hugeicons',
+    'phosphor',
+    'remixicon',
+  ];
 
   for (const key of requiredKeys) {
     if (!mapped[key]) {
-      throw new Error(`Icon "${iconName}" is missing "${key}" mapping.`)
+      throw new Error(`Icon "${iconName}" is missing "${key}" mapping.`);
     }
   }
 
-  const normalizedProps = props.trim()
+  const normalizedProps = props.trim();
 
   return [
-    "<IconPlaceholder",
+    '<IconPlaceholder',
     `  lucide="${mapped.lucide}"`,
     `  tabler="${mapped.tabler}"`,
     `  hugeicons="${mapped.hugeicons}"`,
     `  phosphor="${mapped.phosphor}"`,
     `  remixicon="${mapped.remixicon}"`,
-    normalizedProps ? `  ${normalizedProps}` : "",
-    "/>",
+    normalizedProps ? `  ${normalizedProps}` : '',
+    '/>',
   ]
     .filter(Boolean)
-    .join("\n")
+    .join('\n');
 }
 
 /**
@@ -146,13 +169,13 @@ function buildIconPlaceholder(iconName, props = "") {
  * directives so that the directive remains the very first line.
  */
 function insertImportAfterDirectives(content, importBlock) {
-  const directiveRegex = /^((?:["'`]use\s+(?:client|strict)["'`];?\s*\n?)+)/
-  const match = content.match(directiveRegex)
+  const directiveRegex = /^((?:["'`]use\s+(?:client|strict)["'`];?\s*\n?)+)/;
+  const match = content.match(directiveRegex);
   if (match) {
-    const pos = match[0].length
-    return content.slice(0, pos) + importBlock + "\n" + content.slice(pos)
+    const pos = match[0].length;
+    return content.slice(0, pos) + importBlock + '\n' + content.slice(pos);
   }
-  return importBlock + "\n" + content
+  return importBlock + '\n' + content;
 }
 
 /**
@@ -167,63 +190,60 @@ function insertImportAfterDirectives(content, importBlock) {
  */
 function transformLucideIconsToPlaceholders(content, filePath) {
   const lucideImportRegex =
-    /import\s*{\s*([^}]+)\s*}\s*from\s*["']lucide-react["'];?\r?\n?/g
+    /import\s*{\s*([^}]+)\s*}\s*from\s*["']lucide-react["'];?\r?\n?/g;
 
-  const typeSpecifiers = [] // e.g. ["LucideIcon"]
-  const valueSpecifiers = [] // e.g. ["BoldIcon", "ChevronRight"]
-  let hasLucideImport = false
+  const typeSpecifiers = []; // e.g. ["LucideIcon"]
+  const valueSpecifiers = []; // e.g. ["BoldIcon", "ChevronRight"]
+  let hasLucideImport = false;
 
   // Remove ALL lucide-react imports; we reconstruct a reduced one below.
   let transformed = content.replace(lucideImportRegex, (_match, imports) => {
-    hasLucideImport = true
+    hasLucideImport = true;
     imports
-      .split(",")
+      .split(',')
       .map((item) => item.trim())
       .filter(Boolean)
       .forEach((item) => {
         // Type-only specifier: `type LucideIcon`
-        const typeMatch = item.match(/^type\s+(\w+)$/)
+        const typeMatch = item.match(/^type\s+(\w+)$/);
         if (typeMatch) {
-          typeSpecifiers.push(typeMatch[1])
-          return
+          typeSpecifiers.push(typeMatch[1]);
+          return;
         }
 
         // Aliased imports are not supported — fail closed.
         if (/\s+as\s+/i.test(item)) {
           throw new Error(
             `Aliased lucide-react import is not supported by the registry icon transformer: ${item}`
-          )
+          );
         }
 
-        valueSpecifiers.push(item)
-      })
+        valueSpecifiers.push(item);
+      });
 
-    return ""
-  })
+    return '';
+  });
 
   if (!hasLucideImport) {
-    return transformed
+    return transformed;
   }
 
-  const fileConverted = []
-  const filePreserved = []
-  const fileUnmapped = []
+  const fileConverted = [];
+  const filePreserved = [];
+  const fileUnmapped = [];
 
   // Record type-only specifiers as preserved.
   for (const name of typeSpecifiers) {
-    filePreserved.push({ name, reason: "type-only" })
+    filePreserved.push({ name, reason: 'type-only' });
   }
 
-  const specifiersToKeep = [] // value specifiers that stay in the reduced import
-  let didConvert = false
+  const specifiersToKeep = []; // value specifiers that stay in the reduced import
+  let didConvert = false;
 
   for (const iconName of valueSpecifiers) {
     // Detect JSX self-closing usage: <IconName ... />
-    const jsxRegex = new RegExp(
-      `<${escapeRegex(iconName)}\\b([^>]*)\\/>`,
-      "g"
-    )
-    const jsxMatches = transformed.match(jsxRegex)
+    const jsxRegex = new RegExp(`<${escapeRegex(iconName)}\\b([^>]*)\\/>`, 'g');
+    const jsxMatches = transformed.match(jsxRegex);
 
     if (jsxMatches && jsxMatches.length > 0) {
       // Has JSX usage. Is it mapped?
@@ -231,9 +251,9 @@ function transformLucideIconsToPlaceholders(content, filePath) {
         // CONVERTIBLE — replace every JSX occurrence with IconPlaceholder.
         transformed = transformed.replace(jsxRegex, (_match, props) =>
           buildIconPlaceholder(iconName, props)
-        )
-        fileConverted.push(iconName)
-        didConvert = true
+        );
+        fileConverted.push(iconName);
+        didConvert = true;
 
         // After replacement, does the bare identifier still appear OUTSIDE
         // IconPlaceholder attribute values AND string literals? (mixed usage)
@@ -241,72 +261,76 @@ function transformLucideIconsToPlaceholders(content, filePath) {
         // that attribute values like lucide="Text" and titles like 'Text' don't
         // cause false positives.
         const withoutPlaceholders = transformed
-          .replace(/<IconPlaceholder\b[\s\S]*?\/>/g, "")
+          .replace(/<IconPlaceholder\b[\s\S]*?\/>/g, '')
           .replace(/"[^"]*"/g, '""')
-          .replace(/'[^']*'/g, "''")
-        const bareRegex = new RegExp(`\\b${escapeRegex(iconName)}\\b`)
+          .replace(/'[^']*'/g, "''");
+        const bareRegex = new RegExp(`\\b${escapeRegex(iconName)}\\b`);
         if (bareRegex.test(withoutPlaceholders)) {
-          specifiersToKeep.push(iconName)
+          specifiersToKeep.push(iconName);
           filePreserved.push({
             name: iconName,
-            reason: "value-referenced (mixed JSX + value usage)",
-          })
+            reason: 'value-referenced (mixed JSX + value usage)',
+          });
         }
       } else {
         // JSX usage but NOT in iconMap → unmapped, keep as lucide.
-        specifiersToKeep.push(iconName)
-        fileUnmapped.push(iconName)
+        specifiersToKeep.push(iconName);
+        fileUnmapped.push(iconName);
       }
     } else {
       // No JSX usage. Is the identifier still referenced (value/destructure)?
-      const bareRegex = new RegExp(`\\b${escapeRegex(iconName)}\\b`)
+      const bareRegex = new RegExp(`\\b${escapeRegex(iconName)}\\b`);
       if (bareRegex.test(transformed)) {
-        specifiersToKeep.push(iconName)
-        filePreserved.push({ name: iconName, reason: "value-referenced" })
+        specifiersToKeep.push(iconName);
+        filePreserved.push({ name: iconName, reason: 'value-referenced' });
       }
       // else: dead import — strip silently.
     }
   }
 
   // Reconstruct the lucide-react import if any specifiers remain.
-  const importParts = []
+  const importParts = [];
   if (typeSpecifiers.length > 0) {
-    importParts.push(...typeSpecifiers.map((s) => `type ${s}`))
+    importParts.push(...typeSpecifiers.map((s) => `type ${s}`));
   }
-  importParts.push(...specifiersToKeep)
+  importParts.push(...specifiersToKeep);
 
   // Build the combined import block (IconPlaceholder first, then lucide).
-  const importLines = []
+  const importLines = [];
   if (didConvert) {
-    importLines.push(iconPlaceholderImport)
+    importLines.push(iconPlaceholderImport);
   }
   if (importParts.length > 0) {
     importLines.push(
-      `import { ${importParts.join(", ")} } from "lucide-react"`
-    )
+      `import { ${importParts.join(', ')} } from "lucide-react"`
+    );
   }
   if (importLines.length > 0) {
     transformed = insertImportAfterDirectives(
       transformed,
-      importLines.join("\n")
-    )
+      importLines.join('\n')
+    );
   }
 
   // Record report data for this file.
-  if (fileConverted.length > 0 || filePreserved.length > 0 || fileUnmapped.length > 0) {
+  if (
+    fileConverted.length > 0 ||
+    filePreserved.length > 0 ||
+    fileUnmapped.length > 0
+  ) {
     report.files.push({
       file: path.relative(root, filePath),
       converted: fileConverted,
       preserved: filePreserved,
       unmapped: fileUnmapped,
-    })
-    report.totals.converted += fileConverted.length
-    report.totals.preserved += filePreserved.length
-    report.totals.unmapped += fileUnmapped.length
-    report.totals.filesWithIcons += 1
+    });
+    report.totals.converted += fileConverted.length;
+    report.totals.preserved += filePreserved.length;
+    report.totals.unmapped += fileUnmapped.length;
+    report.totals.filesWithIcons += 1;
   }
 
-  return transformed
+  return transformed;
 }
 
 /**
@@ -315,189 +339,192 @@ function transformLucideIconsToPlaceholders(content, filePath) {
  * for bare module specifiers (npm packages). `filePath` is the output path.
  */
 function resolveCoreModule(filePath, specifier) {
-  let absolute
-  if (specifier.startsWith("@/")) {
-    absolute = path.join(coreOutDir, specifier.slice(2))
-  } else if (specifier.startsWith(".")) {
-    absolute = path.resolve(path.dirname(filePath), specifier)
+  let absolute;
+  if (specifier.startsWith('@/')) {
+    absolute = path.join(coreOutDir, specifier.slice(2));
+  } else if (specifier.startsWith('.')) {
+    absolute = path.resolve(path.dirname(filePath), specifier);
   } else {
-    return null
+    return null;
   }
 
-  return externalizedModuleKey(toPosix(path.relative(coreOutDir, absolute)))
+  return externalizedModuleKey(toPosix(path.relative(coreOutDir, absolute)));
 }
 
 function rewriteCoreImports(filePath, content) {
-  const ext = path.extname(filePath)
+  const ext = path.extname(filePath);
 
-  if (![".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
-    return content
+  if (!['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
+    return content;
   }
 
   let transformed = content.replace(
     /(["'])((?:@\/|\.\.?\/)[^"']+)\1/g,
     (match, quote, specifier) => {
-      const moduleKey = resolveCoreModule(filePath, specifier)
+      const moduleKey = resolveCoreModule(filePath, specifier);
 
       // Externalized module → emit the consumer-resolved alias literally.
       if (moduleKey && EXTERNALIZED_MODULES[moduleKey]) {
-        return `${quote}${EXTERNALIZED_MODULES[moduleKey]}${quote}`
+        return `${quote}${EXTERNALIZED_MODULES[moduleKey]}${quote}`;
       }
 
       // Internal `@/` alias → relative path within the installed maily tree.
-      if (specifier.startsWith("@/")) {
-        const absoluteTarget = path.join(coreOutDir, specifier.slice(2))
-        const relativeTarget = makeRelativeImport(filePath, absoluteTarget)
+      if (specifier.startsWith('@/')) {
+        const absoluteTarget = path.join(coreOutDir, specifier.slice(2));
+        const relativeTarget = makeRelativeImport(filePath, absoluteTarget);
 
-        return `${quote}${relativeTarget}${quote}`
+        return `${quote}${relativeTarget}${quote}`;
       }
 
       // Relative import that isn't externalized — already correct, leave as-is.
-      return match
+      return match;
     }
-  )
+  );
 
-  transformed = transformLucideIconsToPlaceholders(transformed, filePath)
+  transformed = transformLucideIconsToPlaceholders(transformed, filePath);
 
-  return transformed
+  return transformed;
 }
 
 function rewriteRenderImports(filePath, content) {
-  const ext = path.extname(filePath)
+  const ext = path.extname(filePath);
 
-  if (![".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
-    return content
+  if (!['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
+    return content;
   }
 
   return content.replace(
     /(["'])@maily-to\/shared(?:\/([^"']+))?\1/g,
-    (_match, quote, subPath = "") => {
-      const absoluteTarget = path.join(sharedOutDir, subPath)
-      const relativeTarget = makeRelativeImport(filePath, absoluteTarget)
+    (_match, quote, subPath = '') => {
+      const absoluteTarget = path.join(sharedOutDir, subPath);
+      const relativeTarget = makeRelativeImport(filePath, absoluteTarget);
 
-      return `${quote}${relativeTarget}${quote}`
+      return `${quote}${relativeTarget}${quote}`;
     }
-  )
+  );
 }
 
 function copySource(sourceDir, outDir, rewrite, shouldSkip) {
-  const sourceFiles = walk(sourceDir)
+  const sourceFiles = walk(sourceDir);
 
   for (const sourceFile of sourceFiles) {
-    const relativePath = path.relative(sourceDir, sourceFile)
+    const relativePath = path.relative(sourceDir, sourceFile);
 
     if (shouldSkip && shouldSkip(toPosix(relativePath))) {
-      continue
+      continue;
     }
 
-    const targetFile = path.join(outDir, relativePath)
-    const ext = path.extname(sourceFile)
+    const targetFile = path.join(outDir, relativePath);
+    const ext = path.extname(sourceFile);
 
-    ensureDir(path.dirname(targetFile))
+    ensureDir(path.dirname(targetFile));
 
     if (textExtensions.has(ext)) {
-      const source = fs.readFileSync(sourceFile, "utf8")
-      fs.writeFileSync(targetFile, rewrite(targetFile, source))
+      const source = fs.readFileSync(sourceFile, 'utf8');
+      fs.writeFileSync(targetFile, rewrite(targetFile, source));
     } else {
-      fs.copyFileSync(sourceFile, targetFile)
+      fs.copyFileSync(sourceFile, targetFile);
     }
   }
 }
 
 function addDeps(map, deps = {}) {
   for (const [name, version] of Object.entries(deps)) {
-    if (name.startsWith("@maily-to/")) continue
-    if (name === "tsconfig") continue
-    if (name === "typescript") continue
-    if (name.startsWith("@types/")) continue
+    if (name.startsWith('@maily-to/')) continue;
+    if (name === 'tsconfig') continue;
+    if (name === 'typescript') continue;
+    if (name.startsWith('@types/')) continue;
 
-    map.set(name, version)
+    map.set(name, version);
   }
 }
 
 function dependencyList(map) {
-  return [...map.entries()].map(([name, version]) => `${name}@${version}`)
+  return [...map.entries()].map(([name, version]) => `${name}@${version}`);
 }
 
 function registryFiles() {
-  const files = []
+  const files = [];
 
   for (const file of walk(coreOutDir)) {
-    const relativeToRoot = toPosix(path.relative(root, file))
-    const relativeToCore = toPosix(path.relative(coreOutDir, file))
+    const relativeToRoot = toPosix(path.relative(root, file));
+    const relativeToCore = toPosix(path.relative(coreOutDir, file));
 
-  files.push({
-    path: relativeToRoot,
-    type: "registry:component",
-    target: `@components/maily/${relativeToCore}`,
-  })
+    files.push({
+      path: relativeToRoot,
+      type: 'registry:component',
+      target: `@components/maily/${relativeToCore}`,
+    });
   }
 
   for (const file of walk(renderOutDir)) {
-    const relativeToRoot = toPosix(path.relative(root, file))
-    const relativeToRender = toPosix(path.relative(renderOutDir, file))
+    const relativeToRoot = toPosix(path.relative(root, file));
+    const relativeToRender = toPosix(path.relative(renderOutDir, file));
 
-  files.push({
-    path: relativeToRoot,
-    type: "registry:lib",
-    target: `@lib/maily-render/${relativeToRender}`,
-  })
+    files.push({
+      path: relativeToRoot,
+      type: 'registry:lib',
+      target: `@lib/maily-render/${relativeToRender}`,
+    });
   }
 
-  return files
+  return files;
 }
 
 function buildRegistryJson() {
-  const corePackage = readJson(corePackagePath)
-  const renderPackage = readJson(renderPackagePath)
-  const sharedPackage = readJson(sharedPackagePath)
+  const corePackage = readJson(corePackagePath);
+  const renderPackage = readJson(renderPackagePath);
+  const sharedPackage = readJson(sharedPackagePath);
 
-  const dependencies = new Map()
-  const devDependencies = new Map()
+  const dependencies = new Map();
+  const devDependencies = new Map();
 
-  addDeps(dependencies, corePackage.dependencies)
-  addDeps(dependencies, renderPackage.dependencies)
-  addDeps(dependencies, sharedPackage.dependencies)
+  addDeps(dependencies, corePackage.dependencies);
+  addDeps(dependencies, renderPackage.dependencies);
+  addDeps(dependencies, sharedPackage.dependencies);
 
   // packages/render/src imports this at runtime even though the package lists it as devDependency.
-  if (renderPackage.devDependencies?.["@antfu/utils"]) {
-    dependencies.set("@antfu/utils", renderPackage.devDependencies["@antfu/utils"])
+  if (renderPackage.devDependencies?.['@antfu/utils']) {
+    dependencies.set(
+      '@antfu/utils',
+      renderPackage.devDependencies['@antfu/utils']
+    );
   }
 
-  const cssBuildDeps = ["@tailwindcss/typography", "tw-animate-css"]
+  const cssBuildDeps = ['@tailwindcss/typography', 'tw-animate-css'];
 
   for (const name of cssBuildDeps) {
-    const version = corePackage.devDependencies?.[name]
+    const version = corePackage.devDependencies?.[name];
     if (version) {
-      devDependencies.set(name, version)
+      devDependencies.set(name, version);
     }
   }
 
-const iconLibraryDeps = [
-  "lucide-react",
-  "@tabler/icons-react",
-  "@hugeicons/react",
-  "@hugeicons/core-free-icons",
-  "@phosphor-icons/react",
-  "@remixicon/react",
-]
+  const iconLibraryDeps = [
+    'lucide-react',
+    '@tabler/icons-react',
+    '@hugeicons/react',
+    '@hugeicons/core-free-icons',
+    '@phosphor-icons/react',
+    '@remixicon/react',
+  ];
 
-for (const name of iconLibraryDeps) {
-  dependencies.set(name, "latest")
-}
-
+  for (const name of iconLibraryDeps) {
+    dependencies.set(name, 'latest');
+  }
 
   const registry = {
-    $schema: "https://ui.shadcn.com/schema/registry.json",
-    name: "maily-prod-ready",
-    homepage: "https://github.com/brokeboiflex/maily.to-prod-ready",
+    $schema: 'https://ui.shadcn.com/schema/registry.json',
+    name: 'maily-prod-ready',
+    homepage: 'https://github.com/brokeboiflex/maily.to-prod-ready',
     items: [
       {
-        name: "maily",
-        type: "registry:block",
-        title: "Maily",
+        name: 'maily',
+        type: 'registry:block',
+        title: 'Maily',
         description:
-          "A local, shadcn-installable Maily email editor with HTML email rendering.",
+          'A local, shadcn-installable Maily email editor with HTML email rendering.',
+        registryDependencies: REGISTRY_DEPENDENCIES,
         dependencies: dependencyList(dependencies),
         devDependencies: dependencyList(devDependencies),
         files: registryFiles(),
@@ -510,27 +537,27 @@ for (const name of iconLibraryDeps) {
           '@plugin "@tailwindcss/typography"': {},
         },
         docs: [
-          "Editor usage:",
-          "",
+          'Editor usage:',
+          '',
           "import { Editor } from '@/components/maily'",
-          "",
-          "Maily ships no CSS — its chrome and canvas use your shadcn theme",
-          "tokens directly. Ensure your app defines the standard shadcn tokens",
-          "(--background, --foreground, --primary, --muted, --border, …) and has",
-          "the Tailwind typography plugin enabled (added automatically on install",
-          "via this item's `css`): @plugin \"@tailwindcss/typography\";",
-          "",
-          "Renderer usage:",
-          "",
+          '',
+          'Maily ships no CSS — its chrome and canvas use your shadcn theme',
+          'tokens directly. Ensure your app defines the standard shadcn tokens',
+          '(--background, --foreground, --primary, --muted, --border, …) and has',
+          'the Tailwind typography plugin enabled (added automatically on install',
+          'via this item\'s `css`): @plugin "@tailwindcss/typography";',
+          '',
+          'Renderer usage:',
+          '',
           "import { render } from '@/lib/maily-render'",
-          "",
-          "const html = await render(editorJson)",
-        ].join("\n"),
+          '',
+          'const html = await render(editorJson)',
+        ].join('\n'),
       },
     ],
-  }
+  };
 
-  fs.writeFileSync(registryPath, `${JSON.stringify(registry, null, 2)}\n`)
+  fs.writeFileSync(registryPath, `${JSON.stringify(registry, null, 2)}\n`);
 }
 
 /**
@@ -538,109 +565,120 @@ for (const name of iconLibraryDeps) {
  * .sisyphus/evidence/icon-conversion-report.md.
  */
 function writeIconReport() {
-  const lines = []
-  lines.push("# Icon Conversion Report")
-  lines.push("")
+  const lines = [];
+  lines.push('# Icon Conversion Report');
+  lines.push('');
   lines.push(
-    "Generated by `scripts/build-shadcn-registry.mjs` using `scripts/icon-map.mjs`."
-  )
-  lines.push("")
-  lines.push("## Summary")
-  lines.push("")
-  lines.push(`- Files with icon imports: **${report.totals.filesWithIcons}**`)
-  lines.push(`- Icons converted to IconPlaceholder: **${report.totals.converted}**`)
-  lines.push(`- Icons preserved as lucide-react: **${report.totals.preserved}**`)
-  lines.push(`- Icons unmapped (JSX, no iconMap entry): **${report.totals.unmapped}**`)
-  lines.push(`- Total icons in iconMap: **${Object.keys(iconMap).length}**`)
-  lines.push("")
+    'Generated by `scripts/build-shadcn-registry.mjs` using `scripts/icon-map.mjs`.'
+  );
+  lines.push('');
+  lines.push('## Summary');
+  lines.push('');
+  lines.push(`- Files with icon imports: **${report.totals.filesWithIcons}**`);
+  lines.push(
+    `- Icons converted to IconPlaceholder: **${report.totals.converted}**`
+  );
+  lines.push(
+    `- Icons preserved as lucide-react: **${report.totals.preserved}**`
+  );
+  lines.push(
+    `- Icons unmapped (JSX, no iconMap entry): **${report.totals.unmapped}**`
+  );
+  lines.push(`- Total icons in iconMap: **${Object.keys(iconMap).length}**`);
+  lines.push('');
 
   // Converted
-  lines.push("## Converted")
-  lines.push("")
+  lines.push('## Converted');
+  lines.push('');
   if (report.files.some((f) => f.converted.length > 0)) {
     for (const entry of report.files) {
-      if (entry.converted.length === 0) continue
-      lines.push(`### \`${entry.file}\``)
+      if (entry.converted.length === 0) continue;
+      lines.push(`### \`${entry.file}\``);
       for (const name of entry.converted) {
-        const m = iconMap[name]
+        const m = iconMap[name];
         lines.push(
           `- ${name} → tabler:${m.tabler} | phosphor:${m.phosphor} | hugeicons:${m.hugeicons} | remixicon:${m.remixicon}`
-        )
+        );
       }
-      lines.push("")
+      lines.push('');
     }
   } else {
-    lines.push("_none_")
-    lines.push("")
+    lines.push('_none_');
+    lines.push('');
   }
 
   // Preserved
-  lines.push("## Preserved (lucide-react retained)")
-  lines.push("")
+  lines.push('## Preserved (lucide-react retained)');
+  lines.push('');
   if (report.files.some((f) => f.preserved.length > 0)) {
     for (const entry of report.files) {
-      if (entry.preserved.length === 0) continue
-      lines.push(`### \`${entry.file}\``)
+      if (entry.preserved.length === 0) continue;
+      lines.push(`### \`${entry.file}\``);
       for (const p of entry.preserved) {
-        lines.push(`- ${p.name} — ${p.reason}`)
+        lines.push(`- ${p.name} — ${p.reason}`);
       }
-      lines.push("")
+      lines.push('');
     }
   } else {
-    lines.push("_none_")
-    lines.push("")
+    lines.push('_none_');
+    lines.push('');
   }
 
   // Unmapped
-  lines.push("## Unmapped (JSX usage, no iconMap entry — stays lucide-react)")
-  lines.push("")
+  lines.push('## Unmapped (JSX usage, no iconMap entry — stays lucide-react)');
+  lines.push('');
   const allUnmapped = report.files.flatMap((f) =>
     f.unmapped.map((name) => ({ name, file: f.file }))
-  )
+  );
   if (allUnmapped.length > 0) {
-    lines.push("These icons are used as JSX but have no verified 5-library mapping:")
-    lines.push("")
+    lines.push(
+      'These icons are used as JSX but have no verified 5-library mapping:'
+    );
+    lines.push('');
     for (const u of allUnmapped) {
-      const reason = iconMapMeta.notes.omitted[u.name] || "No mapping available."
-      lines.push(`- ${u.name} (\`${u.file}\`) — ${reason}`)
+      const reason =
+        iconMapMeta.notes.omitted[u.name] || 'No mapping available.';
+      lines.push(`- ${u.name} (\`${u.file}\`) — ${reason}`);
     }
-    lines.push("")
+    lines.push('');
   } else {
-    lines.push("_none_")
-    lines.push("")
+    lines.push('_none_');
+    lines.push('');
   }
 
   // Approximations
   if (Object.keys(iconMapMeta.notes.approximations).length > 0) {
-    lines.push("## Conceptual Approximations")
-    lines.push("")
+    lines.push('## Conceptual Approximations');
+    lines.push('');
     lines.push(
-      "These mappings use the closest available icon (verified to exist) rather than an exact visual match:"
-    )
-    lines.push("")
-    for (const [name, note] of Object.entries(iconMapMeta.notes.approximations)) {
-      lines.push(`- ${name} — ${note}`)
+      'These mappings use the closest available icon (verified to exist) rather than an exact visual match:'
+    );
+    lines.push('');
+    for (const [name, note] of Object.entries(
+      iconMapMeta.notes.approximations
+    )) {
+      lines.push(`- ${name} — ${note}`);
     }
-    lines.push("")
+    lines.push('');
   }
 
-  const reportText = lines.join("\n")
+  const reportText = lines.join('\n');
 
   // Print to stdout.
-  console.log("")
-  console.log(reportText)
+  console.log('');
+  console.log(reportText);
 
   // Save to evidence directory.
-  const evidenceDir = path.join(root, ".sisyphus/evidence")
-  ensureDir(evidenceDir)
+  const evidenceDir = path.join(root, '.sisyphus/evidence');
+  ensureDir(evidenceDir);
   fs.writeFileSync(
-    path.join(evidenceDir, "icon-conversion-report.md"),
-    reportText + "\n"
-  )
+    path.join(evidenceDir, 'icon-conversion-report.md'),
+    reportText + '\n'
+  );
 }
 
-fs.rmSync(registryRoot, { recursive: true, force: true })
-ensureDir(itemRoot)
+fs.rmSync(registryRoot, { recursive: true, force: true });
+ensureDir(itemRoot);
 
 copySource(
   coreSourceDir,
@@ -652,18 +690,18 @@ copySource(
       EXTERNALIZED_MODULES,
       externalizedModuleKey(relativePosixPath)
     )
-)
+);
 copySource(
   sharedSourceDir,
   sharedOutDir,
   (_filePath, content) => content,
   isTestFile
-)
-copySource(renderSourceDir, renderOutDir, rewriteRenderImports, isTestFile)
+);
+copySource(renderSourceDir, renderOutDir, rewriteRenderImports, isTestFile);
 
-buildRegistryJson()
+buildRegistryJson();
 
 // ── Icon-conversion report ────────────────────────────────────────────────
-writeIconReport()
+writeIconReport();
 
-console.log("Generated registry/default/maily and registry.json")
+console.log('Generated registry/default/maily and registry.json');

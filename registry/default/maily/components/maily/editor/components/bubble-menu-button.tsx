@@ -1,4 +1,4 @@
-import { BaseButton } from './base-button';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { BubbleMenuItem } from './text-menu/text-bubble-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -7,11 +7,10 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
   const { tooltip } = item;
 
   const content = (
-    <BaseButton
+    <Button
       variant="ghost"
       size="sm"
       {...(item.command ? { onClick: item.command } : {})}
-      data-state={item?.isActive?.()}
       className={cn(
         'size-7! px-2.5 disabled:cursor-not-allowed',
         item?.className
@@ -33,7 +32,7 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
           {item.name}
         </span>
       )}
-    </BaseButton>
+    </Button>
   );
 
   if (tooltip) {
