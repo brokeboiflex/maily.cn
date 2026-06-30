@@ -78,7 +78,7 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
                   <ToggleGroupItem
                     value={key}
                     aria-label={value.tooltip}
-                    className="size-7! px-2.5"
+                    className="size-7! min-w-7! px-2.5"
                   >
                     <value.icon className="h-3 w-3 stroke-[2.5]" />
                   </ToggleGroupItem>

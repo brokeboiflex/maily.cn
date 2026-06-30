@@ -89,7 +89,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
                 aria-label={item.name}
                 onClick={item.command}
                 disabled={item.disbabled}
-                className="size-7! px-2.5 disabled:cursor-not-allowed"
+                className="size-7! min-w-7! px-2.5 disabled:cursor-not-allowed"
               >
                 {item.icon ? (
                   <item.icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
