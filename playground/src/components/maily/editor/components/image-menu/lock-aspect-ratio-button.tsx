@@ -1,5 +1,5 @@
 import { LockOpenIcon } from "lucide-react"
-import { BaseButton } from "../base-button"
+import { Toggle } from "@/components/ui/toggle"
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
 import { useMailyContext } from "../../provider"
 import { LockIcon } from "lucide-react"
@@ -16,20 +16,18 @@ export function LockAspectRatioButton(props: LockAspectRatioButtonProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <BaseButton
-          variant="ghost"
+        <Toggle
           size="sm"
-          type="button"
           className="size-7"
-          data-state={isLocked}
-          onClick={onClick}
+          pressed={isLocked}
+          onPressedChange={onClick}
         >
           {isLocked ? (
             <LockIcon className="h-3 w-3 shrink-0 stroke-[2.5] text-foreground" />
           ) : (
             <LockOpenIcon className="h-3 w-3 shrink-0 stroke-[2.5] text-foreground" />
           )}
-        </BaseButton>
+        </Toggle>
       </TooltipTrigger>
       <TooltipContent sideOffset={8}>
         {isLocked

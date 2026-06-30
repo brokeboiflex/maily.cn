@@ -6,7 +6,7 @@ import { useCallback } from "react"
 import { sticky } from "tippy.js"
 import { getRenderContainer } from "../../utils/get-render-container"
 import { AlignmentSwitch } from "../alignment-switch"
-import { BaseButton } from "../base-button"
+import { Button } from "@/components/ui/button"
 import { BubbleMenuButton } from "../bubble-menu-button"
 import { ColumnsBubbleMenuContent } from "../column-menu/columns-bubble-menu-content"
 import { BorderColor } from "../icons/border-color"
@@ -207,7 +207,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
             }}
             tooltip={t("sectionMenu.borderColor")}
           >
-            <BaseButton
+            <Button
               variant="ghost"
               className="h-7 w-7 shrink-0"
               size="sm"
@@ -220,7 +220,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
                   color: state.currentBorderColor,
                 }}
               />
-            </BaseButton>
+            </Button>
           </ColorPicker>
           <ColorPicker
             color={state.currentBackgroundColor}

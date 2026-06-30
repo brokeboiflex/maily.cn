@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import type { NodeSelection } from "@tiptap/pm/state"
 
 import type { Node } from "@tiptap/pm/model"
-import { BaseButton } from "./base-button"
+import { Button } from "@/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
@@ -132,7 +132,7 @@ export function ContentMenu(props: ContentMenuProps) {
         <div className="flex items-center pr-1.5">
           <Tooltip>
             <TooltipTrigger asChild>
-              <BaseButton
+              <Button
                 variant="ghost"
                 size="icon"
                 className="size-5! cursor-grab text-muted-foreground hover:text-foreground"
@@ -140,7 +140,7 @@ export function ContentMenu(props: ContentMenuProps) {
                 type="button"
               >
                 <Plus className="size-3.5 shrink-0" />
-              </BaseButton>
+              </Button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
               {t("contentMenu.addNode")}
@@ -150,7 +150,7 @@ export function ContentMenu(props: ContentMenuProps) {
             <div className="relative flex flex-col">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <BaseButton
+                  <Button
                     variant="ghost"
                     size="icon"
                     className="relative z-1 size-5! cursor-grab text-muted-foreground hover:text-foreground"
@@ -162,7 +162,7 @@ export function ContentMenu(props: ContentMenuProps) {
                     type="button"
                   >
                     <GripVertical className="size-3.5 shrink-0" />
-                  </BaseButton>
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>
                   {t("contentMenu.nodeActions")}
@@ -177,22 +177,22 @@ export function ContentMenu(props: ContentMenuProps) {
               sideOffset={8}
               className="flex w-max flex-col rounded-md p-1"
             >
-              <BaseButton
+              <Button
                 variant="ghost"
                 onClick={duplicateNode}
                 className="h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal"
               >
                 <Copy className="size-[15px] shrink-0" />
                 {t("contentMenu.duplicate")}
-              </BaseButton>
+              </Button>
               <Divider type="horizontal" />
-              <BaseButton
+              <Button
                 onClick={deleteCurrentNode}
                 className="h-auto justify-start gap-2 rounded! bg-destructive/10 px-2 py-1 text-sm font-normal text-destructive hover:bg-red-200 focus:bg-red-200"
               >
                 <Trash2 className="size-[15px] shrink-0" />
                 {t("contentMenu.delete")}
-              </BaseButton>
+              </Button>
             </PopoverContent>
           </Popover>
         </div>
