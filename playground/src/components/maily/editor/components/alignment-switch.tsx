@@ -1,41 +1,41 @@
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react"
-import { AllowedLogoAlignment, allowedLogoAlignment } from "../nodes/logo/logo"
-import { Popover, PopoverContent, PopoverTrigger } from "./popover"
-import { cn } from "@/lib/utils"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { useMailyContext } from "../provider"
+import { AllowedLogoAlignment, allowedLogoAlignment } from '../nodes/logo/logo';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { useMailyContext } from '../provider';
 
 type AlignmentSwitchProps = {
-  alignment: AllowedLogoAlignment
-  onAlignmentChange: (alignment: AllowedLogoAlignment) => void
-}
+  alignment: AllowedLogoAlignment;
+  onAlignmentChange: (alignment: AllowedLogoAlignment) => void;
+};
 
 export function AlignmentSwitch(props: AlignmentSwitchProps) {
-  const { alignment: rawAlignment, onAlignmentChange } = props
-  const { t } = useMailyContext()
+  const { alignment: rawAlignment, onAlignmentChange } = props;
+  const { t } = useMailyContext();
   const alignment = allowedLogoAlignment.includes(
     rawAlignment as AllowedLogoAlignment
   )
     ? rawAlignment
-    : "left"
+    : 'left';
 
   const alignments = {
     left: {
       icon: AlignLeft,
-      tooltip: t("alignment.left"),
+      tooltip: t('alignment.left'),
     },
     center: {
       icon: AlignCenter,
-      tooltip: t("alignment.center"),
+      tooltip: t('alignment.center'),
     },
     right: {
       icon: AlignRight,
-      tooltip: t("alignment.right"),
+      tooltip: t('alignment.right'),
     },
-  }
+  };
 
-  const activeAlignment = alignments[alignment]
+  const activeAlignment = alignments[alignment];
 
   return (
     <Popover>
@@ -43,13 +43,13 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
         <TooltipTrigger asChild>
           <PopoverTrigger
             className={cn(
-              "flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+              'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
             )}
           >
             <activeAlignment.icon className="h-3 w-3 stroke-[2.5]" />
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent sideOffset={8}>{t("alignment.label")}</TooltipContent>
+        <TooltipContent sideOffset={8}>{t('alignment.label')}</TooltipContent>
       </Tooltip>
       <PopoverContent
         className="flex w-max gap-0.5 rounded-lg p-0.5!"
@@ -57,10 +57,10 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
         sideOffset={8}
         align="center"
         onOpenAutoFocus={(e) => {
-          e.preventDefault()
+          e.preventDefault();
         }}
         onCloseAutoFocus={(e) => {
-          e.preventDefault()
+          e.preventDefault();
         }}
       >
         <ToggleGroup
@@ -68,7 +68,7 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
           value={alignment}
           onValueChange={(value) => {
             if (value) {
-              onAlignmentChange(value as AllowedLogoAlignment)
+              onAlignmentChange(value as AllowedLogoAlignment);
             }
           }}
         >
@@ -86,10 +86,10 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
               </Tooltip>
-            )
+            );
           })}
         </ToggleGroup>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

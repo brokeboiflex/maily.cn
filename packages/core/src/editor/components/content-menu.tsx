@@ -135,11 +135,11 @@ export function ContentMenu(props: ContentMenuProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground size-5! cursor-grab"
+                className="text-muted-foreground hover:text-foreground size-7! cursor-grab"
                 onClick={handleAddNewNode}
                 type="button"
               >
-                <Plus className="size-3.5 shrink-0" />
+                <Plus className="size-4 shrink-0" />
               </Button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
@@ -153,7 +153,7 @@ export function ContentMenu(props: ContentMenuProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-foreground relative z-1 size-5! cursor-grab"
+                    className="text-muted-foreground hover:text-foreground relative z-1 size-7! cursor-grab"
                     onClick={(e) => {
                       e.preventDefault();
                       setMenuOpen(true);
@@ -161,14 +161,14 @@ export function ContentMenu(props: ContentMenuProps) {
                     }}
                     type="button"
                   >
-                    <GripVertical className="size-3.5 shrink-0" />
+                    <GripVertical className="size-4 shrink-0" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>
                   {t('contentMenu.nodeActions')}
                 </TooltipContent>
               </Tooltip>
-              <PopoverTrigger className="absolute top-0 left-0 z-0 h-5 w-5" />
+              <PopoverTrigger className="absolute top-0 left-0 z-0 h-7 w-7" />
             </div>
 
             <PopoverContent

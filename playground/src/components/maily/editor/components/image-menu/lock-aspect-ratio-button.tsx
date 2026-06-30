@@ -1,17 +1,17 @@
 import { LockOpenIcon } from "lucide-react"
-import { Toggle } from "@/components/ui/toggle"
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip"
-import { useMailyContext } from "../../provider"
+import { Toggle } from '@/components/ui/toggle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { useMailyContext } from '../../provider';
 import { LockIcon } from "lucide-react"
 
 type LockAspectRatioButtonProps = {
-  onClick: () => void
-  isLocked: boolean
-}
+  onClick: () => void;
+  isLocked: boolean;
+};
 
 export function LockAspectRatioButton(props: LockAspectRatioButtonProps) {
-  const { onClick, isLocked } = props
-  const { t } = useMailyContext()
+  const { onClick, isLocked } = props;
+  const { t } = useMailyContext();
 
   return (
     <Tooltip>
@@ -23,17 +23,17 @@ export function LockAspectRatioButton(props: LockAspectRatioButtonProps) {
           onPressedChange={onClick}
         >
           {isLocked ? (
-            <LockIcon className="h-3 w-3 shrink-0 stroke-[2.5] text-foreground" />
+            <LockIcon className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]" />
           ) : (
-            <LockOpenIcon className="h-3 w-3 shrink-0 stroke-[2.5] text-foreground" />
+            <LockOpenIcon className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]" />
           )}
         </Toggle>
       </TooltipTrigger>
       <TooltipContent sideOffset={8}>
         {isLocked
-          ? t("imageMenu.lockAspectRatioUnlock")
-          : t("imageMenu.lockAspectRatioLock")}
+          ? t('imageMenu.lockAspectRatioUnlock')
+          : t('imageMenu.lockAspectRatioLock')}
       </TooltipContent>
     </Tooltip>
-  )
+  );
 }

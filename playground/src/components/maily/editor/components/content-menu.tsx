@@ -1,132 +1,132 @@
-import type { Editor } from "@tiptap/core"
-import { useCallback, useEffect, useState } from "react"
+import type { Editor } from '@tiptap/core';
+import { useCallback, useEffect, useState } from 'react';
 
-import type { NodeSelection } from "@tiptap/pm/state"
+import type { NodeSelection } from '@tiptap/pm/state';
 
-import type { Node } from "@tiptap/pm/model"
-import { Button } from "@/components/ui/button"
+import type { Node } from '@tiptap/pm/model';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip"
-import { Popover, PopoverContent, PopoverTrigger } from "./popover"
-import { Divider } from "./ui/divider"
-import { DragHandle } from "../plugins/drag-handle/drag-handle"
-import { cn } from "@/lib/utils"
-import { useMailyContext } from "../provider"
-import { Plus, GripVertical, Copy, Trash2 } from "lucide-react"
+} from './ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { Divider } from './ui/divider';
+import { DragHandle } from '../plugins/drag-handle/drag-handle';
+import { cn } from '@/lib/utils';
+import { useMailyContext } from '../provider';
+import { Plus, GripVertical, Copy, Trash2 } from "lucide-react";
 
 export type ContentMenuProps = {
-  editor: Editor
-}
+  editor: Editor;
+};
 
 export function ContentMenu(props: ContentMenuProps) {
-  const { editor } = props
-  const { t } = useMailyContext()
+  const { editor } = props;
+  const { t } = useMailyContext();
 
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [currentNode, setCurrentNode] = useState<Node | null>(null)
-  const [currentNodePos, setCurrentNodePos] = useState<number>(-1)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [currentNode, setCurrentNode] = useState<Node | null>(null);
+  const [currentNodePos, setCurrentNodePos] = useState<number>(-1);
 
   const handleNodeChange = useCallback(
     (data: { node: Node | null; editor: Editor; pos: number }) => {
       if (data.node) {
-        setCurrentNode(data.node)
+        setCurrentNode(data.node);
       }
 
-      setCurrentNodePos(data.pos)
+      setCurrentNodePos(data.pos);
     },
     [setCurrentNodePos, setCurrentNode]
-  )
+  );
 
   function duplicateNode() {
-    editor.commands.setNodeSelection(currentNodePos)
-    const { $anchor } = editor.state.selection
+    editor.commands.setNodeSelection(currentNodePos);
+    const { $anchor } = editor.state.selection;
     const selectedNode =
-      $anchor.node(1) || (editor.state.selection as NodeSelection).node
+      $anchor.node(1) || (editor.state.selection as NodeSelection).node;
     editor
       .chain()
-      .setMeta("hideDragHandle", true)
+      .setMeta('hideDragHandle', true)
       .insertContentAt(
         currentNodePos + (currentNode?.nodeSize || 0),
         selectedNode.toJSON()
       )
-      .run()
+      .run();
 
-    setMenuOpen(false)
+    setMenuOpen(false);
   }
 
   function deleteCurrentNode() {
     editor
       .chain()
-      .setMeta("hideDragHandle", true)
+      .setMeta('hideDragHandle', true)
       .setNodeSelection(currentNodePos)
       .deleteSelection()
-      .run()
+      .run();
 
-    setMenuOpen(false)
+    setMenuOpen(false);
   }
 
   function handleAddNewNode() {
     if (currentNodePos !== -1) {
-      const currentNodeSize = currentNode?.nodeSize || 0
-      const insertPos = currentNodePos + currentNodeSize
+      const currentNodeSize = currentNode?.nodeSize || 0;
+      const insertPos = currentNodePos + currentNodeSize;
       const currentNodeIsEmptyParagraph =
-        currentNode?.type.name === "paragraph" &&
-        currentNode?.content?.size === 0
+        currentNode?.type.name === 'paragraph' &&
+        currentNode?.content?.size === 0;
       const focusPos = currentNodeIsEmptyParagraph
         ? currentNodePos + 2
-        : insertPos + 2
+        : insertPos + 2;
       editor
         .chain()
         .command(({ dispatch, tr, state }) => {
           if (dispatch) {
             if (currentNodeIsEmptyParagraph) {
-              tr.insertText("/", currentNodePos, currentNodePos + 1)
+              tr.insertText('/', currentNodePos, currentNodePos + 1);
             } else {
               tr.insert(
                 insertPos,
                 state.schema.nodes.paragraph.create(null, [
-                  state.schema.text("/"),
+                  state.schema.text('/'),
                 ])
-              )
+              );
             }
 
-            return dispatch(tr)
+            return dispatch(tr);
           }
 
-          return true
+          return true;
         })
         .focus(focusPos)
-        .run()
+        .run();
     }
   }
 
   useEffect(() => {
     if (menuOpen) {
-      editor.commands.setMeta("lockDragHandle", true)
+      editor.commands.setMeta('lockDragHandle', true);
     } else {
-      editor.commands.setMeta("lockDragHandle", false)
+      editor.commands.setMeta('lockDragHandle', false);
     }
 
     return () => {
-      editor.commands.setMeta("lockDragHandle", false)
-    }
-  }, [editor, menuOpen])
+      editor.commands.setMeta('lockDragHandle', false);
+    };
+  }, [editor, menuOpen]);
 
   return (
     <DragHandle
       pluginKey="ContentMenu"
       editor={editor}
       tippyOptions={{
-        placement: "left",
+        placement: 'left',
         offset: [0, 0],
         zIndex: 99,
       }}
       onNodeChange={handleNodeChange}
-      className={cn(editor.isEditable ? "visible" : "hidden")}
+      className={cn(editor.isEditable ? 'visible' : 'hidden')}
     >
       <TooltipProvider>
         <div className="flex items-center pr-1.5">
@@ -135,15 +135,15 @@ export function ContentMenu(props: ContentMenuProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-5! cursor-grab text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground size-7! cursor-grab"
                 onClick={handleAddNewNode}
                 type="button"
               >
-                <Plus className="size-3.5 shrink-0" />
+                <Plus className="size-4 shrink-0" />
               </Button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
-              {t("contentMenu.addNode")}
+              {t('contentMenu.addNode')}
             </TooltipContent>
           </Tooltip>
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
@@ -153,22 +153,22 @@ export function ContentMenu(props: ContentMenuProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="relative z-1 size-5! cursor-grab text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground relative z-1 size-7! cursor-grab"
                     onClick={(e) => {
-                      e.preventDefault()
-                      setMenuOpen(true)
-                      editor.commands.setNodeSelection(currentNodePos)
+                      e.preventDefault();
+                      setMenuOpen(true);
+                      editor.commands.setNodeSelection(currentNodePos);
                     }}
                     type="button"
                   >
-                    <GripVertical className="size-3.5 shrink-0" />
+                    <GripVertical className="size-4 shrink-0" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>
-                  {t("contentMenu.nodeActions")}
+                  {t('contentMenu.nodeActions')}
                 </TooltipContent>
               </Tooltip>
-              <PopoverTrigger className="absolute top-0 left-0 z-0 h-5 w-5" />
+              <PopoverTrigger className="absolute top-0 left-0 z-0 h-7 w-7" />
             </div>
 
             <PopoverContent
@@ -183,20 +183,20 @@ export function ContentMenu(props: ContentMenuProps) {
                 className="h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal"
               >
                 <Copy className="size-[15px] shrink-0" />
-                {t("contentMenu.duplicate")}
+                {t('contentMenu.duplicate')}
               </Button>
               <Divider type="horizontal" />
               <Button
                 onClick={deleteCurrentNode}
-                className="h-auto justify-start gap-2 rounded! bg-destructive/10 px-2 py-1 text-sm font-normal text-destructive hover:bg-red-200 focus:bg-red-200"
+                className="bg-destructive/10 text-destructive h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal hover:bg-red-200 focus:bg-red-200"
               >
                 <Trash2 className="size-[15px] shrink-0" />
-                {t("contentMenu.delete")}
+                {t('contentMenu.delete')}
               </Button>
             </PopoverContent>
           </Popover>
         </div>
       </TooltipProvider>
     </DragHandle>
-  )
+  );
 }

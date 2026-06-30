@@ -1,19 +1,19 @@
-import { NodeViewProps, NodeViewWrapper } from "@tiptap/react"
-import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "../components/popover"
-import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from "../utils/constants"
+import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/popover';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
 
 export function LinkCardComponent(props: NodeViewProps) {
   const { title, description, link, linkTitle, image, badgeText, subTitle } =
-    props.node.attrs
-  const { getPos, editor } = props
+    props.node.attrs;
+  const { getPos, editor } = props;
 
   return (
     <NodeViewWrapper
       className={`react-component ${
-        props.selected && "ProseMirror-selectednode"
+        props.selected && 'ProseMirror-selectednode'
       }`}
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
@@ -23,12 +23,12 @@ export function LinkCardComponent(props: NodeViewProps) {
           <div
             tabIndex={-1}
             onClick={(e) => {
-              e.preventDefault()
-              const pos = getPos()
-              editor.commands.setNodeSelection(pos)
+              e.preventDefault();
+              const pos = getPos();
+              editor.commands.setNodeSelection(pos);
             }}
           >
-            <div className="no-prose flex flex-col rounded-lg border border-border">
+            <div className="no-prose border-border flex flex-col rounded-lg border">
               {image && (
                 <div className="relative mb-1.5 w-full shrink-0">
                   <img
@@ -40,22 +40,22 @@ export function LinkCardComponent(props: NodeViewProps) {
                 </div>
               )}
               <div className="flex items-stretch p-3">
-                <div className={cn("flex flex-col")}>
+                <div className={cn('flex flex-col')}>
                   <div className="!mb-1.5 flex items-center gap-1.5">
                     <h2 className="!mb-0 text-lg! font-semibold">{title}</h2>
                     {badgeText && (
                       <span className="!font-base rounded-md bg-yellow-200 px-2 py-1 text-xs leading-none font-semibold">
                         {badgeText}
                       </span>
-                    )}{" "}
+                    )}{' '}
                     {subTitle && !badgeText && (
-                      <span className="!font-base font-regular rounded-md text-xs leading-none text-muted-foreground">
+                      <span className="!font-base font-regular text-muted-foreground rounded-md text-xs leading-none">
                         {subTitle}
                       </span>
                     )}
                   </div>
-                  <p className="!my-0 text-base! text-muted-foreground">
-                    {description}{" "}
+                  <p className="text-muted-foreground !my-0 text-base!">
+                    {description}{' '}
                     {linkTitle ? (
                       <a href={link} className="font-semibold">
                         {linkTitle}
@@ -75,7 +75,7 @@ export function LinkCardComponent(props: NodeViewProps) {
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <label className="w-full space-y-1">
-            <span className="text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground text-xs font-normal">
               Image
             </span>
             <Input
@@ -86,13 +86,13 @@ export function LinkCardComponent(props: NodeViewProps) {
               onChange={(e) => {
                 props.updateAttributes({
                   image: e.target.value,
-                })
+                });
               }}
             />
           </label>
 
           <label className="w-full space-y-1">
-            <span className="text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground text-xs font-normal">
               Title
             </span>
             <Input
@@ -102,13 +102,13 @@ export function LinkCardComponent(props: NodeViewProps) {
               onChange={(e) => {
                 props.updateAttributes({
                   title: e.target.value,
-                })
+                });
               }}
             />
           </label>
 
           <label className="w-full space-y-1">
-            <span className="text-xs font-normal text-muted-foreground">
+            <span className="text-muted-foreground text-xs font-normal">
               Description
             </span>
             <Textarea
@@ -117,14 +117,14 @@ export function LinkCardComponent(props: NodeViewProps) {
               onChange={(e) => {
                 props.updateAttributes({
                   description: e.target.value,
-                })
+                });
               }}
             />
           </label>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="w-full space-y-1">
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-normal">
                 Link Title
               </span>
               <Input
@@ -134,13 +134,13 @@ export function LinkCardComponent(props: NodeViewProps) {
                 onChange={(e) => {
                   props.updateAttributes({
                     linkTitle: e.target.value,
-                  })
+                  });
                 }}
               />
             </label>
 
             <label className="w-full space-y-1">
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-normal">
                 Link
               </span>
               <Input
@@ -150,7 +150,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 onChange={(e) => {
                   props.updateAttributes({
                     link: e.target.value,
-                  })
+                  });
                 }}
               />
             </label>
@@ -158,7 +158,7 @@ export function LinkCardComponent(props: NodeViewProps) {
 
           <div className="grid grid-cols-2 gap-2">
             <label className="w-full space-y-1">
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-normal">
                 Badge Text
               </span>
               <Input
@@ -168,13 +168,13 @@ export function LinkCardComponent(props: NodeViewProps) {
                 onChange={(e) => {
                   props.updateAttributes({
                     badgeText: e.target.value,
-                  })
+                  });
                 }}
               />
             </label>
 
             <label className="w-full space-y-1">
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-muted-foreground text-xs font-normal">
                 Sub Title
               </span>
               <Input
@@ -184,7 +184,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 onChange={(e) => {
                   props.updateAttributes({
                     subTitle: e.target.value,
-                  })
+                  });
                 }}
               />
             </label>
@@ -192,5 +192,5 @@ export function LinkCardComponent(props: NodeViewProps) {
         </PopoverContent>
       </Popover>
     </NodeViewWrapper>
-  )
+  );
 }

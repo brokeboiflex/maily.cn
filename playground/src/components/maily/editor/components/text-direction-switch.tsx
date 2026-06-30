@@ -1,40 +1,40 @@
 import {
   AllowedTextDirection,
   allowedTextDirection,
-} from "../nodes/paragraph/paragraph"
-import { Popover, PopoverContent, PopoverTrigger } from "./popover"
-import { cn } from "@/lib/utils"
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { LtrIcon, RtlIcon } from "./icons/text-direction-icon"
-import { useMailyContext } from "../provider"
+} from '../nodes/paragraph/paragraph';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { LtrIcon, RtlIcon } from './icons/text-direction-icon';
+import { useMailyContext } from '../provider';
 
 type TextDirectionSwitchProps = {
-  direction: AllowedTextDirection
-  onDirectionChange: (direction: AllowedTextDirection) => void
-}
+  direction: AllowedTextDirection;
+  onDirectionChange: (direction: AllowedTextDirection) => void;
+};
 
 export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
-  const { direction: rawDirection, onDirectionChange } = props
-  const { t } = useMailyContext()
+  const { direction: rawDirection, onDirectionChange } = props;
+  const { t } = useMailyContext();
   const direction = allowedTextDirection.includes(
     rawDirection as AllowedTextDirection
   )
     ? rawDirection
-    : "ltr"
+    : 'ltr';
 
   const directions = {
     ltr: {
       icon: LtrIcon,
-      tooltip: t("direction.ltr"),
+      tooltip: t('direction.ltr'),
     },
     rtl: {
       icon: RtlIcon,
-      tooltip: t("direction.rtl"),
+      tooltip: t('direction.rtl'),
     },
-  }
+  };
 
-  const activeDirection = directions[direction]
+  const activeDirection = directions[direction];
 
   return (
     <Popover>
@@ -42,13 +42,13 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
         <TooltipTrigger asChild>
           <PopoverTrigger
             className={cn(
-              "flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm hover:bg-accent hover:text-accent-foreground focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+              'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
             )}
           >
             <activeDirection.icon className="h-3 w-3 stroke-[2.5]" />
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent sideOffset={8}>{t("direction.label")}</TooltipContent>
+        <TooltipContent sideOffset={8}>{t('direction.label')}</TooltipContent>
       </Tooltip>
       <PopoverContent
         className="flex w-max gap-0.5 rounded-lg p-0.5!"
@@ -56,10 +56,10 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
         sideOffset={8}
         align="center"
         onOpenAutoFocus={(e) => {
-          e.preventDefault()
+          e.preventDefault();
         }}
         onCloseAutoFocus={(e) => {
-          e.preventDefault()
+          e.preventDefault();
         }}
       >
         <ToggleGroup
@@ -67,7 +67,7 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
           value={direction}
           onValueChange={(value) => {
             if (value) {
-              onDirectionChange(value as AllowedTextDirection)
+              onDirectionChange(value as AllowedTextDirection);
             }
           }}
         >
@@ -85,10 +85,10 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
               </Tooltip>
-            )
+            );
           })}
         </ToggleGroup>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

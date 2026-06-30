@@ -1,5 +1,5 @@
-import type { JSX } from "react"
-import { Fragment, type CSSProperties } from "react"
+import type { JSX } from 'react';
+import { Fragment, type CSSProperties } from 'react';
 import {
   Text,
   Html,
@@ -17,71 +17,74 @@ import {
   Column,
   Section,
   HtmlProps,
-} from "@react-email/components"
-import { renderAsync as reactEmailRenderAsync } from "@react-email/render"
-import type { JSONContent } from "@tiptap/core"
-import { deepMerge } from "@antfu/utils"
-import { generateKey } from "./utils"
-import type { MetaDescriptors } from "./meta"
-import { meta } from "./meta"
-import { parse } from "node-html-parser"
-import juice from "juice"
-import type { FontProps, RendererThemeOptions as ThemeOptions } from "./shared"
+} from '@react-email/components';
+import { renderAsync as reactEmailRenderAsync } from '@react-email/render';
+import type { JSONContent } from '@tiptap/core';
+import { deepMerge } from '@antfu/utils';
+import { generateKey } from './utils';
+import type { MetaDescriptors } from './meta';
+import { meta } from './meta';
+import { parse } from 'node-html-parser';
+import juice from 'juice';
+import type {
+  FontProps,
+  RendererThemeOptions as ThemeOptions,
+} from './shared';
 import {
   DEFAULT_RENDERER_THEME as DEFAULT_THEME,
   DEFAULT_FONT,
   DEFAULT_LINK_TEXT_COLOR,
-} from "./shared"
-import { Preheader } from "./preheader"
+} from './shared';
+import { Preheader } from './preheader';
 
 interface NodeOptions {
-  parent?: JSONContent
-  prev?: JSONContent
-  next?: JSONContent
+  parent?: JSONContent;
+  prev?: JSONContent;
+  next?: JSONContent;
 
-  payloadValue?: PayloadValue
+  payloadValue?: PayloadValue;
 }
 
 export interface MarkType {
-  [key: string]: any
-  type: string
-  attrs?: Record<string, any> | undefined
+  [key: string]: any;
+  type: string;
+  attrs?: Record<string, any> | undefined;
 }
 
 const antialiased: CSSProperties = {
-  WebkitFontSmoothing: "antialiased",
-  MozOsxFontSmoothing: "grayscale",
-}
+  WebkitFontSmoothing: 'antialiased',
+  MozOsxFontSmoothing: 'grayscale',
+};
 
-const allowedHeadings = ["h1", "h2", "h3"] as const
-type AllowedHeadings = (typeof allowedHeadings)[number]
+const allowedHeadings = ['h1', 'h2', 'h3'] as const;
+type AllowedHeadings = (typeof allowedHeadings)[number];
 
 const headings: Record<AllowedHeadings, CSSProperties> = {
   h1: {
-    fontSize: "36px",
-    lineHeight: "40px",
+    fontSize: '36px',
+    lineHeight: '40px',
     fontWeight: 800,
   },
   h2: {
-    fontSize: "30px",
-    lineHeight: "36px",
+    fontSize: '30px',
+    lineHeight: '36px',
     fontWeight: 700,
   },
   h3: {
-    fontSize: "24px",
-    lineHeight: "38px",
+    fontSize: '24px',
+    lineHeight: '38px',
     fontWeight: 600,
   },
-}
+};
 
-const allowedLogoSizes = ["sm", "md", "lg"] as const
-type AllowedLogoSizes = (typeof allowedLogoSizes)[number]
+const allowedLogoSizes = ['sm', 'md', 'lg'] as const;
+type AllowedLogoSizes = (typeof allowedLogoSizes)[number];
 
 const logoSizes: Record<AllowedLogoSizes, string> = {
-  sm: "40px",
-  md: "48px",
-  lg: "64px",
-}
+  sm: '40px',
+  md: '48px',
+  lg: '64px',
+};
 
 export interface MailyConfig {
   /**
@@ -90,7 +93,7 @@ export interface MailyConfig {
    *
    * Default: `undefined`
    */
-  preview?: string | JSONContent
+  preview?: string | JSONContent;
   /**
    * The theme object allows you to customize the colors and font sizes of the
    * rendered email.
@@ -131,81 +134,81 @@ export interface MailyConfig {
    * });
    * ```
    */
-  theme?: Partial<ThemeOptions>
+  theme?: Partial<ThemeOptions>;
 }
 
 const CODE_FONT_FAMILY =
-  'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-export const DEFAULT_SECTION_BACKGROUND_COLOR = "#ffffff"
-export const DEFAULT_SECTION_ALIGN = "left"
-export const DEFAULT_SECTION_BORDER_WIDTH = 1
-export const DEFAULT_SECTION_BORDER_COLOR = "#000000"
+  'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
+export const DEFAULT_SECTION_BACKGROUND_COLOR = '#ffffff';
+export const DEFAULT_SECTION_ALIGN = 'left';
+export const DEFAULT_SECTION_BORDER_WIDTH = 1;
+export const DEFAULT_SECTION_BORDER_COLOR = '#000000';
 
-export const DEFAULT_SECTION_MARGIN_TOP = 0
-export const DEFAULT_SECTION_MARGIN_RIGHT = 0
-export const DEFAULT_SECTION_MARGIN_BOTTOM = 0
-export const DEFAULT_SECTION_MARGIN_LEFT = 0
+export const DEFAULT_SECTION_MARGIN_TOP = 0;
+export const DEFAULT_SECTION_MARGIN_RIGHT = 0;
+export const DEFAULT_SECTION_MARGIN_BOTTOM = 0;
+export const DEFAULT_SECTION_MARGIN_LEFT = 0;
 
-export const DEFAULT_SECTION_PADDING_TOP = 5
-export const DEFAULT_SECTION_PADDING_RIGHT = 5
-export const DEFAULT_SECTION_PADDING_BOTTOM = 5
-export const DEFAULT_SECTION_PADDING_LEFT = 5
+export const DEFAULT_SECTION_PADDING_TOP = 5;
+export const DEFAULT_SECTION_PADDING_RIGHT = 5;
+export const DEFAULT_SECTION_PADDING_BOTTOM = 5;
+export const DEFAULT_SECTION_PADDING_LEFT = 5;
 
-export const DEFAULT_COLUMNS_WIDTH = "100%"
-export const DEFAULT_COLUMNS_GAP = 8
+export const DEFAULT_COLUMNS_WIDTH = '100%';
+export const DEFAULT_COLUMNS_GAP = 8;
 
-export const DEFAULT_COLUMN_BACKGROUND_COLOR = "transparent"
-export const DEFAULT_COLUMN_BORDER_RADIUS = 0
-export const DEFAULT_COLUMN_BORDER_WIDTH = 0
-export const DEFAULT_COLUMN_BORDER_COLOR = "transparent"
+export const DEFAULT_COLUMN_BACKGROUND_COLOR = 'transparent';
+export const DEFAULT_COLUMN_BORDER_RADIUS = 0;
+export const DEFAULT_COLUMN_BORDER_WIDTH = 0;
+export const DEFAULT_COLUMN_BORDER_COLOR = 'transparent';
 
-export const DEFAULT_COLUMN_PADDING_TOP = 0
-export const DEFAULT_COLUMN_PADDING_RIGHT = 0
-export const DEFAULT_COLUMN_PADDING_BOTTOM = 0
-export const DEFAULT_COLUMN_PADDING_LEFT = 0
+export const DEFAULT_COLUMN_PADDING_TOP = 0;
+export const DEFAULT_COLUMN_PADDING_RIGHT = 0;
+export const DEFAULT_COLUMN_PADDING_BOTTOM = 0;
+export const DEFAULT_COLUMN_PADDING_LEFT = 0;
 
-export const DEFAULT_INLINE_IMAGE_HEIGHT = 20
-export const DEFAULT_INLINE_IMAGE_WIDTH = 20
+export const DEFAULT_INLINE_IMAGE_HEIGHT = 20;
+export const DEFAULT_INLINE_IMAGE_WIDTH = 20;
 
-export const LINK_PROTOCOL_REGEX = /https?:\/\//
+export const LINK_PROTOCOL_REGEX = /https?:\/\//;
 
 export const DEFAULT_META_TAGS: MetaDescriptors = [
   {
-    name: "viewport",
-    content: "width=device-width",
+    name: 'viewport',
+    content: 'width=device-width',
   },
   {
-    httpEquiv: "X-UA-Compatible",
-    content: "IE=edge",
+    httpEquiv: 'X-UA-Compatible',
+    content: 'IE=edge',
   },
   {
-    name: "x-apple-disable-message-reformatting",
+    name: 'x-apple-disable-message-reformatting',
   },
   {
     // http://www.html-5.com/metatags/format-detection-meta-tag.html
     // It will prevent iOS from automatically detecting possible phone numbers in a block of text
-    name: "format-detection",
-    content: "telephone=no,address=no,email=no,date=no,url=no",
+    name: 'format-detection',
+    content: 'telephone=no,address=no,email=no,date=no,url=no',
   },
   {
-    name: "color-scheme",
-    content: "light",
+    name: 'color-scheme',
+    content: 'light',
   },
   {
-    name: "supported-color-schemes",
-    content: "light",
+    name: 'supported-color-schemes',
+    content: 'light',
   },
-]
+];
 
 export const DEFAULT_HTML_PROPS: HtmlProps = {
-  lang: "en",
-  dir: "ltr",
-}
+  lang: 'en',
+  dir: 'ltr',
+};
 
 const DEFAULT_RENDER_OPTIONS: RenderOptions = {
   pretty: false,
   plainText: false,
-}
+};
 
 export interface RenderOptions {
   /**
@@ -218,58 +221,60 @@ export interface RenderOptions {
    *
    * Default: `pretty` - `false`, `plainText` - `false`
    */
-  pretty?: boolean
-  plainText?: boolean
+  pretty?: boolean;
+  plainText?: boolean;
 }
 
 export type VariableFormatter = (options: {
-  variable: string
-  fallback?: string
-}) => string
-export type VariableValues = Map<string, string>
-export type LinkValues = Map<string, string>
+  variable: string;
+  fallback?: string;
+}) => string;
+export type VariableValues = Map<string, string>;
+export type LinkValues = Map<string, string>;
 
-export type PayloadValue = Record<string, any> | boolean
-export type PayloadValues = Map<string, PayloadValue>
+export type PayloadValue = Record<string, any> | boolean;
+export type PayloadValues = Map<string, PayloadValue>;
 
 export class Maily {
-  readonly preheader = new Preheader(this)
+  readonly preheader = new Preheader(this);
 
-  private readonly content: JSONContent
+  private readonly content: JSONContent;
   private config: MailyConfig = {
     theme: DEFAULT_THEME,
-  }
+  };
 
   private variableFormatter: VariableFormatter = ({ variable, fallback }) => {
-    return fallback ? `{{${variable},fallback=${fallback}}}` : `{{${variable}}}`
-  }
+    return fallback
+      ? `{{${variable},fallback=${fallback}}}`
+      : `{{${variable}}}`;
+  };
 
-  private shouldReplaceVariableValues = false
-  private variableValues: VariableValues = new Map()
-  private linkValues: LinkValues = new Map()
-  private openTrackingPixel: string | undefined
-  private payloadValues: PayloadValues = new Map()
-  private marksOrder = ["underline", "bold", "italic", "textStyle", "link"]
-  private meta: MetaDescriptors = DEFAULT_META_TAGS
-  private htmlProps: HtmlProps = DEFAULT_HTML_PROPS
+  private shouldReplaceVariableValues = false;
+  private variableValues: VariableValues = new Map();
+  private linkValues: LinkValues = new Map();
+  private openTrackingPixel: string | undefined;
+  private payloadValues: PayloadValues = new Map();
+  private marksOrder = ['underline', 'bold', 'italic', 'textStyle', 'link'];
+  private meta: MetaDescriptors = DEFAULT_META_TAGS;
+  private htmlProps: HtmlProps = DEFAULT_HTML_PROPS;
 
-  constructor(content: JSONContent = { type: "doc", content: [] }) {
-    this.content = content
+  constructor(content: JSONContent = { type: 'doc', content: [] }) {
+    this.content = content;
   }
 
   setPreviewText(preview?: string | JSONContent) {
-    this.config.preview = preview
+    this.config.preview = preview;
   }
 
   setTheme(theme: Partial<ThemeOptions>) {
     this.config.theme = deepMerge(
       this.config.theme || DEFAULT_THEME,
       theme
-    ) as ThemeOptions
+    ) as ThemeOptions;
   }
 
   setVariableFormatter(formatter: VariableFormatter) {
-    this.variableFormatter = formatter
+    this.variableFormatter = formatter;
   }
 
   /**
@@ -281,10 +286,10 @@ export class Maily {
    */
   setVariableValue(variable: string, value: string) {
     if (!this.shouldReplaceVariableValues) {
-      this.shouldReplaceVariableValues = true
+      this.shouldReplaceVariableValues = true;
     }
 
-    this.variableValues.set(variable, value)
+    this.variableValues.set(variable, value);
   }
 
   /**
@@ -304,36 +309,36 @@ export class Maily {
    */
   setVariableValues(values: Record<string, string>) {
     if (!this.shouldReplaceVariableValues) {
-      this.shouldReplaceVariableValues = true
+      this.shouldReplaceVariableValues = true;
     }
 
     Object.entries(values).forEach(([variable, value]) => {
-      this.setVariableValue(variable, value)
-    })
+      this.setVariableValue(variable, value);
+    });
   }
 
   setLinkValue(link: string, value: string) {
-    this.linkValues.set(link, value)
+    this.linkValues.set(link, value);
   }
 
   setLinkValues(values: Record<string, string>) {
     Object.entries(values).forEach(([link, value]) => {
-      this.setLinkValue(link, value)
-    })
+      this.setLinkValue(link, value);
+    });
   }
 
   setPayloadValue(key: string, value: PayloadValue) {
     if (!this.shouldReplaceVariableValues) {
-      this.shouldReplaceVariableValues = true
+      this.shouldReplaceVariableValues = true;
     }
 
-    this.payloadValues.set(key, value)
+    this.payloadValues.set(key, value);
   }
 
   setPayloadValues(values: Record<string, PayloadValue>) {
     Object.entries(values).forEach(([key, value]) => {
-      this.setPayloadValue(key, value)
-    })
+      this.setPayloadValue(key, value);
+    });
   }
 
   /**
@@ -342,7 +347,7 @@ export class Maily {
    * @param pixel - The open tracking pixel
    */
   setOpenTrackingPixel(pixel?: string) {
-    this.openTrackingPixel = pixel
+    this.openTrackingPixel = pixel;
   }
 
   /**
@@ -352,7 +357,7 @@ export class Maily {
    * Default: `false`
    */
   setShouldReplaceVariableValues(shouldReplace: boolean) {
-    this.shouldReplaceVariableValues = shouldReplace
+    this.shouldReplaceVariableValues = shouldReplace;
   }
 
   /**
@@ -361,7 +366,7 @@ export class Maily {
    * @param meta - The meta tags
    */
   setMetaTags(meta: MetaDescriptors) {
-    this.meta.push(...meta)
+    this.meta.push(...meta);
   }
 
   /**
@@ -373,69 +378,69 @@ export class Maily {
     this.htmlProps = {
       ...this.htmlProps,
       ...props,
-    }
+    };
   }
 
   getAllLinks() {
-    const nodes = this.content.content || []
-    const links = new Set<string>()
+    const nodes = this.content.content || [];
+    const links = new Set<string>();
 
     const isValidLink = (href: string) => {
       return (
         href &&
         this.isValidUrl(href) &&
-        !href.startsWith("#") &&
-        !href.startsWith("mailto:") &&
-        !href.startsWith("tel:") &&
-        typeof href === "string"
-      )
-    }
+        !href.startsWith('#') &&
+        !href.startsWith('mailto:') &&
+        !href.startsWith('tel:') &&
+        typeof href === 'string'
+      );
+    };
 
     const extractLinksFromNode = (node: JSONContent) => {
-      if (node.type === "button") {
-        const originalLink = node.attrs?.url
+      if (node.type === 'button') {
+        const originalLink = node.attrs?.url;
         if (isValidLink(originalLink) && originalLink) {
-          links.add(originalLink)
+          links.add(originalLink);
         }
       } else if (node.content) {
         node.content.forEach((childNode) => {
           if (childNode.marks) {
             childNode.marks.forEach((mark) => {
-              const originalLink = mark.attrs?.href
-              if (mark.type === "link" && isValidLink(originalLink)) {
-                links.add(originalLink)
+              const originalLink = mark.attrs?.href;
+              if (mark.type === 'link' && isValidLink(originalLink)) {
+                links.add(originalLink);
               }
-            })
+            });
           }
           if (childNode.content) {
-            extractLinksFromNode(childNode)
+            extractLinksFromNode(childNode);
           }
-        })
+        });
       }
-    }
+    };
 
     nodes.forEach((childNode) => {
-      extractLinksFromNode(childNode)
-    })
+      extractLinksFromNode(childNode);
+    });
 
-    return links
+    return links;
   }
 
   private isValidUrl(href: string) {
     try {
-      new URL(href)
-      return true
+      new URL(href);
+      return true;
     } catch (err) {
-      return false
+      return false;
     }
   }
 
   async render(
     options: RenderOptions = DEFAULT_RENDER_OPTIONS
   ): Promise<string> {
-    const markup = this.markup()
+    const markup = this.markup();
 
-    return reactEmailRenderAsync(markup, options)
+    return reactEmailRenderAsync(markup, options);
   }
 
   /**
@@ -445,23 +450,23 @@ export class Maily {
    * @returns The children of the content as JSX elements
    */
   children() {
-    const nodes = this.content.content || []
+    const nodes = this.content.content || [];
     const jsxNodes = nodes.map((node, index) => {
       const nodeOptions: NodeOptions = {
         prev: nodes[index - 1],
         next: nodes[index + 1],
         parent: node,
-      }
+      };
 
-      const component = this.renderNode(node, nodeOptions)
+      const component = this.renderNode(node, nodeOptions);
       if (!component) {
-        return null
+        return null;
       }
 
-      return <Fragment key={generateKey()}>{component}</Fragment>
-    })
+      return <Fragment key={generateKey()}>{component}</Fragment>;
+    });
 
-    return jsxNodes
+    return jsxNodes;
   }
 
   /**
@@ -469,24 +474,24 @@ export class Maily {
    * and return the raw React Tree.
    */
   markup() {
-    const jsxNodes = this.children()
+    const jsxNodes = this.children();
 
-    const { preview } = this.config
-    const tags = meta(this.meta)
-    const htmlProps = this.htmlProps
-    const containerStyles = this.config.theme?.container
+    const { preview } = this.config;
+    const tags = meta(this.meta);
+    const htmlProps = this.htmlProps;
+    const containerStyles = this.config.theme?.container;
     const fontOptions: FontProps = {
       ...(this.config.theme?.font || DEFAULT_FONT),
-      fontStyle: "normal",
+      fontStyle: 'normal',
       fontWeight: 400,
-    }
+    };
 
     const bodyStyles: CSSProperties = {
-      margin: "0px",
+      margin: '0px',
       ...this.config.theme?.body,
-    }
+    };
 
-    const preheader = preview ? this.preheader.render(preview) : null
+    const preheader = preview ? this.preheader.render(preview) : null;
 
     const markup = (
       <Html {...htmlProps}>
@@ -504,10 +509,10 @@ export class Maily {
           {preheader ? <Preview>{preheader}</Preview> : null}
           <Container
             style={{
-              width: "100%",
-              marginLeft: "auto",
-              marginRight: "auto",
-              borderStyle: "solid",
+              width: '100%',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+              borderStyle: 'solid',
               ...containerStyles,
             }}
           >
@@ -518,41 +523,41 @@ export class Maily {
               alt=""
               src={this.openTrackingPixel}
               style={{
-                display: "none",
-                width: "1px",
-                height: "1px",
+                display: 'none',
+                width: '1px',
+                height: '1px',
               }}
             />
           ) : null}
         </Body>
       </Html>
-    )
+    );
 
-    return markup
+    return markup;
   }
 
   private getMarginOverrideConditions(
     _node: JSONContent,
     options?: NodeOptions
   ) {
-    const { parent, prev, next } = options || {}
+    const { parent, prev, next } = options || {};
 
-    const isNextSpacer = next?.type === "spacer"
-    const isPrevSpacer = prev?.type === "spacer"
+    const isNextSpacer = next?.type === 'spacer';
+    const isPrevSpacer = prev?.type === 'spacer';
 
-    const isParentListItem = parent?.type === "listItem"
+    const isParentListItem = parent?.type === 'listItem';
 
-    const isLastSectionElement = parent?.type === "section" && !next
-    const isFirstSectionElement = parent?.type === "section" && !prev
+    const isLastSectionElement = parent?.type === 'section' && !next;
+    const isFirstSectionElement = parent?.type === 'section' && !prev;
 
-    const isLastColumnElement = parent?.type === "column" && !next
-    const isFirstColumnElement = parent?.type === "column" && !prev
+    const isLastColumnElement = parent?.type === 'column' && !next;
+    const isFirstColumnElement = parent?.type === 'column' && !prev;
 
-    const isFirstRepeatElement = parent?.type === "repeat" && !prev
-    const isLastRepeatElement = parent?.type === "repeat" && !next
+    const isFirstRepeatElement = parent?.type === 'repeat' && !prev;
+    const isLastRepeatElement = parent?.type === 'repeat' && !next;
 
-    const isFirstShowElement = parent?.type === "show" && !prev
-    const isLastShowElement = parent?.type === "show" && !next
+    const isFirstShowElement = parent?.type === 'show' && !prev;
+    const isLastShowElement = parent?.type === 'show' && !next;
 
     return {
       isNextSpacer,
@@ -579,7 +584,7 @@ export class Maily {
         isLastColumnElement ||
         isLastRepeatElement ||
         isLastShowElement,
-    }
+    };
   }
 
   // `getMappedContent` will call corresponding node type
@@ -588,21 +593,21 @@ export class Maily {
     node: JSONContent,
     options?: NodeOptions
   ): JSX.Element[] {
-    const allNodes = node.content || []
+    const allNodes = node.content || [];
     return allNodes
       .map((childNode, index) => {
         const component = this.renderNode(childNode, {
           ...options,
           next: allNodes[index + 1],
           prev: allNodes[index - 1],
-        })
+        });
         if (!component) {
-          return null
+          return null;
         }
 
-        return <Fragment key={generateKey()}>{component}</Fragment>
+        return <Fragment key={generateKey()}>{component}</Fragment>;
       })
-      .filter((n) => n !== null) as JSX.Element[]
+      .filter((n) => n !== null) as JSX.Element[];
   }
 
   // `renderNode` will call the method of the corresponding node type
@@ -610,60 +615,60 @@ export class Maily {
     node: JSONContent,
     options: NodeOptions = {}
   ): JSX.Element | null {
-    const type = node.type || ""
+    const type = node.type || '';
 
     if (type in this) {
       // @ts-expect-error - `this` is not assignable to type 'never'
-      return this[type]?.(node, options) as JSX.Element
+      return this[type]?.(node, options) as JSX.Element;
     }
 
-    throw new Error(`Node type "${type}" is not supported.`)
+    throw new Error(`Node type "${type}" is not supported.`);
   }
 
   // `renderMark` will call the method of the corresponding mark type
   private renderMark(node: JSONContent, options?: NodeOptions): JSX.Element {
     // It will wrap the text with the corresponding mark type
-    const text = node?.text || <>&nbsp;</>
-    let marks = node?.marks || []
+    const text = node?.text || <>&nbsp;</>;
+    let marks = node?.marks || [];
     // sort the marks by uderline, bold, italic, textStyle, link
     // so that the text will be wrapped in the correct order
     marks.sort((a, b) => {
-      return this.marksOrder.indexOf(a.type) - this.marksOrder.indexOf(b.type)
-    })
+      return this.marksOrder.indexOf(a.type) - this.marksOrder.indexOf(b.type);
+    });
 
     return marks.reduce(
       (acc, mark) => {
-        const type = mark.type
+        const type = mark.type;
         if (type in this) {
           // @ts-expect-error - `this` is not assignable to type 'never'
-          return this[type]?.(mark, acc, options) as JSX.Element
+          return this[type]?.(mark, acc, options) as JSX.Element;
         }
 
-        throw new Error(`Mark type "${type}" is not supported.`)
+        throw new Error(`Mark type "${type}" is not supported.`);
       },
       <>{text}</>
-    )
+    );
   }
 
   protected paragraph(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
-    const alignment = attrs?.textAlign || "left"
-    const textDirection = attrs?.textDirection || "ltr"
+    const { attrs } = node;
+    const alignment = attrs?.textAlign || 'left';
+    const textDirection = attrs?.textDirection || 'ltr';
     const { isParentListItem, shouldRemoveBottomMargin } =
-      this.getMarginOverrideConditions(node, options)
+      this.getMarginOverrideConditions(node, options);
 
-    const show = this.shouldShow(node, options)
+    const show = this.shouldShow(node, options);
     if (!show) {
-      return <></>
+      return <></>;
     }
 
-    const marginBottom = isParentListItem || shouldRemoveBottomMargin ? 0 : 20
+    const marginBottom = isParentListItem || shouldRemoveBottomMargin ? 0 : 20;
 
     return (
       <Text
         style={{
-          ...(alignment !== "left" ? { textAlign: alignment } : {}),
-          ...(textDirection !== "ltr" ? { direction: textDirection } : {}),
+          ...(alignment !== 'left' ? { textAlign: alignment } : {}),
+          ...(textDirection !== 'ltr' ? { direction: textDirection } : {}),
           ...antialiased,
           fontSize: this.config.theme?.fontSize?.paragraph?.size,
           lineHeight: this.config.theme?.fontSize?.paragraph?.lineHeight,
@@ -680,18 +685,18 @@ export class Maily {
           <>&nbsp;</>
         )}
       </Text>
-    )
+    );
   }
 
   protected text(node: JSONContent, options?: NodeOptions): JSX.Element {
     if (node.marks) {
-      return this.renderMark(node, options)
+      return this.renderMark(node, options);
     }
 
-    const text = node.text
+    const text = node.text;
     // if it's all empty, return an invisible space length
     // of the text so that it doesn't look empty for inline-images
-    const spaces = text?.match(/\s/g)
+    const spaces = text?.match(/\s/g);
     if (spaces && spaces.length === text?.length) {
       return (
         <>
@@ -699,31 +704,31 @@ export class Maily {
             <Fragment key={index}>&nbsp;</Fragment>
           ))}
         </>
-      )
+      );
     }
 
-    return text ? <>{text}</> : <>&nbsp;</>
+    return text ? <>{text}</> : <>&nbsp;</>;
   }
 
   protected bold(_: MarkType, text: JSX.Element): JSX.Element {
-    return <strong>{text}</strong>
+    return <strong>{text}</strong>;
   }
 
   protected italic(_: MarkType, text: JSX.Element): JSX.Element {
-    return <em>{text}</em>
+    return <em>{text}</em>;
   }
 
   protected underline(_: MarkType, text: JSX.Element): JSX.Element {
-    return <u>{text}</u>
+    return <u>{text}</u>;
   }
 
   protected strike(_: MarkType, text: JSX.Element): JSX.Element {
-    return <s style={{ textDecoration: "line-through" }}>{text}</s>
+    return <s style={{ textDecoration: 'line-through' }}>{text}</s>;
   }
 
   protected textStyle(mark: MarkType, text: JSX.Element): JSX.Element {
-    const { attrs } = mark
-    const { color = this.config.theme?.colors?.paragraph } = attrs || {}
+    const { attrs } = mark;
+    const { color = this.config.theme?.colors?.paragraph } = attrs || {};
 
     return (
       <span
@@ -733,7 +738,7 @@ export class Maily {
       >
         {text}
       </span>
-    )
+    );
   }
 
   protected link(
@@ -741,20 +746,20 @@ export class Maily {
     text: JSX.Element,
     options?: NodeOptions
   ): JSX.Element {
-    const { attrs } = mark
+    const { attrs } = mark;
 
-    const linkTheme = this.config.theme?.link
+    const linkTheme = this.config.theme?.link;
 
-    let href = attrs?.href || "#"
-    const target = attrs?.target || "_blank"
-    const rel = attrs?.rel || "noopener noreferrer nofollow"
-    const isUrlVariable = attrs?.isUrlVariable ?? false
+    let href = attrs?.href || '#';
+    const target = attrs?.target || '_blank';
+    const rel = attrs?.rel || 'noopener noreferrer nofollow';
+    const isUrlVariable = attrs?.isUrlVariable ?? false;
 
     if (isUrlVariable) {
-      const linkWithoutProtocol = this.removeLinkProtocol(href)
-      href = this.variableUrlValue(linkWithoutProtocol, options)
+      const linkWithoutProtocol = this.removeLinkProtocol(href);
+      href = this.variableUrlValue(linkWithoutProtocol, options);
     } else {
-      href = this.linkValues.get(href) || href
+      href = this.linkValues.get(href) || href;
     }
 
     return (
@@ -763,57 +768,57 @@ export class Maily {
         rel={rel}
         style={{
           fontWeight: 500,
-          textDecoration: "none",
+          textDecoration: 'none',
           color: linkTheme?.color || DEFAULT_LINK_TEXT_COLOR,
         }}
         target={target}
       >
         {text}
       </Link>
-    )
+    );
   }
 
   private removeLinkProtocol(href: string) {
-    return href.replace(LINK_PROTOCOL_REGEX, "")
+    return href.replace(LINK_PROTOCOL_REGEX, '');
   }
 
   private variableUrlValue(href: string, options?: NodeOptions) {
-    const { payloadValue } = options || {}
-    const linkWithoutProtocol = this.removeLinkProtocol(href)
+    const { payloadValue } = options || {};
+    const linkWithoutProtocol = this.removeLinkProtocol(href);
 
     if (!this.shouldReplaceVariableValues) {
       return this.variableFormatter({
         variable: linkWithoutProtocol,
-      })
+      });
     }
 
     return (
-      (typeof payloadValue === "object"
+      (typeof payloadValue === 'object'
         ? payloadValue[linkWithoutProtocol]
         : payloadValue) ??
       this.variableValues.get(linkWithoutProtocol) ??
       href
-    )
+    );
   }
 
   protected heading(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
 
-    const level = `h${Number(attrs?.level) || 1}`
-    const textDirection = attrs?.textDirection || "ltr"
-    const isRtl = textDirection === "rtl"
-    const defaultAlignment = isRtl ? "right" : "left"
-    const alignment = attrs?.textAlign || defaultAlignment
+    const level = `h${Number(attrs?.level) || 1}`;
+    const textDirection = attrs?.textDirection || 'ltr';
+    const isRtl = textDirection === 'rtl';
+    const defaultAlignment = isRtl ? 'right' : 'left';
+    const alignment = attrs?.textAlign || defaultAlignment;
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
     const { fontSize, lineHeight, fontWeight } =
-      headings[level as AllowedHeadings]
+      headings[level as AllowedHeadings];
 
-    const show = this.shouldShow(node, options)
+    const show = this.shouldShow(node, options);
     if (!show) {
-      return <></>
+      return <></>;
     }
 
     return (
@@ -821,7 +826,7 @@ export class Maily {
         // @ts-expect-error - `this` is not assignable to type 'never'
         as={level}
         style={{
-          ...(alignment !== "left" ? { textAlign: alignment } : {}),
+          ...(alignment !== 'left' ? { textAlign: alignment } : {}),
           ...(isRtl ? { direction: textDirection } : {}),
           color: this.config.theme?.colors?.heading,
           fontSize,
@@ -837,18 +842,22 @@ export class Maily {
           parent: node,
         })}
       </Heading>
-    )
+    );
   }
 
   protected variable(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { id: variable, fallback } = node.attrs || {}
+    const { id: variable, fallback } = node.attrs || {};
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow || !variable) {
-      return <></>
+      return <></>;
     }
 
-    const formattedVariable = this.getVariableValue(variable, fallback, options)
+    const formattedVariable = this.getVariableValue(
+      variable,
+      fallback,
+      options
+    );
 
     if (node?.marks) {
       return this.renderMark(
@@ -857,63 +866,63 @@ export class Maily {
           marks: node.marks,
         },
         options
-      )
+      );
     }
 
-    return <>{formattedVariable}</>
+    return <>{formattedVariable}</>;
   }
 
   getVariableValue(variable: string, fallback?: string, options?: NodeOptions) {
-    const { payloadValue } = options || {}
+    const { payloadValue } = options || {};
 
     let formattedVariable = this.variableFormatter({
       variable,
       fallback,
-    })
+    });
 
     // If `shouldReplaceVariableValues` is true, replace the variable values
     // Otherwise, just return the formatted variable
     if (this.shouldReplaceVariableValues) {
       formattedVariable =
-        (typeof payloadValue === "object"
+        (typeof payloadValue === 'object'
           ? payloadValue[variable]
           : payloadValue) ??
         this.variableValues.get(variable) ??
         fallback ??
-        formattedVariable
+        formattedVariable;
     }
 
-    return formattedVariable
+    return formattedVariable;
   }
 
   protected horizontalRule(_: JSONContent, __?: NodeOptions): JSX.Element {
     return (
       <Hr
         style={{
-          marginTop: "32px",
-          marginBottom: "32px",
+          marginTop: '32px',
+          marginBottom: '32px',
         }}
       />
-    )
+    );
   }
 
   protected orderedList(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
 
     return (
       <Container
         style={{
-          marginTop: "0px",
-          marginBottom: shouldRemoveBottomMargin ? "0" : "20px",
+          marginTop: '0px',
+          marginBottom: shouldRemoveBottomMargin ? '0' : '20px',
         }}
       >
         <ol
           style={{
-            paddingLeft: "26px",
-            listStyleType: "decimal",
+            paddingLeft: '26px',
+            listStyleType: 'decimal',
           }}
         >
           {this.getMappedContent(node, {
@@ -922,31 +931,31 @@ export class Maily {
           })}
         </ol>
       </Container>
-    )
+    );
   }
 
   protected bulletList(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { parent, next } = options || {}
+    const { parent, next } = options || {};
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       {
         parent,
         next,
       }
-    )
+    );
 
     return (
       <Container
         style={{
-          maxWidth: "100%",
-          marginTop: "0px",
-          marginBottom: shouldRemoveBottomMargin ? "0" : "20px",
+          maxWidth: '100%',
+          marginTop: '0px',
+          marginBottom: shouldRemoveBottomMargin ? '0' : '20px',
         }}
       >
         <ul
           style={{
-            paddingLeft: "26px",
-            listStyleType: "disc",
+            paddingLeft: '26px',
+            listStyleType: 'disc',
           }}
         >
           {this.getMappedContent(node, {
@@ -955,28 +964,28 @@ export class Maily {
           })}
         </ul>
       </Container>
-    )
+    );
   }
 
   protected listItem(node: JSONContent, options?: NodeOptions): JSX.Element {
     return (
       <li
         style={{
-          marginBottom: "8px",
-          marginTop: "8px",
-          paddingLeft: "6px",
+          marginBottom: '8px',
+          marginTop: '8px',
+          paddingLeft: '6px',
           ...antialiased,
         }}
       >
         {this.getMappedContent(node, { ...options, parent: node })}
       </li>
-    )
+    );
   }
 
   protected button(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
 
-    const buttonTheme = this.config.theme?.button
+    const buttonTheme = this.config.theme?.button;
 
     let {
       text: _text,
@@ -988,57 +997,57 @@ export class Maily {
       textColor: _textColor,
       borderRadius,
       // @TODO: Update the attribute to `textAlign`
-      alignment = "left",
+      alignment = 'left',
 
       paddingTop: _paddingTop,
       paddingRight: _paddingRight,
       paddingBottom: _paddingBottom,
       paddingLeft: _paddingLeft,
-    } = attrs || {}
+    } = attrs || {};
 
-    const buttonColor = _buttonColor || buttonTheme?.backgroundColor
-    const textColor = _textColor || buttonTheme?.color
+    const buttonColor = _buttonColor || buttonTheme?.backgroundColor;
+    const textColor = _textColor || buttonTheme?.color;
 
     let paddingTop =
-      parseInt(String(_paddingTop || buttonTheme?.paddingTop)) || 0
+      parseInt(String(_paddingTop || buttonTheme?.paddingTop)) || 0;
     const paddingRight =
-      parseInt(String(_paddingRight || buttonTheme?.paddingRight)) || 0
+      parseInt(String(_paddingRight || buttonTheme?.paddingRight)) || 0;
     let paddingBottom =
-      parseInt(String(_paddingBottom || buttonTheme?.paddingBottom)) || 0
+      parseInt(String(_paddingBottom || buttonTheme?.paddingBottom)) || 0;
     const paddingLeft =
-      parseInt(String(_paddingLeft || buttonTheme?.paddingLeft)) || 0
+      parseInt(String(_paddingLeft || buttonTheme?.paddingLeft)) || 0;
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
-    let radius: string | undefined = "0px"
-    if (borderRadius === "round") {
-      radius = "9999px"
-    } else if (borderRadius === "smooth") {
-      radius = "6px"
+    let radius: string | undefined = '0px';
+    if (borderRadius === 'round') {
+      radius = '9999px';
+    } else if (borderRadius === 'smooth') {
+      radius = '6px';
     }
 
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
 
     const href = isUrlVariable
       ? this.variableUrlValue(url, options)
-      : this.linkValues.get(url) || url
-    const text = isTextVariable ? this.variableUrlValue(_text, options) : _text
+      : this.linkValues.get(url) || url;
+    const text = isTextVariable ? this.variableUrlValue(_text, options) : _text;
 
-    paddingTop += 2
-    paddingBottom += 2
+    paddingTop += 2;
+    paddingBottom += 2;
 
     return (
       <Container
         style={{
           textAlign: alignment,
-          maxWidth: "100%",
-          marginBottom: shouldRemoveBottomMargin ? "0px" : "20px",
+          maxWidth: '100%',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
         }}
       >
         <Button
@@ -1046,12 +1055,12 @@ export class Maily {
           style={{
             color: String(textColor),
             backgroundColor:
-              variant === "filled" ? String(buttonColor) : "transparent",
+              variant === 'filled' ? String(buttonColor) : 'transparent',
             borderColor: String(buttonColor),
-            borderWidth: "2px",
-            borderStyle: "solid",
-            textDecoration: "none",
-            fontSize: "14px",
+            borderWidth: '2px',
+            borderStyle: 'solid',
+            textDecoration: 'none',
+            fontSize: '14px',
             fontWeight: 500,
             borderRadius: radius,
             padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
@@ -1060,16 +1069,16 @@ export class Maily {
           {text}
         </Button>
       </Container>
-    )
+    );
   }
 
   protected spacer(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
-    const { height } = attrs || {}
+    const { attrs } = node;
+    const { height } = attrs || {};
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
     return (
@@ -1078,15 +1087,15 @@ export class Maily {
           height: `${height}px`,
         }}
       />
-    )
+    );
   }
 
   protected hardBreak(_: JSONContent, __?: NodeOptions): JSX.Element {
-    return <br />
+    return <br />;
   }
 
   protected logo(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
     let {
       src,
       isSrcVariable,
@@ -1094,104 +1103,104 @@ export class Maily {
       title,
       size,
       // @TODO: Update the attribute to `textAlign`
-      alignment = "left",
-    } = attrs || {}
+      alignment = 'left',
+    } = attrs || {};
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
-    src = isSrcVariable ? this.variableUrlValue(src, options) : src
+    src = isSrcVariable ? this.variableUrlValue(src, options) : src;
 
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
 
     return (
       <Row
         style={{
-          marginTop: "0px",
-          marginBottom: shouldRemoveBottomMargin ? "0px" : "32px",
+          marginTop: '0px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : '32px',
         }}
       >
         <Column align={alignment}>
           <Img
-            alt={alt || title || "Logo"}
+            alt={alt || title || 'Logo'}
             src={src}
             style={{
               width: logoSizes[size as AllowedLogoSizes] || size,
               height: logoSizes[size as AllowedLogoSizes] || size,
             }}
-            title={title || alt || "Logo"}
+            title={title || alt || 'Logo'}
           />
         </Column>
       </Row>
-    )
+    );
   }
 
   protected image(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
     let {
       src,
       isSrcVariable,
       alt,
       title,
-      width = "auto",
-      height = "auto",
-      alignment = "center",
-      externalLink = "",
+      width = 'auto',
+      height = 'auto',
+      alignment = 'center',
+      externalLink = '',
       isExternalLinkVariable,
       borderRadius = 0,
-    } = attrs || {}
+    } = attrs || {};
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
 
-    src = isSrcVariable ? this.variableUrlValue(src, options) : src
+    src = isSrcVariable ? this.variableUrlValue(src, options) : src;
     externalLink = isExternalLinkVariable
       ? this.variableUrlValue(externalLink, options)
-      : externalLink
+      : externalLink;
 
     // Handle width value
-    const imageWidth = width === "auto" ? "auto" : Number(width)
-    const widthStyle = imageWidth === "auto" ? "auto" : `${imageWidth}px`
+    const imageWidth = width === 'auto' ? 'auto' : Number(width);
+    const widthStyle = imageWidth === 'auto' ? 'auto' : `${imageWidth}px`;
 
     // Handle height value
-    const imageHeight = height === "auto" ? "auto" : Number(height)
-    const heightStyle = imageHeight === "auto" ? "auto" : `${imageHeight}px`
+    const imageHeight = height === 'auto' ? 'auto' : Number(height);
+    const heightStyle = imageHeight === 'auto' ? 'auto' : `${imageHeight}px`;
 
     const mainImage = (
       <Img
-        alt={alt || title || "Image"}
+        alt={alt || title || 'Image'}
         src={src}
         style={{
           width: widthStyle, // Use the calculated width
           height: heightStyle, // Use the calculated height
-          maxWidth: "100%", // Ensure image doesn't overflow container
-          outline: "none",
-          border: "none",
-          textDecoration: "none",
-          display: "block", // Prevent unwanted spacing
+          maxWidth: '100%', // Ensure image doesn't overflow container
+          outline: 'none',
+          border: 'none',
+          textDecoration: 'none',
+          display: 'block', // Prevent unwanted spacing
           borderRadius,
         }}
-        title={title || alt || "Image"}
+        title={title || alt || 'Image'}
       />
-    )
+    );
 
     return (
       <Row
         style={{
-          marginTop: "0px",
-          marginBottom: shouldRemoveBottomMargin ? "0px" : "32px",
+          marginTop: '0px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : '32px',
         }}
       >
         <Column align={alignment}>
@@ -1200,9 +1209,9 @@ export class Maily {
               href={externalLink}
               rel="noopener noreferrer"
               style={{
-                display: "block",
-                maxWidth: "100%",
-                textDecoration: "none",
+                display: 'block',
+                maxWidth: '100%',
+                textDecoration: 'none',
               }}
               target="_blank"
             >
@@ -1213,17 +1222,17 @@ export class Maily {
           )}
         </Column>
       </Row>
-    )
+    );
   }
 
   protected footer(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
-    const { textAlign = "left", textDirection = "ltr" } = attrs || {}
+    const { attrs } = node;
+    const { textAlign = 'left', textDirection = 'ltr' } = attrs || {};
 
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
 
     return (
       <Text
@@ -1231,10 +1240,10 @@ export class Maily {
           fontSize: this.config.theme?.fontSize?.footer?.size,
           lineHeight: this.config.theme?.fontSize?.footer?.lineHeight,
           color: this.config.theme?.colors?.footer,
-          marginTop: "0px",
-          marginBottom: shouldRemoveBottomMargin ? "0px" : "20px",
+          marginTop: '0px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
           textAlign,
-          ...(textDirection !== "ltr" ? { direction: textDirection } : {}),
+          ...(textDirection !== 'ltr' ? { direction: textDirection } : {}),
           ...antialiased,
         }}
       >
@@ -1243,24 +1252,24 @@ export class Maily {
           parent: node,
         })}
       </Text>
-    )
+    );
   }
 
   protected blockquote(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { isPrevSpacer, shouldRemoveBottomMargin } =
-      this.getMarginOverrideConditions(node, options)
+      this.getMarginOverrideConditions(node, options);
 
     return (
       <blockquote
         style={{
-          borderLeftWidth: "4px",
-          borderLeftStyle: "solid",
+          borderLeftWidth: '4px',
+          borderLeftStyle: 'solid',
           borderLeftColor: this.config.theme?.colors?.blockquoteBorder,
-          paddingLeft: "16px",
-          marginLeft: "0px",
-          marginRight: "0px",
-          marginTop: isPrevSpacer ? "0px" : "20px",
-          marginBottom: shouldRemoveBottomMargin ? "0px" : "20px",
+          paddingLeft: '16px',
+          marginLeft: '0px',
+          marginRight: '0px',
+          marginTop: isPrevSpacer ? '0px' : '20px',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
         }}
       >
         {this.getMappedContent(node, {
@@ -1268,7 +1277,7 @@ export class Maily {
           parent: node,
         })}
       </blockquote>
-    )
+    );
   }
   protected code(_: MarkType, text: JSX.Element): JSX.Element {
     return (
@@ -1276,8 +1285,8 @@ export class Maily {
         style={{
           backgroundColor: this.config.theme?.colors?.codeBackground,
           color: this.config.theme?.colors?.codeText,
-          padding: "2px 4px",
-          borderRadius: "6px",
+          padding: '2px 4px',
+          borderRadius: '6px',
           fontFamily: CODE_FONT_FAMILY,
           fontWeight: 400,
           letterSpacing: 0,
@@ -1285,56 +1294,56 @@ export class Maily {
       >
         {text}
       </code>
-    )
+    );
   }
   protected linkCard(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
-    )
+    );
 
     const { title, description, link, linkTitle, image, badgeText, subTitle } =
-      attrs || {}
+      attrs || {};
     const href =
-      this.linkValues.get(link) || this.variableValues.get(link) || link || "#"
+      this.linkValues.get(link) || this.variableValues.get(link) || link || '#';
 
     return (
       <a
         href={href}
         rel="noopener noreferrer"
         style={{
-          border: "1px solid #eaeaea",
-          borderRadius: "10px",
-          textDecoration: "none",
-          color: "inherit",
-          display: "block",
-          marginBottom: shouldRemoveBottomMargin ? "0px" : "20px",
+          border: '1px solid #eaeaea',
+          borderRadius: '10px',
+          textDecoration: 'none',
+          color: 'inherit',
+          display: 'block',
+          marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
         }}
         target="_blank"
       >
         {image ? (
           <Row
             style={{
-              marginBottom: "6px",
+              marginBottom: '6px',
             }}
           >
             <Column
               style={{
-                width: "100%",
-                height: "100%",
+                width: '100%',
+                height: '100%',
               }}
             >
               <Img
-                alt={title || "Link Card"}
+                alt={title || 'Link Card'}
                 src={image}
                 style={{
-                  borderRadius: "10px 10px 0 0",
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "cover",
+                  borderRadius: '10px 10px 0 0',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
                 }}
-                title={title || "Link Card"}
+                title={title || 'Link Card'}
               />
             </Column>
           </Row>
@@ -1342,31 +1351,31 @@ export class Maily {
 
         <Row
           style={{
-            padding: "15px",
+            padding: '15px',
             marginTop: 0,
             marginBottom: 0,
           }}
         >
           <Column
             style={{
-              verticalAlign: "top",
+              verticalAlign: 'top',
             }}
           >
             <Row
               align={undefined}
               style={{
-                marginBottom: "8px",
-                marginTop: "0px",
+                marginBottom: '8px',
+                marginTop: '0px',
               }}
               width="auto"
             >
               <Column>
                 <Text
                   style={{
-                    fontSize: "18px",
+                    fontSize: '18px',
                     fontWeight: 600,
                     color: this.config.theme?.colors?.linkCardTitle,
-                    margin: "0px",
+                    margin: '0px',
                     ...antialiased,
                   }}
                 >
@@ -1376,8 +1385,8 @@ export class Maily {
               {badgeText || subTitle ? (
                 <Column
                   style={{
-                    paddingLeft: "6px",
-                    verticalAlign: "middle",
+                    paddingLeft: '6px',
+                    verticalAlign: 'middle',
                   }}
                 >
                   {badgeText ? (
@@ -1385,24 +1394,24 @@ export class Maily {
                       style={{
                         fontWeight: 600,
                         color: this.config.theme?.colors?.linkCardBadgeText,
-                        padding: "4px 8px",
-                        borderRadius: "8px",
+                        padding: '4px 8px',
+                        borderRadius: '8px',
                         backgroundColor:
                           this.config.theme?.colors?.linkCardBadgeBackground,
-                        fontSize: "12px",
-                        lineHeight: "12px",
+                        fontSize: '12px',
+                        lineHeight: '12px',
                       }}
                     >
                       {badgeText}
                     </span>
-                  ) : null}{" "}
+                  ) : null}{' '}
                   {subTitle && !badgeText ? (
                     <span
                       style={{
-                        fontWeight: "normal",
+                        fontWeight: 'normal',
                         color: this.config.theme?.colors?.linkCardSubTitle,
-                        fontSize: "12px",
-                        lineHeight: "12px",
+                        fontSize: '12px',
+                        lineHeight: '12px',
                       }}
                     >
                       {subTitle}
@@ -1413,23 +1422,23 @@ export class Maily {
             </Row>
             <Text
               style={{
-                fontSize: "16px",
+                fontSize: '16px',
                 color: this.config.theme?.colors?.linkCardDescription,
-                marginTop: "0px",
-                marginBottom: "0px",
+                marginTop: '0px',
+                marginBottom: '0px',
                 ...antialiased,
               }}
             >
-              {description}{" "}
+              {description}{' '}
               {linkTitle ? (
                 <a
                   href={href}
                   rel="noopener noreferrer"
                   style={{
                     color: this.config.theme?.colors?.linkCardTitle,
-                    fontSize: "14px",
+                    fontSize: '14px',
                     fontWeight: 600,
-                    textDecoration: "underline",
+                    textDecoration: 'underline',
                   }}
                 >
                   {linkTitle}
@@ -1439,11 +1448,11 @@ export class Maily {
           </Column>
         </Row>
       </a>
-    )
+    );
   }
 
   protected section(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
     const {
       borderRadius = 0,
       backgroundColor = DEFAULT_SECTION_BACKGROUND_COLOR,
@@ -1460,11 +1469,11 @@ export class Maily {
       paddingRight = DEFAULT_SECTION_PADDING_RIGHT,
       paddingBottom = DEFAULT_SECTION_PADDING_BOTTOM,
       paddingLeft = DEFAULT_SECTION_PADDING_LEFT,
-    } = attrs || {}
+    } = attrs || {};
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
     return (
@@ -1481,7 +1490,7 @@ export class Maily {
           style={{
             borderColor,
             borderWidth,
-            borderStyle: "solid",
+            borderStyle: 'solid',
             backgroundColor,
             borderRadius,
 
@@ -1497,16 +1506,17 @@ export class Maily {
           })}
         </Column>
       </Row>
-    )
+    );
   }
 
   protected columns(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const shouldShow = this.shouldShow(node, options)
+
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
-    const [newNode, totalWidth] = this.adjustColumnsContent(node)
+    const [newNode, totalWidth] = this.adjustColumnsContent(node);
 
     return (
       <Row
@@ -1523,70 +1533,70 @@ export class Maily {
           parent: newNode,
         })}
       </Row>
-    )
+    );
   }
 
   private adjustColumnsContent(node: JSONContent): [JSONContent, number] {
-    const { content = [] } = node
-    const totalWidth = 100
+    const { content = [] } = node;
+    const totalWidth = 100;
     const columnsWithWidth = content.filter(
-      (c) => c.type === "column" && Boolean(Number(c.attrs?.width || 0))
-    )
+      (c) => c.type === 'column' && Boolean(Number(c.attrs?.width || 0))
+    );
     const autoWidthColumns = content.filter(
       (c) =>
-        c.type === "column" && (c.attrs?.width === "auto" || !c.attrs?.width)
-    )
+        c.type === 'column' && (c.attrs?.width === 'auto' || !c.attrs?.width)
+    );
 
     const totalWidthUsed = columnsWithWidth.reduce(
       (acc, c) => acc + Number(c.attrs?.width),
       0
-    )
+    );
 
-    const remainingWidth = totalWidth - totalWidthUsed
-    const measuredWidth = Math.round(remainingWidth / autoWidthColumns.length)
+    const remainingWidth = totalWidth - totalWidthUsed;
+    const measuredWidth = Math.round(remainingWidth / autoWidthColumns.length);
 
-    const columnCount = content.filter((c) => c.type === "column").length
-    const gap = node.attrs?.gap ?? DEFAULT_COLUMNS_GAP
+    const columnCount = content.filter((c) => c.type === 'column').length;
+    const gap = node.attrs?.gap ?? DEFAULT_COLUMNS_GAP;
 
     return [
       {
         ...node,
         content: content.map((c, index) => {
           const isAutoWidthColumn =
-            c.type === "column" &&
-            (c.attrs?.width === "auto" || !c.attrs?.width)
-          const isFirstColumn = index === 0
-          const isMiddleColumn = index > 0 && index < columnCount - 1
-          const isLastColumn = index === content.length - 1
+            c.type === 'column' &&
+            (c.attrs?.width === 'auto' || !c.attrs?.width);
+          const isFirstColumn = index === 0;
+          const isMiddleColumn = index > 0 && index < columnCount - 1;
+          const isLastColumn = index === content.length - 1;
 
-          let paddingLeft = 0
-          let paddingRight = 0
+          let paddingLeft = 0;
+          let paddingRight = 0;
 
           // For 2 columns, apply a simple gap logic
           if (columnCount < 3) {
-            paddingLeft = isFirstColumn ? 0 : gap / 2
-            paddingRight = isLastColumn ? 0 : gap / 2
+            paddingLeft = isFirstColumn ? 0 : gap / 2;
+            paddingRight = isLastColumn ? 0 : gap / 2;
           } else {
             // For more than 2 columns, apply more gap in the first and last columns
             // and less gap in the middle columns to make it look more balanced
             // because the first and last columns have more space to fill
-            const leftAndRightPadding = (gap / 2) * 1.5
-            const middleColumnPadding = leftAndRightPadding / 2
+            const leftAndRightPadding = (gap / 2) * 1.5;
+            const middleColumnPadding = leftAndRightPadding / 2;
 
             paddingLeft = isFirstColumn
               ? 0
               : isMiddleColumn
                 ? middleColumnPadding
-                : leftAndRightPadding
+                : leftAndRightPadding;
             paddingRight = isLastColumn
               ? 0
               : isMiddleColumn
                 ? middleColumnPadding
-                : leftAndRightPadding
+                : leftAndRightPadding;
           }
 
-          paddingLeft = Math.round(paddingLeft * 100) / 100
-          paddingRight = Math.round(paddingRight * 100) / 100
+          paddingLeft = Math.round(paddingLeft * 100) / 100;
+          paddingRight = Math.round(paddingRight * 100) / 100;
 
           return {
             ...c,
@@ -1601,23 +1611,23 @@ export class Maily {
               paddingLeft,
               paddingRight,
             },
-          }
+          };
         }),
       },
       autoWidthColumns.length === 0
         ? Math.min(totalWidth, totalWidthUsed)
         : totalWidth,
-    ]
+    ];
   }
 
   protected column(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
     const {
       width,
-      verticalAlign = "top",
+      verticalAlign = 'top',
       paddingLeft = 0,
       paddingRight = 0,
-    } = attrs || {}
+    } = attrs || {};
 
     return (
       <Column
@@ -1643,24 +1653,24 @@ export class Maily {
           })}
         </Section>
       </Column>
-    )
+    );
   }
 
   private repeat(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
-    const { each = "" } = attrs || {}
+    const { attrs } = node;
+    const { each = '' } = attrs || {};
 
-    const shouldShow = this.shouldShow(node, options)
+    const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
-      return <></>
+      return <></>;
     }
 
-    let { payloadValue } = options || {}
-    payloadValue = typeof payloadValue === "object" ? payloadValue : {}
+    let { payloadValue } = options || {};
+    payloadValue = typeof payloadValue === 'object' ? payloadValue : {};
 
-    const values = this.payloadValues.get(each) ?? payloadValue[each] ?? []
+    const values = this.payloadValues.get(each) ?? payloadValue[each] ?? [];
     if (!Array.isArray(values)) {
-      throw new Error(`Payload value for each "${each}" is not an array`)
+      throw new Error(`Payload value for each "${each}" is not an array`);
     }
 
     return (
@@ -1674,10 +1684,10 @@ export class Maily {
                 payloadValue: value,
               })}
             </Fragment>
-          )
+          );
         })}
       </>
-    )
+    );
   }
 
   /**
@@ -1689,24 +1699,24 @@ export class Maily {
    * @returns JSX.Element
    */
   protected for(node: JSONContent, options?: NodeOptions): JSX.Element {
-    return this.repeat(node, options)
+    return this.repeat(node, options);
   }
 
   private shouldShow(node: JSONContent, options?: NodeOptions): boolean {
-    const showIfKey = node?.attrs?.showIfKey ?? ""
+    const showIfKey = node?.attrs?.showIfKey ?? '';
     if (!showIfKey) {
-      return true
+      return true;
     }
 
-    let { payloadValue } = options || {}
-    payloadValue = typeof payloadValue === "object" ? payloadValue : {}
-    return !!(this.payloadValues.get(showIfKey) ?? payloadValue[showIfKey])
+    let { payloadValue } = options || {};
+    payloadValue = typeof payloadValue === 'object' ? payloadValue : {};
+    return !!(this.payloadValues.get(showIfKey) ?? payloadValue[showIfKey]);
   }
 
   htmlCodeBlock(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const show = this.shouldShow(node, options)
+    const show = this.shouldShow(node, options);
     if (!show) {
-      return <></>
+      return <></>;
     }
 
     // the text can be a proper html code block
@@ -1714,27 +1724,27 @@ export class Maily {
     // so we need to wrap it in a proper html tag
     const text =
       node.content?.reduce((acc, n) => {
-        if (n?.type === "text") {
-          return acc + n?.text
-        } else if (n?.type === "variable") {
+        if (n?.type === 'text') {
+          return acc + n?.text;
+        } else if (n?.type === 'variable') {
           const value = this.getVariableValue(
             n?.attrs?.id,
             n?.attrs?.fallback,
             options
-          )
-          return acc + value
+          );
+          return acc + value;
         }
 
-        return acc
-      }, "") || ""
+        return acc;
+      }, '') || '';
 
     // we will inline the css in the html
     // so that it can be rendered properly
-    const inlineCssHtml = juice(text)
-    const doc = parse(inlineCssHtml)
-    const head = doc?.querySelector("head")
-    head?.remove()
-    const html = doc.toString()
+    const inlineCssHtml = juice(text);
+    const doc = parse(inlineCssHtml);
+    const head = doc?.querySelector('head');
+    head?.remove();
+    const html = doc.toString();
 
     return (
       <table
@@ -1746,9 +1756,9 @@ export class Maily {
         role="presentation"
       >
         <tbody>
-          <tr style={{ width: "100%" }}>
+          <tr style={{ width: '100%' }}>
             <td
-              style={{ width: "100%" }}
+              style={{ width: '100%' }}
               dangerouslySetInnerHTML={{
                 __html: html,
               }}
@@ -1756,26 +1766,26 @@ export class Maily {
           </tr>
         </tbody>
       </table>
-    )
+    );
   }
 
   protected inlineImage(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node
+    const { attrs } = node;
     let {
       src,
       isSrcVariable,
-      alt = "",
-      title = "",
+      alt = '',
+      title = '',
       height = DEFAULT_INLINE_IMAGE_HEIGHT,
       width = DEFAULT_INLINE_IMAGE_WIDTH,
-      externalLink = "",
+      externalLink = '',
       isExternalLinkVariable,
-    } = attrs || {}
+    } = attrs || {};
 
-    src = isSrcVariable ? this.variableUrlValue(src, options) : src
+    src = isSrcVariable ? this.variableUrlValue(src, options) : src;
     externalLink = isExternalLinkVariable
       ? this.variableUrlValue(externalLink, options)
-      : externalLink
+      : externalLink;
 
     const image = (
       <img
@@ -1785,19 +1795,19 @@ export class Maily {
         width={width}
         height={height}
         style={{
-          display: "inline",
-          verticalAlign: "middle",
+          display: 'inline',
+          verticalAlign: 'middle',
           width: `${width}px`,
           height: `${height}px`,
-          outline: "none",
-          border: "none",
-          textDecoration: "none",
+          outline: 'none',
+          border: 'none',
+          textDecoration: 'none',
         }}
       />
-    )
+    );
 
     if (!externalLink) {
-      return image
+      return image;
     }
 
     return (
@@ -1805,13 +1815,13 @@ export class Maily {
         href={externalLink}
         rel="noopener noreferrer"
         style={{
-          display: "inline",
-          textDecoration: "none",
+          display: 'inline',
+          textDecoration: 'none',
         }}
         target="_blank"
       >
         {image}
       </a>
-    )
+    );
   }
 }
