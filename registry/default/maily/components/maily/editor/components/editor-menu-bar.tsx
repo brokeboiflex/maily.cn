@@ -5,6 +5,7 @@ import { EditorProps } from '..';
 import { cn } from '@/lib/utils';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { BubbleMenuItem } from './text-menu/text-bubble-menu';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 
 interface EditorMenuItem extends BubbleMenuItem {
   group: 'alignment' | 'image' | 'mark' | 'custom' | 'email';
@@ -14,6 +15,30 @@ type EditorMenuBarProps = {
   config: EditorProps['config'];
   editor: EditorType;
 };
+
+// Items in the `mark` group that are real on/off toggles (the rest, e.g. the
+// eraser, are one-shot actions and stay plain buttons).
+const MARK_TOGGLE_NAMES = new Set(['bold', 'italic', 'underline', 'strike']);
+
+function ToggleItem(item: EditorMenuItem) {
+  return (
+    <ToggleGroupItem
+      value={item.name!}
+      aria-label={item.name}
+      onClick={item.command}
+      disabled={item.disbabled}
+      className="size-7! px-2.5 disabled:cursor-not-allowed"
+    >
+      {item.icon ? (
+        <item.icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+      ) : (
+        <span className="text-muted-foreground text-sm font-medium">
+          {item.name}
+        </span>
+      )}
+    </ToggleGroupItem>
+  );
+}
 
 export const EditorMenuBar = (props: EditorMenuBarProps) => {
   const { editor, config } = props;
@@ -130,18 +155,66 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
 
   return (
     <div className={cn('flex items-center gap-3', config?.toolbarClassName)}>
-      {groups.map((group, index) => (
-        <div
-          key={index}
-          className="border-border bg-background flex items-center gap-1 rounded-md border p-1"
-        >
-          {items
-            .filter((item) => item.group === group)
-            .map((item, index) => (
-              <BubbleMenuButton key={index} {...item} />
-            ))}
-        </div>
-      ))}
+      {groups.map((group) => {
+        const groupItems = items.filter((item) => item.group === group);
+
+        return (
+          <div
+            key={group}
+            className="border-border bg-background flex items-center gap-1 rounded-md border p-1"
+          >
+            {renderGroup(group, groupItems)}
+          </div>
+        );
+      })}
     </div>
   );
 };
+
+function renderGroup(group: string, groupItems: EditorMenuItem[]) {
+  // Single-select alignment toggle (left / center / right).
+  if (group === 'alignment') {
+    const activeAlignment =
+      groupItems.find((item) => item.isActive?.())?.name ?? '';
+
+    return (
+      <ToggleGroup type="single" value={activeAlignment}>
+        {groupItems.map((item) => (
+          <ToggleItem key={item.name} {...item} />
+        ))}
+      </ToggleGroup>
+    );
+  }
+
+  // Multi-select text marks (bold / italic / underline / strike); any
+  // non-toggle items in the group (the eraser) render as plain buttons.
+  if (group === 'mark') {
+    const toggleItems = groupItems.filter((item) =>
+      MARK_TOGGLE_NAMES.has(item.name!)
+    );
+    const actionItems = groupItems.filter(
+      (item) => !MARK_TOGGLE_NAMES.has(item.name!)
+    );
+    const activeMarks = toggleItems
+      .filter((item) => item.isActive?.())
+      .map((item) => item.name!);
+
+    return (
+      <>
+        <ToggleGroup type="multiple" value={activeMarks}>
+          {toggleItems.map((item) => (
+            <ToggleItem key={item.name} {...item} />
+          ))}
+        </ToggleGroup>
+        {actionItems.map((item) => (
+          <BubbleMenuButton key={item.name} {...item} />
+        ))}
+      </>
+    );
+  }
+
+  // Everything else (divider, link, …) stays a plain action button.
+  return groupItems.map((item) => (
+    <BubbleMenuButton key={item.name} {...item} />
+  ));
+}
