@@ -13,7 +13,7 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
       {...(item.command ? { onClick: item.command } : {})}
       data-state={item?.isActive?.()}
       className={cn(
-        // "size-7! px-2.5 disabled:cursor-not-allowed",
+        "size-7! px-2.5 disabled:cursor-not-allowed",
         item?.className
       )}
       type="button"

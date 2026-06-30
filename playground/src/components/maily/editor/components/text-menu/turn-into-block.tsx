@@ -62,7 +62,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
                 key={option.id}
                 onClick={option.onClick}
                 variant="ghost"
-                className="mb-0.5 h-auto justify-start gap-2 rounded! px-2 py-1 text-left text-sm font-normal text-foreground"
+                className="mb-0.5 h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal text-foreground"
               >
                 <option.icon className="size-[15px] shrink-0" />
                 {option.label}

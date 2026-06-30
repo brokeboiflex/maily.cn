@@ -1,6 +1,7 @@
-import { SVGProps } from 'react';
+import type { JSX } from "react"
+import { SVGProps } from "react"
 
-export type SVGIcon = (props: SVGProps<SVGSVGElement>) => JSX.Element;
+export type SVGIcon = (props: SVGProps<SVGSVGElement>) => JSX.Element
 
 export function GridLines(props: SVGProps<SVGSVGElement>) {
   return (
@@ -21,5 +22,5 @@ export function GridLines(props: SVGProps<SVGSVGElement>) {
       <path d="M3 9h18" />
       <path d="M3 15h18" />
     </svg>
-  );
+  )
 }

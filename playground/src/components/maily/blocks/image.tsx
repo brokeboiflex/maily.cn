@@ -42,7 +42,7 @@ export const inlineImage = (t: TranslateFn): BlockItem => ({
       })
       // @ts-ignore
       .command((props) => {
-        const { tr, state, view, editor } = props
+        const { tr, state, view: _view, editor: _editor } = props
         const { from } = range
 
         const node = state.doc.nodeAt(from)
