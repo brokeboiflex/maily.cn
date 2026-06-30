@@ -70,7 +70,6 @@ export function getDefaultBlocks(t: TranslateFn): BlockGroupItem[] {
   remixicon="RiHeading"
   className="h-4 w-4"
 />,
-          preview: 'https://cdn.usemaily.com/previews/header-preview-xyz.png',
           commands: [
             headerLogoWithTextVertical(t),
             headerLogoWithTextHorizontal(t),

@@ -63,7 +63,6 @@ export function getDefaultBlocks(t: TranslateFn): BlockGroupItem[] {
           description: t('block.headers.description'),
           searchTerms: ['header', 'headers'],
           icon: <Heading1 className="h-4 w-4" />,
-          preview: 'https://cdn.usemaily.com/previews/header-preview-xyz.png',
           commands: [
             headerLogoWithTextVertical(t),
             headerLogoWithTextHorizontal(t),

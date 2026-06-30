@@ -1,5 +1,4 @@
 import { BlockGroupItem, BlockItem } from '../../../blocks/types';
-import { cn } from '@/lib/utils';
 import { Editor, Range } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import { SuggestionOptions } from '@tiptap/suggestion';
@@ -17,9 +16,14 @@ import {
 import tippy, { GetReferenceClientRect, Instance } from 'tippy.js';
 import { getDefaultBlocks } from './default-slash-commands';
 import { englishTranslator, type TranslateFn } from '../../i18n';
-import { TooltipProvider } from '../../components/ui/tooltip';
 import { SlashCommandItem } from './slash-command-item';
+import { SlashCommandSubmenu } from './slash-command-submenu';
 import { filterSlashCommands } from './slash-command-search';
+
+const isSubCommandItem = (item: BlockItem | undefined): boolean =>
+  !!item && 'commands' in item;
+
+type SubmenuState = { groupIndex: number; commandIndex: number };
 
 type CommandListProps = {
   items: BlockGroupItem[];
@@ -44,23 +48,91 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
 
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
-  const [hoveredItemKey, setHoveredItemKey] = useState<string | null>(null);
+  const [submenu, setSubmenu] = useState<SubmenuState | null>(null);
+  const [submenuIndex, setSubmenuIndex] = useState(0);
+  const [focusInSubmenu, setFocusInSubmenu] = useState(false);
+  const [submenuTop, setSubmenuTop] = useState(0);
 
   const prevQuery = useRef('');
   const prevSelectedGroupIndex = useRef(0);
   const prevSelectedCommandIndex = useRef(0);
 
+  const openSubItem = submenu
+    ? groups[submenu.groupIndex]?.commands[submenu.commandIndex]
+    : undefined;
+  const submenuCommands: BlockItem[] =
+    openSubItem && 'commands' in openSubItem && Array.isArray(openSubItem.commands)
+      ? openSubItem.commands
+      : [];
+
+  const openSubmenu = useCallback(
+    (groupIndex: number, commandIndex: number, focus: boolean) => {
+      setSelectedGroupIndex(groupIndex);
+      setSelectedCommandIndex(commandIndex);
+      setSubmenu({ groupIndex, commandIndex });
+      setSubmenuIndex(0);
+      setFocusInSubmenu(focus);
+    },
+    []
+  );
+
+  const closeSubmenu = useCallback(() => {
+    setSubmenu(null);
+    setSubmenuIndex(0);
+    setFocusInSubmenu(false);
+  }, []);
+
+  // Selecting a subcommand opens its flyout; selecting a leaf runs its command.
   const selectItem = useCallback(
     (groupIndex: number, commandIndex: number) => {
-      const item = groups[groupIndex].commands[commandIndex];
+      const item = groups[groupIndex]?.commands[commandIndex];
+      if (!item) {
+        return;
+      }
+
+      if (isSubCommandItem(item)) {
+        openSubmenu(groupIndex, commandIndex, true);
+        return;
+      }
+
+      command(item);
+    },
+    [command, groups, openSubmenu]
+  );
+
+  const selectSubItem = useCallback(
+    (index: number) => {
+      const item = submenuCommands[index];
       if (!item) {
         return;
       }
 
       command(item);
     },
-    [command]
+    [command, submenuCommands]
   );
+
+  const handleItemHover = useCallback(
+    (groupIndex: number, commandIndex: number) => {
+      setSelectedGroupIndex(groupIndex);
+      setSelectedCommandIndex(commandIndex);
+
+      const item = groups[groupIndex]?.commands[commandIndex];
+      if (item && isSubCommandItem(item)) {
+        setSubmenu({ groupIndex, commandIndex });
+        setSubmenuIndex(0);
+        setFocusInSubmenu(false);
+      } else {
+        closeSubmenu();
+      }
+    },
+    [groups, closeSubmenu]
+  );
+
+  const handleSubHover = useCallback((index: number) => {
+    setSubmenuIndex(index);
+    setFocusInSubmenu(true);
+  }, []);
 
   useImperativeHandle(ref, () => ({
     onKeyDown: ({ event }: { event: KeyboardEvent }) => {
@@ -71,96 +143,134 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
         'ArrowLeft',
         'ArrowRight',
       ];
-      if (navigationKeys.includes(event.key)) {
-        let newCommandIndex = selectedCommandIndex;
-        let newGroupIndex = selectedGroupIndex;
+      if (!navigationKeys.includes(event.key)) {
+        return false;
+      }
 
+      // Keyboard focus is inside the open submenu flyout.
+      if (submenu && focusInSubmenu) {
+        const count = submenuCommands.length;
         switch (event.key) {
+          case 'ArrowDown':
+            event.preventDefault();
+            if (count) {
+              setSubmenuIndex((index) => (index + 1) % count);
+            }
+            return true;
+          case 'ArrowUp':
+            event.preventDefault();
+            if (count) {
+              setSubmenuIndex((index) => (index - 1 + count) % count);
+            }
+            return true;
           case 'ArrowLeft':
             event.preventDefault();
-
-            const group = groups?.[selectedGroupIndex];
-            const isInsideSubCommand = group && 'id' in group;
-            if (!isInsideSubCommand) {
-              return false;
-            }
-
-            editor
-              .chain()
-              .focus()
-              .insertContentAt(range, `/${prevQuery.current}`)
-              .run();
-            setTimeout(() => {
-              setSelectedGroupIndex(prevSelectedGroupIndex.current);
-              setSelectedCommandIndex(prevSelectedCommandIndex.current);
-            }, 0);
+            closeSubmenu();
             return true;
           case 'ArrowRight':
             event.preventDefault();
-
-            const command =
-              groups?.[selectedGroupIndex]?.commands?.[selectedCommandIndex];
-            const isSelectingSubCommand = command && 'commands' in command;
-            if (!isSelectingSubCommand) {
-              return false;
-            }
-
-            selectItem(selectedGroupIndex, selectedCommandIndex);
-            prevQuery.current = query;
-            prevSelectedGroupIndex.current = selectedGroupIndex;
-            prevSelectedCommandIndex.current = selectedCommandIndex;
             return true;
           case 'Enter':
-            if (!groups.length) {
+            if (!count) {
               return false;
             }
-            selectItem(selectedGroupIndex, selectedCommandIndex);
-
-            prevQuery.current = query;
-            prevSelectedGroupIndex.current = selectedGroupIndex;
-            prevSelectedCommandIndex.current = selectedCommandIndex;
-            return true;
-          case 'ArrowUp':
-            if (!groups.length) {
-              return false;
-            }
-            newCommandIndex = selectedCommandIndex - 1;
-            newGroupIndex = selectedGroupIndex;
-            if (newCommandIndex < 0) {
-              newGroupIndex = selectedGroupIndex - 1;
-              newCommandIndex = groups[newGroupIndex]?.commands.length - 1 || 0;
-            }
-            if (newGroupIndex < 0) {
-              newGroupIndex = groups.length - 1;
-              newCommandIndex = groups[newGroupIndex]?.commands.length - 1 || 0;
-            }
-            setSelectedGroupIndex(newGroupIndex);
-            setSelectedCommandIndex(newCommandIndex);
-            return true;
-          case 'ArrowDown':
-            if (!groups.length) {
-              return false;
-            }
-            const commands = groups[selectedGroupIndex].commands;
-            newCommandIndex = selectedCommandIndex + 1;
-            newGroupIndex = selectedGroupIndex;
-            if (commands.length - 1 < newCommandIndex) {
-              newCommandIndex = 0;
-              newGroupIndex = selectedGroupIndex + 1;
-            }
-            if (groups.length - 1 < newGroupIndex) {
-              newGroupIndex = 0;
-            }
-            setSelectedGroupIndex(newGroupIndex);
-            setSelectedCommandIndex(newCommandIndex);
+            selectSubItem(submenuIndex);
             return true;
           default:
             return false;
         }
       }
+
+      let newCommandIndex = selectedCommandIndex;
+      let newGroupIndex = selectedGroupIndex;
+
+      switch (event.key) {
+        case 'ArrowLeft': {
+          event.preventDefault();
+
+          // Manual `/headers.` query view: step back out to the parent list.
+          const group = groups?.[selectedGroupIndex];
+          const isInsideSubCommand = group && 'id' in group;
+          if (!isInsideSubCommand) {
+            return false;
+          }
+
+          editor
+            .chain()
+            .focus()
+            .insertContentAt(range, `/${prevQuery.current}`)
+            .run();
+          setTimeout(() => {
+            setSelectedGroupIndex(prevSelectedGroupIndex.current);
+            setSelectedCommandIndex(prevSelectedCommandIndex.current);
+          }, 0);
+          return true;
+        }
+        case 'ArrowRight': {
+          event.preventDefault();
+
+          const item =
+            groups?.[selectedGroupIndex]?.commands?.[selectedCommandIndex];
+          if (!isSubCommandItem(item)) {
+            return false;
+          }
+
+          openSubmenu(selectedGroupIndex, selectedCommandIndex, true);
+          return true;
+        }
+        case 'Enter':
+          if (!groups.length) {
+            return false;
+          }
+          selectItem(selectedGroupIndex, selectedCommandIndex);
+
+          prevQuery.current = query;
+          prevSelectedGroupIndex.current = selectedGroupIndex;
+          prevSelectedCommandIndex.current = selectedCommandIndex;
+          return true;
+        case 'ArrowUp':
+          if (!groups.length) {
+            return false;
+          }
+          closeSubmenu();
+          newCommandIndex = selectedCommandIndex - 1;
+          newGroupIndex = selectedGroupIndex;
+          if (newCommandIndex < 0) {
+            newGroupIndex = selectedGroupIndex - 1;
+            newCommandIndex = groups[newGroupIndex]?.commands.length - 1 || 0;
+          }
+          if (newGroupIndex < 0) {
+            newGroupIndex = groups.length - 1;
+            newCommandIndex = groups[newGroupIndex]?.commands.length - 1 || 0;
+          }
+          setSelectedGroupIndex(newGroupIndex);
+          setSelectedCommandIndex(newCommandIndex);
+          return true;
+        case 'ArrowDown':
+          if (!groups.length) {
+            return false;
+          }
+          closeSubmenu();
+          const commands = groups[selectedGroupIndex].commands;
+          newCommandIndex = selectedCommandIndex + 1;
+          newGroupIndex = selectedGroupIndex;
+          if (commands.length - 1 < newCommandIndex) {
+            newCommandIndex = 0;
+            newGroupIndex = selectedGroupIndex + 1;
+          }
+          if (groups.length - 1 < newGroupIndex) {
+            newGroupIndex = 0;
+          }
+          setSelectedGroupIndex(newGroupIndex);
+          setSelectedCommandIndex(newCommandIndex);
+          return true;
+        default:
+          return false;
+      }
     },
   }));
 
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const commandListContainer = useRef<HTMLDivElement>(null);
   const activeCommandRef = useRef<HTMLButtonElement | null>(null);
 
@@ -181,9 +291,29 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
     activeCommandRef,
   ]);
 
+  // Align the submenu flyout to its trigger row (the active item when open).
+  useLayoutEffect(() => {
+    if (!submenu) {
+      return;
+    }
+
+    const trigger = activeCommandRef.current;
+    const wrapper = wrapperRef.current;
+    if (!trigger || !wrapper) {
+      return;
+    }
+
+    const triggerRect = trigger.getBoundingClientRect();
+    const wrapperRect = wrapper.getBoundingClientRect();
+    setSubmenuTop(triggerRect.top - wrapperRect.top);
+  }, [submenu, selectedGroupIndex, selectedCommandIndex]);
+
   useEffect(() => {
     setSelectedGroupIndex(0);
     setSelectedCommandIndex(0);
+    setSubmenu(null);
+    setSubmenuIndex(0);
+    setFocusInSubmenu(false);
   }, [groups]);
 
   useEffect(() => {
@@ -199,41 +329,35 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   }
 
   return (
-    <TooltipProvider>
-      <div className="border-border bg-background z-50 w-72 overflow-hidden rounded-md border shadow-md transition-all">
+    <div ref={wrapperRef} className="relative w-72">
+      <div className="border-border bg-popover text-popover-foreground z-50 w-full overflow-hidden rounded-md border shadow-md transition-all">
         <div
           id="slash-command"
           ref={commandListContainer}
-          className="h-auto max-h-[330px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="h-auto max-h-[330px] overflow-y-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((group, groupIndex) => (
             <Fragment key={groupIndex}>
-              <span
-                className={cn(
-                  'border-border bg-muted text-muted-foreground block border-b p-2 text-xs uppercase',
-                  groupIndex > 0 ? 'border-t' : ''
-                )}
-              >
+              {groupIndex > 0 && <div className="bg-border -mx-1 my-1 h-px" />}
+              <p className="text-muted-foreground px-2 py-1.5 text-xs font-medium">
                 {group.title}
-              </span>
-              <div className="space-y-0.5 p-1">
+              </p>
+              <div className="space-y-0.5">
                 {group.commands.map((item, commandIndex) => {
-                  const itemKey = `${groupIndex}-${commandIndex}`;
+                  const isActive =
+                    groupIndex === selectedGroupIndex &&
+                    commandIndex === selectedCommandIndex;
                   return (
                     <SlashCommandItem
-                      key={itemKey}
+                      key={`${groupIndex}-${commandIndex}`}
                       item={item}
-                      groupIndex={groupIndex}
-                      commandIndex={commandIndex}
-                      selectedGroupIndex={selectedGroupIndex}
-                      selectedCommandIndex={selectedCommandIndex}
-                      selectItem={() => selectItem(groupIndex, commandIndex)}
+                      isActive={isActive}
                       editor={editor}
-                      activeCommandRef={activeCommandRef}
-                      hoveredItemKey={hoveredItemKey}
-                      onHover={(isHovered) =>
-                        setHoveredItemKey(isHovered ? itemKey : null)
+                      onSelect={() => selectItem(groupIndex, commandIndex)}
+                      onMouseEnter={() =>
+                        handleItemHover(groupIndex, commandIndex)
                       }
+                      activeRef={isActive ? activeCommandRef : undefined}
                     />
                   );
                 })}
@@ -241,7 +365,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             </Fragment>
           ))}
         </div>
-        <div className="border-border border-t px-1 px-4 py-3">
+        <div className="border-border border-t px-4 py-3">
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground text-center text-xs">
               <kbd className="border-border rounded border p-1 px-2 font-medium">
@@ -261,7 +385,19 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           </div>
         </div>
       </div>
-    </TooltipProvider>
+
+      {submenu && submenuCommands.length > 0 && (
+        <SlashCommandSubmenu
+          commands={submenuCommands}
+          activeIndex={submenuIndex}
+          isFocused={focusInSubmenu}
+          editor={editor}
+          style={{ top: submenuTop }}
+          onSelect={selectSubItem}
+          onHover={handleSubHover}
+        />
+      )}
+    </div>
   );
 });
 

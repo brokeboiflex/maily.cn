@@ -415,6 +415,11 @@
           "target": "@components/maily/editor/extensions/slash-command/slash-command-search.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command-submenu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/slash-command-submenu.tsx"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command-view.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/slash-command/slash-command-view.tsx"
