@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Editor, mergeAttributes, Node } from '@tiptap/core';
 import { Node as TNode } from '@tiptap/pm/model';
 import { PluginKey } from '@tiptap/pm/state';

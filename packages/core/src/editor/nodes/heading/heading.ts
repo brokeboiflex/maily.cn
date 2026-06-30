@@ -1,9 +1,6 @@
 import TiptapHeading from '@tiptap/extension-heading';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
-import {
-  AllowedTextDirection,
-  DEFAULT_TEXT_DIRECTION,
-} from '../paragraph/paragraph';
+import { DEFAULT_TEXT_DIRECTION } from '../paragraph/paragraph';
 
 export const HeadingExtension = TiptapHeading.extend({
   addAttributes() {

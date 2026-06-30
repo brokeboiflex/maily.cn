@@ -1,3 +1,4 @@
+import type { JSX } from 'react';
 import { Fragment, type CSSProperties } from 'react';
 import {
   Text,
@@ -427,7 +428,7 @@ export class Maily {
 
   private isValidUrl(href: string) {
     try {
-      const _ = new URL(href);
+      new URL(href);
       return true;
     } catch (err) {
       return false;
@@ -536,7 +537,7 @@ export class Maily {
   }
 
   private getMarginOverrideConditions(
-    node: JSONContent,
+    _node: JSONContent,
     options?: NodeOptions
   ) {
     const { parent, prev, next } = options || {};
@@ -649,7 +650,7 @@ export class Maily {
     );
   }
 
-  private paragraph(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected paragraph(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const alignment = attrs?.textAlign || 'left';
     const textDirection = attrs?.textDirection || 'ltr';
@@ -687,7 +688,7 @@ export class Maily {
     );
   }
 
-  private text(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected text(node: JSONContent, options?: NodeOptions): JSX.Element {
     if (node.marks) {
       return this.renderMark(node, options);
     }
@@ -709,23 +710,23 @@ export class Maily {
     return text ? <>{text}</> : <>&nbsp;</>;
   }
 
-  private bold(_: MarkType, text: JSX.Element): JSX.Element {
+  protected bold(_: MarkType, text: JSX.Element): JSX.Element {
     return <strong>{text}</strong>;
   }
 
-  private italic(_: MarkType, text: JSX.Element): JSX.Element {
+  protected italic(_: MarkType, text: JSX.Element): JSX.Element {
     return <em>{text}</em>;
   }
 
-  private underline(_: MarkType, text: JSX.Element): JSX.Element {
+  protected underline(_: MarkType, text: JSX.Element): JSX.Element {
     return <u>{text}</u>;
   }
 
-  private strike(_: MarkType, text: JSX.Element): JSX.Element {
+  protected strike(_: MarkType, text: JSX.Element): JSX.Element {
     return <s style={{ textDecoration: 'line-through' }}>{text}</s>;
   }
 
-  private textStyle(mark: MarkType, text: JSX.Element): JSX.Element {
+  protected textStyle(mark: MarkType, text: JSX.Element): JSX.Element {
     const { attrs } = mark;
     const { color = this.config.theme?.colors?.paragraph } = attrs || {};
 
@@ -740,7 +741,7 @@ export class Maily {
     );
   }
 
-  private link(
+  protected link(
     mark: MarkType,
     text: JSX.Element,
     options?: NodeOptions
@@ -800,7 +801,7 @@ export class Maily {
     );
   }
 
-  private heading(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected heading(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
 
     const level = `h${Number(attrs?.level) || 1}`;
@@ -844,8 +845,7 @@ export class Maily {
     );
   }
 
-  private variable(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { payloadValue } = options || {};
+  protected variable(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { id: variable, fallback } = node.attrs || {};
 
     const shouldShow = this.shouldShow(node, options);
@@ -895,7 +895,7 @@ export class Maily {
     return formattedVariable;
   }
 
-  private horizontalRule(_: JSONContent, __?: NodeOptions): JSX.Element {
+  protected horizontalRule(_: JSONContent, __?: NodeOptions): JSX.Element {
     return (
       <Hr
         style={{
@@ -906,7 +906,7 @@ export class Maily {
     );
   }
 
-  private orderedList(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected orderedList(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
       options
@@ -934,7 +934,7 @@ export class Maily {
     );
   }
 
-  private bulletList(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected bulletList(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { parent, next } = options || {};
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
@@ -967,7 +967,7 @@ export class Maily {
     );
   }
 
-  private listItem(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected listItem(node: JSONContent, options?: NodeOptions): JSX.Element {
     return (
       <li
         style={{
@@ -982,7 +982,7 @@ export class Maily {
     );
   }
 
-  private button(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected button(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
 
     const buttonTheme = this.config.theme?.button;
@@ -1072,7 +1072,7 @@ export class Maily {
     );
   }
 
-  private spacer(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected spacer(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const { height } = attrs || {};
 
@@ -1090,11 +1090,11 @@ export class Maily {
     );
   }
 
-  private hardBreak(_: JSONContent, __?: NodeOptions): JSX.Element {
+  protected hardBreak(_: JSONContent, __?: NodeOptions): JSX.Element {
     return <br />;
   }
 
-  private logo(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected logo(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     let {
       src,
@@ -1140,7 +1140,7 @@ export class Maily {
     );
   }
 
-  private image(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected image(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     let {
       src,
@@ -1225,7 +1225,7 @@ export class Maily {
     );
   }
 
-  private footer(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected footer(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const { textAlign = 'left', textDirection = 'ltr' } = attrs || {};
 
@@ -1255,7 +1255,7 @@ export class Maily {
     );
   }
 
-  private blockquote(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected blockquote(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { isPrevSpacer, shouldRemoveBottomMargin } =
       this.getMarginOverrideConditions(node, options);
 
@@ -1279,7 +1279,7 @@ export class Maily {
       </blockquote>
     );
   }
-  private code(_: MarkType, text: JSX.Element): JSX.Element {
+  protected code(_: MarkType, text: JSX.Element): JSX.Element {
     return (
       <code
         style={{
@@ -1296,7 +1296,7 @@ export class Maily {
       </code>
     );
   }
-  private linkCard(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected linkCard(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
@@ -1451,7 +1451,7 @@ export class Maily {
     );
   }
 
-  private section(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected section(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const {
       borderRadius = 0,
@@ -1509,8 +1509,7 @@ export class Maily {
     );
   }
 
-  private columns(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node;
+  protected columns(node: JSONContent, options?: NodeOptions): JSX.Element {
 
     const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
@@ -1621,7 +1620,7 @@ export class Maily {
     ];
   }
 
-  private column(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected column(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     const {
       width,
@@ -1699,7 +1698,7 @@ export class Maily {
    * @param options
    * @returns JSX.Element
    */
-  private for(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected for(node: JSONContent, options?: NodeOptions): JSX.Element {
     return this.repeat(node, options);
   }
 
@@ -1770,7 +1769,7 @@ export class Maily {
     );
   }
 
-  private inlineImage(node: JSONContent, options?: NodeOptions): JSX.Element {
+  protected inlineImage(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
     let {
       src,

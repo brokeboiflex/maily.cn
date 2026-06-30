@@ -14,10 +14,7 @@ import { Select } from '../ui/select';
 import { TooltipProvider } from '../ui/tooltip';
 import { ImageSize } from './image-size';
 import { useImageState } from './use-image-state';
-import {
-  IMAGE_MAX_HEIGHT,
-  IMAGE_MAX_WIDTH,
-} from '@/editor/nodes/image/image-view';
+import { IMAGE_MAX_WIDTH } from '@/editor/nodes/image/image-view';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '@/editor/i18n';
 

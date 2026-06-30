@@ -15,7 +15,7 @@ import {
   Plugin,
   EditorState,
 } from '@tiptap/pm/state';
-import tippy, { Instance, Tippy } from 'tippy.js';
+import tippy, { Instance } from 'tippy.js';
 import {
   ySyncPluginKey,
   absolutePositionToRelativePosition,
@@ -377,7 +377,7 @@ export function DragHandlePlugin(
     key: typeof e === 'string' ? new PluginKey(e) : e,
     state: {
       init: () => ({ locked: false }) as { locked: boolean },
-      apply(e, t, n, o) {
+      apply(e, t, _n, o) {
         const l = e.getMeta('lockDragHandle');
         const a = e.getMeta('hideDragHandle');
         if ((undefined !== l && (x = l), a && tippyInstance)) {
@@ -434,7 +434,7 @@ export function DragHandlePlugin(
           content: element,
         })),
         {
-          update(t, n) {
+          update(_t, n) {
             if (!element || !tippyInstance) return;
             if (
               ((element.draggable = !x),
@@ -472,7 +472,7 @@ export function DragHandlePlugin(
     },
     props: {
       handleDOMEvents: {
-        mouseleave: (e, event) => (
+        mouseleave: (_e, event) => (
           x ||
             (event.target &&
               !container.contains(event?.relatedTarget as Node) &&

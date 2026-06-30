@@ -1,7 +1,6 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
 import { cn } from '@/lib/utils';
 import { useId } from 'react';
-import { Divider } from './divider';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useMailyContext } from '../../provider';

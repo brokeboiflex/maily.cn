@@ -1,4 +1,4 @@
-import { NodeSelection, Selection, TextSelection } from '@tiptap/pm/state';
+import { TextSelection } from '@tiptap/pm/state';
 import type { BlockItem } from './types';
 import type { TranslateFn } from '@/editor/i18n';
 import { ImageIcon } from 'lucide-react';
@@ -42,7 +42,7 @@ export const inlineImage = (t: TranslateFn): BlockItem => ({
       })
       // @ts-ignore
       .command((props) => {
-        const { tr, state, view, editor } = props;
+        const { tr, state, view: _view, editor: _editor } = props;
         const { from } = range;
 
         const node = state.doc.nodeAt(from);

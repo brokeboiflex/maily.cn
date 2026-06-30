@@ -6,7 +6,6 @@ import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '../ui/tooltip';
 import { useInlineImageState } from './use-inline-image-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
-import { isTextSelected } from '../../utils/is-text-selected';
 import {
   DEFAULT_INLINE_IMAGE_HEIGHT,
   DEFAULT_INLINE_IMAGE_WIDTH,

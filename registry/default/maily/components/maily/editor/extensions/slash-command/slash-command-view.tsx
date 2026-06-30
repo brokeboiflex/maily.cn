@@ -7,7 +7,6 @@ import {
   forwardRef,
   Fragment,
   KeyboardEvent,
-  RefObject,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -242,7 +241,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             </Fragment>
           ))}
         </div>
-        <div className="border-border border-t px-4 py-3">
+        <div className="border-border border-t px-1 px-4 py-3">
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground text-center text-xs">
               <kbd className="border-border rounded border p-1 px-2 font-medium">

@@ -10,7 +10,7 @@ import { LogoExtension } from '../nodes/logo/logo';
 import { HTMLCodeBlockExtension } from '../nodes/html/html';
 import { InlineImageExtension } from '../nodes/inline-image/inline-image';
 
-export const isCustomNodeSelected = (editor: Editor, node: HTMLElement) => {
+export const isCustomNodeSelected = (editor: Editor, _node: HTMLElement) => {
   const customNodes = [
     HorizontalRule.name,
     Image.name,

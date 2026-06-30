@@ -1,4 +1,4 @@
-import { Editor, Extension } from '@tiptap/core';
+import { Extension } from '@tiptap/core';
 import Suggestion, { SuggestionOptions } from '@tiptap/suggestion';
 
 export type SlashCommandOptions = {

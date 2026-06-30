@@ -1,4 +1,3 @@
-import { forwardRef } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useMailyContext } from '../../provider';
 

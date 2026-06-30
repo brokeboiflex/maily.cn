@@ -101,7 +101,9 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
               items?.map((item, index: number) => (
                 <button
                   key={index}
-                  ref={(el) => (itemRefs.current[index] = el)}
+                  ref={(el) => {
+                    itemRefs.current[index] = el;
+                  }}
                   onClick={() => onSelectItem(item)}
                   className={cn(
                     'text-foreground hover:bg-muted flex w-fit min-w-full items-center gap-2 rounded-md px-2 py-1 text-left font-mono text-sm',

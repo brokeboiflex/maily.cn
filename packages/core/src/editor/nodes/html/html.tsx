@@ -1,12 +1,7 @@
 import { updateAttributes } from '@/editor/utils/update-attribute';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { TextSelection } from '@tiptap/pm/state';
-import {
-  NodeViewContent,
-  NodeViewProps,
-  NodeViewWrapper,
-  ReactNodeViewRenderer,
-} from '@tiptap/react';
+import { ReactNodeViewRenderer } from '@tiptap/react';
 import html from 'highlight.js/lib/languages/xml';
 import { createLowlight, common } from 'lowlight';
 import { HTMLCodeBlockView } from './html-view';

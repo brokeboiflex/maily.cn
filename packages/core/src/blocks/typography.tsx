@@ -109,7 +109,7 @@ export const clearLine = (t: TranslateFn): BlockItem => ({
   description: t('block.clearLine.description'),
   searchTerms: ['clear', 'line'],
   icon: <EraserIcon className="h-4 w-4" />,
-  command: ({ editor, range }) => {
+  command: ({ editor }) => {
     // @ts-ignore
     editor.chain().focus().selectParentNode().deleteSelection().run();
   },

@@ -6,7 +6,6 @@ import { TooltipProvider } from '../ui/tooltip';
 import { useInlineImageState } from './use-inline-image-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { ImageDownIcon } from 'lucide-react';
-import { isTextSelected } from '@/editor/utils/is-text-selected';
 import {
   DEFAULT_INLINE_IMAGE_HEIGHT,
   DEFAULT_INLINE_IMAGE_WIDTH,

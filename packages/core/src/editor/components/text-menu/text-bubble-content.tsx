@@ -7,7 +7,6 @@ import {
   ItalicIcon,
   List,
   ListOrdered,
-  LucideIcon,
   StrikethroughIcon,
   UnderlineIcon,
 } from 'lucide-react';

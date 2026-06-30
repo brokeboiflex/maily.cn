@@ -156,7 +156,7 @@ export const clearLine = (t: TranslateFn): BlockItem => ({
   remixicon="RiEraserLine"
   className="h-4 w-4"
 />,
-  command: ({ editor, range }) => {
+  command: ({ editor }) => {
     // @ts-ignore
     editor.chain().focus().selectParentNode().deleteSelection().run();
   },
