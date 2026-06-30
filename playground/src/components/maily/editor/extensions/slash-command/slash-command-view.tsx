@@ -56,6 +56,9 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   const prevQuery = useRef('');
   const prevSelectedGroupIndex = useRef(0);
   const prevSelectedCommandIndex = useRef(0);
+  // Scroll the active item into view only for keyboard navigation; hovering must
+  // not move the scroll position (mouse-over sets the selection too).
+  const keyboardNav = useRef(false);
 
   const openSubItem = submenu
     ? groups[submenu.groupIndex]?.commands[submenu.commandIndex]
@@ -114,6 +117,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
 
   const handleItemHover = useCallback(
     (groupIndex: number, commandIndex: number) => {
+      keyboardNav.current = false;
       setSelectedGroupIndex(groupIndex);
       setSelectedCommandIndex(commandIndex);
 
@@ -233,6 +237,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             return false;
           }
           closeSubmenu();
+          keyboardNav.current = true;
           newCommandIndex = selectedCommandIndex - 1;
           newGroupIndex = selectedGroupIndex;
           if (newCommandIndex < 0) {
@@ -251,6 +256,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             return false;
           }
           closeSubmenu();
+          keyboardNav.current = true;
           const commands = groups[selectedGroupIndex].commands;
           newCommandIndex = selectedCommandIndex + 1;
           newGroupIndex = selectedGroupIndex;
@@ -275,6 +281,13 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   const activeCommandRef = useRef<HTMLButtonElement | null>(null);
 
   useLayoutEffect(() => {
+    // Only auto-scroll on keyboard navigation — hovering also moves the
+    // selection, and scrolling on mouse-over makes the list unusable.
+    if (!keyboardNav.current) {
+      return;
+    }
+    keyboardNav.current = false;
+
     const container = commandListContainer?.current;
     const activeCommandContainer = activeCommandRef?.current;
     if (!container || !activeCommandContainer) {
