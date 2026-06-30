@@ -242,8 +242,8 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             </Fragment>
           ))}
         </div>
-        <div className="border-border border-t px-1 py-3 pl-4">
-          <div className="flex items-center">
+        <div className="border-border border-t px-1 px-4 py-3">
+          <div className="flex items-center justify-between">
             <p className="text-muted-foreground text-center text-xs">
               <kbd className="border-border rounded border p-1 px-2 font-medium">
                 ↑
@@ -251,16 +251,13 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
               <kbd className="border-border ml-1 rounded border p-1 px-2 font-medium">
                 ↓
               </kbd>{' '}
-              {navigateLabel}
+              <span className="ml-1 select-none">{navigateLabel}</span>
             </p>
-            <span aria-hidden="true" className="px-1 select-none">
-              ·
-            </span>
             <p className="text-muted-foreground text-center text-xs">
               <kbd className="border-border rounded border p-1 px-1.5 font-medium">
                 Enter
               </kbd>{' '}
-              {selectLabel}
+              <span className="ml-1 select-none">{selectLabel}</span>
             </p>
           </div>
         </div>

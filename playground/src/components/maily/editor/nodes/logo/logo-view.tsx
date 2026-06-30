@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { LogoAttributes, logoSizes } from './logo';
 import { ImageStatus, ImageStatusLabel } from '../image/image-view';
 import { useImageUploadOptions } from '../../extensions/image-upload/image-upload';
-import { cn } from '../../utils/classname';
+import { cn } from '@/lib/utils';
 
 export function LogoView(props: NodeViewProps) {
   const { node, editor, updateAttributes } = props;

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import { cn } from '../../utils/classname';
+import { cn } from '@/lib/utils';
 
 // Explicit type annotations to avoid TS2742 errors
 const TooltipProvider: React.FC<

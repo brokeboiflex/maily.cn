@@ -3,9 +3,11 @@ import type { Editor as TiptapEditor } from "@tiptap/core"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Editor } from "@/components/maily"
+import { polishLabels } from "@/polish-labels"
 
 export function App() {
   const [json, setJson] = useState<unknown>(null)
+  const [polish, setPolish] = useState(true)
 
   return (
     <div className="min-h-svh bg-muted/30 p-6">
@@ -19,10 +21,21 @@ export function App() {
               from the local registry.
             </p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPolish((p) => !p)}
+              className="rounded border border-border px-2 py-1 text-xs"
+            >
+              {polish ? "Język: Polski" : "Language: English"}
+            </button>
+            <ThemeToggle />
+          </div>
         </header>
 
         <Editor
+          key={polish ? "pl" : "en"}
+          labels={polish ? polishLabels : undefined}
           contentJson={{ type: "doc", content: [{ type: "paragraph" }] }}
           onUpdate={(editor: TiptapEditor) => setJson(editor.getJSON())}
         />

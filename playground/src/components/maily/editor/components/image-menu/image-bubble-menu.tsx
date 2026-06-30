@@ -18,6 +18,16 @@ import {
   IMAGE_MAX_HEIGHT,
   IMAGE_MAX_WIDTH,
 } from '../../nodes/image/image-view';
+import { useMailyContext } from '../../provider';
+import type { LabelKey } from '../../i18n';
+
+const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
+  Sharp: 'imageMenu.radius.sharp',
+  Smooth: 'imageMenu.radius.smooth',
+  Smoother: 'imageMenu.radius.smoother',
+  Rounded: 'imageMenu.radius.rounded',
+  Circle: 'imageMenu.radius.circle',
+};
 
 export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
@@ -26,6 +36,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
   }
 
   const state = useImageState(editor);
+  const { t } = useMailyContext();
 
   const bubbleMenuProps: EditorBubbleMenuProps = {
     ...props,
@@ -58,8 +69,8 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
         {state.isLogoActive && state.imageSrc && (
           <>
             <Select
-              label="Size"
-              tooltip="Size"
+              label={t('imageMenu.size')}
+              tooltip={t('imageMenu.size')}
               value={state.logoSize}
               options={allowedLogoSize.map((size) => ({
                 value: size,
@@ -116,7 +127,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   .run();
               }
             }}
-            tooltip="Source URL"
+            tooltip={t('imageMenu.sourceUrl')}
             icon={ImageDown}
             editor={editor}
             isVariable={state.isSrcVariable}
@@ -134,7 +145,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   })
                   .run();
               }}
-              tooltip="External URL"
+              tooltip={t('imageMenu.externalUrl')}
               editor={editor}
               isVariable={state.isExternalLinkVariable}
             />
@@ -146,11 +157,11 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
             <Divider />
 
             <Select
-              label="Border Radius"
+              label={t('imageMenu.borderRadius')}
               value={state?.borderRadius}
               options={borderRadius.map((value) => ({
                 value: String(value.value),
-                label: value.name,
+                label: t(RADIUS_LABEL_KEY[value.name]),
               }))}
               onValueChange={(value) => {
                 editor
@@ -160,7 +171,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   })
                   .run();
               }}
-              tooltip="Border Radius"
+              tooltip={t('imageMenu.borderRadius')}
               className="capitalize"
             />
 
@@ -256,7 +267,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                     .run();
                 }}
                 icon={lockAspectRatio ? LockIcon : LockOpenIcon}
-                tooltip="Lock Aspect Ratio"
+                tooltip={t('imageMenu.lockAspectRatio')}
               />
             </div>
           </>

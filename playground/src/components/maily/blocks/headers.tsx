@@ -1,11 +1,12 @@
 import { LogoWithCoverImageIcon } from '../editor/components/icons/logo-with-cover-image';
 import { BlockItem } from './types';
+import type { TranslateFn } from '../editor/i18n';
 import { LogoWithTextHorizonIcon } from '../editor/components/icons/logo-with-text-horizon';
 import { LogoWithTextVerticalIcon } from '../editor/components/icons/logo-with-text-vertical';
 
-export const headerLogoWithTextHorizontal: BlockItem = {
-  title: 'Logo with Text (Horizontal)',
-  description: 'Logo and a text horizontally',
+export const headerLogoWithTextHorizontal = (t: TranslateFn): BlockItem => ({
+  title: t('block.headerLogoWithTextHorizontal.title'),
+  description: t('block.headerLogoWithTextHorizontal.description'),
   searchTerms: ['logo', 'text'],
   icon: <LogoWithTextHorizonIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
@@ -70,11 +71,11 @@ export const headerLogoWithTextHorizontal: BlockItem = {
       })
       .run();
   },
-};
+});
 
-export const headerLogoWithTextVertical: BlockItem = {
-  title: 'Logo with Text (Vertical)',
-  description: 'Logo and a text vertically',
+export const headerLogoWithTextVertical = (t: TranslateFn): BlockItem => ({
+  title: t('block.headerLogoWithTextVertical.title'),
+  description: t('block.headerLogoWithTextVertical.description'),
   searchTerms: ['logo', 'text'],
   icon: <LogoWithTextVerticalIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
@@ -106,11 +107,11 @@ export const headerLogoWithTextVertical: BlockItem = {
       ])
       .run();
   },
-};
+});
 
-export const headerLogoWithCoverImage: BlockItem = {
-  title: 'Logo with Cover Image',
-  description: 'Logo and a cover image',
+export const headerLogoWithCoverImage = (t: TranslateFn): BlockItem => ({
+  title: t('block.headerLogoWithCoverImage.title'),
+  description: t('block.headerLogoWithCoverImage.description'),
   searchTerms: ['logo', 'cover', 'image'],
   icon: <LogoWithCoverImageIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
@@ -202,4 +203,4 @@ export const headerLogoWithCoverImage: BlockItem = {
       ])
       .run();
   },
-};
+});

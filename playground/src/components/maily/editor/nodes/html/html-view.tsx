@@ -1,4 +1,4 @@
-import { cn } from '../../utils/classname';
+import { cn } from '@/lib/utils';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { useMemo } from 'react';

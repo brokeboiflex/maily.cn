@@ -1,7 +1,7 @@
 import { LucideIcon } from "lucide-react"
 import { useId } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
-import { cn } from '../../utils/classname';
+import { cn } from '@/lib/utils';
 import { SVGIcon } from '../icons/grid-lines';
 import { ChevronDownIcon } from "lucide-react"
 
@@ -54,7 +54,7 @@ export function Select(props: SelectProps) {
       <select
         id={selectId}
         className={cn(
-          'bg-background text-foreground ring-offset-background hover:bg-accent focus-visible:ring-ring active:bg-accent flex min-h-7 max-w-max appearance-none items-center rounded-md px-1.5 py-0.5 pr-7 text-sm transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
+          'bg-background text-foreground ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring active:bg-accent active:text-accent-foreground flex min-h-7 max-w-max appearance-none items-center rounded-md px-1.5 py-0.5 pr-7 text-sm transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
           !!Icon && 'pl-7',
           className
         )}

@@ -1,10 +1,10 @@
-import { BaseButton } from './base-button';
-import { cn } from '../utils/classname';
-import { BubbleMenuItem } from './text-menu/text-bubble-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { BaseButton } from "./base-button"
+import { cn } from "@/lib/utils"
+import { BubbleMenuItem } from "./text-menu/text-bubble-menu"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
 export function BubbleMenuButton(item: BubbleMenuItem) {
-  const { tooltip } = item;
+  const { tooltip } = item
 
   const content = (
     <BaseButton
@@ -13,7 +13,7 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
       {...(item.command ? { onClick: item.command } : {})}
       data-state={item?.isActive?.()}
       className={cn(
-        'size-7! px-2.5 disabled:cursor-not-allowed',
+        // "size-7! px-2.5 disabled:cursor-not-allowed",
         item?.className
       )}
       type="button"
@@ -21,12 +21,12 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
     >
       {item.icon ? (
         <item.icon
-          className={cn('h-3 w-3 shrink-0 stroke-[2.5]', item?.iconClassName)}
+          className={cn("h-3 w-3 shrink-0 stroke-[2.5]", item?.iconClassName)}
         />
       ) : (
         <span
           className={cn(
-            'text-muted-foreground text-sm font-medium',
+            "text-sm font-medium text-muted-foreground",
             item?.nameClassName
           )}
         >
@@ -34,7 +34,7 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
         </span>
       )}
     </BaseButton>
-  );
+  )
 
   if (tooltip) {
     return (
@@ -42,8 +42,8 @@ export function BubbleMenuButton(item: BubbleMenuItem) {
         <TooltipTrigger asChild>{content}</TooltipTrigger>
         <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
       </Tooltip>
-    );
+    )
   }
 
-  return content;
+  return content
 }

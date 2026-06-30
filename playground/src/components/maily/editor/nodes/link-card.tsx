@@ -2,7 +2,7 @@ import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Input } from '../components/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/popover';
 import { Textarea } from '../components/textarea';
-import { cn } from '../utils/classname';
+import { cn } from '@/lib/utils';
 
 export function LinkCardComponent(props: NodeViewProps) {
   const { title, description, link, linkTitle, image, badgeText, subTitle } =

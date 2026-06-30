@@ -1,9 +1,8 @@
 import { AlignCenter, AlignLeft, AlignRight, BoldIcon, EraserIcon, ItalicIcon, LinkIcon, SeparatorHorizontal, StrikethroughIcon, UnderlineIcon } from "lucide-react"
 import { useMemo } from 'react';
 import { Editor as EditorType } from '@tiptap/core';
-
 import { EditorProps } from '..';
-
+import { cn } from '@/lib/utils';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { BubbleMenuItem } from './text-menu/text-bubble-menu';
 
@@ -130,7 +129,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
   }
 
   return (
-    <div className={`flex items-center gap-3 ${config?.toolbarClassName}`}>
+    <div className={cn('flex items-center gap-3', config?.toolbarClassName)}>
       {groups.map((group, index) => (
         <div
           key={index}

@@ -1,0 +1,209 @@
+import type { MailyLabels } from "@/components/maily"
+
+/**
+ * A complete Polish translation of the Maily editor.
+ *
+ * `MailyLabels` is `Record<LabelKey, string>` — a COMPLETE language, not a
+ * partial. If you delete any line below, TypeScript fails to compile and names
+ * the missing key. That is the i18n contract working as designed.
+ */
+export const polishLabels: MailyLabels = {
+  // ── Slash-command default blocks ──
+  "block.text.title": "Tekst",
+  "block.text.description": "Po prostu zacznij pisać zwykły tekst.",
+  "block.heading1.title": "Nagłówek 1",
+  "block.heading1.description": "Duży nagłówek.",
+  "block.heading2.title": "Nagłówek 2",
+  "block.heading2.description": "Średni nagłówek.",
+  "block.heading3.title": "Nagłówek 3",
+  "block.heading3.description": "Mały nagłówek.",
+  "block.bulletList.title": "Lista punktowana",
+  "block.bulletList.description": "Utwórz prostą listę punktowaną.",
+  "block.orderedList.title": "Lista numerowana",
+  "block.orderedList.description": "Utwórz listę z numeracją.",
+  "block.image.title": "Obraz",
+  "block.image.description": "Obraz na całą szerokość",
+  "block.logo.title": "Logo",
+  "block.logo.description": "Dodaj logo swojej marki",
+  "block.inlineImage.title": "Obraz w tekście",
+  "block.inlineImage.description": "Obraz w linii tekstu",
+  "block.columns.title": "Kolumny",
+  "block.columns.description": "Dodaj kolumny do wiadomości.",
+  "block.section.title": "Sekcja",
+  "block.section.description": "Dodaj sekcję do wiadomości.",
+  "block.repeat.title": "Powtórzenie",
+  "block.repeat.description": "Iteruj po tablicy elementów.",
+  "block.divider.title": "Separator",
+  "block.divider.description": "Dodaj poziomy separator.",
+  "block.spacer.title": "Odstęp",
+  "block.spacer.description": "Dodaj odstęp między blokami.",
+  "block.button.title": "Przycisk",
+  "block.button.description": "Dodaj przycisk wezwania do działania.",
+  "block.linkCard.title": "Karta linku",
+  "block.linkCard.description": "Dodaj kartę linku do wiadomości.",
+  "block.hardBreak.title": "Twardy podział",
+  "block.hardBreak.description": "Dodaj podział między wierszami.",
+  "block.blockquote.title": "Cytat",
+  "block.blockquote.description": "Dodaj cytat blokowy.",
+  "block.footer.title": "Stopka",
+  "block.footer.description": "Dodaj tekst stopki do wiadomości.",
+  "block.clearLine.title": "Wyczyść wiersz",
+  "block.clearLine.description": "Wyczyść bieżący wiersz.",
+  "block.htmlCodeBlock.title": "Własny HTML",
+  "block.htmlCodeBlock.description": "Wstaw własny blok HTML",
+  "block.headers.title": "Nagłówki",
+  "block.headers.description": "Dodaj gotowy blok nagłówka",
+  "block.footers.title": "Stopki",
+  "block.footers.description": "Dodaj gotowy blok stopki",
+  "block.headerLogoWithTextVertical.title": "Logo z tekstem (pionowo)",
+  "block.headerLogoWithTextVertical.description": "Logo i tekst w pionie",
+  "block.headerLogoWithTextHorizontal.title": "Logo z tekstem (poziomo)",
+  "block.headerLogoWithTextHorizontal.description": "Logo i tekst w poziomie",
+  "block.headerLogoWithCoverImage.title": "Logo z obrazem tła",
+  "block.headerLogoWithCoverImage.description": "Logo i obraz tła",
+  "block.footerCopyrightText.title": "Stopka — prawa autorskie",
+  "block.footerCopyrightText.description": "Tekst praw autorskich w stopce.",
+  "block.footerCommunityFeedbackCta.title": "Stopka — CTA opinii społeczności",
+  "block.footerCommunityFeedbackCta.description":
+    "Wezwanie do podzielenia się opinią w stopce.",
+  "block.footerCompanySignature.title": "Stopka — podpis firmy",
+  "block.footerCompanySignature.description": "Podpis firmy w stopce.",
+
+  // ── Slash-command chrome ──
+  "slashCommand.group.blocks": "Bloki",
+  "slashCommand.group.components": "Komponenty",
+  "slashCommand.navigate": "aby nawigować",
+  "slashCommand.select": "aby wybrać",
+
+  // ── Placeholders ──
+  "placeholder.default": "Zacznij pisać lub wpisz / aby zobaczyć polecenia",
+  "placeholder.heading": "Nagłówek {level}",
+  "placeholder.html": "Wpisz swój kod HTML...",
+
+  // ── Text bubble menu ──
+  "toolbar.bold": "Pogrubienie",
+  "toolbar.italic": "Kursywa",
+  "toolbar.underline": "Podkreślenie",
+  "toolbar.strikethrough": "Przekreślenie",
+  "toolbar.code": "Kod",
+  "toolbar.bulletList": "Lista punktowana",
+  "toolbar.orderedList": "Lista numerowana",
+  "toolbar.link": "Zewnętrzny adres URL",
+  "toolbar.textColor": "Kolor tekstu",
+
+  // ── Turn-into menu ──
+  "turnInto.label": "Zmień na",
+  "turnInto.hierarchy": "Hierarchia",
+  "turnInto.paragraph": "Akapit",
+  "turnInto.heading1": "Nagłówek 1",
+  "turnInto.heading2": "Nagłówek 2",
+  "turnInto.heading3": "Nagłówek 3",
+  "turnInto.footer": "Stopka",
+  "turnInto.lists": "Listy",
+  "turnInto.bulletList": "Lista punktowana",
+  "turnInto.numberedList": "Lista numerowana",
+
+  // ── Alignment / direction / vertical-alignment switches ──
+  "alignment.left": "Wyrównaj do lewej",
+  "alignment.center": "Wyśrodkuj",
+  "alignment.right": "Wyrównaj do prawej",
+  "alignment.label": "Wyrównanie",
+  "direction.ltr": "Od lewej do prawej",
+  "direction.rtl": "Od prawej do lewej",
+  "direction.label": "Kierunek tekstu",
+  "verticalAlignment.top": "Wyrównaj do góry",
+  "verticalAlignment.center": "Wyśrodkuj w pionie",
+  "verticalAlignment.bottom": "Wyrównaj do dołu",
+
+  // ── Section bubble menu ──
+  "sectionMenu.borderRadius": "Zaokrąglenie rogów",
+  "sectionMenu.radius.sharp": "Ostre",
+  "sectionMenu.radius.smooth": "Lekkie",
+  "sectionMenu.radius.round": "Zaokrąglone",
+  "sectionMenu.borderWidth": "Grubość obramowania",
+  "sectionMenu.borderWidth.none": "Brak",
+  "sectionMenu.borderWidth.thin": "Cienkie",
+  "sectionMenu.borderWidth.medium": "Średnie",
+  "sectionMenu.borderWidth.thick": "Grube",
+  "sectionMenu.margin": "Margines",
+  "sectionMenu.margin.none": "Brak",
+  "sectionMenu.padding": "Wypełnienie",
+  "sectionMenu.padding.none": "Brak",
+  "sectionMenu.borderColor": "Kolor obramowania",
+  "sectionMenu.backgroundColor": "Kolor tła",
+  "sectionMenu.delete": "Usuń sekcję",
+  "sectionMenu.column": "Kolumna",
+
+  // ── Image / inline-image menus ──
+  "imageMenu.size": "Rozmiar",
+  "imageMenu.borderRadius": "Zaokrąglenie rogów",
+  "imageMenu.radius.sharp": "Ostre",
+  "imageMenu.radius.smooth": "Lekkie",
+  "imageMenu.radius.smoother": "Łagodniejsze",
+  "imageMenu.radius.rounded": "Zaokrąglone",
+  "imageMenu.radius.circle": "Okrągłe",
+  "imageMenu.lockAspectRatio": "Zablokuj proporcje",
+  "imageMenu.lockAspectRatioLock": "Zablokuj proporcje",
+  "imageMenu.lockAspectRatioUnlock": "Odblokuj proporcje",
+  "imageMenu.sourceUrl": "Adres źródłowy",
+  "imageMenu.externalUrl": "Zewnętrzny adres URL",
+  "imageMenu.width": "Sz",
+  "imageMenu.height": "Wy",
+  "imageMenu.unitPx": "PX",
+  "inlineImageMenu.sourceUrl": "Adres źródłowy",
+  "inlineImageMenu.externalUrl": "Zewnętrzny adres URL",
+
+  // ── Column menu ──
+  "columnMenu.gap": "Odstęp kolumn",
+  "columnMenu.gap.none": "Brak",
+  "columnMenu.delete": "Usuń kolumny",
+  "columnMenu.width": "Sz",
+  "columnMenu.fitContent": "Dopasuj do treści",
+  "columnMenu.stretch": "Rozciągnij",
+  "columnMenu.twoColumns": "2 kolumny",
+  "columnMenu.threeColumns": "3 kolumny",
+  "columnMenu.left": "Lewa",
+  "columnMenu.right": "Prawa",
+  "columnMenu.middle": "Środkowa",
+  "columnMenu.autoPlaceholder": "auto",
+  "columnMenu.unitPercent": "%",
+
+  // ── Repeat menu ──
+  "repeatMenu.label": "Powtórzenie",
+  "repeatMenu.iterableHint":
+    "Upewnij się, że wybrana zmienna jest iterowalna, np. tablica obiektów.",
+  "repeatMenu.placeholder": "np. payload.items",
+
+  // ── HTML menu ──
+  "htmlMenu.htmlCode": "Kod HTML",
+  "htmlMenu.preview": "Podgląd",
+
+  // ── Content (drag-handle) menu ──
+  "contentMenu.addNode": "Dodaj nowy węzeł",
+  "contentMenu.nodeActions": "Akcje węzła",
+  "contentMenu.duplicate": "Duplikuj",
+  "contentMenu.delete": "Usuń",
+
+  // ── Show-conditionally popover ──
+  "showPopover.showConditionally": "Pokaż blok warunkowo",
+  "showPopover.showIf": "Pokaż jeśli",
+  "showPopover.showIfHint":
+    "Pokaż blok, jeśli wybrana zmienna jest prawdziwa.",
+
+  // ── Edge-spacing micro-labels (Góra/Prawo/Dół/Lewo) ──
+  "edgeSpacing.top": "G",
+  "edgeSpacing.right": "P",
+  "edgeSpacing.bottom": "D",
+  "edgeSpacing.left": "L",
+
+  // ── Spacing scale ──
+  "spacing.xs": "Bardzo mały",
+  "spacing.sm": "Mały",
+  "spacing.md": "Średni",
+  "spacing.lg": "Duży",
+  "spacing.xl": "Bardzo duży",
+
+  // ── Misc ──
+  "colorPicker.recentlyUsed": "Ostatnio używane",
+  "inputAutocomplete.placeholder": "np. items",
+}

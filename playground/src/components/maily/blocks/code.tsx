@@ -1,9 +1,10 @@
 import { BlockItem } from './types';
+import type { TranslateFn } from '../editor/i18n';
 import { CodeXmlIcon } from "lucide-react";
 
-export const htmlCodeBlock: BlockItem = {
-  title: 'Custom HTML',
-  description: 'Insert a custom HTML block',
+export const htmlCodeBlock = (t: TranslateFn): BlockItem => ({
+  title: t('block.htmlCodeBlock.title'),
+  description: t('block.htmlCodeBlock.description'),
   searchTerms: ['html', 'code', 'custom'],
   icon: <CodeXmlIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
@@ -16,4 +17,4 @@ export const htmlCodeBlock: BlockItem = {
       .setHtmlCodeBlock({ language: 'html' })
       .run();
   },
-};
+});

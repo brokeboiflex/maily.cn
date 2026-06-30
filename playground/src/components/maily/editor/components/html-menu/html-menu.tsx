@@ -1,103 +1,109 @@
-import { cn } from '../../utils/classname';
-import { BubbleMenu } from '@tiptap/react';
-import { useCallback } from 'react';
-import { sticky } from 'tippy.js';
-import { getRenderContainer } from '../../utils/get-render-container';
-import { ShowPopover } from '../show-popover';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Divider } from '../ui/divider';
+import { cn } from "@/lib/utils"
+import { BubbleMenu } from "@tiptap/react"
+import { useCallback } from "react"
+import { sticky } from "tippy.js"
+import { getRenderContainer } from "../../utils/get-render-container"
+import { ShowPopover } from "../show-popover"
+import { EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
+import { Divider } from "../ui/divider"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../ui/tooltip';
-import { useHtmlState } from './use-html-state';
-import { CodeXmlIcon, ViewIcon } from "lucide-react";
+} from "../ui/tooltip"
+import { useHtmlState } from "./use-html-state"
+import { useMailyContext } from "../../provider"
+import { CodeXmlIcon, ViewIcon } from "lucide-react"
 
 export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor } = props
   if (!editor) {
-    return null;
+    return null
   }
 
-  const state = useHtmlState(editor);
+  const state = useHtmlState(editor)
+  const { t } = useMailyContext()
 
   const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor!, 'htmlCodeBlock');
+    const renderContainer = getRenderContainer(editor!, "htmlCodeBlock")
     const rect =
       renderContainer?.getBoundingClientRect() ||
-      new DOMRect(-1000, -1000, 0, 0);
+      new DOMRect(-1000, -1000, 0, 0)
 
-    return rect;
-  }, [editor]);
+    return rect
+  }, [editor])
 
   const bubbleMenuProps: EditorBubbleMenuProps = {
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     shouldShow: ({ editor }) => {
-      return editor.isActive('htmlCodeBlock');
+      return editor.isActive("htmlCodeBlock")
     },
     tippyOptions: {
       offset: [0, 8],
       popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
+        modifiers: [{ name: "flip", enabled: false }],
       },
       getReferenceClientRect,
       appendTo: () => appendTo?.current,
       plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+      sticky: "popper",
+      maxWidth: "auto",
     },
-    pluginKey: 'htmlCodeBlockBubbleMenu',
-  };
+    pluginKey: "htmlCodeBlockBubbleMenu",
+  }
 
-  const { activeTab = 'code' } = state;
+  const { activeTab = "code" } = state
 
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className="border-border bg-background flex items-stretch rounded-lg border p-0.5 shadow-md"
+      className="flex items-stretch rounded-lg border border-border bg-background p-0.5 shadow-md"
     >
       <TooltipProvider>
-        <div className="bg-muted flex h-7 items-center rounded-md px-0.5">
+        <div className="flex h-7 items-center rounded-md bg-muted px-0.5">
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 className={cn(
-                  'focus-visible:ring-ring flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-                  activeTab === 'code' && 'bg-background'
+                  "flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden",
+                  activeTab === "code" && "bg-background"
                 )}
-                disabled={activeTab === 'code'}
+                disabled={activeTab === "code"}
                 onClick={() => {
                   editor?.commands?.updateHtmlCodeBlock({
-                    activeTab: 'code',
-                  });
+                    activeTab: "code",
+                  })
                 }}
               >
                 <CodeXmlIcon className="size-3 shrink-0 stroke-[2.5]" />
               </button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>HTML Code</TooltipContent>
+            <TooltipContent sideOffset={8}>
+              {t("htmlMenu.htmlCode")}
+            </TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 className={cn(
-                  'focus-visible:ring-ring flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-                  activeTab === 'preview' && 'bg-background'
+                  "flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden",
+                  activeTab === "preview" && "bg-background"
                 )}
-                disabled={activeTab === 'preview'}
+                disabled={activeTab === "preview"}
                 onClick={() => {
                   editor?.commands?.updateHtmlCodeBlock({
-                    activeTab: 'preview',
-                  });
+                    activeTab: "preview",
+                  })
                 }}
               >
                 <ViewIcon className="size-3 shrink-0 stroke-[2.5]" />
               </button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>Preview</TooltipContent>
+            <TooltipContent sideOffset={8}>
+              {t("htmlMenu.preview")}
+            </TooltipContent>
           </Tooltip>
         </div>
         <Divider />
@@ -106,11 +112,11 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
           onShowIfKeyValueChange={(value) => {
             editor.commands.updateHtmlCodeBlock({
               showIfKey: value,
-            });
+            })
           }}
           editor={editor}
         />
       </TooltipProvider>
     </BubbleMenu>
-  );
+  )
 }

@@ -1,26 +1,26 @@
-import type { Editor } from '@tiptap/core';
-import { BlockItem } from '../../../blocks';
+import type { Editor } from "@tiptap/core"
+import { BlockItem } from "../../../blocks"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '../../components/ui/tooltip';
-import { useCallback, useState, useRef, useEffect, RefObject } from 'react';
-import { cn } from '../../utils/classname';
-import { ChevronRightIcon } from "lucide-react";
+} from "../../components/ui/tooltip"
+import { useCallback, useState, useRef, useEffect, RefObject } from "react"
+import { cn } from "@/lib/utils"
+import { ChevronRightIcon } from "lucide-react"
 
 type SlashCommandItemProps = {
-  item: BlockItem;
-  groupIndex: number;
-  commandIndex: number;
-  selectedGroupIndex: number;
-  selectedCommandIndex: number;
-  editor: Editor;
-  activeCommandRef: RefObject<HTMLButtonElement> | null;
-  selectItem: (groupIndex: number, commandIndex: number) => void;
-  hoveredItemKey: string | null;
-  onHover: (isHovered: boolean) => void;
-};
+  item: BlockItem
+  groupIndex: number
+  commandIndex: number
+  selectedGroupIndex: number
+  selectedCommandIndex: number
+  editor: Editor
+  activeCommandRef: RefObject<HTMLButtonElement> | null
+  selectItem: (groupIndex: number, commandIndex: number) => void
+  hoveredItemKey: string | null
+  onHover: (isHovered: boolean) => void
+}
 
 export function SlashCommandItem(props: SlashCommandItemProps) {
   const {
@@ -34,23 +34,23 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
     selectItem,
     hoveredItemKey,
     onHover,
-  } = props;
+  } = props
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
   const isActive =
-    groupIndex === selectedGroupIndex && commandIndex === selectedCommandIndex;
+    groupIndex === selectedGroupIndex && commandIndex === selectedCommandIndex
 
-  const itemKey = `${groupIndex}-${commandIndex}`;
-  const isHovered = hoveredItemKey === itemKey;
+  const itemKey = `${groupIndex}-${commandIndex}`
+  const isHovered = hoveredItemKey === itemKey
 
-  const isSubCommand = item && 'commands' in item;
+  const isSubCommand = item && "commands" in item
 
   // show tooltip only if this item is hovered OR (active/keyboard selected AND no other item is hovered)
   const shouldOpenTooltip =
-    !!item?.preview && (isHovered || (isActive && !hoveredItemKey));
+    !!item?.preview && (isHovered || (isActive && !hoveredItemKey))
 
-  const hasRenderFunction = typeof item.render === 'function';
-  const renderFunctionValue = hasRenderFunction ? item.render?.(editor) : null;
+  const hasRenderFunction = typeof item.render === "function"
+  const renderFunctionValue = hasRenderFunction ? item.render?.(editor) : null
 
   let value = (
     <>
@@ -59,57 +59,57 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
       </div>
       <div className="grow">
         <p className="font-medium">{item.title}</p>
-        <p className="text-muted-foreground text-xs">{item.description}</p>
+        <p className="text-xs text-muted-foreground">{item.description}</p>
       </div>
 
       {isSubCommand && (
-        <span className="text-muted-foreground block px-1">
+        <span className="block px-1 text-muted-foreground">
           <ChevronRightIcon className="size-3.5 stroke-[2.5]" />
         </span>
       )}
     </>
-  );
+  )
 
   if (renderFunctionValue !== null && renderFunctionValue !== true) {
-    value = renderFunctionValue!;
+    value = renderFunctionValue!
   }
 
-  const openTimerRef = useRef<number>(0);
+  const openTimerRef = useRef<number>(0)
   const handleDelayedOpen = useCallback(() => {
-    window.clearTimeout(openTimerRef.current);
-    const delay = 200;
+    window.clearTimeout(openTimerRef.current)
+    const delay = 200
     openTimerRef.current = window.setTimeout(() => {
-      setOpen(true);
-      openTimerRef.current = 0;
-    }, delay);
-  }, [setOpen]);
+      setOpen(true)
+      openTimerRef.current = 0
+    }, delay)
+  }, [setOpen])
 
   useEffect(() => {
     if (shouldOpenTooltip) {
-      handleDelayedOpen();
+      handleDelayedOpen()
     } else {
-      window.clearTimeout(openTimerRef.current);
-      openTimerRef.current = 0;
-      setOpen(false);
+      window.clearTimeout(openTimerRef.current)
+      openTimerRef.current = 0
+      setOpen(false)
     }
-  }, [shouldOpenTooltip]);
+  }, [shouldOpenTooltip])
 
   useEffect(() => {
     return () => {
       if (openTimerRef.current) {
-        window.clearTimeout(openTimerRef.current);
-        openTimerRef.current = 0;
+        window.clearTimeout(openTimerRef.current)
+        openTimerRef.current = 0
       }
-    };
-  }, []);
+    }
+  }, [])
 
   return (
     <Tooltip open={open} key={`${groupIndex}-${commandIndex}`}>
       <TooltipTrigger asChild>
         <button
           className={cn(
-            'text-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm',
-            isActive ? 'bg-muted text-foreground' : 'bg-transparent'
+            "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm text-foreground hover:bg-muted hover:text-foreground",
+            isActive ? "bg-muted text-foreground" : "bg-transparent"
           )}
           onClick={() => selectItem(groupIndex, commandIndex)}
           onMouseEnter={() => onHover(true)}
@@ -125,23 +125,23 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
         sideOffset={10}
         className="w-52 rounded-lg border-none p-1 shadow"
       >
-        {typeof item.preview === 'function' ? (
+        {typeof item.preview === "function" ? (
           item?.preview(editor)
         ) : (
           <>
-            <figure className="border-border relative aspect-[2.5] w-full overflow-hidden rounded-md border">
+            <figure className="relative aspect-[2.5] w-full overflow-hidden rounded-md border border-border">
               <img
                 src={item?.preview}
                 alt={item?.title}
                 className="absolute inset-0 h-full w-full object-cover"
               />
             </figure>
-            <p className="text-muted-foreground mt-2 px-0.5">
+            <p className="mt-2 px-0.5 text-muted-foreground">
               {item.description}
             </p>
           </>
         )}
       </TooltipContent>
     </Tooltip>
-  );
+  )
 }

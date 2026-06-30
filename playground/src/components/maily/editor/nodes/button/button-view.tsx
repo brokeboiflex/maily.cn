@@ -1,30 +1,30 @@
-import { AlignmentSwitch } from '../../components/alignment-switch';
-import { BaseButton } from '../../components/base-button';
+import { AlignmentSwitch } from "../../components/alignment-switch"
+import { BaseButton } from "../../components/base-button"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../components/popover';
-import { ShowPopover } from '../../components/show-popover';
-import { ColorPicker } from '../../components/ui/color-picker';
-import { Divider } from '../../components/ui/divider';
-import { LinkInputPopover } from '../../components/ui/link-input-popover';
-import { Select } from '../../components/ui/select';
-import { TooltipProvider } from '../../components/ui/tooltip';
-import { cn } from '../../utils/classname';
-import { useVariableOptions } from '../../utils/node-options';
-import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { CSSProperties, useMemo } from 'react';
+} from "../../components/popover"
+import { ShowPopover } from "../../components/show-popover"
+import { ColorPicker } from "../../components/ui/color-picker"
+import { Divider } from "../../components/ui/divider"
+import { LinkInputPopover } from "../../components/ui/link-input-popover"
+import { Select } from "../../components/ui/select"
+import { TooltipProvider } from "../../components/ui/tooltip"
+import { cn } from "@/lib/utils"
+import { useVariableOptions } from "../../utils/node-options"
+import { NodeViewProps, NodeViewWrapper } from "@tiptap/react"
+import { CSSProperties, useMemo } from "react"
 import {
   allowedButtonBorderRadius,
   AllowedButtonVariant,
   allowedButtonVariant,
   ButtonAttributes,
-} from './button';
-import { ButtonLabelInput } from './button-label-input';
+} from "./button"
+import { ButtonLabelInput } from "./button-label-input"
 
 export function ButtonView(props: NodeViewProps) {
-  const { node, editor, getPos, updateAttributes } = props;
+  const { node, editor, getPos, updateAttributes } = props
   const {
     text,
     isTextVariable,
@@ -34,16 +34,16 @@ export function ButtonView(props: NodeViewProps) {
     buttonColor,
     textColor,
     url: externalLink,
-    showIfKey = '',
+    showIfKey = "",
     isUrlVariable,
     paddingTop,
     paddingRight,
     paddingBottom,
     paddingLeft,
-  } = node.attrs as ButtonAttributes;
+  } = node.attrs as ButtonAttributes
 
-  const opts = useVariableOptions(editor);
-  const renderVariable = opts?.renderVariable;
+  const opts = useVariableOptions(editor)
+  const renderVariable = opts?.renderVariable
 
   const sizes = useMemo(
     () => ({
@@ -61,14 +61,14 @@ export function ButtonView(props: NodeViewProps) {
       },
     }),
     []
-  );
+  )
 
   const size = useMemo(() => {
     return Object.entries(sizes).find(
       ([, { paddingX, paddingY }]) =>
         paddingRight === paddingX && paddingTop === paddingY
-    )?.[0] as 'small' | 'medium' | 'large';
-  }, [paddingRight, paddingTop, sizes]);
+    )?.[0] as "small" | "medium" | "large"
+  }, [paddingRight, paddingTop, sizes])
 
   return (
     <NodeViewWrapper
@@ -84,53 +84,53 @@ export function ButtonView(props: NodeViewProps) {
           <div>
             <button
               className={cn(
-                'ring-offset-background inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50',
-                'font-semibold no-underline',
+                "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors disabled:pointer-events-none disabled:opacity-50",
+                "font-semibold no-underline",
                 {
-                  'rounded-full!': _radius === 'round',
-                  'rounded-md!': _radius === 'smooth',
-                  'rounded-none!': _radius === 'sharp',
+                  "rounded-full!": _radius === "round",
+                  "rounded-md!": _radius === "smooth",
+                  "rounded-none!": _radius === "sharp",
                 }
               )}
               tabIndex={-1}
               style={
                 {
                   backgroundColor:
-                    variant === 'filled'
-                      ? buttonColor || '#000000'
-                      : 'transparent',
-                  color: textColor || '#ffffff',
+                    variant === "filled"
+                      ? buttonColor || "#000000"
+                      : "transparent",
+                  color: textColor || "#ffffff",
 
                   borderWidth: 2,
-                  borderStyle: 'solid',
-                  borderColor: buttonColor || '#000000',
+                  borderStyle: "solid",
+                  borderColor: buttonColor || "#000000",
                   // decrease the border color opacity to 80%
                   // so that it's not too prominent
-                  '--button-var-border-color': textColor
+                  "--button-var-border-color": textColor
                     ? `${textColor}80`
-                    : 'color-mix(in srgb, #ffffff 80%, transparent)',
+                    : "color-mix(in srgb, #ffffff 80%, transparent)",
 
-                  paddingTop: paddingTop || '10px',
-                  paddingRight: paddingRight || '32px',
-                  paddingBottom: paddingBottom || '10px',
-                  paddingLeft: paddingLeft || '32px',
+                  paddingTop: paddingTop || "10px",
+                  paddingRight: paddingRight || "32px",
+                  paddingBottom: paddingBottom || "10px",
+                  paddingLeft: paddingLeft || "32px",
                 } as CSSProperties
               }
               onClick={(e) => {
-                e.preventDefault();
+                e.preventDefault()
                 if (!editor.isEditable) {
-                  return;
+                  return
                 }
 
-                const pos = getPos();
-                editor.commands.setNodeSelection(pos);
+                const pos = getPos()
+                editor.commands.setNodeSelection(pos)
               }}
             >
               {isTextVariable
                 ? renderVariable({
                     variable: { name: text, valid: true },
                     fallback: text,
-                    from: 'button-variable',
+                    from: "button-variable",
                     editor,
                   })
                 : text}
@@ -146,14 +146,14 @@ export function ButtonView(props: NodeViewProps) {
           onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <TooltipProvider>
-            <div className="text-foreground flex items-stretch">
+            <div className="flex items-stretch text-foreground">
               <ButtonLabelInput
                 value={text}
                 onValueChange={(value, isVariable) => {
                   updateAttributes({
                     text: value,
                     isTextVariable: isVariable ?? false,
-                  });
+                  })
                 }}
                 isVariable={isTextVariable}
                 editor={editor}
@@ -172,7 +172,7 @@ export function ButtonView(props: NodeViewProps) {
                   onValueChange={(value) => {
                     updateAttributes({
                       borderRadius: value,
-                    });
+                    })
                   }}
                   tooltip="Border Radius"
                   className="capitalize"
@@ -188,7 +188,7 @@ export function ButtonView(props: NodeViewProps) {
                   onValueChange={(value) => {
                     updateAttributes({
                       variant: value,
-                    });
+                    })
                   }}
                   tooltip="Style"
                   className="capitalize"
@@ -198,20 +198,20 @@ export function ButtonView(props: NodeViewProps) {
                   label="Size"
                   value={size}
                   options={[
-                    { value: 'small', label: 'Small' },
-                    { value: 'medium', label: 'Medium' },
-                    { value: 'large', label: 'Large' },
+                    { value: "small", label: "Small" },
+                    { value: "medium", label: "Medium" },
+                    { value: "large", label: "Large" },
                   ]}
                   onValueChange={(value) => {
                     const { paddingX, paddingY } =
-                      sizes[value as 'small' | 'medium' | 'large'];
+                      sizes[value as "small" | "medium" | "large"]
 
                     updateAttributes({
                       paddingTop: paddingY,
                       paddingRight: paddingX,
                       paddingBottom: paddingY,
                       paddingLeft: paddingX,
-                    });
+                    })
                   }}
                   tooltip="Size"
                   placeholder="Size"
@@ -226,17 +226,17 @@ export function ButtonView(props: NodeViewProps) {
                   onAlignmentChange={(alignment) => {
                     updateAttributes({
                       alignment,
-                    });
+                    })
                   }}
                 />
 
                 <LinkInputPopover
-                  defaultValue={externalLink || ''}
+                  defaultValue={externalLink || ""}
                   onValueChange={(value, isVariable) => {
                     updateAttributes({
                       url: value,
                       isUrlVariable: isVariable ?? false,
-                    });
+                    })
                   }}
                   tooltip="Update External Link"
                   editor={editor}
@@ -249,20 +249,20 @@ export function ButtonView(props: NodeViewProps) {
               <div className="flex gap-x-0.5">
                 <BackgroundColorPickerPopup
                   variant={variant}
-                  color={buttonColor || 'transparent'}
+                  color={buttonColor || "transparent"}
                   onChange={(color) => {
                     updateAttributes({
                       buttonColor: color,
-                    });
+                    })
                   }}
                 />
 
                 <TextColorPickerPopup
-                  color={textColor || 'transparent'}
+                  color={textColor || "transparent"}
                   onChange={(color) => {
                     updateAttributes({
                       textColor: color,
-                    });
+                    })
                   }}
                 />
               </div>
@@ -274,7 +274,7 @@ export function ButtonView(props: NodeViewProps) {
                 onShowIfKeyValueChange={(value) => {
                   updateAttributes({
                     showIfKey: value,
-                  });
+                  })
                 }}
                 editor={editor}
               />
@@ -283,17 +283,17 @@ export function ButtonView(props: NodeViewProps) {
         </PopoverContent>
       </Popover>
     </NodeViewWrapper>
-  );
+  )
 }
 
 type ColorPickerProps = {
-  variant?: AllowedButtonVariant;
-  color: string;
-  onChange: (color: string) => void;
-};
+  variant?: AllowedButtonVariant
+  color: string
+  onChange: (color: string) => void
+}
 
 function BackgroundColorPickerPopup(props: ColorPickerProps) {
-  const { color, onChange, variant } = props;
+  const { color, onChange, variant } = props
 
   return (
     <ColorPicker
@@ -305,25 +305,25 @@ function BackgroundColorPickerPopup(props: ColorPickerProps) {
         <div
           className="h-4 w-4 shrink-0 rounded-full shadow"
           style={{
-            backgroundColor: variant === 'filled' ? color : 'transparent',
-            borderStyle: 'solid',
+            backgroundColor: variant === "filled" ? color : "transparent",
+            borderStyle: "solid",
             borderWidth: 2,
-            borderColor: variant === 'filled' ? 'white' : color,
+            borderColor: variant === "filled" ? "white" : color,
           }}
         />
       </BaseButton>
     </ColorPicker>
-  );
+  )
 }
 
 function TextColorPickerPopup(props: ColorPickerProps) {
-  const { color, onChange } = props;
+  const { color, onChange } = props
 
   return (
     <ColorPicker color={color} onColorChange={onChange} tooltip="Text Color">
       <BaseButton variant="ghost" size="sm" type="button" className="size-7">
         <div className="flex flex-col items-center justify-center gap-px">
-          <span className="font-bolder text-foreground font-mono text-xs">
+          <span className="font-bolder font-mono text-xs text-foreground">
             A
           </span>
           <div
@@ -333,5 +333,5 @@ function TextColorPickerPopup(props: ColorPickerProps) {
         </div>
       </BaseButton>
     </ColorPicker>
-  );
+  )
 }

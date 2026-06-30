@@ -1,0 +1,206 @@
+export const defaultLabels = {
+  // ── Slash-command default blocks: block.<exportName>.{title,description} ──
+  'block.text.title': 'Text',
+  'block.text.description': 'Just start typing with plain text.',
+  'block.heading1.title': 'Heading 1',
+  'block.heading1.description': 'Big heading.',
+  'block.heading2.title': 'Heading 2',
+  'block.heading2.description': 'Medium heading.',
+  'block.heading3.title': 'Heading 3',
+  'block.heading3.description': 'Small heading.',
+  'block.bulletList.title': 'Bullet List',
+  'block.bulletList.description': 'Create a simple bullet list.',
+  'block.orderedList.title': 'Numbered List',
+  'block.orderedList.description': 'Create a list with numbering.',
+  'block.image.title': 'Image',
+  'block.image.description': 'Full width image',
+  'block.logo.title': 'Logo',
+  'block.logo.description': 'Add your brand logo',
+  'block.inlineImage.title': 'Inline Image',
+  'block.inlineImage.description': 'Inline image',
+  'block.columns.title': 'Columns',
+  'block.columns.description': 'Add columns to email.',
+  'block.section.title': 'Section',
+  'block.section.description': 'Add a section to email.',
+  'block.repeat.title': 'Repeat',
+  'block.repeat.description': 'Loop over an array of items.',
+  'block.divider.title': 'Divider',
+  'block.divider.description': 'Add a horizontal divider.',
+  'block.spacer.title': 'Spacer',
+  'block.spacer.description': 'Add space between blocks.',
+  'block.button.title': 'Button',
+  'block.button.description': 'Add a call to action button to email.',
+  'block.linkCard.title': 'Link Card',
+  'block.linkCard.description': 'Add a link card to email.',
+  'block.hardBreak.title': 'Hard Break',
+  'block.hardBreak.description': 'Add a break between lines.',
+  'block.blockquote.title': 'Blockquote',
+  'block.blockquote.description': 'Add blockquote.',
+  'block.footer.title': 'Footer',
+  'block.footer.description': 'Add a footer text to email.',
+  'block.clearLine.title': 'Clear Line',
+  'block.clearLine.description': 'Clear the current line.',
+  'block.htmlCodeBlock.title': 'Custom HTML',
+  'block.htmlCodeBlock.description': 'Insert a custom HTML block',
+  // Header/footer submenu group blocks (id: 'headers' / 'footers')
+  'block.headers.title': 'Headers',
+  'block.headers.description': 'Add pre-designed headers block',
+  'block.footers.title': 'Footers',
+  'block.footers.description': 'Add pre-designed footers block',
+  // Header/footer leaf blocks
+  'block.headerLogoWithTextVertical.title': 'Logo with Text (Vertical)',
+  'block.headerLogoWithTextVertical.description': 'Logo and a text vertically',
+  'block.headerLogoWithTextHorizontal.title': 'Logo with Text (Horizontal)',
+  'block.headerLogoWithTextHorizontal.description': 'Logo and a text horizontally',
+  'block.headerLogoWithCoverImage.title': 'Logo with Cover Image',
+  'block.headerLogoWithCoverImage.description': 'Logo and a cover image',
+  'block.footerCopyrightText.title': 'Footer Copyright',
+  'block.footerCopyrightText.description': 'Copyright text for the footer.',
+  'block.footerCommunityFeedbackCta.title': 'Footer Community Feedback CTA',
+  'block.footerCommunityFeedbackCta.description':
+    'Community feedback CTA for the footer.',
+  'block.footerCompanySignature.title': 'Footer Company Signature',
+  'block.footerCompanySignature.description': 'Company signature for the footer.',
+
+  // ── Slash-command chrome ──
+  'slashCommand.group.blocks': 'Blocks',
+  'slashCommand.group.components': 'Components',
+  'slashCommand.navigate': 'to navigate',
+  'slashCommand.select': 'to select',
+
+  // ── Placeholders ──
+  'placeholder.default': 'Write something or / to see commands',
+  'placeholder.heading': 'Heading {level}',
+  'placeholder.html': 'Type your HTML code...',
+
+  // ── Text bubble menu ──
+  'toolbar.bold': 'Bold',
+  'toolbar.italic': 'Italic',
+  'toolbar.underline': 'Underline',
+  'toolbar.strikethrough': 'Strikethrough',
+  'toolbar.code': 'Code',
+  'toolbar.bulletList': 'Bullet List',
+  'toolbar.orderedList': 'Ordered List',
+  'toolbar.link': 'External URL',
+  'toolbar.textColor': 'Text Color',
+
+  // ── Turn-into menu ──
+  'turnInto.label': 'Turn into',
+  'turnInto.hierarchy': 'Hierarchy',
+  'turnInto.paragraph': 'Paragraph',
+  'turnInto.heading1': 'Heading 1',
+  'turnInto.heading2': 'Heading 2',
+  'turnInto.heading3': 'Heading 3',
+  'turnInto.footer': 'Footer',
+  'turnInto.lists': 'Lists',
+  'turnInto.bulletList': 'Bullet list',
+  'turnInto.numberedList': 'Numbered list',
+
+  // ── Alignment / direction / vertical-alignment switches ──
+  'alignment.left': 'Align Left',
+  'alignment.center': 'Align Center',
+  'alignment.right': 'Align Right',
+  'alignment.label': 'Alignment',
+  'direction.ltr': 'Left to Right',
+  'direction.rtl': 'Right to Left',
+  'direction.label': 'Text Direction',
+  'verticalAlignment.top': 'Align Top',
+  'verticalAlignment.center': 'Align Center',
+  'verticalAlignment.bottom': 'Align Bottom',
+
+  // ── Section bubble menu ──
+  'sectionMenu.borderRadius': 'Border Radius',
+  'sectionMenu.radius.sharp': 'Sharp',
+  'sectionMenu.radius.smooth': 'Smooth',
+  'sectionMenu.radius.round': 'Round',
+  'sectionMenu.borderWidth': 'Border Width',
+  'sectionMenu.borderWidth.none': 'None',
+  'sectionMenu.borderWidth.thin': 'Thin',
+  'sectionMenu.borderWidth.medium': 'Medium',
+  'sectionMenu.borderWidth.thick': 'Thick',
+  'sectionMenu.margin': 'Margin',
+  'sectionMenu.margin.none': 'None',
+  'sectionMenu.padding': 'Padding',
+  'sectionMenu.padding.none': 'None',
+  'sectionMenu.borderColor': 'Border Color',
+  'sectionMenu.backgroundColor': 'Background Color',
+  'sectionMenu.delete': 'Delete Section',
+  'sectionMenu.column': 'Column',
+
+  // ── Image / inline-image menus ──
+  'imageMenu.size': 'Size',
+  'imageMenu.borderRadius': 'Border Radius',
+  'imageMenu.radius.sharp': 'Sharp',
+  'imageMenu.radius.smooth': 'Smooth',
+  'imageMenu.radius.smoother': 'Smoother',
+  'imageMenu.radius.rounded': 'Rounded',
+  'imageMenu.radius.circle': 'Circle',
+  'imageMenu.lockAspectRatio': 'Lock Aspect Ratio',
+  'imageMenu.lockAspectRatioLock': 'Lock aspect ratio',
+  'imageMenu.lockAspectRatioUnlock': 'Unlock aspect ratio',
+  'imageMenu.sourceUrl': 'Source URL',
+  'imageMenu.externalUrl': 'External URL',
+  'imageMenu.width': 'W',
+  'imageMenu.height': 'H',
+  'imageMenu.unitPx': 'PX',
+  'inlineImageMenu.sourceUrl': 'Source URL',
+  'inlineImageMenu.externalUrl': 'External URL',
+
+  // ── Column menu ──
+  'columnMenu.gap': 'Columns Gap',
+  'columnMenu.gap.none': 'None',
+  'columnMenu.delete': 'Delete Columns',
+  'columnMenu.width': 'W',
+  'columnMenu.fitContent': 'Fit content',
+  'columnMenu.stretch': 'Stretch',
+  'columnMenu.twoColumns': '2 Columns',
+  'columnMenu.threeColumns': '3 Columns',
+  'columnMenu.left': 'Left',
+  'columnMenu.right': 'Right',
+  'columnMenu.middle': 'Middle',
+  'columnMenu.autoPlaceholder': 'auto',
+  'columnMenu.unitPercent': '%',
+
+  // ── Repeat menu ──
+  'repeatMenu.label': 'Repeat',
+  'repeatMenu.iterableHint':
+    'Ensure the selected variable is iterable, such as an array of objects.',
+  'repeatMenu.placeholder': 'ie. payload.items',
+
+  // ── HTML menu ──
+  'htmlMenu.htmlCode': 'HTML Code',
+  'htmlMenu.preview': 'Preview',
+
+  // ── Content (drag-handle) menu ──
+  'contentMenu.addNode': 'Add new node',
+  'contentMenu.nodeActions': 'Node actions',
+  'contentMenu.duplicate': 'Duplicate',
+  'contentMenu.delete': 'Delete',
+
+  // ── Show-conditionally popover ──
+  'showPopover.showConditionally': 'Show block conditionally',
+  'showPopover.showIf': 'Show if',
+  'showPopover.showIfHint': 'Show the block if the selected variable is true.',
+
+  // ── Edge-spacing micro-labels (T/R/B/L) ──
+  'edgeSpacing.top': 'T',
+  'edgeSpacing.right': 'R',
+  'edgeSpacing.bottom': 'B',
+  'edgeSpacing.left': 'L',
+
+  // ── Spacing scale (section margin/padding dropdowns; keyed by short code) ──
+  'spacing.xs': 'Extra Small',
+  'spacing.sm': 'Small',
+  'spacing.md': 'Medium',
+  'spacing.lg': 'Large',
+  'spacing.xl': 'Extra Large',
+
+  // ── Misc ──
+  'colorPicker.recentlyUsed': 'Recently used',
+  'inputAutocomplete.placeholder': 'e.g. items',
+} as const;
+
+export type LabelKey = keyof typeof defaultLabels;
+
+/** A COMPLETE language. Every key required — no Partial. */
+export type MailyLabels = Record<LabelKey, string>;

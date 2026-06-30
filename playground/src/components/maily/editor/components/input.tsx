@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '../utils/classname';
+import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
 
 export interface InputProps

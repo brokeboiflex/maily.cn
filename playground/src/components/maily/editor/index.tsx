@@ -20,13 +20,18 @@ import { SpacerBubbleMenu } from './components/spacer-menu/spacer-bubble-menu';
 import { TextBubbleMenu } from './components/text-menu/text-bubble-menu';
 import { VariableBubbleMenu } from './components/variable-menu/variable-bubble-menu';
 import { extensions as defaultExtensions } from './extensions';
-import { DEFAULT_SLASH_COMMANDS } from './extensions/slash-command/default-slash-commands';
+import { getDefaultBlocks } from './extensions/slash-command/default-slash-commands';
 import {
   DEFAULT_PLACEHOLDER_URL,
   MailyContextType,
   MailyProvider,
 } from './provider';
-import { cn } from './utils/classname';
+import {
+  createTranslator,
+  defaultLabels,
+  type MailyLabels,
+} from './i18n';
+import { cn } from '@/lib/utils';
 import { replaceDeprecatedNode } from './utils/replace-deprecated';
 
 type ParitialMailContextType = Partial<MailyContextType>;
@@ -79,6 +84,7 @@ export type EditorProps = {
   editable?: boolean;
   scrollThreshold?: number;
   scrollMargin?: number;
+  labels?: MailyLabels;
 } & ParitialMailContextType;
 
 export function Editor(props: EditorProps) {
@@ -98,12 +104,20 @@ export function Editor(props: EditorProps) {
     extensions,
     contentHtml,
     contentJson,
-    blocks = DEFAULT_SLASH_COMMANDS,
+    blocks,
+    labels,
     editable = true,
     placeholderUrl = DEFAULT_PLACEHOLDER_URL,
     scrollThreshold = 40,
     scrollMargin = 40,
   } = props;
+
+  const resolvedLabels: MailyLabels = labels ?? { ...defaultLabels };
+  const t = useMemo(() => createTranslator(resolvedLabels), [resolvedLabels]);
+  const resolvedBlocks = useMemo(
+    () => blocks ?? getDefaultBlocks(t),
+    [blocks, t]
+  );
 
   const formattedContent = useMemo(() => {
     if (contentJson) {
@@ -150,7 +164,8 @@ export function Editor(props: EditorProps) {
     },
     extensions: defaultExtensions({
       extensions,
-      blocks,
+      blocks: resolvedBlocks,
+      t,
     }),
     content: formattedContent,
     autofocus,
@@ -162,7 +177,12 @@ export function Editor(props: EditorProps) {
   }
 
   return (
-    <MailyProvider placeholderUrl={placeholderUrl}>
+    <MailyProvider
+      placeholderUrl={placeholderUrl}
+      blocks={resolvedBlocks}
+      labels={resolvedLabels}
+      t={t}
+    >
       <div
         id="mly-editor"
         className={cn(
@@ -195,3 +215,6 @@ export function Editor(props: EditorProps) {
     </MailyProvider>
   );
 }
+
+export { defaultLabels, createTranslator } from './i18n';
+export type { MailyLabels, LabelKey, TranslateFn } from './i18n';

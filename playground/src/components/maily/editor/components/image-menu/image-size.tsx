@@ -1,4 +1,5 @@
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
+import { useMailyContext } from '../../provider';
 
 type ImageSizeProps = {
   value: string;
@@ -8,11 +9,12 @@ type ImageSizeProps = {
 
 export function ImageSize(props: ImageSizeProps) {
   const { value, onValueChange, dimension } = props;
+  const { t } = useMailyContext();
 
   return (
     <label className="relative flex items-center">
       <span className="text-muted-foreground absolute inset-y-0 left-2 flex items-center text-xs leading-none">
-        {dimension === 'width' ? 'W' : 'H'}
+        {dimension === 'width' ? t('imageMenu.width') : t('imageMenu.height')}
       </span>
       <input
         {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
@@ -22,7 +24,7 @@ export function ImageSize(props: ImageSizeProps) {
         onChange={(e) => onValueChange(e.target.value)}
       />
       <span className="text-muted-foreground absolute inset-y-0 right-1 flex items-center text-xs leading-none">
-        PX
+        {t('imageMenu.unitPx')}
       </span>
     </label>
   );

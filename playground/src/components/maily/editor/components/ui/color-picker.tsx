@@ -1,25 +1,26 @@
-'use client';
+"use client"
 
-import { HexColorPicker, HexColorInput } from 'react-colorful';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { BaseButton } from '../base-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
-import { cn } from '../../utils/classname';
-import { ReactNode } from 'react';
+import { HexColorPicker, HexColorInput } from "react-colorful"
+import { Popover, PopoverContent, PopoverTrigger } from "../popover"
+import { BaseButton } from "../base-button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip"
+import { cn } from "@/lib/utils"
+import { ReactNode } from "react"
+import { useMailyContext } from "../../provider"
 
 type ColorPickerProps = {
-  color: string;
-  onColorChange: (color: string) => void;
+  color: string
+  onColorChange: (color: string) => void
 
-  borderColor?: string;
-  backgroundColor?: string;
-  tooltip?: string;
-  className?: string;
+  borderColor?: string
+  backgroundColor?: string
+  tooltip?: string
+  className?: string
 
-  children?: ReactNode;
-  onClose?: (color: string) => void;
-  suggestedColors?: string[];
-};
+  children?: ReactNode
+  onClose?: (color: string) => void
+  suggestedColors?: string[]
+}
 
 export function ColorPicker(props: ColorPickerProps) {
   const {
@@ -34,7 +35,8 @@ export function ColorPicker(props: ColorPickerProps) {
     onClose,
 
     suggestedColors = [],
-  } = props;
+  } = props
+  const { t } = useMailyContext()
 
   const handleColorChange = (color: string) => {
     // HACK: This is a workaround for a bug in tiptap
@@ -45,9 +47,9 @@ export function ColorPicker(props: ColorPickerProps) {
     // To fix this, we need to make sure that the onChange
     // callback is run after the current execution context.
     queueMicrotask(() => {
-      onColorChange(color);
-    });
-  };
+      onColorChange(color)
+    })
+  }
 
   const popoverButton = (
     <PopoverTrigger asChild>
@@ -60,24 +62,24 @@ export function ColorPicker(props: ColorPickerProps) {
         >
           <div
             className={cn(
-              'border-border h-4 w-4 shrink-0 rounded border-2',
+              "h-4 w-4 shrink-0 rounded border-2 border-border",
               className
             )}
             style={{
               ...(borderColor ? { borderColor } : {}),
-              backgroundColor: backgroundColor || 'transparent',
+              backgroundColor: backgroundColor || "transparent",
             }}
           />
         </BaseButton>
       )}
     </PopoverTrigger>
-  );
+  )
 
   return (
     <Popover
       onOpenChange={(open) => {
         if (!open) {
-          onClose?.(color);
+          onClose?.(color)
         }
       }}
     >
@@ -94,7 +96,7 @@ export function ColorPicker(props: ColorPickerProps) {
         className="w-full rounded-none border-0 bg-transparent! p-0! shadow-none drop-shadow-md"
         sideOffset={8}
       >
-        <div className="border-border bg-background min-w-[260px] rounded-xl border p-4">
+        <div className="min-w-[260px] rounded-xl border border-border bg-background p-4">
           <HexColorPicker
             color={color}
             onChange={handleColorChange}
@@ -104,15 +106,17 @@ export function ColorPicker(props: ColorPickerProps) {
             alpha={true}
             color={color}
             onChange={handleColorChange}
-            className="border-border bg-background focus-visible:border-ring mt-4 w-full min-w-0 rounded-lg border px-2 py-1.5 text-sm uppercase focus-visible:outline-hidden"
+            className="mt-4 w-full min-w-0 rounded-lg border border-border bg-background px-2 py-1.5 text-sm uppercase focus-visible:border-ring focus-visible:outline-hidden"
             prefixed
           />
 
           {suggestedColors.length > 0 && (
             <div>
-              <div className="bg-muted -mx-4 my-4 h-px" />
+              <div className="-mx-4 my-4 h-px bg-muted" />
 
-              <h2 className="text-muted-foreground text-xs">Recently used</h2>
+              <h2 className="text-xs text-muted-foreground">
+                {t("colorPicker.recentlyUsed")}
+              </h2>
 
               <div className="mt-2 flex flex-wrap gap-0.5">
                 {suggestedColors.map((suggestedColor) => (
@@ -138,5 +142,5 @@ export function ColorPicker(props: ColorPickerProps) {
         </div>
       </PopoverContent>
     </Popover>
-  );
+  )
 }

@@ -15,6 +15,8 @@ import { Select } from '../ui/select';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { deleteNode } from '../../utils/delete-node';
 import { spacing } from '../../utils/spacing';
+import { useMailyContext } from '../../provider';
+import type { LabelKey } from '../../i18n';
 
 type ColumnsBubbleMenuProps = {
   editor: EditorBubbleMenuProps['editor'];
@@ -27,6 +29,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
   }
 
   const state = useColumnsState(editor);
+  const { t } = useMailyContext();
 
   const currentColumnCount = state.columnsCount;
 
@@ -67,12 +70,12 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
 
         <Select
           icon={Space}
-          label="Columns Gap"
+          label={t('columnMenu.gap')}
           value={state.currentColumnsGap}
           options={[
-            { value: '0', label: 'None' },
+            { value: '0', label: t('columnMenu.gap.none') },
             ...spacing.map((space) => ({
-              label: space.name,
+              label: t(`spacing.${space.short}` as LabelKey),
               value: String(space.value),
             })),
           ]}
@@ -81,14 +84,14 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               gap: +value,
             });
           }}
-          tooltip="Columns Gap"
+          tooltip={t('columnMenu.gap')}
         />
 
         <Divider />
 
         <BubbleMenuButton
           icon={Trash}
-          tooltip="Delete Columns"
+          tooltip={t('columnMenu.delete')}
           command={() => {
             deleteNode(editor, 'columns');
           }}

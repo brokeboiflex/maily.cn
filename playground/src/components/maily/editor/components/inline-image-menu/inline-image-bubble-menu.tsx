@@ -11,6 +11,7 @@ import {
   DEFAULT_INLINE_IMAGE_HEIGHT,
   DEFAULT_INLINE_IMAGE_WIDTH,
 } from '../../nodes/inline-image/inline-image';
+import { useMailyContext } from '../../provider';
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
@@ -19,6 +20,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   }
 
   const state = useInlineImageState(editor);
+  const { t } = useMailyContext();
 
   const bubbleMenuProps: EditorBubbleMenuProps = {
     ...props,
@@ -58,7 +60,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
                 })
                 .run();
             }}
-            tooltip="Source URL"
+            tooltip={t('inlineImageMenu.sourceUrl')}
             icon={ImageDownIcon}
             editor={editor}
             isVariable={state.isSrcVariable}
@@ -75,7 +77,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
                 })
                 .run();
             }}
-            tooltip="External URL"
+            tooltip={t('inlineImageMenu.externalUrl')}
             editor={editor}
             isVariable={state.isExternalLinkVariable}
           />

@@ -1,6 +1,7 @@
 import { AlignVerticalDistributeCenter, AlignVerticalDistributeEnd, AlignVerticalDistributeStart } from "lucide-react"
 import { BubbleMenuButton } from './bubble-menu-button';
 import { AllowedColumnVerticalAlign } from '../nodes/columns/column';
+import { useMailyContext } from '../provider';
 
 type VerticalAlignmentSwitchProps = {
   alignment: AllowedColumnVerticalAlign;
@@ -9,25 +10,26 @@ type VerticalAlignmentSwitchProps = {
 
 export function VerticalAlignmentSwitch(props: VerticalAlignmentSwitchProps) {
   const { alignment = 'top', onAlignmentChange } = props;
+  const { t } = useMailyContext();
 
   const activeAlignment = {
     top: {
       icon: AlignVerticalDistributeStart,
-      tooltip: 'Align Top',
+      tooltip: t('verticalAlignment.top'),
       onClick: () => {
         onAlignmentChange('middle');
       },
     },
     middle: {
       icon: AlignVerticalDistributeCenter,
-      tooltip: 'Align Center',
+      tooltip: t('verticalAlignment.center'),
       onClick: () => {
         onAlignmentChange('bottom');
       },
     },
     bottom: {
       icon: AlignVerticalDistributeEnd,
-      tooltip: 'Align Bottom',
+      tooltip: t('verticalAlignment.bottom'),
       onClick: () => {
         onAlignmentChange('top');
       },

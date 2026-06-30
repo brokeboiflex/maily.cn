@@ -24,63 +24,66 @@ import {
   footerCommunityFeedbackCta,
   footerCompanySignature,
 } from '../../../blocks/footers';
+import type { TranslateFn } from '../../i18n';
 import { Heading1, FootprintsIcon } from "lucide-react";
 
-export const DEFAULT_SLASH_COMMANDS: BlockGroupItem[] = [
-  {
-    title: 'Blocks',
-    commands: [
-      text,
-      heading1,
-      heading2,
-      heading3,
-      bulletList,
-      orderedList,
-      image,
-      logo,
-      inlineImage,
-      columns,
-      section,
-      repeat,
-      divider,
-      spacer,
-      button,
-      linkCard,
-      hardBreak,
-      blockquote,
-      footer,
-      clearLine,
-    ],
-  },
-  {
-    title: 'Components',
-    commands: [
-      {
-        id: 'headers',
-        title: 'Headers',
-        description: 'Add pre-designed headers block',
-        searchTerms: ['header', 'headers'],
-        icon: <Heading1 className="h-4 w-4" />,
-        preview: 'https://cdn.usemaily.com/previews/header-preview-xyz.png',
-        commands: [
-          headerLogoWithTextVertical,
-          headerLogoWithTextHorizontal,
-          headerLogoWithCoverImage,
-        ],
-      },
-      {
-        id: 'footers',
-        title: 'Footers',
-        description: 'Add pre-designed footers block',
-        searchTerms: ['footers'],
-        icon: <FootprintsIcon className="h-4 w-4" />,
-        commands: [
-          footerCopyrightText,
-          footerCommunityFeedbackCta,
-          footerCompanySignature,
-        ],
-      },
-      htmlCodeBlock,
-    ],
-  },
-];
+export function getDefaultBlocks(t: TranslateFn): BlockGroupItem[] {
+  return [
+    {
+      title: t('slashCommand.group.blocks'),
+      commands: [
+        text(t),
+        heading1(t),
+        heading2(t),
+        heading3(t),
+        bulletList(t),
+        orderedList(t),
+        image(t),
+        logo(t),
+        inlineImage(t),
+        columns(t),
+        section(t),
+        repeat(t),
+        divider(t),
+        spacer(t),
+        button(t),
+        linkCard(t),
+        hardBreak(t),
+        blockquote(t),
+        footer(t),
+        clearLine(t),
+      ],
+    },
+    {
+      title: t('slashCommand.group.components'),
+      commands: [
+        {
+          id: 'headers',
+          title: t('block.headers.title'),
+          description: t('block.headers.description'),
+          searchTerms: ['header', 'headers'],
+          icon: <Heading1 className="h-4 w-4" />,
+          preview: 'https://cdn.usemaily.com/previews/header-preview-xyz.png',
+          commands: [
+            headerLogoWithTextVertical(t),
+            headerLogoWithTextHorizontal(t),
+            headerLogoWithCoverImage(t),
+          ],
+        },
+        {
+          id: 'footers',
+          title: t('block.footers.title'),
+          description: t('block.footers.description'),
+          searchTerms: ['footers'],
+          icon: <FootprintsIcon className="h-4 w-4" />,
+          commands: [
+            footerCopyrightText(t),
+            footerCommunityFeedbackCta(t),
+            footerCompanySignature(t),
+          ],
+        },
+        htmlCodeBlock(t),
+      ],
+    },
+  ];
+}

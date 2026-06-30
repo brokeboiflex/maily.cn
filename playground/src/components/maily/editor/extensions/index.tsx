@@ -5,29 +5,31 @@ import { InlineImageExtension } from '../nodes/inline-image/inline-image';
 import { getVariableSuggestions } from '../nodes/variable/variable-suggestions';
 import { MailyContextType } from '../provider';
 import { MailyKit } from './maily-kit';
-import { PlaceholderExtension } from './placeholder';
+import { createPlaceholderExtension } from './placeholder';
 import { SlashCommandExtension } from './slash-command/slash-command';
 import { getSlashCommandSuggestions } from './slash-command/slash-command-view';
 import { SelectionExtension } from './selection/selection';
+import { englishTranslator, type TranslateFn } from '../i18n';
 
 type ExtensionsProps = Partial<MailyContextType> & {
   extensions?: AnyExtension[];
+  t?: TranslateFn;
 };
 
 export function extensions(props: ExtensionsProps) {
-  const { blocks, extensions = [] } = props;
+  const { blocks, extensions = [], t = englishTranslator } = props;
 
   const defaultExtensions = [
     MailyKit,
     SlashCommandExtension.configure({
-      suggestion: getSlashCommandSuggestions(blocks),
+      suggestion: getSlashCommandSuggestions(blocks, t),
     }),
     VariableExtension.configure({
       suggestion: getVariableSuggestions(),
     }),
     HTMLCodeBlockExtension,
     InlineImageExtension,
-    PlaceholderExtension,
+    createPlaceholderExtension(t),
     SelectionExtension,
   ].filter((ext) => {
     return !extensions.some((e) => e.name === ext.name);
