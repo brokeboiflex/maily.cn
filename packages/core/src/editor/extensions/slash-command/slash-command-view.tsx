@@ -379,8 +379,8 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           ))}
         </div>
         <div className="border-border border-t px-4 py-3">
-          <div className="flex items-center justify-between">
-            <p className="text-muted-foreground text-center text-xs">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-muted-foreground text-left text-xs">
               <kbd className="border-border rounded border p-1 px-2 font-medium">
                 ↑
               </kbd>
@@ -389,7 +389,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
               </kbd>{' '}
               <span className="ml-1 select-none">{navigateLabel}</span>
             </p>
-            <p className="text-muted-foreground text-center text-xs">
+            <p className="text-muted-foreground text-right text-xs">
               <kbd className="border-border rounded border p-1 px-1.5 font-medium">
                 Enter
               </kbd>{' '}
