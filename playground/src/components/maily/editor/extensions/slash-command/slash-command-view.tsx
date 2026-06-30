@@ -389,7 +389,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
               </kbd>{' '}
               <span className="ml-1 select-none">{navigateLabel}</span>
             </p>
-            <p className="text-muted-foreground text-right text-xs">
+            <p className="text-muted-foreground text-left text-xs">
               <kbd className="border-border rounded border p-1 px-1.5 font-medium">
                 Enter
               </kbd>{' '}
