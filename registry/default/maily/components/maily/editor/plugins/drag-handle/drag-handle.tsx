@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 
 import { Node } from '@tiptap/pm/model';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Editor } from '@tiptap/core';
-import { Props as TippyProps } from 'tippy.js';
+import { type Props as TippyProps } from 'tippy.js';
 import {
   DragHandlePlugin,
   dragHandlePluginDefaultKey,

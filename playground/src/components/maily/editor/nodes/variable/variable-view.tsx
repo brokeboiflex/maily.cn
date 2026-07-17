@@ -3,22 +3,25 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '../../components/popover';
-import { Divider } from '../../components/ui/divider';
-import { TooltipProvider } from '../../components/ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
+import { useMailyContext } from '../../provider';
 import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { getNodeOptions } from '../../utils/node-options';
-import { NodeViewProps } from '@tiptap/core';
+import { type NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useMemo } from 'react';
 import {
   DEFAULT_RENDER_VARIABLE_FUNCTION,
-  VariableOptions,
+  type VariableOptions,
   type RenderVariableFunction,
 } from './variable';
 import { Pencil, Braces, AlertTriangle } from "lucide-react";
 
 export function VariableView(props: NodeViewProps) {
+  const { t } = useMailyContext();
   const { node, updateAttributes, editor } = props;
   const {
     id,
@@ -71,9 +74,9 @@ export function VariableView(props: NodeViewProps) {
             <div className="text-foreground flex items-stretch">
               <label className="relative">
                 <span className="text-foreground inline-block px-2 text-xs">
-                  Variable
+                  {t('variableMenu.variable')}
                 </span>
-                <input
+                <Input
                   {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                   value={id ?? ''}
                   onChange={(e) => {
@@ -81,20 +84,20 @@ export function VariableView(props: NodeViewProps) {
                       id: e.target.value,
                     });
                   }}
-                  placeholder="ie. name..."
+                  placeholder={t('variableMenu.variablePlaceholder')}
                   className="bg-muted text-foreground focus:bg-muted h-7 w-36 rounded-md px-2 text-sm focus:outline-hidden disabled:cursor-not-allowed"
                 />
               </label>
 
               {!hideDefaultValue && (
                 <>
-                  <Divider className="mx-1.5" />
+                  <Separator orientation="vertical" className="mx-1.5" />
 
                   <label className="relative">
                     <span className="text-foreground inline-block px-2 pl-1 text-xs">
-                      Default
+                      {t('variableMenu.default')}
                     </span>
-                    <input
+                    <Input
                       {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                       value={fallback ?? ''}
                       onChange={(e) => {
@@ -102,7 +105,7 @@ export function VariableView(props: NodeViewProps) {
                           fallback: e.target.value,
                         });
                       }}
-                      placeholder="ie. John Doe..."
+                      placeholder={t('variableMenu.defaultPlaceholder')}
                       className="bg-muted text-foreground focus:bg-muted h-7 w-32 rounded-md px-2 pr-6 text-sm focus:outline-none"
                     />
                     <div className="absolute inset-y-0 right-1 flex items-center">

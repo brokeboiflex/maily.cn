@@ -1,6 +1,6 @@
-import { AllowedLogoAlignment } from '@/editor/nodes/logo/logo';
+import { type AllowedLogoAlignment } from '@/editor/nodes/logo/logo';
 import {
-  AllowedTextDirection,
+  type AllowedTextDirection,
   DEFAULT_TEXT_DIRECTION,
 } from '@/editor/nodes/paragraph/paragraph';
 import { Editor, useEditorState } from '@tiptap/react';

@@ -1,8 +1,8 @@
 import { cn } from '@/editor/utils/classname';
-import { NodeViewProps } from '@tiptap/core';
+import { type NodeViewProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { useMemo } from 'react';
-import { HtmlCodeBlockAttributes } from './html';
+import { type HtmlCodeBlockAttributes } from './html';
 
 // highlight.js token colors for the HTML code view. These are literal
 // syntax-theme colors (a code palette is its own thing, not the host's shadcn

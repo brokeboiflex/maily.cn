@@ -51,7 +51,8 @@ export const defaultLabels = {
   'block.headerLogoWithTextVertical.title': 'Logo with Text (Vertical)',
   'block.headerLogoWithTextVertical.description': 'Logo and a text vertically',
   'block.headerLogoWithTextHorizontal.title': 'Logo with Text (Horizontal)',
-  'block.headerLogoWithTextHorizontal.description': 'Logo and a text horizontally',
+  'block.headerLogoWithTextHorizontal.description':
+    'Logo and a text horizontally',
   'block.headerLogoWithCoverImage.title': 'Logo with Cover Image',
   'block.headerLogoWithCoverImage.description': 'Logo and a cover image',
   'block.footerCopyrightText.title': 'Footer Copyright',
@@ -60,13 +61,15 @@ export const defaultLabels = {
   'block.footerCommunityFeedbackCta.description':
     'Community feedback CTA for the footer.',
   'block.footerCompanySignature.title': 'Footer Company Signature',
-  'block.footerCompanySignature.description': 'Company signature for the footer.',
+  'block.footerCompanySignature.description':
+    'Company signature for the footer.',
 
   // ── Slash-command chrome ──
   'slashCommand.group.blocks': 'Blocks',
   'slashCommand.group.components': 'Components',
   'slashCommand.navigate': 'to navigate',
   'slashCommand.select': 'to select',
+  'slashCommand.enter': 'Enter',
 
   // ── Placeholders ──
   'placeholder.default': 'Write something or / to see commands',
@@ -82,6 +85,7 @@ export const defaultLabels = {
   'toolbar.bulletList': 'Bullet List',
   'toolbar.orderedList': 'Ordered List',
   'toolbar.link': 'External URL',
+  'toolbar.linkPrompt': 'Enter a URL',
   'toolbar.textColor': 'Text Color',
 
   // ── Turn-into menu ──
@@ -146,6 +150,22 @@ export const defaultLabels = {
   'inlineImageMenu.sourceUrl': 'Source URL',
   'inlineImageMenu.externalUrl': 'External URL',
 
+  // ── Button menu ──
+  'buttonMenu.borderRadius': 'Border Radius',
+  'buttonMenu.radius.sharp': 'Sharp',
+  'buttonMenu.radius.smooth': 'Smooth',
+  'buttonMenu.radius.round': 'Round',
+  'buttonMenu.style': 'Style',
+  'buttonMenu.style.filled': 'Filled',
+  'buttonMenu.style.outline': 'Outline',
+  'buttonMenu.size': 'Size',
+  'buttonMenu.size.small': 'Small',
+  'buttonMenu.size.medium': 'Medium',
+  'buttonMenu.size.large': 'Large',
+  'buttonMenu.updateExternalLink': 'Update External Link',
+  'buttonMenu.backgroundColor': 'Background Color',
+  'buttonMenu.textColor': 'Text Color',
+
   // ── Column menu ──
   'columnMenu.gap': 'Columns Gap',
   'columnMenu.gap.none': 'None',
@@ -181,6 +201,40 @@ export const defaultLabels = {
   'showPopover.showConditionally': 'Show block conditionally',
   'showPopover.showIf': 'Show if',
   'showPopover.showIfHint': 'Show the block if the selected variable is true.',
+
+  // ── Link card ──
+  'linkCard.imageAlt': 'Link card image',
+  'linkCard.image': 'Image',
+  'linkCard.imagePlaceholder': 'Add image',
+  'linkCard.title': 'Title',
+  'linkCard.titlePlaceholder': 'Add title',
+  'linkCard.description': 'Description',
+  'linkCard.descriptionPlaceholder': 'Add description here',
+  'linkCard.linkTitle': 'Link Title',
+  'linkCard.linkTitlePlaceholder': 'Add link title here',
+  'linkCard.link': 'Link',
+  'linkCard.linkPlaceholder': 'Add link here',
+  'linkCard.badgeText': 'Badge Text',
+  'linkCard.badgeTextPlaceholder': 'Add badge text here',
+  'linkCard.subTitle': 'Sub Title',
+  'linkCard.subTitlePlaceholder': 'Add sub title here',
+
+  // ── Image and logo node status ──
+  'imageStatus.noImage': 'No image selected',
+  'imageStatus.dropImage': 'Click or drop image here',
+  'imageStatus.loading': 'Loading image...',
+  'imageStatus.error': 'Error loading image',
+  'imageStatus.variable': 'Variable image URL',
+  'logo.alt': 'Logo',
+
+  // ── Variables ──
+  'variableMenu.variable': 'Variable',
+  'variableMenu.variablePlaceholder': 'e.g. name',
+  'variableMenu.default': 'Default',
+  'variableMenu.defaultPlaceholder': 'e.g. John Doe',
+  'variableMenu.title': 'Variables',
+  'variableMenu.noResult': 'No result',
+  'variableMenu.navigate': 'Navigate',
 
   // ── Edge-spacing micro-labels (T/R/B/L) ──
   'edgeSpacing.top': 'T',

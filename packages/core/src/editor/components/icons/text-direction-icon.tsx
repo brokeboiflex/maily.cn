@@ -1,4 +1,4 @@
-import { SVGProps } from 'react';
+import { type SVGProps } from 'react';
 
 export function LtrIcon(props: SVGProps<SVGSVGElement>) {
   return (

@@ -1,11 +1,11 @@
-import { BlockGroupItem, BlockItem } from '../../../blocks/types';
-import { Editor, Range } from '@tiptap/core';
+import { type BlockGroupItem, type BlockItem } from '../../../blocks/types';
+import { Editor, type Range } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
-import { SuggestionOptions } from '@tiptap/suggestion';
+import { type SuggestionOptions } from '@tiptap/suggestion';
 import {
   forwardRef,
   Fragment,
-  KeyboardEvent,
+  type KeyboardEvent,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -13,17 +13,23 @@ import {
   useRef,
   useState,
 } from 'react';
-import tippy, { GetReferenceClientRect, Instance } from 'tippy.js';
+import tippy, { type GetReferenceClientRect, type Instance } from 'tippy.js';
 import { getDefaultBlocks } from './default-slash-commands';
 import { englishTranslator, type TranslateFn } from '../../i18n';
 import { SlashCommandItem } from './slash-command-item';
 import { SlashCommandSubmenu } from './slash-command-submenu';
 import { filterSlashCommands } from './slash-command-search';
+import { Kbd } from '@/components/ui/kbd';
 
 const isSubCommandItem = (item: BlockItem | undefined): boolean =>
   !!item && 'commands' in item;
 
 type SubmenuState = { groupIndex: number; commandIndex: number };
+type SubmenuLayout = {
+  top: number;
+  width: number;
+  side: 'left' | 'right' | 'overlay';
+};
 
 type CommandListProps = {
   items: BlockGroupItem[];
@@ -33,6 +39,7 @@ type CommandListProps = {
   query: string;
   navigateLabel?: string;
   selectLabel?: string;
+  enterLabel?: string;
 };
 
 const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
@@ -44,6 +51,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
     query,
     navigateLabel = englishTranslator('slashCommand.navigate'),
     selectLabel = englishTranslator('slashCommand.select'),
+    enterLabel = englishTranslator('slashCommand.enter'),
   } = props;
 
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
@@ -51,7 +59,11 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   const [submenu, setSubmenu] = useState<SubmenuState | null>(null);
   const [submenuIndex, setSubmenuIndex] = useState(0);
   const [focusInSubmenu, setFocusInSubmenu] = useState(false);
-  const [submenuTop, setSubmenuTop] = useState(0);
+  const [submenuLayout, setSubmenuLayout] = useState<SubmenuLayout>({
+    top: 0,
+    width: 320,
+    side: 'right',
+  });
 
   const prevQuery = useRef('');
   const prevSelectedGroupIndex = useRef(0);
@@ -64,7 +76,9 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
     ? groups[submenu.groupIndex]?.commands[submenu.commandIndex]
     : undefined;
   const submenuCommands: BlockItem[] =
-    openSubItem && 'commands' in openSubItem && Array.isArray(openSubItem.commands)
+    openSubItem &&
+    'commands' in openSubItem &&
+    Array.isArray(openSubItem.commands)
       ? openSubItem.commands
       : [];
 
@@ -304,8 +318,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
     activeCommandRef,
   ]);
 
-  // Align the submenu flyout to its trigger row (the active item when open).
-  useLayoutEffect(() => {
+  const updateSubmenuLayout = useCallback(() => {
     if (!submenu) {
       return;
     }
@@ -318,8 +331,59 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
 
     const triggerRect = trigger.getBoundingClientRect();
     const wrapperRect = wrapper.getBoundingClientRect();
-    setSubmenuTop(triggerRect.top - wrapperRect.top);
-  }, [submenu, selectedGroupIndex, selectedCommandIndex]);
+    const viewportGutter = 8;
+    const flyoutGap = 4;
+    const desiredWidth = 320;
+    const minimumUsefulWidth = 192;
+    const availableRight = Math.max(
+      0,
+      window.innerWidth - wrapperRect.right - flyoutGap - viewportGutter
+    );
+    const availableLeft = Math.max(
+      0,
+      wrapperRect.left - flyoutGap - viewportGutter
+    );
+
+    let side: SubmenuLayout['side'];
+    let width: number;
+
+    if (Math.max(availableRight, availableLeft) < minimumUsefulWidth) {
+      side = 'overlay';
+      width = Math.min(
+        desiredWidth,
+        window.innerWidth - wrapperRect.left - viewportGutter
+      );
+    } else {
+      side =
+        availableRight >= desiredWidth || availableRight >= availableLeft
+          ? 'right'
+          : 'left';
+      width = Math.min(
+        desiredWidth,
+        side === 'right' ? availableRight : availableLeft
+      );
+    }
+
+    setSubmenuLayout({
+      top: triggerRect.top - wrapperRect.top,
+      width,
+      side,
+    });
+  }, [submenu]);
+
+  // Align the submenu flyout to its trigger row and keep it within the viewport.
+  useLayoutEffect(() => {
+    updateSubmenuLayout();
+  }, [updateSubmenuLayout, selectedGroupIndex, selectedCommandIndex]);
+
+  useEffect(() => {
+    if (!submenu) {
+      return;
+    }
+
+    window.addEventListener('resize', updateSubmenuLayout);
+    return () => window.removeEventListener('resize', updateSubmenuLayout);
+  }, [submenu, updateSubmenuLayout]);
 
   useEffect(() => {
     setSelectedGroupIndex(0);
@@ -378,23 +442,19 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             </Fragment>
           ))}
         </div>
-        <div className="border-border border-t px-4 py-3">
+        <div className="border-border border-t px-3 py-2">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-muted-foreground text-left text-xs">
-              <kbd className="border-border rounded border p-1 px-2 font-medium">
-                ↑
-              </kbd>
-              <kbd className="border-border ml-1 rounded border p-1 px-2 font-medium">
-                ↓
-              </kbd>{' '}
-              <span className="ml-1 select-none">{navigateLabel}</span>
-            </p>
-            <p className="text-muted-foreground text-left text-xs">
-              <kbd className="border-border rounded border p-1 px-1.5 font-medium">
-                Enter
-              </kbd>{' '}
-              <span className="ml-1 select-none">{selectLabel}</span>
-            </p>
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              <div className="flex items-center gap-1">
+                <Kbd>↑</Kbd>
+                <Kbd>↓</Kbd>
+              </div>
+              <span className="select-none">{navigateLabel}</span>
+            </div>
+            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+              <Kbd>{enterLabel}</Kbd>
+              <span className="select-none">{selectLabel}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -405,7 +465,8 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           activeIndex={submenuIndex}
           isFocused={focusInSubmenu}
           editor={editor}
-          style={{ top: submenuTop }}
+          side={submenuLayout.side}
+          style={{ top: submenuLayout.top, width: submenuLayout.width }}
           onSelect={selectSubItem}
           onHover={handleSubHover}
         />
@@ -420,6 +481,7 @@ export function getSlashCommandSuggestions(
 ): Omit<SuggestionOptions, 'editor'> {
   const navigateLabel = t('slashCommand.navigate');
   const selectLabel = t('slashCommand.select');
+  const enterLabel = t('slashCommand.enter');
 
   const BoundCommandList = forwardRef<unknown, CommandListProps>(
     (props, ref) => (
@@ -427,6 +489,7 @@ export function getSlashCommandSuggestions(
         {...props}
         navigateLabel={navigateLabel}
         selectLabel={selectLabel}
+        enterLabel={enterLabel}
         ref={ref}
       />
     )

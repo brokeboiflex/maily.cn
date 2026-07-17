@@ -2,7 +2,7 @@ import { BubbleMenu } from '@tiptap/react';
 import { useCallback } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { sticky } from 'tippy.js';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { isTextSelected } from '@/editor/utils/is-text-selected';
 import { ColumnsBubbleMenuContent } from './columns-bubble-menu-content';
 

@@ -1,7 +1,12 @@
 'use client';
 
-import { BlockGroupItem } from '@/blocks/types';
-import { createContext, PropsWithChildren, useContext, useMemo } from 'react';
+import { type BlockGroupItem } from '@/blocks/types';
+import {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useMemo,
+} from 'react';
 import { getDefaultBlocks } from './extensions/slash-command/default-slash-commands';
 import {
   defaultLabels,
@@ -35,7 +40,9 @@ export function MailyProvider(props: MailyProviderProps) {
     [values.placeholderUrl, values.blocks, values.labels, values.t]
   );
 
-  return <MailyContext.Provider value={value}>{children}</MailyContext.Provider>;
+  return (
+    <MailyContext.Provider value={value}>{children}</MailyContext.Provider>
+  );
 }
 
 export function useMailyContext() {

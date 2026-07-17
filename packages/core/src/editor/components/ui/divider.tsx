@@ -1,18 +1,22 @@
 import { cn } from '@/editor/utils/classname';
 
 type Props = {
-  type?: 'horizontal' | 'vertical';
+  orientation?: 'horizontal' | 'vertical';
   className?: string;
 };
 
-export function Divider(props: Props) {
-  const { type = 'vertical', className } = props;
+export function Separator(props: Props) {
+  const { orientation = 'vertical', className } = props;
 
   return (
     <div
+      role="separator"
+      aria-orientation={orientation}
       className={cn(
-        'bg-muted shrink-0',
-        type === 'vertical' ? 'mx-0.5 w-px' : 'my-0.5 h-px',
+        'bg-border shrink-0',
+        orientation === 'vertical'
+          ? 'mx-0.5 w-px self-stretch'
+          : 'my-0.5 h-px w-full',
         className
       )}
     />

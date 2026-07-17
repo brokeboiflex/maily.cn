@@ -20,7 +20,9 @@
     "clean": {},
     "//#format": {},
     "//#format:check": {},
-    "test": {},
+    "test": {
+      "dependsOn": ["^build"]
+    },
     "test:watch": {
       "cache": false
     },

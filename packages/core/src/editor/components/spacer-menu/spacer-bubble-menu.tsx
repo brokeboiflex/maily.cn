@@ -2,10 +2,10 @@ import { BubbleMenu } from '@tiptap/react';
 
 import { BubbleMenuButton } from '../bubble-menu-button';
 import {
-  BubbleMenuItem,
-  EditorBubbleMenuProps,
+  type BubbleMenuItem,
+  type EditorBubbleMenuProps,
 } from '../text-menu/text-bubble-menu';
-import { Divider } from '../ui/divider';
+import { Separator } from '../ui/divider';
 import { useSpacerState } from './use-spacer-state';
 import { ShowPopover } from '../show-popover';
 import { TooltipProvider } from '../ui/tooltip';
@@ -66,7 +66,7 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
             {...item}
           />
         ))}
-        <Divider />
+        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

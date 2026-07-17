@@ -59,7 +59,7 @@ export const inlineImage = (t: TranslateFn): BlockItem => ({
       .deleteRange(range)
       // @ts-ignore
       .setInlineImage({
-        src: 'https://maily.to/brand/logo.png',
+        src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
       })
       // @ts-ignore
       .command((props) => {

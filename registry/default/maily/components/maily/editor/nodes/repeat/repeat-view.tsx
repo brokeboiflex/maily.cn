@@ -1,5 +1,9 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { NodeViewProps, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
+import {
+  type NodeViewProps,
+  NodeViewWrapper,
+  NodeViewContent,
+} from '@tiptap/react';
 
 export function RepeatView(props: NodeViewProps) {
   const { editor, getPos } = props;
@@ -30,7 +34,7 @@ export function RepeatView(props: NodeViewProps) {
   remixicon="RiRepeatLine"
   className="text-foreground size-3 stroke-[2.5]"
 />
-        <div className="w-[1.5px] grow rounded-full bg-rose-300" />
+        <div className="bg-primary/50 w-[1.5px] grow rounded-full" />
       </div>
     </NodeViewWrapper>
   );

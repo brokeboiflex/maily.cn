@@ -1,4 +1,3 @@
-import { Trash } from "lucide-react"
 import { deleteNode } from '../../utils/delete-node';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { BubbleMenu, findChildren } from '@tiptap/react';
@@ -14,17 +13,17 @@ import { MarginIcon } from '../icons/margin-icon';
 import { PaddingIcon } from '../icons/padding-icon';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { ShowPopover } from '../show-popover';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { ColorPicker } from '../ui/color-picker';
-import { Divider } from '../ui/divider';
+import { Separator } from '@/components/ui/separator';
 import { Select } from '../ui/select';
-import { TooltipProvider } from '../ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useSectionState } from './use-section-state';
 import { getClosestNodeByName } from '../../utils/columns';
 import { spacing } from '../../utils/spacing';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '../../i18n';
-import { ChevronUp } from "lucide-react"
+import { Trash, ChevronUp } from "lucide-react";
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -118,7 +117,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           }}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <div className="flex gap-x-0.5">
           <Select
@@ -153,11 +152,10 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           />
         </div>
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <Select
-          icon={MarginIcon}
-          iconClassName="stroke-[1.2] size-3.5"
+          icon={<MarginIcon className="size-3.5 stroke-[1.2]" />}
           label={t('sectionMenu.margin')}
           value={String(state.currentMarginTop)}
           options={spacingOptions('sectionMenu.margin.none')}
@@ -174,11 +172,10 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           className="capitalize"
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <Select
-          icon={PaddingIcon}
-          iconClassName="stroke-[1]"
+          icon={<PaddingIcon className="stroke-[1]" />}
           label={t('sectionMenu.padding')}
           value={String(state.currentPaddingTop)}
           options={spacingOptions('sectionMenu.padding.none')}
@@ -195,7 +192,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           className="capitalize"
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <div className="flex gap-x-0.5">
           <ColorPicker
@@ -235,17 +232,18 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           />
         </div>
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={Trash}
+          icon={<Trash
+/>}
           tooltip={t('sectionMenu.delete')}
           command={() => {
             deleteNode(editor, 'section');
           }}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <ShowPopover
           showIfKey={state.currentShowIfKey}
@@ -259,7 +257,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
         {state.isColumnsActive && (
           <>
-            <Divider />
+            <Separator orientation="vertical" />
             <Popover>
               <PopoverTrigger className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground flex items-center gap-1 rounded-md px-1.5 text-sm">
                 {t('sectionMenu.column')}

@@ -10,12 +10,7 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    // Relaxed for the maily playground: the installed editor source value-imports
-    // type-only symbols (e.g. `import { Command } from '@tiptap/core'`). With
-    // verbatimModuleSyntax on, Vite/esbuild keeps those as runtime imports and they
-    // fail to resolve. See playground/README.md ("Known issue"). Proper fix is to
-    // switch those imports to `import type` in packages/core.
-    "verbatimModuleSyntax": false,
+    "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",

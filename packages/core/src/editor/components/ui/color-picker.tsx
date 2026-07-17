@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { Button } from '../base-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from '@/editor/utils/classname';
-import { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { useMailyContext } from '../../provider';
 
 type ColorPickerProps = {
@@ -51,30 +51,6 @@ export function ColorPicker(props: ColorPickerProps) {
     });
   };
 
-  const popoverButton = (
-    <PopoverTrigger asChild>
-      {children || (
-        <Button
-          variant="ghost"
-          className="h-7 w-7 shrink-0"
-          size="sm"
-          type="button"
-        >
-          <div
-            className={cn(
-              'border-border h-4 w-4 shrink-0 rounded border-2',
-              className
-            )}
-            style={{
-              ...(borderColor ? { borderColor } : {}),
-              backgroundColor: backgroundColor || 'transparent',
-            }}
-          />
-        </Button>
-      )}
-    </PopoverTrigger>
-  );
-
   return (
     <Popover
       onOpenChange={(open) => {
@@ -85,11 +61,54 @@ export function ColorPicker(props: ColorPickerProps) {
     >
       {tooltip ? (
         <Tooltip>
-          <TooltipTrigger asChild>{popoverButton}</TooltipTrigger>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              {children || (
+                <Button
+                  variant="ghost"
+                  className="h-7 w-7 shrink-0"
+                  size="sm"
+                  type="button"
+                  aria-label={tooltip}
+                >
+                  <div
+                    className={cn(
+                      'border-border h-4 w-4 shrink-0 rounded border-2',
+                      className
+                    )}
+                    style={{
+                      ...(borderColor ? { borderColor } : {}),
+                      backgroundColor: backgroundColor || 'transparent',
+                    }}
+                  />
+                </Button>
+              )}
+            </PopoverTrigger>
+          </TooltipTrigger>
           <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
         </Tooltip>
       ) : (
-        popoverButton
+        <PopoverTrigger asChild>
+          {children || (
+            <Button
+              variant="ghost"
+              className="h-7 w-7 shrink-0"
+              size="sm"
+              type="button"
+            >
+              <div
+                className={cn(
+                  'border-border h-4 w-4 shrink-0 rounded border-2',
+                  className
+                )}
+                style={{
+                  ...(borderColor ? { borderColor } : {}),
+                  backgroundColor: backgroundColor || 'transparent',
+                }}
+              />
+            </Button>
+          )}
+        </PopoverTrigger>
       )}
 
       <PopoverContent

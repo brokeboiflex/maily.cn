@@ -3,6 +3,8 @@ import { useId } from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useMailyContext } from '../../provider';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { ChevronUp } from "lucide-react";
 
 type EdgeSpacingControlProps = {
@@ -31,8 +33,10 @@ export function EdgeSpacingControl(props: EdgeSpacingControlProps) {
 
   return (
     <Popover>
-      <PopoverTrigger className="hover:bg-muted rounded">
-        <ChevronUp size={14} />
+      <PopoverTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="size-7">
+          <ChevronUp size={14} />
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         className="border-border flex max-w-max gap-0.5 rounded-md border p-0.5! shadow-none"
@@ -83,7 +87,7 @@ function InputWithLabel(props: InputWithLabelProps) {
 
   return (
     <div className={cn('flex flex-col items-center gap-1', className)}>
-      <input
+      <Input
         {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
         id={id}
         min={0}

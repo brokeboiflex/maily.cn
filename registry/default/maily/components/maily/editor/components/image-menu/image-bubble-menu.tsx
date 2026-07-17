@@ -1,5 +1,8 @@
-import { ImageDown, LockIcon, LockOpenIcon } from "lucide-react"
-import { AllowedLogoSize, allowedLogoSize } from '../../nodes/logo/logo';
+import { IconPlaceholder } from "@/components/icon-placeholder"
+import {
+  type AllowedLogoSize,
+  allowedLogoSize,
+} from '../../nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '../../utils/aspect-ratio';
 import { borderRadius } from '../../utils/border-radius';
 import { BubbleMenu } from '@tiptap/react';
@@ -7,11 +10,11 @@ import { sticky } from 'tippy.js';
 import { AlignmentSwitch } from '../alignment-switch';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { ShowPopover } from '../show-popover';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Divider } from '../ui/divider';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { Separator } from '@/components/ui/separator';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { Select } from '../ui/select';
-import { TooltipProvider } from '../ui/tooltip';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { ImageSize } from './image-size';
 import { useImageState } from './use-image-state';
 import { IMAGE_MAX_WIDTH } from '../../nodes/image/image-view';
@@ -82,7 +85,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }}
             />
 
-            <Divider />
+            <Separator orientation="vertical" />
           </>
         )}
 
@@ -125,7 +128,13 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }
             }}
             tooltip={t('imageMenu.sourceUrl')}
-            icon={ImageDown}
+            icon={<IconPlaceholder
+  lucide="ImageDown"
+  tabler="IconPhotoDown"
+  hugeicons="ImageDownloadIcon"
+  phosphor="Image"
+  remixicon="RiImageDownloadLine"
+/>}
             editor={editor}
             isVariable={state.isSrcVariable}
           />
@@ -151,7 +160,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
 
         {state.isImageActive && state.imageSrc && (
           <>
-            <Divider />
+            <Separator orientation="vertical" />
 
             <Select
               label={t('imageMenu.borderRadius')}
@@ -263,14 +272,26 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                     })
                     .run();
                 }}
-                icon={lockAspectRatio ? LockIcon : LockOpenIcon}
+                icon={lockAspectRatio ? <IconPlaceholder
+  lucide="LockIcon"
+  tabler="IconLock"
+  hugeicons="LockIcon"
+  phosphor="Lock"
+  remixicon="RiLockLine"
+/> : <IconPlaceholder
+  lucide="LockOpenIcon"
+  tabler="IconLockOpen"
+  hugeicons="SquareUnlock01Icon"
+  phosphor="LockOpen"
+  remixicon="RiLockUnlockLine"
+/>}
                 tooltip={t('imageMenu.lockAspectRatio')}
               />
             </div>
           </>
         )}
 
-        <Divider />
+        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

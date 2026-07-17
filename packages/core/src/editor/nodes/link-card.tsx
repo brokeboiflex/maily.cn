@@ -1,11 +1,13 @@
-import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Input } from '../components/input';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/popover';
 import { Textarea } from '../components/textarea';
+import { useMailyContext } from '../provider';
 import { cn } from '../utils/classname';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
 
 export function LinkCardComponent(props: NodeViewProps) {
+  const { t } = useMailyContext();
   const { title, description, link, linkTitle, image, badgeText, subTitle } =
     props.node.attrs;
   const { getPos, editor } = props;
@@ -33,7 +35,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 <div className="relative mb-1.5 w-full shrink-0">
                   <img
                     src={image}
-                    alt="link-card"
+                    alt={t('linkCard.imageAlt')}
                     className="no-prose mb-0! h-full w-full rounded-t-lg"
                     draggable={editor.isEditable}
                   />
@@ -76,11 +78,11 @@ export function LinkCardComponent(props: NodeViewProps) {
         >
           <label className="w-full space-y-1">
             <span className="text-muted-foreground text-xs font-normal">
-              Image
+              {t('linkCard.image')}
             </span>
             <Input
               {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-              placeholder="Add Image"
+              placeholder={t('linkCard.imagePlaceholder')}
               type="url"
               value={image}
               onChange={(e) => {
@@ -93,11 +95,11 @@ export function LinkCardComponent(props: NodeViewProps) {
 
           <label className="w-full space-y-1">
             <span className="text-muted-foreground text-xs font-normal">
-              Title
+              {t('linkCard.title')}
             </span>
             <Input
               {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-              placeholder="Add title"
+              placeholder={t('linkCard.titlePlaceholder')}
               value={title}
               onChange={(e) => {
                 props.updateAttributes({
@@ -109,10 +111,10 @@ export function LinkCardComponent(props: NodeViewProps) {
 
           <label className="w-full space-y-1">
             <span className="text-muted-foreground text-xs font-normal">
-              Description
+              {t('linkCard.description')}
             </span>
             <Textarea
-              placeholder="Add description here"
+              placeholder={t('linkCard.descriptionPlaceholder')}
               value={description}
               onChange={(e) => {
                 props.updateAttributes({
@@ -125,11 +127,11 @@ export function LinkCardComponent(props: NodeViewProps) {
           <div className="grid grid-cols-2 gap-2">
             <label className="w-full space-y-1">
               <span className="text-muted-foreground text-xs font-normal">
-                Link Title
+                {t('linkCard.linkTitle')}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder="Add link title here"
+                placeholder={t('linkCard.linkTitlePlaceholder')}
                 value={linkTitle}
                 onChange={(e) => {
                   props.updateAttributes({
@@ -141,11 +143,11 @@ export function LinkCardComponent(props: NodeViewProps) {
 
             <label className="w-full space-y-1">
               <span className="text-muted-foreground text-xs font-normal">
-                Link
+                {t('linkCard.link')}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder="Add link here"
+                placeholder={t('linkCard.linkPlaceholder')}
                 value={link}
                 onChange={(e) => {
                   props.updateAttributes({
@@ -159,11 +161,11 @@ export function LinkCardComponent(props: NodeViewProps) {
           <div className="grid grid-cols-2 gap-2">
             <label className="w-full space-y-1">
               <span className="text-muted-foreground text-xs font-normal">
-                Badge Text
+                {t('linkCard.badgeText')}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder="Add badge text here"
+                placeholder={t('linkCard.badgeTextPlaceholder')}
                 value={badgeText}
                 onChange={(e) => {
                   props.updateAttributes({
@@ -175,11 +177,11 @@ export function LinkCardComponent(props: NodeViewProps) {
 
             <label className="w-full space-y-1">
               <span className="text-muted-foreground text-xs font-normal">
-                Sub Title
+                {t('linkCard.subTitle')}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder="Add sub title here"
+                placeholder={t('linkCard.subTitlePlaceholder')}
                 value={subTitle}
                 onChange={(e) => {
                   props.updateAttributes({

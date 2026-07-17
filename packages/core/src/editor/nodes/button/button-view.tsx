@@ -7,23 +7,25 @@ import {
 } from '@/editor/components/popover';
 import { ShowPopover } from '@/editor/components/show-popover';
 import { ColorPicker } from '@/editor/components/ui/color-picker';
-import { Divider } from '@/editor/components/ui/divider';
+import { Separator } from '@/editor/components/ui/divider';
 import { LinkInputPopover } from '@/editor/components/ui/link-input-popover';
 import { Select } from '@/editor/components/ui/select';
 import { TooltipProvider } from '@/editor/components/ui/tooltip';
+import { useMailyContext } from '@/editor/provider';
 import { cn } from '@/editor/utils/classname';
 import { useVariableOptions } from '@/editor/utils/node-options';
-import { NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { CSSProperties, useMemo } from 'react';
+import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { type CSSProperties, useMemo } from 'react';
 import {
   allowedButtonBorderRadius,
-  AllowedButtonVariant,
+  type AllowedButtonVariant,
   allowedButtonVariant,
-  ButtonAttributes,
+  type ButtonAttributes,
 } from './button';
 import { ButtonLabelInput } from './button-label-input';
 
 export function ButtonView(props: NodeViewProps) {
+  const { t } = useMailyContext();
   const { node, editor, getPos, updateAttributes } = props;
   const {
     text,
@@ -159,48 +161,53 @@ export function ButtonView(props: NodeViewProps) {
                 editor={editor}
               />
 
-              <Divider />
+              <Separator orientation="vertical" />
 
               <div className="flex gap-x-0.5">
                 <Select
-                  label="Border Radius"
+                  label={t('buttonMenu.borderRadius')}
                   value={_radius}
                   options={allowedButtonBorderRadius.map((value) => ({
                     value,
-                    label: value,
+                    label: {
+                      sharp: t('buttonMenu.radius.sharp'),
+                      smooth: t('buttonMenu.radius.smooth'),
+                      round: t('buttonMenu.radius.round'),
+                    }[value],
                   }))}
                   onValueChange={(value) => {
                     updateAttributes({
                       borderRadius: value,
                     });
                   }}
-                  tooltip="Border Radius"
-                  className="capitalize"
+                  tooltip={t('buttonMenu.borderRadius')}
                 />
 
                 <Select
-                  label="Style"
+                  label={t('buttonMenu.style')}
                   value={variant}
                   options={allowedButtonVariant.map((value) => ({
                     value,
-                    label: value,
+                    label: {
+                      filled: t('buttonMenu.style.filled'),
+                      outline: t('buttonMenu.style.outline'),
+                    }[value],
                   }))}
                   onValueChange={(value) => {
                     updateAttributes({
                       variant: value,
                     });
                   }}
-                  tooltip="Style"
-                  className="capitalize"
+                  tooltip={t('buttonMenu.style')}
                 />
 
                 <Select
-                  label="Size"
+                  label={t('buttonMenu.size')}
                   value={size}
                   options={[
-                    { value: 'small', label: 'Small' },
-                    { value: 'medium', label: 'Medium' },
-                    { value: 'large', label: 'Large' },
+                    { value: 'small', label: t('buttonMenu.size.small') },
+                    { value: 'medium', label: t('buttonMenu.size.medium') },
+                    { value: 'large', label: t('buttonMenu.size.large') },
                   ]}
                   onValueChange={(value) => {
                     const { paddingX, paddingY } =
@@ -213,12 +220,12 @@ export function ButtonView(props: NodeViewProps) {
                       paddingLeft: paddingX,
                     });
                   }}
-                  tooltip="Size"
-                  placeholder="Size"
+                  tooltip={t('buttonMenu.size')}
+                  placeholder={t('buttonMenu.size')}
                 />
               </div>
 
-              <Divider />
+              <Separator orientation="vertical" />
 
               <div className="flex gap-x-0.5">
                 <AlignmentSwitch
@@ -238,13 +245,13 @@ export function ButtonView(props: NodeViewProps) {
                       isUrlVariable: isVariable ?? false,
                     });
                   }}
-                  tooltip="Update External Link"
+                  tooltip={t('buttonMenu.updateExternalLink')}
                   editor={editor}
                   isVariable={isUrlVariable}
                 />
               </div>
 
-              <Divider />
+              <Separator orientation="vertical" />
 
               <div className="flex gap-x-0.5">
                 <BackgroundColorPickerPopup
@@ -267,7 +274,7 @@ export function ButtonView(props: NodeViewProps) {
                 />
               </div>
 
-              <Divider />
+              <Separator orientation="vertical" />
 
               <ShowPopover
                 showIfKey={showIfKey}
@@ -294,12 +301,13 @@ type ColorPickerProps = {
 
 function BackgroundColorPickerPopup(props: ColorPickerProps) {
   const { color, onChange, variant } = props;
+  const { t } = useMailyContext();
 
   return (
     <ColorPicker
       color={color}
       onColorChange={onChange}
-      tooltip="Background Color"
+      tooltip={t('buttonMenu.backgroundColor')}
     >
       <Button variant="ghost" size="sm" type="button" className="size-7">
         <div
@@ -308,7 +316,7 @@ function BackgroundColorPickerPopup(props: ColorPickerProps) {
             backgroundColor: variant === 'filled' ? color : 'transparent',
             borderStyle: 'solid',
             borderWidth: 2,
-            borderColor: variant === 'filled' ? 'white' : color,
+            borderColor: variant === 'filled' ? 'var(--background)' : color,
           }}
         />
       </Button>
@@ -318,9 +326,14 @@ function BackgroundColorPickerPopup(props: ColorPickerProps) {
 
 function TextColorPickerPopup(props: ColorPickerProps) {
   const { color, onChange } = props;
+  const { t } = useMailyContext();
 
   return (
-    <ColorPicker color={color} onColorChange={onChange} tooltip="Text Color">
+    <ColorPicker
+      color={color}
+      onColorChange={onChange}
+      tooltip={t('buttonMenu.textColor')}
+    >
       <Button variant="ghost" size="sm" type="button" className="size-7">
         <div className="flex flex-col items-center justify-center gap-px">
           <span className="font-bolder text-foreground font-mono text-xs">

@@ -1,5 +1,5 @@
 import { CodeXmlIcon } from 'lucide-react';
-import { BlockItem } from './types';
+import { type BlockItem } from './types';
 import type { TranslateFn } from '@/editor/i18n';
 
 export const htmlCodeBlock = (t: TranslateFn): BlockItem => ({

@@ -3,7 +3,7 @@ import {
   LayoutTemplateIcon,
   RectangleHorizontalIcon,
 } from 'lucide-react';
-import { BlockItem } from './types';
+import { type BlockItem } from './types';
 import type { TranslateFn } from '@/editor/i18n';
 
 export const footerCopyrightText = (t: TranslateFn): BlockItem => ({
@@ -47,7 +47,7 @@ export const footerCommunityFeedbackCta = (t: TranslateFn): BlockItem => ({
         {
           type: 'image',
           attrs: {
-            src: 'https://maily.to/brand/logo.png',
+            src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
             alt: null,
             title: null,
             width: '42',
@@ -97,7 +97,7 @@ export const footerCompanySignature = (t: TranslateFn): BlockItem => ({
         {
           type: 'image',
           attrs: {
-            src: 'https://maily.to/brand/logo.png',
+            src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
             alt: null,
             title: null,
             width: '48',

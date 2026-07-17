@@ -1,5 +1,6 @@
-import { FootprintsIcon, Heading1Icon, Heading2Icon, Heading3Icon, ListIcon, ListOrderedIcon, LucideIcon, PilcrowIcon } from "lucide-react"
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { Editor, useEditorState } from '@tiptap/react';
+import type { ReactNode } from 'react';
 import { useMailyContext } from '../../provider';
 
 export type TurnIntoBlockOptions = {
@@ -9,7 +10,7 @@ export type TurnIntoBlockOptions = {
   disabled: () => boolean;
   isActive: () => boolean;
   onClick: () => void;
-  icon: LucideIcon;
+  icon: ReactNode;
 };
 
 export type TurnIntoBlockCategory = {
@@ -33,7 +34,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         id: 'hierarchy',
       },
       {
-        icon: PilcrowIcon,
+        icon: <IconPlaceholder
+  lucide="PilcrowIcon"
+  tabler="IconPilcrow"
+  hugeicons="ParagraphIcon"
+  phosphor="Paragraph"
+  remixicon="RiParagraph"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () =>
           editor.chain().focus().liftListItem('listItem').setParagraph().run(),
         id: 'paragraph',
@@ -47,7 +55,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         type: 'option',
       },
       {
-        icon: Heading1Icon,
+        icon: <IconPlaceholder
+  lucide="Heading1Icon"
+  tabler="IconH1"
+  hugeicons="Heading01Icon"
+  phosphor="TextHOne"
+  remixicon="RiHeading"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () =>
           editor
             .chain()
@@ -62,7 +77,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         type: 'option',
       },
       {
-        icon: Heading2Icon,
+        icon: <IconPlaceholder
+  lucide="Heading2Icon"
+  tabler="IconH2"
+  hugeicons="Heading02Icon"
+  phosphor="TextHTwo"
+  remixicon="RiHeading"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () =>
           editor
             .chain()
@@ -77,7 +99,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         type: 'option',
       },
       {
-        icon: Heading3Icon,
+        icon: <IconPlaceholder
+  lucide="Heading3Icon"
+  tabler="IconH3"
+  hugeicons="Heading03Icon"
+  phosphor="TextHThree"
+  remixicon="RiHeading"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () =>
           editor
             .chain()
@@ -95,7 +124,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         id: 'footer',
         type: 'option',
         label: t('turnInto.footer'),
-        icon: FootprintsIcon,
+        icon: <IconPlaceholder
+  lucide="FootprintsIcon"
+  tabler="IconWalk"
+  hugeicons="FootprintsIcon"
+  phosphor="Footprints"
+  remixicon="RiFootprintLine"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () => {
           editor.chain().focus().liftListItem('listItem').setFooter().run();
         },
@@ -108,7 +144,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         id: 'lists',
       },
       {
-        icon: ListIcon,
+        icon: <IconPlaceholder
+  lucide="ListIcon"
+  tabler="IconList"
+  hugeicons="LeftToRightListBulletIcon"
+  phosphor="ListBullets"
+  remixicon="RiListUnordered"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () => editor.chain().focus().toggleBulletList().run(),
         id: 'bulletList',
         disabled: () => !editor.can().toggleBulletList(),
@@ -117,7 +160,14 @@ export function useTurnIntoBlockOptions(editor: Editor) {
         type: 'option',
       },
       {
-        icon: ListOrderedIcon,
+        icon: <IconPlaceholder
+  lucide="ListOrderedIcon"
+  tabler="IconListNumbers"
+  hugeicons="LeftToRightListNumberIcon"
+  phosphor="ListNumbers"
+  remixicon="RiListOrdered"
+  className="size-[15px] shrink-0"
+/>,
         onClick: () => editor.chain().focus().toggleOrderedList().run(),
         id: 'orderedList',
         disabled: () => !editor.can().toggleOrderedList(),

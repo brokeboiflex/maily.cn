@@ -1,5 +1,5 @@
 import { LogoWithCoverImageIcon } from '../editor/components/icons/logo-with-cover-image';
-import { BlockItem } from './types';
+import { type BlockItem } from './types';
 import type { TranslateFn } from '../editor/i18n';
 import { LogoWithTextHorizonIcon } from '../editor/components/icons/logo-with-text-horizon';
 import { LogoWithTextVerticalIcon } from '../editor/components/icons/logo-with-text-vertical';
@@ -28,7 +28,7 @@ export const headerLogoWithTextHorizontal = (t: TranslateFn): BlockItem => ({
               {
                 type: 'image',
                 attrs: {
-                  src: 'https://maily.to/brand/logo.png',
+                  src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
                   alt: null,
                   title: null,
                   width: '32',
@@ -86,7 +86,7 @@ export const headerLogoWithTextVertical = (t: TranslateFn): BlockItem => ({
         {
           type: 'image',
           attrs: {
-            src: 'https://maily.to/brand/logo.png',
+            src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
             alt: null,
             title: null,
             width: '48',
@@ -128,11 +128,11 @@ export const headerLogoWithCoverImage = (t: TranslateFn): BlockItem => ({
         {
           type: 'image',
           attrs: {
-            src: 'https://maily.to/og-image.png',
+            src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-hero.png',
             alt: null,
             title: null,
             width: 600,
-            height: 314,
+            height: 600,
             alignment: 'center',
             externalLink: null,
             isExternalLinkVariable: false,
@@ -155,7 +155,7 @@ export const headerLogoWithCoverImage = (t: TranslateFn): BlockItem => ({
                 {
                   type: 'image',
                   attrs: {
-                    src: 'https://maily.to/brand/logo.png',
+                    src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
                     alt: null,
                     title: null,
                     width: '48',

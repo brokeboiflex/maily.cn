@@ -1,8 +1,9 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
 import type { Editor } from '@tiptap/core';
-import { BlockItem } from '../../../blocks';
-import { Ref } from 'react';
+import { type BlockItem } from '../../../blocks';
+import { type Ref } from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 type SlashCommandItemProps = {
   item: BlockItem;
@@ -26,9 +27,11 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
       <div className="flex h-6 w-6 shrink-0 items-center justify-center">
         {item.icon}
       </div>
-      <div className="grow">
-        <p className="font-medium">{item.title}</p>
-        <p className="text-muted-foreground text-xs">{item.description}</p>
+      <div className="min-w-0 grow">
+        <p className="truncate font-medium">{item.title}</p>
+        <p className="text-muted-foreground truncate text-xs">
+          {item.description}
+        </p>
       </div>
 
       {isSubCommand && (
@@ -49,10 +52,11 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
       className={cn(
-        'text-foreground flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
-        isActive ? 'bg-muted text-foreground' : 'bg-transparent'
+        'text-foreground hover:bg-accent hover:text-accent-foreground hover:**:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground dark:hover:bg-accent h-auto w-full cursor-pointer justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-sm',
+        isActive && 'bg-accent text-accent-foreground **:text-accent-foreground'
       )}
       onClick={onSelect}
       onMouseEnter={onMouseEnter}
@@ -60,6 +64,6 @@ export function SlashCommandItem(props: SlashCommandItemProps) {
       ref={activeRef}
     >
       {value}
-    </button>
+    </Button>
   );
 }

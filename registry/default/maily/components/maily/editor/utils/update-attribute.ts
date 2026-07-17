@@ -1,4 +1,4 @@
-import { Command } from '@tiptap/core';
+import { type Command } from '@tiptap/core';
 
 export function updateAttribute(
   type: string,

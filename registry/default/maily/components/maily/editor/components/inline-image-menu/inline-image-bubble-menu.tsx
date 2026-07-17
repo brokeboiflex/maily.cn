@@ -1,9 +1,9 @@
-import { ImageDownIcon } from "lucide-react"
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { BubbleMenu } from '@tiptap/react';
 import { sticky } from 'tippy.js';
 import { ImageSize } from '../image-menu/image-size';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { TooltipProvider } from '../ui/tooltip';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { useInlineImageState } from './use-inline-image-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import {
@@ -60,7 +60,13 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
                 .run();
             }}
             tooltip={t('inlineImageMenu.sourceUrl')}
-            icon={ImageDownIcon}
+            icon={<IconPlaceholder
+  lucide="ImageDownIcon"
+  tabler="IconPhotoDown"
+  hugeicons="ImageDownloadIcon"
+  phosphor="Image"
+  remixicon="RiImageDownloadLine"
+/>}
             editor={editor}
             isVariable={state.isSrcVariable}
           />

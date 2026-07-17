@@ -1,4 +1,7 @@
-import { AllowedLogoSize, allowedLogoSize } from '@/editor/nodes/logo/logo';
+import {
+  type AllowedLogoSize,
+  allowedLogoSize,
+} from '@/editor/nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '@/editor/utils/aspect-ratio';
 import { borderRadius } from '@/editor/utils/border-radius';
 import { BubbleMenu } from '@tiptap/react';
@@ -7,8 +10,8 @@ import { sticky } from 'tippy.js';
 import { AlignmentSwitch } from '../alignment-switch';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { ShowPopover } from '../show-popover';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Divider } from '../ui/divider';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { Separator } from '../ui/divider';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { Select } from '../ui/select';
 import { TooltipProvider } from '../ui/tooltip';
@@ -82,7 +85,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }}
             />
 
-            <Divider />
+            <Separator orientation="vertical" />
           </>
         )}
 
@@ -125,7 +128,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }
             }}
             tooltip={t('imageMenu.sourceUrl')}
-            icon={ImageDown}
+            icon={<ImageDown />}
             editor={editor}
             isVariable={state.isSrcVariable}
           />
@@ -151,7 +154,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
 
         {state.isImageActive && state.imageSrc && (
           <>
-            <Divider />
+            <Separator orientation="vertical" />
 
             <Select
               label={t('imageMenu.borderRadius')}
@@ -263,14 +266,14 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                     })
                     .run();
                 }}
-                icon={lockAspectRatio ? LockIcon : LockOpenIcon}
+                icon={lockAspectRatio ? <LockIcon /> : <LockOpenIcon />}
                 tooltip={t('imageMenu.lockAspectRatio')}
               />
             </div>
           </>
         )}
 
-        <Divider />
+        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

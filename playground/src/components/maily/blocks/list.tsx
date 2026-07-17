@@ -1,6 +1,6 @@
-import { List, ListOrdered } from "lucide-react"
 import type { BlockItem } from './types';
 import type { TranslateFn } from '../editor/i18n';
+import { List, ListOrdered } from "lucide-react";
 
 export const bulletList = (t: TranslateFn): BlockItem => ({
   title: t('block.bulletList.title'),

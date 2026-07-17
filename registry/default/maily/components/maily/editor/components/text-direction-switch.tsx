@@ -1,11 +1,11 @@
 import {
-  AllowedTextDirection,
+  type AllowedTextDirection,
   allowedTextDirection,
 } from '../nodes/paragraph/paragraph';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Toggle } from '@/components/ui/toggle';
 import { LtrIcon, RtlIcon } from './icons/text-direction-icon';
 import { useMailyContext } from '../provider';
 
@@ -25,11 +25,11 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
 
   const directions = {
     ltr: {
-      icon: LtrIcon,
+      icon: <LtrIcon className="size-3 stroke-[2.5]" />,
       tooltip: t('direction.ltr'),
     },
     rtl: {
-      icon: RtlIcon,
+      icon: <RtlIcon className="size-3 stroke-[2.5]" />,
       tooltip: t('direction.rtl'),
     },
   };
@@ -45,7 +45,7 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
               'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
             )}
           >
-            <activeDirection.icon className="h-3 w-3 stroke-[2.5]" />
+            {activeDirection.icon}
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>{t('direction.label')}</TooltipContent>
@@ -62,32 +62,27 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
           e.preventDefault();
         }}
       >
-        <ToggleGroup
-          type="single"
-          value={direction}
-          onValueChange={(value) => {
-            if (value) {
-              onDirectionChange(value as AllowedTextDirection);
-            }
-          }}
-        >
+        <>
           {Object.entries(directions).map(([key, value]) => {
             return (
               <Tooltip key={key}>
                 <TooltipTrigger asChild>
-                  <ToggleGroupItem
-                    value={key}
+                  <Toggle
+                    pressed={key === direction}
+                    onPressedChange={() =>
+                      onDirectionChange(key as AllowedTextDirection)
+                    }
                     aria-label={value.tooltip}
                     className="size-7! min-w-7! px-2.5"
                   >
-                    <value.icon className="h-3 w-3 stroke-[2.5]" />
-                  </ToggleGroupItem>
+                    {value.icon}
+                  </Toggle>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
               </Tooltip>
             );
           })}
-        </ToggleGroup>
+        </>
       </PopoverContent>
     </Popover>
   );

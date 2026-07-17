@@ -1,4 +1,6 @@
 import { cn } from '@/lib/utils';
+import { useMailyContext } from '../../provider';
+import { Button } from '@/components/ui/button';
 import {
   forwardRef,
   useEffect,
@@ -6,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Variable } from './variable';
+import { type Variable } from './variable';
 import { Braces, ArrowDownIcon, ArrowUpIcon, CornerDownLeftIcon } from "lucide-react";
 
 export type VariableSuggestionsPopoverProps = {
@@ -28,6 +30,7 @@ export type VariableSuggestionsPopoverType = React.ForwardRefExoticComponent<
 export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
   forwardRef((props, ref) => {
     const { items, onSelectItem } = props;
+    const { t } = useMailyContext();
 
     const [selectedIndex, setSelectedIndex] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +87,7 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
     return (
       <div className="border-border bg-background z-50 w-64 rounded-lg border shadow-md transition-all">
         <div className="border-border bg-muted/40 text-muted-foreground flex items-center justify-between gap-2 border-b px-1 py-1.5">
-          <span className="text-xs uppercase">Variables</span>
+          <span className="text-xs uppercase">{t('variableMenu.title')}</span>
           <VariableIcon>
             <Braces className="size-3 stroke-[2.5]" />
           </VariableIcon>
@@ -94,24 +97,26 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
           <div className="flex w-fit min-w-full flex-col gap-0.5 p-1">
             {items?.length ? (
               items?.map((item, index: number) => (
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
                   key={index}
                   ref={(el) => {
                     itemRefs.current[index] = el;
                   }}
                   onClick={() => onSelectItem(item)}
                   className={cn(
-                    'text-foreground hover:bg-muted flex w-fit min-w-full items-center gap-2 rounded-md px-2 py-1 text-left font-mono text-sm',
+                    'text-foreground hover:bg-muted h-auto w-fit min-w-full justify-start gap-2 rounded-md px-2 py-1 text-left font-mono text-sm',
                     index === selectedIndex ? 'bg-muted' : 'bg-background'
                   )}
                 >
                   <Braces className="size-3 stroke-[2.5] text-rose-600" />
                   {item?.label || item.name}
-                </button>
+                </Button>
               ))
             ) : (
               <div className="text-foreground hover:bg-muted flex h-7 w-full items-center gap-2 rounded-md px-2 py-1 text-left font-mono text-[13px]">
-                No result
+                {t('variableMenu.noResult')}
               </div>
             )}
           </div>
@@ -125,7 +130,9 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
             <VariableIcon>
               <ArrowUpIcon className="size-3 stroke-[2.5]" />
             </VariableIcon>
-            <span className="text-muted-foreground text-xs">Navigate</span>
+            <span className="text-muted-foreground text-xs">
+              {t('variableMenu.navigate')}
+            </span>
           </div>
           <VariableIcon>
             <CornerDownLeftIcon className="size-3 stroke-[2.5]" />

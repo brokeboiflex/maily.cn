@@ -1,7 +1,7 @@
 import { BubbleMenu } from '@tiptap/react';
 import { sticky } from 'tippy.js';
 import { ImageSize } from '../image-menu/image-size';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '../ui/tooltip';
 import { useInlineImageState } from './use-inline-image-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
@@ -60,7 +60,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
                 .run();
             }}
             tooltip={t('inlineImageMenu.sourceUrl')}
-            icon={ImageDownIcon}
+            icon={<ImageDownIcon />}
             editor={editor}
             isVariable={state.isSrcVariable}
           />

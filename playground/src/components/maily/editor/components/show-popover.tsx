@@ -5,8 +5,9 @@ import { useVariableOptions } from '../utils/node-options';
 import { processVariables } from '../utils/variable';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { InputAutocomplete } from './ui/input-autocomplete';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../provider';
+import { Button } from '@/components/ui/button';
 import { Eye, InfoIcon } from "lucide-react";
 
 type ShowPopoverProps = {
@@ -48,14 +49,19 @@ function _ShowPopover(props: ShowPopoverProps) {
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger
-            className={cn(
-              'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-              showIfKey &&
-                'bg-rose-100 text-rose-800 hover:bg-rose-100 hover:text-rose-800 data-[state=open]:bg-rose-100 data-[state=open]:text-rose-800'
-            )}
-          >
-            <Eye className="h-3 w-3 stroke-[2.5]" />
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className={cn(
+                'size-7',
+                showIfKey &&
+                  'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary data-[state=open]:bg-primary/15 data-[state=open]:text-primary'
+              )}
+            >
+              <Eye className="h-3 w-3 stroke-[2.5]" />
+            </Button>
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>
@@ -91,7 +97,10 @@ function _ShowPopover(props: ShowPopoverProps) {
         </div>
 
         {!isUpdatingKey && (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto p-0"
             onClick={() => {
               setIsUpdatingKey(true);
               setTimeout(() => {
@@ -108,7 +117,7 @@ function _ShowPopover(props: ShowPopoverProps) {
               from: 'bubble-variable',
               editor,
             })}
-          </button>
+          </Button>
         )}
         {isUpdatingKey && (
           <form

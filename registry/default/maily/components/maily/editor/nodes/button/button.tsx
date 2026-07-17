@@ -3,7 +3,7 @@ import { ReactNodeViewRenderer } from '@tiptap/react';
 import { ButtonView } from './button-view';
 import { updateAttributes } from '../../utils/update-attribute';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
-import { AllowedLogoAlignment } from '../logo/logo';
+import { type AllowedLogoAlignment } from '../logo/logo';
 
 export const DEFAULT_BUTTON_ALIGNMENT: AllowedLogoAlignment = 'left';
 export const DEFAULT_BUTTON_VARIANT: AllowedButtonVariant = 'filled';

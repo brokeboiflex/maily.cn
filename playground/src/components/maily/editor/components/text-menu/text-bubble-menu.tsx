@@ -1,13 +1,12 @@
-import { LucideIcon } from "lucide-react"
 import { ColumnExtension } from '../../nodes/columns/column';
 import { ColumnsExtension } from '../../nodes/columns/columns';
 import { SectionExtension } from '../../nodes/section/section';
 import { isCustomNodeSelected } from '../../utils/is-custom-node-selected';
 import { isTextSelected } from '../../utils/is-text-selected';
-import { BubbleMenu, BubbleMenuProps } from '@tiptap/react';
-import { SVGIcon } from '../icons/grid-lines';
-import { Divider } from '../ui/divider';
-import { TooltipProvider } from '../ui/tooltip';
+import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react';
+import type { ReactNode } from 'react';
+import { Separator } from '@/components/ui/separator';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { TextBubbleContent } from './text-bubble-content';
 import { RepeatExtension } from '../../nodes/repeat/repeat';
 import { TurnIntoBlock } from './turn-into-block';
@@ -18,7 +17,7 @@ export interface BubbleMenuItem {
   isActive?: () => boolean;
   command?: () => void;
   shouldShow?: () => boolean;
-  icon?: LucideIcon | SVGIcon;
+  icon?: ReactNode;
   className?: string;
   iconClassName?: string;
   nameClassName?: string;
@@ -100,7 +99,7 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
       <TooltipProvider>
         <TurnIntoBlock options={turnIntoBlockOptions} />
 
-        <Divider className="mx-0" />
+        <Separator orientation="vertical" className="mx-0" />
 
         <TextBubbleContent editor={editor} />
       </TooltipProvider>

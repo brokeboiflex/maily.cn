@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  AnyExtension,
-  FocusPosition,
+  type AnyExtension,
+  type FocusPosition,
   Editor as TiptapEditor,
 } from '@tiptap/core';
-import { EditorContent, JSONContent, useEditor } from '@tiptap/react';
+import { EditorContent, type JSONContent, useEditor } from '@tiptap/react';
 
 import { useMemo, useRef } from 'react';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
@@ -19,18 +19,15 @@ import { SectionBubbleMenu } from './components/section-menu/section-bubble-menu
 import { SpacerBubbleMenu } from './components/spacer-menu/spacer-bubble-menu';
 import { TextBubbleMenu } from './components/text-menu/text-bubble-menu';
 import { VariableBubbleMenu } from './components/variable-menu/variable-bubble-menu';
+import { TooltipProvider } from './components/ui/tooltip';
 import { extensions as defaultExtensions } from './extensions';
 import { getDefaultBlocks } from './extensions/slash-command/default-slash-commands';
 import {
   DEFAULT_PLACEHOLDER_URL,
-  MailyContextType,
+  type MailyContextType,
   MailyProvider,
 } from './provider';
-import {
-  createTranslator,
-  defaultLabels,
-  type MailyLabels,
-} from './i18n';
+import { createTranslator, defaultLabels, type MailyLabels } from './i18n';
 import { cn } from './utils/classname';
 import { replaceDeprecatedNode } from './utils/replace-deprecated';
 
@@ -183,35 +180,42 @@ export function Editor(props: EditorProps) {
       labels={resolvedLabels}
       t={t}
     >
-      <div
-        id="mly-editor"
-        className={cn(
-          'mly-editor antialiased',
-          editor.isEditable ? 'mly-editable' : 'mly-not-editable',
-          wrapClassName
-        )}
-        ref={menuContainerRef}
-      >
-        {hasMenuBar && <EditorMenuBar config={props.config} editor={editor} />}
+      <TooltipProvider>
         <div
+          id="mly-editor"
           className={cn(
-            'border-border bg-background mt-4 rounded-lg border py-4 pr-4',
-            bodyClassName
+            'mly-editor antialiased',
+            editor.isEditable ? 'mly-editable' : 'mly-not-editable',
+            wrapClassName
           )}
+          ref={menuContainerRef}
         >
-          <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <EditorContent editor={editor} />
-          <SectionBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <ColumnsBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          {!hideContextMenu && <ContentMenu editor={editor} />}
-          <VariableBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
-          <InlineImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+          {hasMenuBar && (
+            <EditorMenuBar config={props.config} editor={editor} />
+          )}
+          <div
+            className={cn(
+              'border-border bg-background mt-4 rounded-lg border py-4 pr-4',
+              bodyClassName
+            )}
+          >
+            <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <EditorContent editor={editor} />
+            <SectionBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <ColumnsBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            {!hideContextMenu && <ContentMenu editor={editor} />}
+            <VariableBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
+            <InlineImageBubbleMenu
+              editor={editor}
+              appendTo={menuContainerRef}
+            />
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
     </MailyProvider>
   );
 }

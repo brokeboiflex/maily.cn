@@ -1,4 +1,4 @@
-import { JSONContent } from '@tiptap/core';
+import { type JSONContent } from '@tiptap/core';
 import { spacing } from './spacing';
 import { DEFAULT_SPACER_HEIGHT } from '@/extensions';
 

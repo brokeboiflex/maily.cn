@@ -5,20 +5,21 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { sticky } from 'tippy.js';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Divider } from '../ui/divider';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { Separator } from '@/components/ui/separator';
 import { InputAutocomplete } from '../ui/input-autocomplete';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../ui/tooltip';
+} from '@/components/ui/tooltip';
 import { useRepeatState } from './use-repeat-state';
 import { getClosestNodeByName } from '../../utils/columns';
 import { processVariables } from '../../utils/variable';
 import { useVariableOptions } from '../../utils/node-options';
 import { useMailyContext } from '../../provider';
+import { Button } from '@/components/ui/button';
 import { InfoIcon } from "lucide-react";
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
@@ -115,7 +116,10 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
           </Tooltip>
         </div>
         {!isUpdatingKey && (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-auto p-0"
             onClick={() => {
               setIsUpdatingKey(true);
               setTimeout(() => {
@@ -132,7 +136,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
               from: 'bubble-variable',
               editor,
             })}
-          </button>
+          </Button>
         )}
         {isUpdatingKey && (
           <form
@@ -170,7 +174,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
           </form>
         )}
 
-        <Divider />
+        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

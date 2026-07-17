@@ -1,6 +1,6 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import {
-  AllowedTextDirection,
+  type AllowedTextDirection,
   DEFAULT_TEXT_DIRECTION,
 } from './paragraph/paragraph';
 

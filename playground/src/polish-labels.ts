@@ -74,6 +74,7 @@ export const polishLabels: MailyLabels = {
   "slashCommand.group.components": "Komponenty",
   "slashCommand.navigate": "aby nawigować",
   "slashCommand.select": "aby wybrać",
+  "slashCommand.enter": "Enter",
 
   // ── Placeholders ──
   "placeholder.default": "Zacznij pisać lub wpisz / aby zobaczyć polecenia",
@@ -89,6 +90,7 @@ export const polishLabels: MailyLabels = {
   "toolbar.bulletList": "Lista punktowana",
   "toolbar.orderedList": "Lista numerowana",
   "toolbar.link": "Zewnętrzny adres URL",
+  "toolbar.linkPrompt": "Wprowadź adres URL",
   "toolbar.textColor": "Kolor tekstu",
 
   // ── Turn-into menu ──
@@ -153,6 +155,22 @@ export const polishLabels: MailyLabels = {
   "inlineImageMenu.sourceUrl": "Adres źródłowy",
   "inlineImageMenu.externalUrl": "Zewnętrzny adres URL",
 
+  // ── Button menu ──
+  "buttonMenu.borderRadius": "Zaokrąglenie rogów",
+  "buttonMenu.radius.sharp": "Ostre",
+  "buttonMenu.radius.smooth": "Lekkie",
+  "buttonMenu.radius.round": "Zaokrąglone",
+  "buttonMenu.style": "Styl",
+  "buttonMenu.style.filled": "Wypełniony",
+  "buttonMenu.style.outline": "Kontur",
+  "buttonMenu.size": "Rozmiar",
+  "buttonMenu.size.small": "Mały",
+  "buttonMenu.size.medium": "Średni",
+  "buttonMenu.size.large": "Duży",
+  "buttonMenu.updateExternalLink": "Zmień zewnętrzny link",
+  "buttonMenu.backgroundColor": "Kolor tła",
+  "buttonMenu.textColor": "Kolor tekstu",
+
   // ── Column menu ──
   "columnMenu.gap": "Odstęp kolumn",
   "columnMenu.gap.none": "Brak",
@@ -187,8 +205,41 @@ export const polishLabels: MailyLabels = {
   // ── Show-conditionally popover ──
   "showPopover.showConditionally": "Pokaż blok warunkowo",
   "showPopover.showIf": "Pokaż jeśli",
-  "showPopover.showIfHint":
-    "Pokaż blok, jeśli wybrana zmienna jest prawdziwa.",
+  "showPopover.showIfHint": "Pokaż blok, jeśli wybrana zmienna jest prawdziwa.",
+
+  // ── Link card ──
+  "linkCard.imageAlt": "Obraz karty linku",
+  "linkCard.image": "Obraz",
+  "linkCard.imagePlaceholder": "Dodaj obraz",
+  "linkCard.title": "Tytuł",
+  "linkCard.titlePlaceholder": "Dodaj tytuł",
+  "linkCard.description": "Opis",
+  "linkCard.descriptionPlaceholder": "Dodaj opis",
+  "linkCard.linkTitle": "Tytuł linku",
+  "linkCard.linkTitlePlaceholder": "Dodaj tytuł linku",
+  "linkCard.link": "Link",
+  "linkCard.linkPlaceholder": "Dodaj link",
+  "linkCard.badgeText": "Tekst etykiety",
+  "linkCard.badgeTextPlaceholder": "Dodaj tekst etykiety",
+  "linkCard.subTitle": "Podtytuł",
+  "linkCard.subTitlePlaceholder": "Dodaj podtytuł",
+
+  // ── Image and logo node status ──
+  "imageStatus.noImage": "Nie wybrano obrazu",
+  "imageStatus.dropImage": "Kliknij lub upuść obraz tutaj",
+  "imageStatus.loading": "Ładowanie obrazu...",
+  "imageStatus.error": "Błąd ładowania obrazu",
+  "imageStatus.variable": "Zmienna adresu URL obrazu",
+  "logo.alt": "Logo",
+
+  // ── Variables ──
+  "variableMenu.variable": "Zmienna",
+  "variableMenu.variablePlaceholder": "np. imię",
+  "variableMenu.default": "Wartość domyślna",
+  "variableMenu.defaultPlaceholder": "np. Jan Kowalski",
+  "variableMenu.title": "Zmienne",
+  "variableMenu.noResult": "Brak wyników",
+  "variableMenu.navigate": "Nawiguj",
 
   // ── Edge-spacing micro-labels (Góra/Prawo/Dół/Lewo) ──
   "edgeSpacing.top": "G",

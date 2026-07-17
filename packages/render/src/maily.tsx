@@ -16,7 +16,7 @@ import {
   Row,
   Column,
   Section,
-  HtmlProps,
+  type HtmlProps,
 } from '@react-email/components';
 import { renderAsync as reactEmailRenderAsync } from '@react-email/render';
 import type { JSONContent } from '@tiptap/core';
@@ -1510,7 +1510,6 @@ export class Maily {
   }
 
   protected columns(node: JSONContent, options?: NodeOptions): JSX.Element {
-
     const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
       return <></>;

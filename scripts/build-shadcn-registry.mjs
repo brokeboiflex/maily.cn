@@ -49,7 +49,11 @@ const EXTERNALIZED_MODULES = {
   'editor/components/input': '@/components/ui/input',
   'editor/components/textarea': '@/components/ui/textarea',
   'editor/components/ui/toggle': '@/components/ui/toggle',
-  'editor/components/ui/toggle-group': '@/components/ui/toggle-group',
+  'editor/components/ui/tooltip': '@/components/ui/tooltip',
+  'editor/components/ui/divider': '@/components/ui/separator',
+  'editor/components/ui/native-select': '@/components/ui/native-select',
+  'editor/components/ui/kbd': '@/components/ui/kbd',
+  'editor/components/ui/dropdown-menu': '@/components/ui/dropdown-menu',
 };
 
 // shadcn registry items the consumer must have for the externalized imports
@@ -59,7 +63,19 @@ const REGISTRY_DEPENDENCIES = [
   'input',
   'textarea',
   'toggle',
-  'toggle-group',
+  'tooltip',
+  'separator',
+  'native-select',
+  'kbd',
+  'dropdown-menu',
+];
+
+// These packages are implementation details of source files replaced by the
+// consumer's stock shadcn primitives and must not leak into registry installs.
+const EXTERNALIZED_PACKAGE_DEPENDENCIES = [
+  '@radix-ui/react-slot',
+  '@radix-ui/react-tooltip',
+  '@radix-ui/react-dropdown-menu',
 ];
 
 function externalizedModuleKey(relativePosixPath) {
@@ -483,6 +499,10 @@ function buildRegistryJson() {
   addDeps(dependencies, renderPackage.dependencies);
   addDeps(dependencies, sharedPackage.dependencies);
 
+  for (const name of EXTERNALIZED_PACKAGE_DEPENDENCIES) {
+    dependencies.delete(name);
+  }
+
   // packages/render/src imports this at runtime even though the package lists it as devDependency.
   if (renderPackage.devDependencies?.['@antfu/utils']) {
     dependencies.set(
@@ -516,7 +536,7 @@ function buildRegistryJson() {
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
     name: 'maily-prod-ready',
-    homepage: 'https://github.com/brokeboiflex/maily.to-prod-ready',
+    homepage: 'https://github.com/brokeboiflex/maily.cn',
     items: [
       {
         name: 'maily',

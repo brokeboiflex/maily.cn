@@ -1,5 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useMailyContext } from '../../provider';
+import { NativeSelect, NativeSelectOption } from '../ui/native-select';
 
 type ColumnsWidthProps = {
   selectedValue: string;
@@ -16,14 +17,19 @@ export function ColumnsWidth(props: ColumnsWidthProps) {
       <span className="text-muted-foreground absolute inset-y-0 left-2 flex items-center text-xs leading-none">
         {t('columnMenu.width')}
       </span>
-      <select
-        className="h-auto max-w-28 appearance-none border-0 border-none p-1 pl-[26px] text-sm tabular-nums outline-hidden focus-visible:outline-hidden"
+      <NativeSelect
+        size="sm"
+        className="max-w-28 [&_[data-slot=native-select-icon]]:hidden [&_[data-slot=native-select]]:h-auto [&_[data-slot=native-select]]:border-0 [&_[data-slot=native-select]]:p-1 [&_[data-slot=native-select]]:pl-[26px] [&_[data-slot=native-select]]:tabular-nums"
         value={selectedValue}
         onChange={(e) => onValueChange(e.target.value)}
       >
-        <option value="auto">{t('columnMenu.fitContent')}</option>
-        <option value="100%">{t('columnMenu.stretch')}</option>
-      </select>
+        <NativeSelectOption value="auto">
+          {t('columnMenu.fitContent')}
+        </NativeSelectOption>
+        <NativeSelectOption value="100%">
+          {t('columnMenu.stretch')}
+        </NativeSelectOption>
+      </NativeSelect>
     </label>
   );
 

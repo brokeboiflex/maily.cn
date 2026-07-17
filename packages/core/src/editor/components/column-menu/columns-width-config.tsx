@@ -3,6 +3,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { cn } from '@/editor/utils/classname';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/editor/utils/constants';
 import { useMailyContext } from '../../provider';
+import { Button } from '../base-button';
+import { Input } from '../input';
+import { Separator } from '../ui/divider';
 
 type ColumnsWidthConfigProps = {
   columnsCount: number;
@@ -23,8 +26,10 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
 
   return (
     <Popover>
-      <PopoverTrigger className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground flex size-7 items-center justify-center gap-1 rounded-md text-sm">
-        <SlidersVertical className="h-3 w-3 stroke-[2.5]" />
+      <PopoverTrigger asChild>
+        <Button type="button" variant="ghost" size="icon" className="size-7">
+          <SlidersVertical className="h-3 w-3 stroke-[2.5]" />
+        </Button>
       </PopoverTrigger>
       <PopoverContent
         className="w-[300px] rounded-lg p-0.5!"
@@ -55,7 +60,7 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
           </SwitchButton>
         </div>
 
-        <hr className="border-border my-0.5" />
+        <Separator orientation="horizontal" className="my-0.5" />
 
         <div
           className="grid gap-1 p-1"
@@ -80,7 +85,7 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
                 <span className="text-muted-foreground text-xs">{label}</span>
 
                 <label className="relative">
-                  <input
+                  <Input
                     {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                     placeholder={t('columnMenu.autoPlaceholder')}
                     min={1}
@@ -116,7 +121,10 @@ function SwitchButton(props: SwitchButtonProps) {
   const { onClick, isActive = false, children } = props;
 
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
       className={cn(
         'text-muted-foreground hover:bg-muted hover:text-foreground flex h-7 items-center gap-1 rounded-md px-2 text-sm',
         isActive && 'bg-muted text-foreground'
@@ -124,6 +132,6 @@ function SwitchButton(props: SwitchButtonProps) {
       onClick={onClick}
     >
       {children}
-    </button>
+    </Button>
   );
 }

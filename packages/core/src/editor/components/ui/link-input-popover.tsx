@@ -1,7 +1,7 @@
-import { Link, LinkIcon, LucideIcon } from 'lucide-react';
+import { Link, LinkIcon } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { Button } from '../base-button';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '@/editor/provider';
 import { InputAutocomplete } from './input-autocomplete';
@@ -16,7 +16,7 @@ type LinkInputPopoverProps = {
   isVariable?: boolean;
   onValueChange?: (value: string, isVariable?: boolean) => void;
 
-  icon?: LucideIcon;
+  icon?: ReactNode;
   tooltip?: string;
 
   editor: Editor;
@@ -27,7 +27,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
     defaultValue = '',
     onValueChange,
     tooltip,
-    icon: Icon = Link,
+    icon,
     editor,
 
     isVariable,
@@ -38,7 +38,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
 
   const linkInputRef = useRef<HTMLInputElement>(null);
 
-  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL } = useMailyContext();
+  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL, t } = useMailyContext();
   const options = useVariableOptions(editor);
 
   const renderVariable = options?.renderVariable;
@@ -59,20 +59,6 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
     }).map((variable) => variable.name);
   }, [variables, variableTriggerCharacter, defaultValue, editor]);
 
-  const popoverButton = (
-    <PopoverTrigger asChild>
-      <Button
-        variant="ghost"
-        size="sm"
-        type="button"
-        className="h-7! w-7!"
-        data-state={!!defaultValue}
-      >
-        <Icon className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]" />
-      </Button>
-    </PopoverTrigger>
-  );
-
   return (
     <Popover
       open={isOpen}
@@ -87,11 +73,39 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
     >
       {tooltip ? (
         <Tooltip>
-          <TooltipTrigger asChild>{popoverButton}</TooltipTrigger>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                type="button"
+                className="h-7! w-7!"
+                data-state={!!defaultValue}
+                aria-label={tooltip}
+              >
+                <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
+                  {icon ?? <Link />}
+                </span>
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
           <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
         </Tooltip>
       ) : (
-        popoverButton
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            type="button"
+            className="h-7! w-7!"
+            data-state={!!defaultValue}
+            aria-label={t('toolbar.link')}
+          >
+            <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
+              {icon ?? <Link />}
+            </span>
+          </Button>
+        </PopoverTrigger>
       )}
 
       <PopoverContent
@@ -116,7 +130,10 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
           <div className="isolate flex rounded-lg">
             {!isEditing && (
               <div className="border-border bg-background flex h-8 items-center rounded-lg border px-0.5">
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto p-0"
                   onClick={() => {
                     setIsEditing(true);
                     setTimeout(() => {
@@ -133,7 +150,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                     from: 'bubble-variable',
                     editor,
                   })}
-                </button>
+                </Button>
               </div>
             )}
 

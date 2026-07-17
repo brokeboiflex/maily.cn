@@ -6,13 +6,17 @@ import type { NodeSelection } from '@tiptap/pm/state';
 import type { Node } from '@tiptap/pm/model';
 import { Button } from '@/components/ui/button';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from './ui/tooltip';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { Divider } from './ui/divider';
+} from '@/components/ui/tooltip';
 import { DragHandle } from '../plugins/drag-handle/drag-handle';
 import { cn } from '@/lib/utils';
 import { useMailyContext } from '../provider';
@@ -137,6 +141,7 @@ export function ContentMenu(props: ContentMenuProps) {
                 size="icon"
                 className="text-muted-foreground hover:text-foreground size-7! cursor-grab"
                 onClick={handleAddNewNode}
+                aria-label={t('contentMenu.addNode')}
                 type="button"
               >
                 <Plus className="size-4 shrink-0" />
@@ -146,55 +151,55 @@ export function ContentMenu(props: ContentMenuProps) {
               {t('contentMenu.addNode')}
             </TooltipContent>
           </Tooltip>
-          <Popover open={menuOpen} onOpenChange={setMenuOpen}>
-            <div className="relative flex flex-col">
-              <Tooltip>
-                <TooltipTrigger asChild>
+          <DropdownMenu
+            open={menuOpen}
+            onOpenChange={(open) => {
+              setMenuOpen(open);
+              if (open) {
+                editor.commands.setNodeSelection(currentNodePos);
+              }
+            }}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-foreground relative z-1 size-7! cursor-grab"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setMenuOpen(true);
-                      editor.commands.setNodeSelection(currentNodePos);
-                    }}
+                    aria-label={t('contentMenu.nodeActions')}
                     type="button"
                   >
                     <GripVertical className="size-4 shrink-0" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent sideOffset={8}>
-                  {t('contentMenu.nodeActions')}
-                </TooltipContent>
-              </Tooltip>
-              <PopoverTrigger className="absolute top-0 left-0 z-0 h-7 w-7" />
-            </div>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                {t('contentMenu.nodeActions')}
+              </TooltipContent>
+            </Tooltip>
 
-            <PopoverContent
+            <DropdownMenuContent
               align="start"
               side="bottom"
               sideOffset={8}
-              className="flex w-max flex-col rounded-md p-1"
+              className="w-max min-w-36"
             >
-              <Button
-                variant="ghost"
-                onClick={duplicateNode}
-                className="h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal"
-              >
-                <Copy className="size-[15px] shrink-0" />
+              <DropdownMenuItem onSelect={duplicateNode}>
+                <Copy
+/>
                 {t('contentMenu.duplicate')}
-              </Button>
-              <Divider type="horizontal" />
-              <Button
-                onClick={deleteCurrentNode}
-                className="bg-destructive/10 text-destructive h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal hover:bg-red-200 focus:bg-red-200"
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={deleteCurrentNode}
               >
-                <Trash2 className="size-[15px] shrink-0" />
+                <Trash2
+/>
                 {t('contentMenu.delete')}
-              </Button>
-            </PopoverContent>
-          </Popover>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </TooltipProvider>
     </DragHandle>

@@ -1,6 +1,6 @@
-import { AlignVerticalDistributeCenter, AlignVerticalDistributeEnd, AlignVerticalDistributeStart } from "lucide-react"
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { BubbleMenuButton } from './bubble-menu-button';
-import { AllowedColumnVerticalAlign } from '../nodes/columns/column';
+import { type AllowedColumnVerticalAlign } from '../nodes/columns/column';
 import { useMailyContext } from '../provider';
 
 type VerticalAlignmentSwitchProps = {
@@ -14,21 +14,39 @@ export function VerticalAlignmentSwitch(props: VerticalAlignmentSwitchProps) {
 
   const activeAlignment = {
     top: {
-      icon: AlignVerticalDistributeStart,
+      icon: <IconPlaceholder
+  lucide="AlignVerticalDistributeStart"
+  tabler="IconAlignBoxTopCenter"
+  hugeicons="AlignBoxTopCenterIcon"
+  phosphor="AlignTop"
+  remixicon="RiAlignTop"
+/>,
       tooltip: t('verticalAlignment.top'),
       onClick: () => {
         onAlignmentChange('middle');
       },
     },
     middle: {
-      icon: AlignVerticalDistributeCenter,
+      icon: <IconPlaceholder
+  lucide="AlignVerticalDistributeCenter"
+  tabler="IconAlignBoxCenterMiddle"
+  hugeicons="AlignBoxMiddleCenterIcon"
+  phosphor="AlignCenterVertical"
+  remixicon="RiAlignVertically"
+/>,
       tooltip: t('verticalAlignment.center'),
       onClick: () => {
         onAlignmentChange('bottom');
       },
     },
     bottom: {
-      icon: AlignVerticalDistributeEnd,
+      icon: <IconPlaceholder
+  lucide="AlignVerticalDistributeEnd"
+  tabler="IconAlignBoxBottomCenter"
+  hugeicons="AlignBoxBottomCenterIcon"
+  phosphor="AlignBottom"
+  remixicon="RiAlignBottom"
+/>,
       tooltip: t('verticalAlignment.bottom'),
       onClick: () => {
         onAlignmentChange('top');

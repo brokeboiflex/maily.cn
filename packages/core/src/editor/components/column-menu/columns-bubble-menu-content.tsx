@@ -1,6 +1,6 @@
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { useColumnsState } from './use-columns-state';
-import { Divider } from '../ui/divider';
+import { Separator } from '../ui/divider';
 import { TooltipProvider } from '../ui/tooltip';
 import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
 import {
@@ -53,7 +53,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               }}
             />
 
-            <Divider />
+            <Separator orientation="vertical" />
           </>
         )}
 
@@ -66,10 +66,10 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           }}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <Select
-          icon={Space}
+          icon={<Space />}
           label={t('columnMenu.gap')}
           value={state.currentColumnsGap}
           options={[
@@ -87,17 +87,17 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           tooltip={t('columnMenu.gap')}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={Trash}
+          icon={<Trash />}
           tooltip={t('columnMenu.delete')}
           command={() => {
             deleteNode(editor, 'columns');
           }}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <ShowPopover
           showIfKey={state.currentShowIfKey}

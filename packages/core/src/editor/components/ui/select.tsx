@@ -1,8 +1,12 @@
-import { useId } from 'react';
+import {
+  forwardRef,
+  useId,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from '@/editor/utils/classname';
-import { ChevronDownIcon, LucideIcon } from 'lucide-react';
-import { SVGIcon } from '../icons/grid-lines';
+import { NativeSelect, NativeSelectOption } from './native-select';
 
 type SelectProps = {
   label: string;
@@ -17,8 +21,7 @@ type SelectProps = {
   tooltip?: string;
   className?: string;
 
-  icon?: LucideIcon | SVGIcon;
-  iconClassName?: string;
+  icon?: ReactNode;
 
   placeholder?: string;
 };
@@ -31,67 +34,101 @@ export function Select(props: SelectProps) {
     onValueChange,
     tooltip,
     className,
-    icon: Icon,
-    iconClassName,
+    icon,
     placeholder,
   } = props;
 
   const selectId = `mly${useId()}`;
 
-  const content = (
-    <div className="relative">
+  if (!tooltip) {
+    return (
+      <SelectControl
+        selectId={selectId}
+        label={label}
+        options={options}
+        value={value}
+        onValueChange={onValueChange}
+        className={className}
+        icon={icon}
+        placeholder={placeholder}
+      />
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <SelectControl
+          selectId={selectId}
+          label={label}
+          options={options}
+          value={value}
+          onValueChange={onValueChange}
+          className={className}
+          icon={icon}
+          placeholder={placeholder}
+        />
+      </TooltipTrigger>
+      <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+type SelectControlProps = Omit<SelectProps, 'tooltip'> & {
+  selectId: string;
+} & Omit<ComponentPropsWithoutRef<'div'>, 'onChange'>;
+
+const SelectControl = forwardRef<HTMLDivElement, SelectControlProps>(
+  (
+    {
+      selectId,
+      label,
+      options,
+      value,
+      onValueChange,
+      className,
+      icon,
+      placeholder,
+      ...triggerProps
+    },
+    ref
+  ) => (
+    <div ref={ref} className="relative" {...triggerProps}>
       <label htmlFor={selectId} className="sr-only">
         {label}
       </label>
 
-      {Icon && (
-        <div className="pointer-events-none absolute inset-y-0 left-2 z-20 flex items-center">
-          <Icon className={cn('size-3', iconClassName)} />
+      {icon && (
+        <div className="pointer-events-none absolute inset-y-0 left-2 z-20 flex items-center [&_svg]:size-3">
+          {icon}
         </div>
       )}
 
-      <select
+      <NativeSelect
         id={selectId}
+        size="sm"
         className={cn(
-          'bg-background text-foreground ring-offset-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring active:bg-accent active:text-accent-foreground flex min-h-7 max-w-max appearance-none items-center rounded-md px-1.5 py-0.5 pr-7 text-sm transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-          !!Icon && 'pl-7',
+          'max-w-max [&_[data-slot=native-select]]:border-0 [&_[data-slot=native-select]]:bg-transparent [&_[data-slot=native-select]]:shadow-none',
+          !!icon && '[&_[data-slot=native-select]]:pl-7',
           className
         )}
         value={value || ''}
         onChange={(event) => onValueChange(event.target.value)}
       >
         {placeholder && (
-          <option value="" disabled hidden>
+          <NativeSelectOption value="" disabled hidden>
             {placeholder}
-          </option>
+          </NativeSelectOption>
         )}
 
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <NativeSelectOption key={option.value} value={option.value}>
             {option.label}
-          </option>
+          </NativeSelectOption>
         ))}
-      </select>
-
-      <span className="text-muted-foreground pointer-events-none absolute inset-y-0 right-0 z-10 flex h-full w-7 items-center justify-center peer-disabled:opacity-50">
-        <ChevronDownIcon
-          size={16}
-          strokeWidth={2}
-          aria-hidden="true"
-          role="img"
-        />
-      </span>
+      </NativeSelect>
     </div>
-  );
+  )
+);
 
-  if (!tooltip) {
-    return content;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{content}</TooltipTrigger>
-      <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
-    </Tooltip>
-  );
-}
+SelectControl.displayName = 'SelectControl';

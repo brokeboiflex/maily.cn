@@ -5,6 +5,7 @@ import { useVariableOptions } from '../../utils/node-options';
 import { processVariables } from '../../utils/variable';
 import { Editor } from '@tiptap/core';
 import { useMemo, useRef, useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 type ButtonLabelInputProps = {
   value: string;
@@ -43,7 +44,10 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
   return (
     <div className="isolate flex rounded-lg">
       {!isEditing && (
-        <button
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-auto p-0"
           onClick={() => {
             setIsEditing(true);
             setTimeout(() => {
@@ -60,7 +64,7 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
             from: 'bubble-variable',
             editor,
           })}
-        </button>
+        </Button>
       )}
 
       {isEditing && (

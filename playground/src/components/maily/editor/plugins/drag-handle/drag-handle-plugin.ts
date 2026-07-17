@@ -5,7 +5,7 @@ import {
   Plugin,
   EditorState,
 } from '@tiptap/pm/state';
-import tippy, { Instance } from 'tippy.js';
+import tippy, { type Instance } from 'tippy.js';
 import {
   ySyncPluginKey,
   absolutePositionToRelativePosition,
@@ -14,7 +14,7 @@ import { NodeRange } from '@tiptap/pm/model';
 import { ResolvedPos, Node as TNode } from '@tiptap/pm/model';
 import { Mapping } from '@tiptap/pm/transform';
 import { Editor } from '@tiptap/core';
-import { Props as TippyProps } from 'tippy.js';
+import { type Props as TippyProps } from 'tippy.js';
 
 function getSelectionRanges(
   state: ResolvedPos,

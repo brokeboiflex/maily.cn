@@ -1,14 +1,15 @@
-import { VariableSuggestionsPopoverRef } from '@/editor/nodes/variable/variable-suggestions-popover';
+import { type VariableSuggestionsPopoverRef } from '@/editor/nodes/variable/variable-suggestions-popover';
 import { cn } from '@/editor/utils/classname';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/editor/utils/constants';
 import { useVariableOptions } from '@/editor/utils/node-options';
 import { useOutsideClick } from '@/editor/utils/use-outside-click';
-import { Editor } from '@tiptap/core';
+import { Input } from '@/editor/components/input';
+import type { Editor } from '@tiptap/core';
 import { CornerDownLeft } from 'lucide-react';
-import { forwardRef, HTMLAttributes, useRef } from 'react';
+import { forwardRef, type InputHTMLAttributes, useRef } from 'react';
 import { useMailyContext } from '@/editor/provider';
 
-type InputAutocompleteProps = HTMLAttributes<HTMLInputElement> & {
+type InputAutocompleteProps = InputHTMLAttributes<HTMLInputElement> & {
   value: string;
   onValueChange: (value: string) => void;
 
@@ -53,7 +54,7 @@ export const InputAutocomplete = forwardRef<
   return (
     <div className={cn('relative')} ref={containerRef}>
       <label className="relative">
-        <input
+        <Input
           {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
           placeholder={t('inputAutocomplete.placeholder')}
           type="text"

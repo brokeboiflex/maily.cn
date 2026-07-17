@@ -1,4 +1,4 @@
-import { BlockGroupItem, BlockItem } from '@/blocks';
+import { type BlockGroupItem, type BlockItem } from '@/blocks';
 import { Editor } from '@tiptap/core';
 
 type SlashCommandFilterOptions = {

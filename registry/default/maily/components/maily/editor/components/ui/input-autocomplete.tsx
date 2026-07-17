@@ -1,14 +1,15 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { VariableSuggestionsPopoverRef } from '../../nodes/variable/variable-suggestions-popover';
+import { type VariableSuggestionsPopoverRef } from '../../nodes/variable/variable-suggestions-popover';
 import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useVariableOptions } from '../../utils/node-options';
 import { useOutsideClick } from '../../utils/use-outside-click';
-import { Editor } from '@tiptap/core';
-import { forwardRef, HTMLAttributes, useRef } from 'react';
+import { Input } from '@/components/ui/input';
+import type { Editor } from '@tiptap/core';
+import { forwardRef, type InputHTMLAttributes, useRef } from 'react';
 import { useMailyContext } from '../../provider';
 
-type InputAutocompleteProps = HTMLAttributes<HTMLInputElement> & {
+type InputAutocompleteProps = InputHTMLAttributes<HTMLInputElement> & {
   value: string;
   onValueChange: (value: string) => void;
 
@@ -53,7 +54,7 @@ export const InputAutocomplete = forwardRef<
   return (
     <div className={cn('relative')} ref={containerRef}>
       <label className="relative">
-        <input
+        <Input
           {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
           placeholder={t('inputAutocomplete.placeholder')}
           type="text"

@@ -4,12 +4,8 @@ import path from "node:path"
 const root = process.cwd()
 const registryPath = path.join(root, "registry.json")
 
-const selectedIconDeps = new Set([
-  // Keep Lucide because some generated files still preserve lucide-react value references.
-  "lucide-react",
-])
-
 const shadcnSelectableIconDeps = new Set([
+  "lucide-react",
   "@tabler/icons-react",
   "@hugeicons/react",
   "@hugeicons/core-free-icons",
@@ -49,10 +45,6 @@ function normalizeRegistryDependencies() {
   for (const item of registry.items ?? []) {
     item.dependencies = (item.dependencies ?? []).filter((specifier) => {
       const { name } = parsePackageSpecifier(specifier)
-
-      if (selectedIconDeps.has(name)) {
-        return true
-      }
 
       return !shadcnSelectableIconDeps.has(name)
     })

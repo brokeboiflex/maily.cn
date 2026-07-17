@@ -1,13 +1,15 @@
-import { NodeViewProps } from '@tiptap/core';
+import { type NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { useCallback, useEffect } from 'react';
 import { useState } from 'react';
-import { LogoAttributes, logoSizes } from './logo';
-import { ImageStatus, ImageStatusLabel } from '../image/image-view';
+import { type LogoAttributes, logoSizes } from './logo';
+import { type ImageStatus, ImageStatusLabel } from '../image/image-view';
 import { useImageUploadOptions } from '@/editor/extensions/image-upload/image-upload';
 import { cn } from '@/editor/utils/classname';
+import { useMailyContext } from '@/editor/provider';
 
 export function LogoView(props: NodeViewProps) {
+  const { t } = useMailyContext();
   const { node, editor, updateAttributes } = props;
 
   const [status, setStatus] = useState<ImageStatus>('idle');
@@ -150,7 +152,7 @@ export function LogoView(props: NodeViewProps) {
         display: 'block',
       }}
       className={cn(
-        "mly-image-drop-zone after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:border-[#00bcff] after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
+        "mly-image-drop-zone after:border-primary after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
         isDraggingOver && 'mly-drag-over after:opacity-100'
       )}
       {...(isDroppable
@@ -196,7 +198,7 @@ export function LogoView(props: NodeViewProps) {
       {hasImageSrc && status === 'loaded' && !isSrcVariable && (
         <img
           src={logoSrc}
-          alt="Logo"
+          alt={t('logo.alt')}
           style={{
             height: logoSize,
             width: logoSize,

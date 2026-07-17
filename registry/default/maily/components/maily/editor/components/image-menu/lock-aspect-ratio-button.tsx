@@ -1,7 +1,6 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { LockOpenIcon } from "lucide-react"
 import { Toggle } from '@/components/ui/toggle';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
 
 type LockAspectRatioButtonProps = {
@@ -32,7 +31,14 @@ export function LockAspectRatioButton(props: LockAspectRatioButtonProps) {
   className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]"
 />
           ) : (
-            <LockOpenIcon className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]" />
+            <IconPlaceholder
+  lucide="LockOpenIcon"
+  tabler="IconLockOpen"
+  hugeicons="SquareUnlock01Icon"
+  phosphor="LockOpen"
+  remixicon="RiLockUnlockLine"
+  className="text-foreground h-3 w-3 shrink-0 stroke-[2.5]"
+/>
           )}
         </Toggle>
       </TooltipTrigger>

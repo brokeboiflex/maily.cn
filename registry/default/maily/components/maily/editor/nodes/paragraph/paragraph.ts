@@ -1,4 +1,4 @@
-import { Command } from '@tiptap/core';
+import { type Command } from '@tiptap/core';
 import TiptapParagraph from '@tiptap/extension-paragraph';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
 

@@ -1,4 +1,8 @@
-import { NodeViewProps, NodeViewWrapper, NodeViewContent } from '@tiptap/react';
+import {
+  type NodeViewProps,
+  NodeViewWrapper,
+  NodeViewContent,
+} from '@tiptap/react';
 import { Repeat2 } from "lucide-react";
 
 export function RepeatView(props: NodeViewProps) {
@@ -23,7 +27,7 @@ export function RepeatView(props: NodeViewProps) {
         }}
       >
         <Repeat2 className="text-foreground size-3 stroke-[2.5]" />
-        <div className="w-[1.5px] grow rounded-full bg-rose-300" />
+        <div className="bg-primary/50 w-[1.5px] grow rounded-full" />
       </div>
     </NodeViewWrapper>
   );

@@ -1,8 +1,7 @@
-import { LockOpenIcon } from "lucide-react"
 import { Toggle } from '@/components/ui/toggle';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
-import { LockIcon } from "lucide-react"
+import { LockIcon, LockOpenIcon } from "lucide-react";
 
 type LockAspectRatioButtonProps = {
   onClick: () => void;

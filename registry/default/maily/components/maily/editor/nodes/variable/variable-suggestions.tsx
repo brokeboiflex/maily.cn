@@ -4,14 +4,14 @@ import {
 } from '../../utils/node-options';
 import { processVariables } from '../../utils/variable';
 import { ReactRenderer } from '@tiptap/react';
-import { SuggestionOptions } from '@tiptap/suggestion';
+import { type SuggestionOptions } from '@tiptap/suggestion';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import tippy, { GetReferenceClientRect } from 'tippy.js';
+import tippy, { type GetReferenceClientRect } from 'tippy.js';
 import {
   DEFAULT_VARIABLE_TRIGGER_CHAR,
-  Variable as VariableType,
+  type Variable as VariableType,
 } from './variable';
-import { VariableSuggestionsPopoverRef } from './variable-suggestions-popover';
+import { type VariableSuggestionsPopoverRef } from './variable-suggestions-popover';
 
 export type VariableListProps = {
   command: (params: {

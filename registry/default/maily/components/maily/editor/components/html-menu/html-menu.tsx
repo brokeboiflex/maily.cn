@@ -5,16 +5,17 @@ import { useCallback } from 'react';
 import { sticky } from 'tippy.js';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Divider } from '../ui/divider';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../ui/tooltip';
+} from '@/components/ui/tooltip';
 import { useHtmlState } from './use-html-state';
 import { useMailyContext } from '../../provider';
+import { Button } from '@/components/ui/button';
 
 export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -65,7 +66,10 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
         <div className="bg-muted flex h-7 items-center rounded-md px-0.5">
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
                 className={cn(
                   'focus-visible:ring-ring flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
                   activeTab === 'code' && 'bg-background'
@@ -85,13 +89,18 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   remixicon="RiCodeLine"
   className="size-3 shrink-0 stroke-[2.5]"
 />
-              </button>
+              </Button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>{t('htmlMenu.htmlCode')}</TooltipContent>
+            <TooltipContent sideOffset={8}>
+              {t('htmlMenu.htmlCode')}
+            </TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
                 className={cn(
                   'focus-visible:ring-ring flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
                   activeTab === 'preview' && 'bg-background'
@@ -111,12 +120,14 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   remixicon="RiEyeLine"
   className="size-3 shrink-0 stroke-[2.5]"
 />
-              </button>
+              </Button>
             </TooltipTrigger>
-            <TooltipContent sideOffset={8}>{t('htmlMenu.preview')}</TooltipContent>
+            <TooltipContent sideOffset={8}>
+              {t('htmlMenu.preview')}
+            </TooltipContent>
           </Tooltip>
         </div>
-        <Divider />
+        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

@@ -1,5 +1,5 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { BlockItem } from './types';
+import { type BlockItem } from './types';
 import type { TranslateFn } from '../editor/i18n';
 
 export const htmlCodeBlock = (t: TranslateFn): BlockItem => ({

@@ -1,15 +1,14 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { PilcrowIcon } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import {
-  TurnIntoBlockCategory,
-  TurnIntoBlockOptions,
-  TurnIntoOptions,
+  type TurnIntoBlockCategory,
+  type TurnIntoBlockOptions,
+  type TurnIntoOptions,
 } from './use-turn-into-block-options';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
 
 type TurnIntoBlockProps = {
@@ -32,7 +31,16 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
       options.find((option) => option.type === 'option' && option.isActive()),
     [options]
   ) as TurnIntoBlockOptions | undefined;
-  const { icon: ActiveIcon = PilcrowIcon } = activeItem || {};
+  const activeIcon = activeItem?.icon ?? (
+    <IconPlaceholder
+  lucide="PilcrowIcon"
+  tabler="IconPilcrow"
+  hugeicons="ParagraphIcon"
+  phosphor="Paragraph"
+  remixicon="RiParagraph"
+  className="size-3 shrink-0 stroke-[2.5]"
+/>
+  );
 
   return (
     <Popover>
@@ -43,7 +51,9 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
               'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex aspect-square h-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
             )}
           >
-            <ActiveIcon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+            <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
+              {activeIcon}
+            </span>
             <IconPlaceholder
   lucide="ChevronDownIcon"
   tabler="IconChevronDown"
@@ -71,7 +81,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
                 variant="ghost"
                 className="text-foreground mb-0.5 h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal"
               >
-                <option.icon className="size-[15px] shrink-0" />
+                {option.icon}
                 {option.label}
               </Button>
             );

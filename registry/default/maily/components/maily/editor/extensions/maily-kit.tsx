@@ -1,4 +1,4 @@
-import { AnyExtension, Extension } from '@tiptap/core';
+import { type AnyExtension, Extension } from '@tiptap/core';
 
 import StarterKit from '@tiptap/starter-kit';
 import ListItem from '@tiptap/extension-list-item';
@@ -15,7 +15,7 @@ import { Color } from './color';
 import { HorizontalRule } from './horizontal-rule';
 import { Footer } from '../nodes/footer';
 import { Spacer } from '../nodes/spacer';
-import { LinkCardExtension, LinkCardOptions } from './link-card';
+import { LinkCardExtension, type LinkCardOptions } from './link-card';
 import { ColumnsExtension } from '../nodes/columns/columns';
 import { ColumnExtension } from '../nodes/columns/column';
 import { SectionExtension } from '../nodes/section/section';
@@ -23,7 +23,7 @@ import { ButtonExtension } from '../nodes/button/button';
 import { LogoExtension } from '../nodes/logo/logo';
 import { ImageExtension } from '../nodes/image/image';
 import { LinkExtension } from '../nodes/link';
-import { LinkOptions } from '@tiptap/extension-link';
+import { type LinkOptions } from '@tiptap/extension-link';
 import { HeadingExtension } from '../nodes/heading/heading';
 import { ParagraphExtension } from '../nodes/paragraph/paragraph';
 import { RepeatExtension } from '../nodes/repeat/repeat';

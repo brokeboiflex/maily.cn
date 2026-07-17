@@ -1,6 +1,6 @@
 import {
   ImageUploadPlugin,
-  ImageUploadPluginOptions,
+  type ImageUploadPluginOptions,
 } from '@/editor/plugins/image-upload/image-upload-plugin';
 import { Editor, Extension } from '@tiptap/core';
 import { useMemo } from 'react';

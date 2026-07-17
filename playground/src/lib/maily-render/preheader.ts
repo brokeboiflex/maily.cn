@@ -1,8 +1,12 @@
-import { JSONContent } from '@tiptap/core';
-import { Maily } from './maily';
+import { type JSONContent } from '@tiptap/core';
+import type { Maily } from './maily';
 
 export class Preheader {
-  constructor(private readonly maily: Maily) {}
+  private readonly maily: Maily;
+
+  constructor(maily: Maily) {
+    this.maily = maily;
+  }
 
   render(content: string | JSONContent): string {
     if (typeof content === 'string') {

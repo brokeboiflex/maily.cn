@@ -11,6 +11,7 @@ import { useImageUploadOptions } from '@/editor/extensions/image-upload/image-up
 import { cn } from '@/editor/utils/classname';
 import { useEvent } from '@/editor/utils/use-event';
 import { getAspectRatio, getNewHeight } from '@/editor/utils/aspect-ratio';
+import { useMailyContext } from '@/editor/provider';
 
 const MIN_WIDTH = 20;
 export const IMAGE_MAX_WIDTH = 600;
@@ -122,7 +123,7 @@ export function ImageView(props: NodeViewProps) {
           tabIndex={0}
           onMouseDown={handleMouseDown}
           data-direction={direction}
-          className="bg-rose-500"
+          className="bg-primary"
           style={{
             position: 'absolute',
             height: '10px',
@@ -298,7 +299,7 @@ export function ImageView(props: NodeViewProps) {
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
       className={cn(
-        "mly-image-drop-zone relative after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:border-[#00bcff] after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
+        "mly-image-drop-zone after:border-primary relative after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
         isDraggingOver && 'mly-drag-over after:opacity-100'
       )}
       style={{
@@ -400,7 +401,7 @@ export function ImageView(props: NodeViewProps) {
               ].map((style, i) => (
                 <div
                   key={i}
-                  className="bg-rose-500"
+                  className="bg-primary"
                   style={{
                     position: 'absolute',
                     ...style,
@@ -426,6 +427,7 @@ type ImageStatusLabelProps = {
 } & React.HTMLAttributes<HTMLDivElement>;
 
 export function ImageStatusLabel(props: ImageStatusLabelProps) {
+  const { t } = useMailyContext();
   const { status, minHeight, className, style, isDropZone, ...rest } = props;
 
   return (
@@ -451,33 +453,33 @@ export function ImageStatusLabel(props: ImageStatusLabelProps) {
       {status === 'idle' && !isDropZone && (
         <>
           <ImageOffIcon className="size-4 stroke-[2.5]" />
-          <span>No image selected</span>
+          <span>{t('imageStatus.noImage')}</span>
         </>
       )}
 
       {status === 'idle' && isDropZone && (
         <>
           <GrabIcon className="size-4 stroke-[2.5]" />
-          <span>Click or Drop image here</span>
+          <span>{t('imageStatus.dropImage')}</span>
         </>
       )}
 
       {status === 'loading' && (
         <>
           <Loader2 className="size-4 animate-spin stroke-[2.5]" />
-          <span>Loading image...</span>
+          <span>{t('imageStatus.loading')}</span>
         </>
       )}
       {status === 'error' && (
         <>
           <Ban className="size-4 stroke-[2.5]" />
-          <span>Error loading image</span>
+          <span>{t('imageStatus.error')}</span>
         </>
       )}
       {status === 'variable' && (
         <>
           <BracesIcon className="size-4 stroke-[2.5]" />
-          <span>Variable Image URL</span>
+          <span>{t('imageStatus.variable')}</span>
         </>
       )}
     </div>

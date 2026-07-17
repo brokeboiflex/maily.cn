@@ -1,17 +1,17 @@
-import { BoldIcon, CodeIcon, ItalicIcon, List, ListOrdered, StrikethroughIcon, UnderlineIcon } from "lucide-react"
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { Editor } from '@tiptap/core';
-import { BubbleMenuItem } from './text-bubble-menu';
+import { type BubbleMenuItem } from './text-bubble-menu';
 
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { AlignmentSwitch } from '../alignment-switch';
 import { TextDirectionSwitch } from '../text-direction-switch';
 import { useTextMenuState } from './use-text-menu-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
-import { Divider } from '../ui/divider';
+import { Separator } from '@/components/ui/separator';
 import { ColorPicker } from '../ui/color-picker';
 import { Button } from '@/components/ui/button';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Toggle } from '@/components/ui/toggle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
 
 type TextBubbleContentProps = {
@@ -32,72 +32,99 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       name: 'bold',
       isActive: () => editor?.isActive('bold')!,
       command: () => editor?.chain().focus().toggleBold().run()!,
-      icon: BoldIcon,
+      icon: <IconPlaceholder
+  lucide="BoldIcon"
+  tabler="IconBold"
+  hugeicons="TextBoldIcon"
+  phosphor="TextB"
+  remixicon="RiBold"
+/>,
       tooltip: t('toolbar.bold'),
     },
     {
       name: 'italic',
       isActive: () => editor?.isActive('italic')!,
       command: () => editor?.chain().focus().toggleItalic().run()!,
-      icon: ItalicIcon,
+      icon: <IconPlaceholder
+  lucide="ItalicIcon"
+  tabler="IconItalic"
+  hugeicons="TextItalicIcon"
+  phosphor="TextItalic"
+  remixicon="RiItalic"
+/>,
       tooltip: t('toolbar.italic'),
     },
     {
       name: 'underline',
       isActive: () => editor?.isActive('underline')!,
       command: () => editor?.chain().focus().toggleUnderline().run()!,
-      icon: UnderlineIcon,
+      icon: <IconPlaceholder
+  lucide="UnderlineIcon"
+  tabler="IconUnderline"
+  hugeicons="TextUnderlineIcon"
+  phosphor="TextUnderline"
+  remixicon="RiUnderline"
+/>,
       tooltip: t('toolbar.underline'),
     },
     {
       name: 'strike',
       isActive: () => editor?.isActive('strike')!,
       command: () => editor?.chain().focus().toggleStrike().run()!,
-      icon: StrikethroughIcon,
+      icon: <IconPlaceholder
+  lucide="StrikethroughIcon"
+  tabler="IconStrikethrough"
+  hugeicons="TextStrikethroughIcon"
+  phosphor="TextStrikethrough"
+  remixicon="RiStrikethrough"
+/>,
       tooltip: t('toolbar.strikethrough'),
     },
     {
       name: 'code',
       isActive: () => editor?.isActive('code')!,
       command: () => editor?.chain().focus().toggleCode().run()!,
-      icon: CodeIcon,
+      icon: <IconPlaceholder
+  lucide="CodeIcon"
+  tabler="IconCode"
+  hugeicons="SourceCodeIcon"
+  phosphor="Code"
+  remixicon="RiCodeLine"
+/>,
       tooltip: t('toolbar.code'),
     },
   ];
 
   return (
     <>
-      <ToggleGroup
-        type="multiple"
-        value={items
-          .filter((item) => item.isActive?.())
-          .map((item) => item.name!)}
-      >
+      <>
         {items.map((item) => (
           <Tooltip key={item.name}>
             <TooltipTrigger asChild>
-              <ToggleGroupItem
-                value={item.name!}
-                aria-label={item.name}
-                onClick={item.command}
+              <Toggle
+                pressed={!!item.isActive?.()}
+                onPressedChange={() => item.command?.()}
+                aria-label={item.tooltip ?? item.name}
                 disabled={item.disbabled}
                 className="size-7! min-w-7! px-2.5 disabled:cursor-not-allowed"
               >
                 {item.icon ? (
-                  <item.icon className="h-3 w-3 shrink-0 stroke-[2.5]" />
+                  <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
+                    {item.icon}
+                  </span>
                 ) : (
                   <span className="text-muted-foreground text-sm font-medium">
                     {item.name}
                   </span>
                 )}
-              </ToggleGroupItem>
+              </Toggle>
             </TooltipTrigger>
             {item.tooltip ? (
               <TooltipContent sideOffset={8}>{item.tooltip}</TooltipContent>
             ) : null}
           </Tooltip>
         ))}
-      </ToggleGroup>
+      </>
 
       <AlignmentSwitch
         alignment={state.textAlign}
@@ -126,14 +153,26 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       {!state.isListActive && showListMenu && (
         <>
           <BubbleMenuButton
-            icon={List}
+            icon={<IconPlaceholder
+  lucide="List"
+  tabler="IconList"
+  hugeicons="LeftToRightListBulletIcon"
+  phosphor="ListBullets"
+  remixicon="RiListUnordered"
+/>}
             command={() => {
               editor.chain().focus().toggleBulletList().run();
             }}
             tooltip={t('toolbar.bulletList')}
           />
           <BubbleMenuButton
-            icon={ListOrdered}
+            icon={<IconPlaceholder
+  lucide="ListOrdered"
+  tabler="IconListNumbers"
+  hugeicons="LeftToRightListNumberIcon"
+  phosphor="ListNumbers"
+  remixicon="RiListOrdered"
+/>}
             command={() => {
               editor.chain().focus().toggleOrderedList().run();
             }}
@@ -169,7 +208,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         isVariable={state.isUrlVariable}
       />
 
-      <Divider />
+      <Separator orientation="vertical" />
 
       <ColorPicker
         color={state.currentTextColor}

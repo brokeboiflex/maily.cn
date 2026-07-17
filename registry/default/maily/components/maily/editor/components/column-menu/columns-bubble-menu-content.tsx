@@ -1,8 +1,8 @@
-import { Space, Trash } from "lucide-react"
-import { EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { IconPlaceholder } from "@/components/icon-placeholder"
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { useColumnsState } from './use-columns-state';
-import { Divider } from '../ui/divider';
-import { TooltipProvider } from '../ui/tooltip';
+import { Separator } from '@/components/ui/separator';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
 import {
   addColumnByIndex,
@@ -53,7 +53,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               }}
             />
 
-            <Divider />
+            <Separator orientation="vertical" />
           </>
         )}
 
@@ -66,10 +66,16 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           }}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <Select
-          icon={Space}
+          icon={<IconPlaceholder
+  lucide="Space"
+  tabler="IconSpace"
+  hugeicons="HorizontalResizeIcon"
+  phosphor="ArrowsOutLineHorizontal"
+  remixicon="RiSpace"
+/>}
           label={t('columnMenu.gap')}
           value={state.currentColumnsGap}
           options={[
@@ -87,17 +93,23 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           tooltip={t('columnMenu.gap')}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={Trash}
+          icon={<IconPlaceholder
+  lucide="Trash"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+/>}
           tooltip={t('columnMenu.delete')}
           command={() => {
             deleteNode(editor, 'columns');
           }}
         />
 
-        <Divider />
+        <Separator orientation="vertical" />
 
         <ShowPopover
           showIfKey={state.currentShowIfKey}
