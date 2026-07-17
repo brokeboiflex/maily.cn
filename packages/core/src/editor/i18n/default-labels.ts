@@ -95,6 +95,23 @@ export const defaultLabels = {
   'toolbar.link': 'External URL',
   'toolbar.linkPrompt': 'Enter a URL',
   'toolbar.textColor': 'Text Color',
+  'toolbar.fontFamily': 'Font Family',
+
+  // ── Font family picker ──
+  'fontPicker.search': 'Search Fontsource fonts...',
+  'fontPicker.default': 'Email default',
+  'fontPicker.defaultDescription': 'Use the email theme font',
+  'fontPicker.loading': 'Loading fonts',
+  'fontPicker.loadError': 'Could not load fonts',
+  'fontPicker.loadErrorDescription':
+    'Check your connection and try Fontsource again.',
+  'fontPicker.retry': 'Try again',
+  'fontPicker.noResults': 'No fonts found.',
+  'fontPicker.category.sansSerif': 'Sans serif',
+  'fontPicker.category.serif': 'Serif',
+  'fontPicker.category.display': 'Display',
+  'fontPicker.category.handwriting': 'Handwriting',
+  'fontPicker.category.monospace': 'Monospace',
 
   // ── Turn-into menu ──
   'turnInto.label': 'Turn into',

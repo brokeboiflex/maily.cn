@@ -224,6 +224,51 @@ describe('render', () => {
     expect(result).toContain('font-size:18px');
   });
 
+  it('renders granular Fontsource families with pinned faces and fallbacks', async () => {
+    const fontAttrs = {
+      color: '#123456',
+      fontFamily: 'Fraunces',
+      fontId: 'fraunces',
+      fontFallback: 'Georgia',
+      fontSubset: 'latin',
+      fontVersion: '5.2.8',
+      fontRegularWeight: 400,
+      fontBoldWeight: 700,
+      fontHasItalic: true,
+    };
+    const content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Editorial type',
+              marks: [{ type: 'textStyle', attrs: fontAttrs }],
+            },
+            {
+              type: 'text',
+              text: ' repeated',
+              marks: [{ type: 'textStyle', attrs: fontAttrs }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = await render(content);
+
+    expect(result).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
+    expect(result).toContain(
+      'fontsource/fonts/fraunces@5.2.8/latin-400-normal.woff2'
+    );
+    expect(result).toContain(
+      'fontsource/fonts/fraunces@5.2.8/latin-700-italic.woff2'
+    );
+    expect(result.match(/latin-400-normal\.woff2/g)).toHaveLength(1);
+  });
+
   it('should remove preview header from text', async () => {
     const content = {
       type: 'doc',

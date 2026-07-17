@@ -14,5 +14,10 @@
     ["cva\\(((?:[^()]|\\([^()]*\\))*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
     ["cx\\(((?:[^()]|\\([^()]*\\))*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
     ["cn\\(((?:[^()]|\\([^()]*\\))*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "i18n-ally.localesPaths": [
+    "packages/core/src/editor/i18n",
+    "playground/src/components/maily/editor/i18n",
+    "registry/default/maily/components/maily/editor/i18n"
   ]
 }

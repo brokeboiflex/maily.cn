@@ -242,6 +242,34 @@ export const iconMap = {
     hugeicons: 'Loading03Icon',
     remixicon: 'RiLoader2Line',
   },
+  LoaderCircleIcon: {
+    lucide: 'LoaderCircleIcon',
+    tabler: 'IconLoader2',
+    phosphor: 'CircleNotch',
+    hugeicons: 'Loading03Icon',
+    remixicon: 'RiLoader2Line',
+  },
+  CheckIcon: {
+    lucide: 'CheckIcon',
+    tabler: 'IconCheck',
+    phosphor: 'Check',
+    hugeicons: 'Tick02Icon',
+    remixicon: 'RiCheckLine',
+  },
+  RotateCwIcon: {
+    lucide: 'RotateCwIcon',
+    tabler: 'IconRepeat',
+    phosphor: 'Repeat',
+    hugeicons: 'RepeatIcon',
+    remixicon: 'RiRepeatLine',
+  },
+  TypeIcon: {
+    lucide: 'TypeIcon',
+    tabler: 'IconTypography',
+    phosphor: 'TextT',
+    hugeicons: 'TextFontIcon',
+    remixicon: 'RiParagraph',
+  },
   Ban: {
     lucide: 'Ban',
     tabler: 'IconBan',
@@ -599,6 +627,10 @@ export const iconMapMeta = {
         'remixicon has no image-off icon; RiImageLine is the nearest image-status glyph.',
       LockOpenIcon:
         'hugeicons SquareUnlock01Icon communicates unlocked state with a square container.',
+      RotateCwIcon:
+        'The verified repeat-arrow icons are the closest cross-library retry action.',
+      TypeIcon:
+        'Uses the same verified typography glyphs as the existing Text mapping.',
     },
     verification:
       'All entries verified against official package type definitions via programmatic check. See file header for sources.',

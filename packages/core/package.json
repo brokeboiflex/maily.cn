@@ -157,6 +157,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tailwindcss/postcss": "^4.1.8",
+    "@tanstack/react-virtual": "^3.14.6",
     "@tiptap/core": "^2.11.5",
     "@tiptap/extension-code-block-lowlight": "^2.11.5",
     "@tiptap/extension-color": "^2.11.5",

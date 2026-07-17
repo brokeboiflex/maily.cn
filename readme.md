@@ -189,6 +189,23 @@ import { ImageUploadExtension } from '@/components/maily/editor/extensions';
 
 Users can still paste a URL when an upload handler is not appropriate.
 
+## Font selection
+
+Select text in the editor to choose from the complete Fontsource catalog. The
+picker fetches catalog metadata only when opened, virtualizes its results, and
+loads preview WOFF2 files only for visible rows, so the font library is not
+bundled into the installed component.
+
+The chosen Fontsource package version, subset, weights, fallback, and family are
+stored on TipTap's `textStyle` mark. Saved editor JSON is therefore enough for
+the server-side renderer to emit version-pinned `@font-face` declarations without
+querying Fontsource while an email is being sent. Unsupported email clients use
+the family-specific email-safe fallback.
+
+The Fontsource API and jsDelivr font CDN must be permitted by the host
+application's content security policy for catalog previews. Sent emails still
+render readable fallback fonts when a client blocks remote web fonts.
+
 ## Renderer usage
 
 ```ts

@@ -5,6 +5,7 @@ import {
 } from '@/editor/nodes/paragraph/paragraph';
 import { Editor, useEditorState } from '@tiptap/react';
 import deepEql from 'fast-deep-equal';
+import { fontSelectionFromAttrs } from '../../fonts/fontsource';
 
 export const DEFAULT_TEXT_COLOR = '#374151';
 
@@ -13,6 +14,9 @@ export const useTextMenuState = (editor: Editor) => {
     editor,
     selector: (ctx) => {
       return {
+        currentFont: fontSelectionFromAttrs(
+          ctx.editor.getAttributes('textStyle')
+        ),
         currentTextColor:
           ctx.editor.getAttributes('textStyle').color || DEFAULT_TEXT_COLOR,
 

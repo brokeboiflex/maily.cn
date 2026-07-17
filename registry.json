@@ -27,6 +27,7 @@
       ],
       "dependencies": [
         "@tailwindcss/postcss@^4.1.8",
+        "@tanstack/react-virtual@^3.14.6",
         "@tiptap/core@^2.11.5",
         "@tiptap/extension-code-block-lowlight@^2.11.5",
         "@tiptap/extension-color@^2.11.5",
@@ -261,6 +262,11 @@
           "target": "@components/maily/editor/components/text-direction-switch.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/font-family-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/font-family-picker.tsx"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/components/text-menu/text-bubble-content.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/text-menu/text-bubble-content.tsx"
@@ -331,6 +337,11 @@
           "target": "@components/maily/editor/extensions/color.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/extensions/font-family.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/font-family.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/extensions/horizontal-rule.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/horizontal-rule.tsx"
@@ -399,6 +410,11 @@
           "path": "registry/default/maily/components/maily/editor/extensions/tailing-node/tailing-node.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/tailing-node/tailing-node.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/fonts/fontsource.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/fonts/fontsource.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/i18n/default-labels.ts",
@@ -654,6 +670,11 @@
           "path": "registry/default/maily/components/maily/index.ts",
           "type": "registry:component",
           "target": "@components/maily/index.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/fontsource.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/fontsource.ts"
         },
         {
           "path": "registry/default/maily/lib/maily-render/index.ts",

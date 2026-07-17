@@ -36,6 +36,7 @@ import {
   DEFAULT_LINK_TEXT_COLOR,
 } from '@maily-to/shared';
 import { Preheader } from './preheader';
+import { emailFontStack, fontsourceStyles } from './fontsource';
 
 interface NodeOptions {
   parent?: JSONContent;
@@ -485,6 +486,7 @@ export class Maily {
       fontStyle: 'normal',
       fontWeight: 400,
     };
+    const selectedFontStyles = fontsourceStyles(this.content);
 
     const bodyStyles: CSSProperties = {
       margin: '0px',
@@ -497,6 +499,13 @@ export class Maily {
       <Html {...htmlProps}>
         <Head>
           <Font {...fontOptions} />
+
+          {selectedFontStyles ? (
+            <style
+              data-maily-fonts="fontsource"
+              dangerouslySetInnerHTML={{ __html: selectedFontStyles }}
+            />
+          ) : null}
 
           <style
             dangerouslySetInnerHTML={{
@@ -728,12 +737,22 @@ export class Maily {
 
   protected textStyle(mark: MarkType, text: JSX.Element): JSX.Element {
     const { attrs } = mark;
-    const { color = this.config.theme?.colors?.paragraph } = attrs || {};
+    const {
+      color = this.config.theme?.colors?.paragraph,
+      fontFamily,
+      fontFallback,
+    } = attrs || {};
+    const selectedFontStack = emailFontStack(
+      fontFamily,
+      fontFallback,
+      this.config.theme?.font?.fallbackFontFamily
+    );
 
     return (
       <span
         style={{
           color,
+          ...(selectedFontStack ? { fontFamily: selectedFontStack } : {}),
         }}
       >
         {text}

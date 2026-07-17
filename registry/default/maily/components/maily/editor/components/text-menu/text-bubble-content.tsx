@@ -15,6 +15,7 @@ import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from '../ui/toggle-group-compat';
+import { FontFamilyPicker } from './font-family-picker';
 
 type TextBubbleContentProps = {
   editor: Editor;
@@ -99,6 +100,10 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
 
   return (
     <>
+      <FontFamilyPicker editor={editor} currentFont={state.currentFont} />
+
+      <Separator orientation="vertical" />
+
       <ToggleGroupCompat
         selectionMode="multiple"
         value={items

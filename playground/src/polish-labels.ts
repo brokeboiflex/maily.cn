@@ -92,6 +92,22 @@ export const polishLabels: MailyLabels = {
   "toolbar.link": "Zewnętrzny adres URL",
   "toolbar.linkPrompt": "Wprowadź adres URL",
   "toolbar.textColor": "Kolor tekstu",
+  "toolbar.fontFamily": "Krój pisma",
+
+  // ── Font family picker ──
+  "fontPicker.search": "Szukaj fontów Fontsource...",
+  "fontPicker.default": "Domyślny wiadomości",
+  "fontPicker.defaultDescription": "Użyj fontu motywu wiadomości",
+  "fontPicker.loading": "Ładowanie fontów",
+  "fontPicker.loadError": "Nie udało się załadować fontów",
+  "fontPicker.loadErrorDescription": "Sprawdź połączenie i spróbuj ponownie.",
+  "fontPicker.retry": "Spróbuj ponownie",
+  "fontPicker.noResults": "Nie znaleziono fontów.",
+  "fontPicker.category.sansSerif": "Bezszeryfowy",
+  "fontPicker.category.serif": "Szeryfowy",
+  "fontPicker.category.display": "Dekoracyjny",
+  "fontPicker.category.handwriting": "Odręczny",
+  "fontPicker.category.monospace": "Stałej szerokości",
 
   // ── Turn-into menu ──
   "turnInto.label": "Zmień na",

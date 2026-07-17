@@ -30,6 +30,7 @@ import {
 import { createTranslator, defaultLabels, type MailyLabels } from './i18n';
 import { cn } from './utils/classname';
 import { replaceDeprecatedNode } from './utils/replace-deprecated';
+import { loadDocumentFonts } from './fonts/fontsource';
 
 type ParitialMailContextType = Partial<MailyContextType>;
 
@@ -154,9 +155,11 @@ export function Editor(props: EditorProps) {
     },
     immediatelyRender,
     onCreate: ({ editor }) => {
+      loadDocumentFonts(editor.getJSON());
       onCreate?.(editor);
     },
     onUpdate: ({ editor }) => {
+      loadDocumentFonts(editor.getJSON());
       onUpdate?.(editor);
     },
     extensions: defaultExtensions({
@@ -222,3 +225,8 @@ export function Editor(props: EditorProps) {
 
 export { defaultLabels, createTranslator } from './i18n';
 export type { MailyLabels, LabelKey, TranslateFn } from './i18n';
+export type {
+  FontsourceCategory,
+  FontsourceFont,
+  MailyFontSelection,
+} from './fonts/fontsource';
