@@ -55,7 +55,7 @@ This was a research-driven plan (no interactive interview needed — the spec wa
 ## Work Objectives
 
 ### Core Objective
-Produce a working shadcn registry that, when installed via `pnpm dlx shadcn@latest add brokeboiflex/maily.to-prod-ready/maily`, emits icon-library-native icons for all JSX-rendered icons, while preserving lucide-react for component-reference and type usages.
+Produce a working shadcn registry that, when installed via `pnpm dlx shadcn@latest add brokeboiflex/maily.cn/maily`, emits icon-library-native icons for all JSX-rendered icons, while preserving lucide-react for component-reference and type usages.
 
 ### Concrete Deliverables
 - `scripts/icon-map.mjs` (new) — verified mapping data
@@ -603,7 +603,7 @@ Wave FINAL (After Task 3 — 4 parallel reviews, then user okay):
   - If feasible:
     1. Create a temporary Next.js or Vite app in `C:\Users\dell\AppData\Local\Temp\opencode\shadcn-fixture` (the pre-approved temp dir).
     2. Initialize shadcn: `pnpm dlx shadcn@latest init` (with `iconLibrary: lucide` and `iconLibrary: tabler` in two separate runs or configs).
-    3. Add the maily item from the LOCAL registry: `pnpm dlx shadcn@latest add brokeboiflex/maily.to-prod-ready/maily` — NOTE: this requires the registry to be pushed to GitHub first. If not pushed, test against the local `registry.json` using `shadcn add ./registry.json` or the `--url` flag if supported.
+    3. Add the maily item from the LOCAL registry: `pnpm dlx shadcn@latest add brokeboiflex/maily.cn/maily` — NOTE: this requires the registry to be pushed to GitHub first. If not pushed, test against the local `registry.json` using `shadcn add ./registry.json` or the `--url` flag if supported.
     4. After install, verify:
        - The IconPlaceholder import was REMOVED by shadcn's transformer (shadcn replaces it with the chosen library's import)
        - The chosen library's icons are imported (e.g., `@tabler/icons-react` for tabler)
