@@ -1,24 +1,39 @@
-<div align="center"><img height="150" src="https://maily.to/brand/icon.svg" /></div>
+<div align="center"><img height="150" src="../../assets/branding/maily-cn-avatar.png" alt="maily.cn avatar" /></div>
 <br>
 
-<div align="center"><strong>@maily-to/render</strong></div>
-<div align="center">Transform <a href="https://maily.to">Maily</a> content into HTML email templates.</div>
+<div align="center"><strong>maily.cn / @maily-to/render</strong></div>
+<div align="center">Transform Maily editor content into email-safe HTML.</div>
 <br />
 
 <p align="center">
-  <a href="https://github.com/arikchakma/maily.to/blob/main/license">
+  <a href="https://github.com/brokeboiflex/maily.cn/blob/main/license">
     <img src="https://img.shields.io/badge/License-MIT-222222.svg" />
   </a>
-  <a href="https://buymeacoffee.com/arikchakma">
-    	<img src="https://img.shields.io/badge/-buy_me_a%C2%A0coffee-222222?logo=buy-me-a-coffee" alt="Buy me a coffee" />
+  <a href="https://github.com/brokeboiflex/maily.cn">
+    <img src="https://img.shields.io/badge/Repository-maily.cn-222222.svg" alt="maily.cn repository" />
+  </a>
+  <a href="https://github.com/sponsors/brokeboiflex">
+    <img src="https://img.shields.io/badge/Sponsor-brokeboiflex-EA4AAA.svg?logo=githubsponsors&logoColor=white" alt="Sponsor brokeboiflex" />
   </a>
 </p>
 
 <br>
 
-## Install
+This workspace package is the renderer source used by the
+[maily.cn shadcn block](../../readme.md). Its technical package name remains
+`@maily-to/render` for compatibility with the upstream package graph.
 
-Install `@maily-to/render` from your command line.
+## Recommended installation: maily.cn source
+
+Install the complete fork through shadcn using the
+[root maily.cn instructions](../../readme.md). The registry copies this renderer to
+`lib/maily-render/**` together with the editor.
+
+## Upstream-compatible package build
+
+The command below installs the published `@maily-to/render` npm package. It is kept
+for compatibility and package development; it does **not** install the source-owned
+`maily.cn` registry block.
 
 ```sh
 pnpm add @maily-to/render
@@ -110,8 +125,16 @@ const html = await maily.render();
 
 ## Contributions
 
-Feel free to submit pull requests, create issues, or spread the word.
+Feel free to submit pull requests, create issues, or spread the word through the
+[maily.cn repository](https://github.com/brokeboiflex/maily.cn).
+
+## Sponsors
+
+If this renderer helps you ship, sponsorships are very welcome through
+[GitHub Sponsors](https://github.com/sponsors/brokeboiflex).
 
 ## License
 
-MIT &copy; [Arik Chakma](https://twitter.com/imarikchakma)
+MIT. Original Maily copyright &copy; [Arik Chakma](https://github.com/arikchakma)
+and contributors; maily.cn modifications are maintained by
+[brokeboiflex](https://github.com/brokeboiflex).
