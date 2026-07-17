@@ -1,4 +1,4 @@
-# maily.to-prod-ready
+# maily.cn
 
 ## What this project is
 
@@ -25,6 +25,8 @@ packages/
   render/    @maily-to/render — renders editor JSON content to email-safe HTML.
   shared/    @maily-to/shared — shared types/utilities used by core and render.
   tsconfig/                   — shared TS config.
+
+assets/branding/              — canonical maily.cn README/brand artwork.
 
 registry/                     — generated shadcn registry output (the installable block).
   default/maily/
@@ -54,20 +56,27 @@ The build step **externalizes modules the consumer already owns** rather than sh
 - `Input` (`editor/components/input` → `@/components/ui/input`)
 - `Textarea` (`editor/components/textarea` → `@/components/ui/textarea`)
 - `Toggle` (`editor/components/ui/toggle` → `@/components/ui/toggle`)
-- `ToggleGroup` / `ToggleGroupItem` (`editor/components/ui/toggle-group` → `@/components/ui/toggle-group`)
+- `Tooltip` (`editor/components/ui/tooltip` → `@/components/ui/tooltip`)
+- `Separator` (`editor/components/ui/divider` → `@/components/ui/separator`)
+- `NativeSelect` / `NativeSelectOption` (`editor/components/ui/native-select` → `@/components/ui/native-select`)
+- `Kbd` / `KbdGroup` (`editor/components/ui/kbd` → `@/components/ui/kbd`)
+- `DropdownMenu` (`editor/components/ui/dropdown-menu` → `@/components/ui/dropdown-menu`)
 
-For an externalized component to resolve in the consumer's project, the registry item must declare the matching stock item in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `toggle-group`) so `shadcn add` installs it; the build emits these from `REGISTRY_DEPENDENCIES`. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
+For an externalized component to resolve in the consumer's project, the registry item must declare the matching stock item in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `tooltip`, `separator`, `native-select`, `kbd`, `dropdown-menu`) so `shadcn add` installs it; the build emits these from `REGISTRY_DEPENDENCIES`. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
 
-**Toggle state uses real primitives, not faked `data-state`.** The old toolbar buttons simulated active/pressed state with a `data-[state=true]` class on a bundled button; that hack is gone. Toggle-style controls now use stock shadcn `Toggle` / `ToggleGroup`: the text-marks bar (bold/italic/underline/strike/code) is a `ToggleGroup type="multiple"`, the alignment and text-direction popovers are `ToggleGroup type="single"`, and lock-aspect-ratio is a standalone `Toggle`. Plain actions (lists, duplicate, delete, the cycle/vertical-align switch, and all popover triggers) stay `Button`.
+**Toggle state uses real primitives, not faked `data-state`.** The old toolbar buttons simulated active/pressed state with a `data-[state=true]` class on a bundled button; that hack is gone. Toggle-style controls use independent stock shadcn `Toggle` instances with `pressed` / `onPressedChange`; this API is shared by shadcn's Radix and Base UI styles. Plain actions use stock `Button`, while the drag-handle node actions use stock `DropdownMenu` / `DropdownMenuItem` without a separator.
 
-Note: the rest of `editor/components/ui/` is **not** externalizable — `select` is a custom native `<select>`, `popover` is a fork with editor-specific inline (`portal`) rendering, and `divider` is a trivial token `<div>` with no stock equivalent — so those stay bundled. `tooltip` is API-compatible with stock shadcn but kept bundled deliberately to preserve the editor's tuned styling.
+The remaining `Select` is an editor-specific labelled/tooltip composite built on the externalized stock `NativeSelect`; it is not a replacement primitive. `popover` stays bundled because the editor needs non-portalled inline rendering. Its trigger accepts both Radix `asChild` and Base UI's shadcn-generated `render` shape, so the same registry block installs into either shadcn style. `Editor` owns the stock `TooltipProvider`, and trigger children forward their refs/props so both primitive styles preserve valid, accessible DOM.
+
+Slash-command flyouts are viewport-aware: submenus grow up to 20rem, open on the side with usable space, fall back to an overlay on narrow viewports, and truncate item copy inside `min-w-0` text columns so translated or consumer-provided labels never escape the panel.
 
 ## Tech stack
 
 - **React 18/19**, **TypeScript**
 - **TipTap / ProseMirror** for the editor
 - **Tailwind CSS v4** (plain, unprefixed utilities using the consumer's shadcn theme tokens — the component ships no Tailwind build or stylesheet of its own)
-- **Radix UI** primitives, **lucide-react** icons
+- The consumer's **shadcn primitives** (Radix or Base UI style) and selected shadcn icon library
+- **Radix Popover** only for the editor-specific inline popover behavior
 - **tsup / tsdown** for package builds, **Turborepo** for orchestration, **Vitest** for tests
 - **shadcn registry** schema for distribution
 
@@ -92,18 +101,15 @@ way an end user would. Its `components.json` declares a local namespace
 `@maily → http://localhost:5173/r/{name}.json`, served from `playground/public/r`.
 
 Loop: edit `packages/*` → `pnpm playground:sync` (rebuild + reserve) → in `playground/`,
-run `bun run dev` and `shadcn add @maily/maily --overwrite`. Full details, commands,
-and the `verbatimModuleSyntax` caveat are in `playground/README.md`.
-
-> **Known portability bug surfaced by the playground:** the editor source
-> value-imports type-only symbols (e.g. `import { Command } from '@tiptap/core'`).
-> Consumers with `verbatimModuleSyntax: true` (the modern shadcn/Vite default) get a
-> runtime "does not provide an export named 'Command'" error. Fix in `packages/core`
-> by switching these to `import type`.
+run `bun run dev` and `shadcn add @maily/maily --overwrite`. Full details and commands
+are in `playground/README.md`. Keep the playground's modern
+`verbatimModuleSyntax: true` setting enabled; the package and generated registry source
+must compile without consumer-side TypeScript workarounds.
 
 ## Working conventions
 
 - **Read before you edit.** The editor is large and the block/extension/node wiring is intricate; trace how a block is registered and rendered before changing it.
+- **Keep the fork branding honest and local.** User-facing repository docs use `maily.cn` and the artwork in `assets/branding/`; do not hotlink the old `maily.to` logo or present upstream sponsors as sponsors of this fork. Preserve clear credit and links to the original `arikchakma/maily.to` project. The technical npm workspace names remain `@maily-to/*` unless a separate package-renaming task explicitly changes them.
 - **Edit packages, regenerate the registry.** Never hand-edit `registry/**` — it is build output.
 - **Keep i18n generic.** Any new user-facing string must be overridable via the label-replacement mechanism, with an English default. Don't couple to a specific i18n framework. The mechanism lives in `packages/core/src/editor/i18n/`: `defaultLabels` (the exhaustive English dictionary in `default-labels.ts`) is both the runtime default and the authoring template; `LabelKey` is its key union; `MailyLabels = Record<LabelKey, string>` is the **complete-language** contract (not `Partial` — a missing key is a compile error, no merging). `createTranslator(labels)` returns `t(key, vars?)`, which does minimal `{token}` interpolation. **Adding any user-facing string means adding a key to `defaultLabels` and reading it via `t('…')`** — components get `t` from `useMailyContext()`; non-React consumers (the Placeholder extension, the default-block builder `getDefaultBlocks(t)`, the slash-command popup) receive `t` threaded from `Editor`. `searchTerms` and inserted seed content stay English (out of the dictionary). Note the deliberate break: block exports (`text`, `button`, …) and the placeholder are now `(t) => …` factories, not ready-made values.
 - **Keep image upload caller-driven.** The component should not assume a storage backend; it calls a handler the consumer provides and uses the returned URL.
