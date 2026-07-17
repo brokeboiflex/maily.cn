@@ -56,19 +56,31 @@ The build step **externalizes modules the consumer already owns** rather than sh
 - `Input` (`editor/components/input` → `@/components/ui/input`)
 - `Textarea` (`editor/components/textarea` → `@/components/ui/textarea`)
 - `Toggle` (`editor/components/ui/toggle` → `@/components/ui/toggle`)
+- `ToggleGroup` / `ToggleGroupItem` (`editor/components/ui/toggle-group` → `@/components/ui/toggle-group`)
 - `Tooltip` (`editor/components/ui/tooltip` → `@/components/ui/tooltip`)
 - `Separator` (`editor/components/ui/divider` → `@/components/ui/separator`)
 - `NativeSelect` / `NativeSelectOption` (`editor/components/ui/native-select` → `@/components/ui/native-select`)
 - `Kbd` / `KbdGroup` (`editor/components/ui/kbd` → `@/components/ui/kbd`)
 - `DropdownMenu` (`editor/components/ui/dropdown-menu` → `@/components/ui/dropdown-menu`)
+- `Popover` (`editor/components/popover` → `@/components/ui/popover`)
+- `Tabs` (`editor/components/ui/tabs` → `@/components/ui/tabs`)
+- `InputGroup` (`editor/components/ui/input-group` → `@/components/ui/input-group`)
+- `Command` (`editor/components/ui/command` → `@/components/ui/command`)
+- `Badge` (`editor/components/ui/badge` → `@/components/ui/badge`)
 
-For an externalized component to resolve in the consumer's project, the registry item must declare the matching stock item in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `tooltip`, `separator`, `native-select`, `kbd`, `dropdown-menu`) so `shadcn add` installs it; the build emits these from `REGISTRY_DEPENDENCIES`. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
+For an externalized component to resolve in the consumer's project, the registry item must declare the matching stock item in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `toggle-group`, `tooltip`, `separator`, `native-select`, `kbd`, `dropdown-menu`, `popover`, `tabs`, `input-group`, `command`, `badge`) so `shadcn add` installs it; the build emits these from `REGISTRY_DEPENDENCIES`. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
 
-**Toggle state uses real primitives, not faked `data-state`.** The old toolbar buttons simulated active/pressed state with a `data-[state=true]` class on a bundled button; that hack is gone. Toggle-style controls use independent stock shadcn `Toggle` instances with `pressed` / `onPressedChange`; this API is shared by shadcn's Radix and Base UI styles. Plain actions use stock `Button`, while the drag-handle node actions use stock `DropdownMenu` / `DropdownMenuItem` without a separator.
+**Toggle state uses real primitives, not faked `data-state`.** Standalone stateful controls use stock shadcn `Toggle`, related controls use the host's stock `ToggleGroup` / `ToggleGroupItem`, and plain actions use `Button`. `toggle-group-compat.tsx` is only a thin prop adapter for the different Radix/Base controlled-value signatures; it does not render a replacement primitive. Alignment, text-direction, and vertical-alignment selectors use Popover + ToggleGroup; the toolbar link control uses the same Maily link Popover as the bubble menu. The drag-handle node actions and “Turn into” selector use stock `DropdownMenu`; the HTML code/preview switch uses stock `Tabs`; Link Card labels use stock `Badge`.
 
-The remaining `Select` is an editor-specific labelled/tooltip composite built on the externalized stock `NativeSelect`; it is not a replacement primitive. `popover` stays bundled because the editor needs non-portalled inline rendering. Its trigger accepts both Radix `asChild` and Base UI's shadcn-generated `render` shape, so the same registry block installs into either shadcn style. `Editor` owns the stock `TooltipProvider`, and trigger children forward their refs/props so both primitive styles preserve valid, accessible DOM.
+The remaining `Select` is an editor-specific labelled/tooltip composite built on the externalized stock `NativeSelect`; it is not a replacement primitive. The registry uses the consumer's stock `Popover`; all current call sites use its standard portalled behavior. Variable suggestions compose stock `Command` and `Kbd`, while compact icon-bearing inputs compose stock `InputGroup`. `Editor` owns the stock `TooltipProvider`. When a Tooltip wraps another stateful primitive, its neutral `span` trigger keeps the Tooltip's state/slot attributes from masking the nested Popover, DropdownMenu, Tabs, Toggle, or ToggleGroup item and prevents nested interactive DOM after shadcn's Radix-to-Base transform.
 
-Slash-command flyouts are viewport-aware: submenus grow up to 20rem, open on the side with usable space, fall back to an overlay on narrow viewports, and truncate item copy inside `min-w-0` text columns so translated or consumer-provided labels never escape the panel.
+Slash-command flyouts are viewport-aware: the main menu is capped to the viewport, submenus grow up to 20rem, open on the side with usable space, fall back to an overlay on narrow viewports, and truncate item copy inside `min-w-0` text columns so translated or consumer-provided labels never escape the panel. The editor toolbar wraps its primitive groups rather than widening the document, and large configuration popovers use viewport-capped widths.
+
+Autocomplete suggestions portal to `document.body` and compute a viewport-aware fixed position so scroll containers cannot clip them. The standalone package therefore declares `react-dom` alongside `react` as a peer and keeps both external in `tsup`; registry consumers use the host application's React runtime.
+
+`SHADCN_ALIGNMENT.md` is the maintained boundary report for host-owned primitives, intentional Maily composites, and the five custom document-diagram SVGs that remain after the final audit.
+
+Icon inheritance is release-tested with clean shadcn apps initialized for Lucide, Tabler, Hugeicons, Phosphor, and Remix; each fixture must mount Maily and pass its TypeScript/Vite production build. Do not validate an icon library by only changing `components.json` on an existing app because the selected shadcn preset also owns the icon packages and primitive source.
 
 ## Tech stack
 
@@ -76,7 +88,7 @@ Slash-command flyouts are viewport-aware: submenus grow up to 20rem, open on the
 - **TipTap / ProseMirror** for the editor
 - **Tailwind CSS v4** (plain, unprefixed utilities using the consumer's shadcn theme tokens — the component ships no Tailwind build or stylesheet of its own)
 - The consumer's **shadcn primitives** (Radix or Base UI style) and selected shadcn icon library
-- **Radix Popover** only for the editor-specific inline popover behavior
+- **Radix UI fallbacks** for standalone npm-package builds; registry installs inherit the consumer's selected shadcn primitive style
 - **tsup / tsdown** for package builds, **Turborepo** for orchestration, **Vitest** for tests
 - **shadcn registry** schema for distribution
 

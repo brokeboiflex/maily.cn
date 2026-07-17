@@ -3,10 +3,19 @@ import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useVariableOptions } from '../../utils/node-options';
 import { useOutsideClick } from '../../utils/use-outside-click';
-import { Input } from '@/components/ui/input';
 import type { Editor } from '@tiptap/core';
-import { forwardRef, type InputHTMLAttributes, useRef } from 'react';
+import {
+  forwardRef,
+  type CSSProperties,
+  type InputHTMLAttributes,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { createPortal } from 'react-dom';
 import { useMailyContext } from '../../provider';
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { CornerDownLeft } from "lucide-react";
 
 type InputAutocompleteProps = InputHTMLAttributes<HTMLInputElement> & {
@@ -41,20 +50,66 @@ export const InputAutocomplete = forwardRef<
   const { t } = useMailyContext();
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
   const popoverRef = useRef<VariableSuggestionsPopoverRef>(null);
+  const listboxId = `mly-autocomplete-${useId()}`;
+  const [popupStyle, setPopupStyle] = useState<CSSProperties>();
   const VariableSuggestionPopoverComponent =
     useVariableOptions(editor)?.variableSuggestionsPopover;
 
-  useOutsideClick(containerRef, () => {
+  useOutsideClick([containerRef, suggestionsRef], () => {
     onOutsideClick?.();
   });
 
-  const isTriggeringVariable = value.startsWith(triggerChar);
+  const isTriggeringVariable =
+    triggerChar.length > 0 && value.startsWith(triggerChar);
+
+  useLayoutEffect(() => {
+    if (!isTriggeringVariable) {
+      setPopupStyle(undefined);
+      return;
+    }
+
+    const updatePosition = () => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      const viewportPadding = 8;
+      const gap = 4;
+      const width = Math.min(256, window.innerWidth - viewportPadding * 2);
+      const left = Math.min(
+        Math.max(rect.left, viewportPadding),
+        window.innerWidth - width - viewportPadding
+      );
+      const availableBelow = window.innerHeight - rect.bottom - viewportPadding;
+      const availableAbove = rect.top - viewportPadding;
+      const placeAbove =
+        availableBelow < 220 && availableAbove > availableBelow;
+
+      setPopupStyle({
+        position: 'fixed',
+        left,
+        width,
+        maxHeight: Math.max(120, placeAbove ? availableAbove : availableBelow),
+        ...(placeAbove
+          ? { bottom: window.innerHeight - rect.top + gap }
+          : { top: rect.bottom + gap }),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isTriggeringVariable]);
 
   return (
     <div className={cn('relative')} ref={containerRef}>
-      <label className="relative">
-        <Input
+      <InputGroup className={cn('h-7 w-40', className)}>
+        <InputGroupInput
           {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
           placeholder={t('inputAutocomplete.placeholder')}
           type="text"
@@ -64,11 +119,14 @@ export const InputAutocomplete = forwardRef<
           onChange={(e) => {
             onValueChange(e.target.value);
           }}
-          className={cn(
-            'bg-background text-foreground hover:bg-muted focus:bg-muted h-7 w-40 rounded-md px-2 pr-6 text-sm focus:outline-hidden',
-            className
-          )}
+          className="h-full min-w-0 px-2 text-sm"
           onKeyDown={(e) => {
+            if (e.key === 'Escape' && isTriggeringVariable) {
+              e.preventDefault();
+              onOutsideClick?.();
+              return;
+            }
+
             if (!popoverRef.current || !isTriggeringVariable) {
               return;
             }
@@ -86,27 +144,36 @@ export const InputAutocomplete = forwardRef<
             }
           }}
           spellCheck={false}
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={isTriggeringVariable}
+          aria-controls={isTriggeringVariable ? listboxId : undefined}
+          aria-haspopup="listbox"
         />
-        <div className="absolute inset-y-0 right-1 flex items-center">
-          <CornerDownLeft className="text-foreground h-3 w-3 stroke-[2.5]" />
-        </div>
-      </label>
+        <InputGroupAddon align="inline-end" className="pr-1.5">
+          <CornerDownLeft className="size-3 stroke-[2.5]" />
+        </InputGroupAddon>
+      </InputGroup>
 
-      {isTriggeringVariable && (
-        <div className="absolute top-8 left-0">
-          <VariableSuggestionPopoverComponent
-            items={autoCompleteOptions.map((option) => {
-              return {
-                name: option,
-              };
-            })}
-            onSelectItem={(item) => {
-              onSelectOption?.(item.name);
-            }}
-            ref={popoverRef}
-          />
-        </div>
-      )}
+      {isTriggeringVariable && popupStyle && typeof document !== 'undefined'
+        ? createPortal(
+            <div
+              id={listboxId}
+              ref={suggestionsRef}
+              className="z-[100] overflow-y-auto"
+              style={popupStyle}
+            >
+              <VariableSuggestionPopoverComponent
+                items={autoCompleteOptions.map((option) => ({ name: option }))}
+                onSelectItem={(item) => {
+                  onSelectOption?.(item.name);
+                }}
+                ref={popoverRef}
+              />
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   );
 });

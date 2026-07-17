@@ -1,12 +1,13 @@
 'use client';
 
 import { HexColorPicker, HexColorInput } from 'react-colorful';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { type ReactNode } from 'react';
 import { useMailyContext } from '../../provider';
+import { Separator } from '@/components/ui/separator';
 
 type ColorPickerProps = {
   color: string;
@@ -62,40 +63,43 @@ export function ColorPicker(props: ColorPickerProps) {
       {tooltip ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              {children || (
+            <span className="inline-flex shrink-0">
+              <PopoverTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-7 w-7 shrink-0"
+                  className="size-7 shrink-0 p-0"
                   size="sm"
                   type="button"
                   aria-label={tooltip}
                 >
-                  <div
-                    className={cn(
-                      'border-border h-4 w-4 shrink-0 rounded border-2',
-                      className
-                    )}
-                    style={{
-                      ...(borderColor ? { borderColor } : {}),
-                      backgroundColor: backgroundColor || 'transparent',
-                    }}
-                  />
+                  {children || (
+                    <div
+                      className={cn(
+                        'border-border h-4 w-4 shrink-0 rounded border-2',
+                        className
+                      )}
+                      style={{
+                        ...(borderColor ? { borderColor } : {}),
+                        backgroundColor: backgroundColor || 'transparent',
+                      }}
+                    />
+                  )}
                 </Button>
-              )}
-            </PopoverTrigger>
+              </PopoverTrigger>
+            </span>
           </TooltipTrigger>
           <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
         </Tooltip>
       ) : (
         <PopoverTrigger asChild>
-          {children || (
-            <Button
-              variant="ghost"
-              className="h-7 w-7 shrink-0"
-              size="sm"
-              type="button"
-            >
+          <Button
+            variant="ghost"
+            className="size-7 shrink-0 p-0"
+            size="sm"
+            type="button"
+            aria-label={t('colorPicker.open')}
+          >
+            {children || (
               <div
                 className={cn(
                   'border-border h-4 w-4 shrink-0 rounded border-2',
@@ -106,32 +110,32 @@ export function ColorPicker(props: ColorPickerProps) {
                   backgroundColor: backgroundColor || 'transparent',
                 }}
               />
-            </Button>
-          )}
+            )}
+          </Button>
         </PopoverTrigger>
       )}
 
       <PopoverContent
-        className="w-full rounded-none border-0 bg-transparent! p-0! shadow-none drop-shadow-md"
+        className="w-[calc(100vw-1rem)] max-w-[260px]"
         sideOffset={8}
       >
-        <div className="border-border bg-background min-w-[260px] rounded-xl border p-4">
+        <div>
           <HexColorPicker
             color={color}
             onChange={handleColorChange}
-            className="flex w-full! flex-col gap-4"
+            className="w-full! flex flex-col gap-4"
           />
           <HexColorInput
             alpha={true}
             color={color}
             onChange={handleColorChange}
-            className="border-border bg-background focus-visible:border-ring mt-4 w-full min-w-0 rounded-lg border px-2 py-1.5 text-sm uppercase focus-visible:outline-hidden"
+            className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 shadow-xs focus-visible:ring-3 mt-4 h-8 w-full min-w-0 rounded-lg border px-2.5 text-sm uppercase outline-none"
             prefixed
           />
 
           {suggestedColors.length > 0 && (
             <div>
-              <div className="bg-muted -mx-4 my-4 h-px" />
+              <Separator className="my-4" />
 
               <h2 className="text-muted-foreground text-xs">
                 {t('colorPicker.recentlyUsed')}
@@ -146,6 +150,9 @@ export function ColorPicker(props: ColorPickerProps) {
                     className="!size-7 shrink-0"
                     type="button"
                     onClick={() => handleColorChange(suggestedColor)}
+                    aria-label={t('colorPicker.useColor', {
+                      color: suggestedColor,
+                    })}
                   >
                     <div
                       className="h-4 w-4 shrink-0 rounded"

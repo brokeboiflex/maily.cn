@@ -1,4 +1,3 @@
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import {
   type TurnIntoBlockCategory,
   type TurnIntoBlockOptions,
@@ -9,6 +8,13 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { PilcrowIcon, ChevronDownIcon } from "lucide-react";
 
 type TurnIntoBlockProps = {
@@ -36,56 +42,54 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
   );
 
   return (
-    <Popover>
+    <DropdownMenu>
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger
-            className={cn(
-              'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex aspect-square h-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
-            )}
-          >
-            <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
-              {activeIcon}
-            </span>
-            <ChevronDownIcon className="h-3 w-3 shrink-0 stroke-[2.5]" />
-          </PopoverTrigger>
+          <span className="inline-flex shrink-0">
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="size-7! gap-1 px-1.5"
+                aria-label={t('turnInto.label')}
+              >
+                <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
+                  {activeIcon}
+                </span>
+                <ChevronDownIcon className="size-3 shrink-0 stroke-[2.5]" />
+              </Button>
+            </DropdownMenuTrigger>
+          </span>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>{t('turnInto.label')}</TooltipContent>
       </Tooltip>
-      <PopoverContent
+      <DropdownMenuContent
         align="start"
         side="bottom"
         sideOffset={8}
-        className="flex w-[160px] flex-col rounded-md p-1"
+        className="w-max min-w-40 max-w-[calc(100vw-1rem)]"
       >
         {options.map((option, index) => {
           if (isOption(option)) {
             return (
-              <Button
-                key={option.id}
-                onClick={option.onClick}
-                variant="ghost"
-                className="text-foreground mb-0.5 h-auto justify-start gap-2 rounded! px-2 py-1 text-sm font-normal"
-              >
+              <DropdownMenuItem key={option.id} onSelect={option.onClick}>
                 {option.icon}
                 {option.label}
-              </Button>
+              </DropdownMenuItem>
             );
           } else if (isCategory(option)) {
             return (
-              <label
+              <DropdownMenuLabel
                 key={option.id}
-                className={cn(
-                  'text-foreground/60 px-2 text-xs font-medium',
-                  index === 0 ? 'mt-1 mb-2' : 'my-2'
-                )}
+                className={cn(index === 0 ? undefined : 'mt-1')}
               >
                 {option.label}
-              </label>
+              </DropdownMenuLabel>
             );
           }
         })}
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

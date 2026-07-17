@@ -1,6 +1,10 @@
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useMailyContext } from '../../provider';
-import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 
 type ImageSizeProps = {
   value: string;
@@ -13,20 +17,23 @@ export function ImageSize(props: ImageSizeProps) {
   const { t } = useMailyContext();
 
   return (
-    <label className="relative flex items-center">
-      <span className="text-muted-foreground absolute inset-y-0 left-2 flex items-center text-xs leading-none">
+    <InputGroup className="h-7 w-24">
+      <InputGroupAddon className="pl-1.5 text-xs leading-none">
         {dimension === 'width' ? t('imageMenu.width') : t('imageMenu.height')}
-      </span>
-      <Input
+      </InputGroupAddon>
+      <InputGroupInput
         {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-        className="h-auto max-w-20 [appearance:textfield] appearance-none border-0 border-none p-1 px-[26px] text-sm uppercase tabular-nums outline-hidden focus-visible:outline-hidden [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+        className="h-full min-w-0 appearance-none px-1 text-sm uppercase tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
         type="number"
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
       />
-      <span className="text-muted-foreground absolute inset-y-0 right-1 flex items-center text-xs leading-none">
+      <InputGroupAddon
+        align="inline-end"
+        className="pr-1.5 text-xs leading-none"
+      >
         {t('imageMenu.unitPx')}
-      </span>
-    </label>
+      </InputGroupAddon>
+    </InputGroup>
   );
 }

@@ -11,6 +11,7 @@ import { TextBubbleContent } from './text-bubble-content';
 import { RepeatExtension } from '../../nodes/repeat/repeat';
 import { TurnIntoBlock } from './turn-into-block';
 import { useTurnIntoBlockOptions } from './use-turn-into-block-options';
+import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
 
 export interface BubbleMenuItem {
   name?: string;
@@ -94,7 +95,7 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className="border-border bg-background flex gap-0.5 rounded-lg border p-0.5 shadow-md"
+      className={`${FLOATING_MENU_CLASS} flex gap-0.5`}
     >
       <TooltipProvider>
         <TurnIntoBlock options={turnIntoBlockOptions} />

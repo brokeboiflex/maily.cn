@@ -1,51 +1,32 @@
 import * as React from 'react';
+import * as TogglePrimitive from '@radix-ui/react-toggle';
 import { cn } from '@/editor/utils/classname';
 
 export interface ToggleProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> {
-  pressed?: boolean;
-  onPressedChange?: (pressed: boolean) => void;
+  extends React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> {
   variant?: 'default' | 'outline';
   size?: 'default' | 'sm' | 'lg';
 }
 
 const toggleVariantClasses = {
   default: 'bg-transparent',
-  outline:
-    'border-input border bg-transparent hover:bg-accent hover:text-accent-foreground',
+  outline: 'border-input hover:bg-muted border bg-transparent',
 };
 
 const toggleSizeClasses = {
-  default: 'h-10 min-w-10 px-3',
-  sm: 'h-9 min-w-9 px-2.5',
-  lg: 'h-11 min-w-11 px-5',
+  default: 'h-8 min-w-8 px-2.5',
+  sm: 'h-7 min-w-7 px-2.5 text-[0.8rem]',
+  lg: 'h-9 min-w-9 px-2.5',
 };
 
 const Toggle = React.forwardRef<HTMLButtonElement, ToggleProps>(
-  (
-    {
-      className,
-      variant = 'default',
-      size = 'default',
-      pressed,
-      onPressedChange,
-      onClick,
-      ...props
-    },
-    ref
-  ) => {
+  ({ className, variant = 'default', size = 'default', ...props }, ref) => {
     return (
-      <button
+      <TogglePrimitive.Root
         ref={ref}
-        type="button"
-        aria-pressed={pressed}
-        data-state={pressed ? 'on' : 'off'}
-        onClick={(event) => {
-          onClick?.(event);
-          onPressedChange?.(!pressed);
-        }}
+        data-slot="toggle"
         className={cn(
-          'ring-offset-background focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground hover:bg-muted hover:text-muted-foreground inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50',
+          'hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-pressed:bg-muted data-[state=on]:bg-muted inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-lg border border-transparent text-sm font-medium outline-none transition-all focus-visible:ring-[3px] disabled:pointer-events-none disabled:opacity-50 [&_svg:not([class*="size-"])]:size-4 [&_svg]:pointer-events-none [&_svg]:shrink-0',
           toggleVariantClasses[variant],
           toggleSizeClasses[size],
           className

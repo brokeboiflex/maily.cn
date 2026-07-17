@@ -116,6 +116,7 @@ export const polishLabels: MailyLabels = {
   "verticalAlignment.top": "Wyrównaj do góry",
   "verticalAlignment.center": "Wyśrodkuj w pionie",
   "verticalAlignment.bottom": "Wyrównaj do dołu",
+  "verticalAlignment.label": "Wyrównanie w pionie",
 
   // ── Section bubble menu ──
   "sectionMenu.borderRadius": "Zaokrąglenie rogów",
@@ -185,12 +186,14 @@ export const polishLabels: MailyLabels = {
   "columnMenu.middle": "Środkowa",
   "columnMenu.autoPlaceholder": "auto",
   "columnMenu.unitPercent": "%",
+  "columnMenu.configureWidths": "Ustaw szerokości kolumn",
 
   // ── Repeat menu ──
   "repeatMenu.label": "Powtórzenie",
   "repeatMenu.iterableHint":
     "Upewnij się, że wybrana zmienna jest iterowalna, np. tablica obiektów.",
   "repeatMenu.placeholder": "np. payload.items",
+  "repeatMenu.selectBlock": "Wybierz blok powtórzenia",
 
   // ── HTML menu ──
   "htmlMenu.htmlCode": "Kod HTML",
@@ -256,5 +259,7 @@ export const polishLabels: MailyLabels = {
 
   // ── Misc ──
   "colorPicker.recentlyUsed": "Ostatnio używane",
+  "colorPicker.open": "Otwórz wybór koloru",
+  "colorPicker.useColor": "Użyj koloru {color}",
   "inputAutocomplete.placeholder": "np. items",
 }

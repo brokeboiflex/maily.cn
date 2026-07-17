@@ -9,7 +9,6 @@ import { AlignmentSwitch } from '../alignment-switch';
 import { Button } from '../base-button';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { ColumnsBubbleMenuContent } from '../column-menu/columns-bubble-menu-content';
-import { BorderColor } from '../icons/border-color';
 import { MarginIcon } from '../icons/margin-icon';
 import { PaddingIcon } from '../icons/padding-icon';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
@@ -24,6 +23,7 @@ import { getClosestNodeByName } from '@/editor/utils/columns';
 import { spacing } from '@/editor/utils/spacing';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '@/editor/i18n';
+import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -105,7 +105,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className="border-border bg-background flex items-stretch rounded-lg border p-0.5 shadow-md"
+      className={`${FLOATING_MENU_CLASS} flex items-stretch`}
     >
       <TooltipProvider>
         <AlignmentSwitch
@@ -203,22 +203,8 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
               });
             }}
             tooltip={t('sectionMenu.borderColor')}
-          >
-            <Button
-              variant="ghost"
-              className="h-7 w-7 shrink-0"
-              size="sm"
-              type="button"
-            >
-              <BorderColor
-                className="size-3 shrink-0"
-                topBarClassName="stroke-foreground"
-                style={{
-                  color: state.currentBorderColor,
-                }}
-              />
-            </Button>
-          </ColorPicker>
+            borderColor={state.currentBorderColor}
+          />
           <ColorPicker
             color={state.currentBackgroundColor}
             onColorChange={(color) => {
@@ -258,21 +244,17 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           <>
             <Separator orientation="vertical" />
             <Popover>
-              <PopoverTrigger className="data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground flex items-center gap-1 rounded-md px-1.5 text-sm">
-                {t('sectionMenu.column')}
-                <ChevronUp className="h-3 w-3" />
+              <PopoverTrigger asChild>
+                <Button type="button" variant="ghost" size="sm">
+                  {t('sectionMenu.column')}
+                  <ChevronUp className="size-3" />
+                </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-max rounded-lg p-0.5!"
+                className="p-0.5! w-max rounded-lg"
                 side="top"
                 sideOffset={8}
                 align="end"
-                onOpenAutoFocus={(e) => {
-                  e.preventDefault();
-                }}
-                onCloseAutoFocus={(e) => {
-                  e.preventDefault();
-                }}
               >
                 <ColumnsBubbleMenuContent editor={editor} />
               </PopoverContent>

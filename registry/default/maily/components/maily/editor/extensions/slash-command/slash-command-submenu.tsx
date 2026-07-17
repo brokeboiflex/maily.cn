@@ -35,7 +35,7 @@ export function SlashCommandSubmenu(props: SlashCommandSubmenuProps) {
     <div
       data-slot="slash-command-submenu"
       className={cn(
-        'border-border bg-popover text-popover-foreground absolute z-50 space-y-0.5 rounded-md border p-1 shadow-md',
+        'bg-popover text-popover-foreground ring-foreground/10 absolute z-50 space-y-0.5 rounded-lg p-1 shadow-lg ring-1 transition-[opacity,transform] duration-100',
         side === 'right' && 'left-full ml-1',
         side === 'left' && 'right-full mr-1',
         side === 'overlay' && 'left-0'

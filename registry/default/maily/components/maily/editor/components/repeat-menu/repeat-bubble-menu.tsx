@@ -21,6 +21,7 @@ import { processVariables } from '../../utils/variable';
 import { useVariableOptions } from '../../utils/node-options';
 import { useMailyContext } from '../../provider';
 import { Button } from '@/components/ui/button';
+import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -97,13 +98,16 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className="border-border bg-background flex items-stretch rounded-lg border p-0.5 shadow-md"
+      className={`${FLOATING_MENU_CLASS} flex items-stretch`}
     >
       <TooltipProvider>
         <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">
           {t('repeatMenu.label')}
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger
+              type="button"
+              aria-label={t('repeatMenu.iterableHint')}
+            >
               <IconPlaceholder
   lucide="InfoIcon"
   tabler="IconInfoCircle"

@@ -1,10 +1,9 @@
 import { AlignmentSwitch } from '../../components/alignment-switch';
-import { Button } from '@/components/ui/button';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../components/popover';
+} from '@/components/ui/popover';
 import { ShowPopover } from '../../components/show-popover';
 import { ColorPicker } from '../../components/ui/color-picker';
 import { Separator } from '@/components/ui/separator';
@@ -142,10 +141,8 @@ export function ButtonView(props: NodeViewProps) {
         <PopoverContent
           align="end"
           side="top"
-          className="w-max rounded-lg p-0.5!"
+          className="p-0.5! w-max rounded-lg"
           sideOffset={8}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <TooltipProvider>
             <div className="text-foreground flex items-stretch">
@@ -309,17 +306,15 @@ function BackgroundColorPickerPopup(props: ColorPickerProps) {
       onColorChange={onChange}
       tooltip={t('buttonMenu.backgroundColor')}
     >
-      <Button variant="ghost" size="sm" type="button" className="size-7">
-        <div
-          className="h-4 w-4 shrink-0 rounded-full shadow"
-          style={{
-            backgroundColor: variant === 'filled' ? color : 'transparent',
-            borderStyle: 'solid',
-            borderWidth: 2,
-            borderColor: variant === 'filled' ? 'var(--background)' : color,
-          }}
-        />
-      </Button>
+      <div
+        className="h-4 w-4 shrink-0 rounded-full shadow"
+        style={{
+          backgroundColor: variant === 'filled' ? color : 'transparent',
+          borderStyle: 'solid',
+          borderWidth: 2,
+          borderColor: variant === 'filled' ? 'var(--background)' : color,
+        }}
+      />
     </ColorPicker>
   );
 }
@@ -334,17 +329,13 @@ function TextColorPickerPopup(props: ColorPickerProps) {
       onColorChange={onChange}
       tooltip={t('buttonMenu.textColor')}
     >
-      <Button variant="ghost" size="sm" type="button" className="size-7">
-        <div className="flex flex-col items-center justify-center gap-px">
-          <span className="font-bolder text-foreground font-mono text-xs">
-            A
-          </span>
-          <div
-            className="h-[2px] w-3 shrink-0 rounded-md shadow"
-            style={{ backgroundColor: color }}
-          />
-        </div>
-      </Button>
+      <div className="flex flex-col items-center justify-center gap-px">
+        <span className="font-bolder text-foreground font-mono text-xs">A</span>
+        <div
+          className="h-[2px] w-3 shrink-0 rounded-md shadow"
+          style={{ backgroundColor: color }}
+        />
+      </div>
     </ColorPicker>
   );
 }

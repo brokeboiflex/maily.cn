@@ -11,7 +11,15 @@ export interface ButtonProps
     | 'secondary'
     | 'ghost'
     | 'link';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
+  size?:
+    | 'default'
+    | 'xs'
+    | 'sm'
+    | 'lg'
+    | 'icon'
+    | 'icon-xs'
+    | 'icon-sm'
+    | 'icon-lg';
   asChild?: boolean;
 }
 
@@ -28,22 +36,28 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const Comp = asChild ? Slot : 'button';
     const baseClass =
-      'inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 ';
+      'group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-medium whitespace-nowrap transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4';
     const variantClasses = {
-      default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+      default: 'bg-primary text-primary-foreground hover:bg-primary/80',
       destructive:
-        'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20',
       outline:
-        'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      ghost: 'bg-transparent hover:bg-accent hover:text-accent-foreground',
+        'border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground',
+      secondary:
+        'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]',
+      ghost:
+        'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground',
       link: 'text-primary underline-offset-4 hover:underline',
     };
     const sizeClasses = {
-      default: 'h-10 px-4 py-2',
-      sm: 'h-9 rounded-md px-3',
-      lg: 'h-11 rounded-md px-8',
-      icon: 'h-10 w-10',
+      default: 'h-8 gap-1.5 px-2.5',
+      xs: 'h-6 gap-1 px-2 text-xs',
+      sm: 'h-7 gap-1 px-2.5 text-[0.8rem]',
+      lg: 'h-9 gap-1.5 px-2.5',
+      icon: 'size-8',
+      'icon-xs': 'size-6',
+      'icon-sm': 'size-7',
+      'icon-lg': 'size-9',
     };
 
     const classes = cn(
@@ -53,7 +67,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className
     );
 
-    return <Comp className={classes} ref={ref} {...props} />;
+    return <Comp data-slot="button" className={classes} ref={ref} {...props} />;
   }
 );
 

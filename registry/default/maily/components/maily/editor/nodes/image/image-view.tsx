@@ -20,6 +20,7 @@ export const IMAGE_MAX_HEIGHT = 400;
 export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 export function ImageView(props: NodeViewProps) {
+  const { t } = useMailyContext();
   const { node, updateAttributes, selected, editor } = props;
 
   const [status, setStatus] = useState<ImageStatus>('idle');
@@ -119,8 +120,7 @@ export function ImageView(props: NodeViewProps) {
 
       return (
         <div
-          role="button"
-          tabIndex={0}
+          aria-hidden="true"
           onMouseDown={handleMouseDown}
           data-direction={direction}
           className="bg-primary"
@@ -361,6 +361,7 @@ export function ImageView(props: NodeViewProps) {
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0"
           multiple={false}
+          aria-label={t('imageStatus.dropImage')}
         />
       )}
 

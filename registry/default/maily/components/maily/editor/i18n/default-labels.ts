@@ -119,6 +119,7 @@ export const defaultLabels = {
   'verticalAlignment.top': 'Align Top',
   'verticalAlignment.center': 'Align Center',
   'verticalAlignment.bottom': 'Align Bottom',
+  'verticalAlignment.label': 'Vertical Alignment',
 
   // ── Section bubble menu ──
   'sectionMenu.borderRadius': 'Border Radius',
@@ -188,12 +189,14 @@ export const defaultLabels = {
   'columnMenu.middle': 'Middle',
   'columnMenu.autoPlaceholder': 'auto',
   'columnMenu.unitPercent': '%',
+  'columnMenu.configureWidths': 'Configure Column Widths',
 
   // ── Repeat menu ──
   'repeatMenu.label': 'Repeat',
   'repeatMenu.iterableHint':
     'Ensure the selected variable is iterable, such as an array of objects.',
   'repeatMenu.placeholder': 'ie. payload.items',
+  'repeatMenu.selectBlock': 'Select Repeat Block',
 
   // ── HTML menu ──
   'htmlMenu.htmlCode': 'HTML Code',
@@ -259,6 +262,8 @@ export const defaultLabels = {
 
   // ── Misc ──
   'colorPicker.recentlyUsed': 'Recently used',
+  'colorPicker.open': 'Open Color Picker',
+  'colorPicker.useColor': 'Use {color}',
   'inputAutocomplete.placeholder': 'e.g. items',
 } as const;
 

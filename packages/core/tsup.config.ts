@@ -6,6 +6,7 @@ const packageOptions: Options = {
   treeshake: false,
   dts: true,
   format: ['esm', 'cjs'],
+  external: ['react', 'react-dom'],
   outExtension: ({ format }) => {
     return {
       js: format === 'esm' ? '.mjs' : '.cjs',
@@ -19,7 +20,6 @@ export default defineConfig([
     entry: {
       index: 'src/index.ts',
     },
-    external: ['react'],
     banner: {
       js: "'use client'",
     },
@@ -29,7 +29,6 @@ export default defineConfig([
     entry: {
       index: 'src/blocks.ts',
     },
-    external: ['react'],
     outDir: 'dist/blocks',
   },
   {
@@ -37,7 +36,6 @@ export default defineConfig([
     entry: {
       index: 'src/extensions.ts',
     },
-    external: ['react'],
     outDir: 'dist/extensions',
   },
 ]);

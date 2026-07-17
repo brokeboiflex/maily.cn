@@ -77,7 +77,7 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           autoCompleteOptions={autoCompleteOptions}
           ref={linkInputRef}
           placeholder={placeholderUrl}
-          className="text-foreground hover:bg-muted focus:bg-muted h-7 w-40 rounded-md px-2 pr-6 text-sm focus:outline-hidden"
+          className="h-7 w-40"
           triggerChar={variableTriggerCharacter}
           onSelectOption={(value) => {
             const isVariable = autoCompleteOptions.includes(value) ?? false;

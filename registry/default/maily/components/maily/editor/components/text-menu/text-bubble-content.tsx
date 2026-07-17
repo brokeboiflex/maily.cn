@@ -9,10 +9,12 @@ import { useTextMenuState } from './use-text-menu-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { Separator } from '@/components/ui/separator';
 import { ColorPicker } from '../ui/color-picker';
-import { Button } from '@/components/ui/button';
-import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
+import {
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from '../ui/toggle-group-compat';
 
 type TextBubbleContentProps = {
   editor: Editor;
@@ -97,34 +99,44 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
 
   return (
     <>
-      <>
+      <ToggleGroupCompat
+        selectionMode="multiple"
+        value={items
+          .filter((item) => item.isActive?.())
+          .map((item) => item.name!)}
+        className="gap-0.5"
+      >
         {items.map((item) => (
           <Tooltip key={item.name}>
             <TooltipTrigger asChild>
-              <Toggle
-                pressed={!!item.isActive?.()}
-                onPressedChange={() => item.command?.()}
-                aria-label={item.tooltip ?? item.name}
-                disabled={item.disbabled}
-                className="size-7! min-w-7! px-2.5 disabled:cursor-not-allowed"
-              >
-                {item.icon ? (
-                  <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
-                    {item.icon}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground text-sm font-medium">
-                    {item.name}
-                  </span>
-                )}
-              </Toggle>
+              <span className="inline-flex shrink-0">
+                <ToggleGroupCompatItem
+                  value={item.name ?? ''}
+                  pressed={!!item.isActive?.()}
+                  onClick={() => item.command?.()}
+                  aria-label={item.tooltip ?? item.name}
+                  disabled={item.disbabled}
+                  className="size-7! min-w-7! px-2.5 disabled:cursor-not-allowed"
+                  type="button"
+                >
+                  {item.icon ? (
+                    <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
+                      {item.icon}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-sm font-medium">
+                      {item.name}
+                    </span>
+                  )}
+                </ToggleGroupCompatItem>
+              </span>
             </TooltipTrigger>
             {item.tooltip ? (
               <TooltipContent sideOffset={8}>{item.tooltip}</TooltipContent>
             ) : null}
           </Tooltip>
         ))}
-      </>
+      </ToggleGroupCompat>
 
       <AlignmentSwitch
         alignment={state.textAlign}
@@ -218,22 +230,15 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         tooltip={t('toolbar.textColor')}
         suggestedColors={suggestedColors}
       >
-        <Button
-          variant="ghost"
-          size="sm"
-          type="button"
-          className="h-7 w-7 shrink-0 p-0"
-        >
-          <div className="flex flex-col items-center justify-center gap-px">
-            <span className="font-bolder text-foreground font-mono text-xs">
-              A
-            </span>
-            <div
-              className="h-[2px] w-3"
-              style={{ backgroundColor: state.currentTextColor }}
-            />
-          </div>
-        </Button>
+        <div className="flex flex-col items-center justify-center gap-px">
+          <span className="font-bolder text-foreground font-mono text-xs">
+            A
+          </span>
+          <div
+            className="h-[2px] w-3"
+            style={{ backgroundColor: state.currentTextColor }}
+          />
+        </div>
       </ColorPicker>
     </>
   );

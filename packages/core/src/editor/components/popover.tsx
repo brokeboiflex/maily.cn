@@ -5,81 +5,39 @@ import * as PopoverPrimitive from '@radix-ui/react-popover';
 
 import { cn } from '../utils/classname';
 
-const Popover: React.FC<
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>
-> = PopoverPrimitive.Root;
+function Popover(
+  props: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Root>
+) {
+  return <PopoverPrimitive.Root data-slot="popover" {...props} />;
+}
 
-type PopoverTriggerProps = React.ComponentPropsWithoutRef<
-  typeof PopoverPrimitive.Trigger
-> & {
-  /** Base UI's shadcn style rewrites `asChild` to a `render` element. */
-  render?: React.ReactElement<{ children?: React.ReactNode }>;
-};
-
-const PopoverTrigger = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Trigger>,
-  PopoverTriggerProps
->(({ render, children, asChild, ...props }, ref) => {
-  if (render) {
-    // Use a spread so shadcn's Base UI migration does not rewrite this internal
-    // Radix implementation detail while converting consumer-facing `asChild`.
-    const radixSlotProps = { asChild: true };
-
-    return (
-      <PopoverPrimitive.Trigger ref={ref} {...radixSlotProps} {...props}>
-        {React.cloneElement(
-          render,
-          undefined,
-          children ?? render.props.children
-        )}
-      </PopoverPrimitive.Trigger>
-    );
-  }
-
-  const radixSlotProps = {
-    asChild: asChild ?? React.isValidElement(children),
-  };
-
-  return (
-    <PopoverPrimitive.Trigger ref={ref} {...radixSlotProps} {...props}>
-      {children}
-    </PopoverPrimitive.Trigger>
-  );
-});
-
-PopoverTrigger.displayName = PopoverPrimitive.Trigger.displayName;
+function PopoverTrigger(
+  props: React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Trigger>
+) {
+  return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
+}
 
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & {
-    portal?: boolean;
-  }
->(
-  (
-    { className, align = 'center', sideOffset = 4, portal = false, ...props },
-    ref
-  ) => {
-    const content = (
+  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
+>(({ className, align = 'center', sideOffset = 4, ...props }, ref) => {
+  return (
+    <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
         ref={ref}
+        data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}
         className={cn(
-          'border-border bg-background text-foreground z-9999 w-72 rounded-md border p-4 shadow-md outline-hidden',
+          'bg-popover text-popover-foreground ring-foreground/10 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 origin-(--radix-popover-content-transform-origin) outline-hidden z-50 flex w-72 flex-col gap-2.5 rounded-lg p-2.5 text-sm shadow-md ring-1 duration-100',
           'mly-editor',
           className
         )}
         {...props}
       />
-    );
-
-    if (!portal) {
-      return content;
-    }
-
-    return <PopoverPrimitive.Portal>{content}</PopoverPrimitive.Portal>;
-  }
-);
+    </PopoverPrimitive.Portal>
+  );
+});
 
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 

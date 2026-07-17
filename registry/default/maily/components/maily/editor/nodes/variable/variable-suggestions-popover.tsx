@@ -1,7 +1,5 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { cn } from '@/lib/utils';
 import { useMailyContext } from '../../provider';
-import { Button } from '@/components/ui/button';
 import {
   forwardRef,
   useEffect,
@@ -10,6 +8,14 @@ import {
   useState,
 } from 'react';
 import { type Variable } from './variable';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import { Kbd, KbdGroup } from '@/components/ui/kbd';
 
 export type VariableSuggestionsPopoverProps = {
   items: Variable[];
@@ -34,7 +40,9 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
 
     const [selectedIndex, setSelectedIndex] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
-    const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const itemValue = (item: Variable, index: number) =>
+      `${item.name}-${index}`;
 
     const scrollSelectedIntoView = (index: number) => {
       const container = scrollContainerRef.current;
@@ -69,9 +77,11 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
 
     useImperativeHandle(ref, () => ({
       moveUp: () => {
+        if (!items.length) return;
         setSelectedIndex((selectedIndex + items.length - 1) % items.length);
       },
       moveDown: () => {
+        if (!items.length) return;
         setSelectedIndex((selectedIndex + 1) % items.length);
       },
       select: () => {
@@ -85,39 +95,35 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
     }));
 
     return (
-      <div className="border-border bg-background z-50 w-64 rounded-lg border shadow-md transition-all">
-        <div className="border-border bg-muted/40 text-muted-foreground flex items-center justify-between gap-2 border-b px-1 py-1.5">
-          <span className="text-xs uppercase">{t('variableMenu.title')}</span>
-          <VariableIcon>
-            <IconPlaceholder
-  lucide="Braces"
-  tabler="IconBraces"
-  hugeicons="BracesIcon"
-  phosphor="BracketsCurly"
-  remixicon="RiBracesLine"
-  className="size-3 stroke-[2.5]"
-/>
-          </VariableIcon>
-        </div>
-
-        <div ref={scrollContainerRef} className="max-h-52 overflow-y-auto">
-          <div className="flex w-fit min-w-full flex-col gap-0.5 p-1">
-            {items?.length ? (
-              items?.map((item, index: number) => (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  key={index}
-                  ref={(el) => {
-                    itemRefs.current[index] = el;
-                  }}
-                  onClick={() => onSelectItem(item)}
-                  className={cn(
-                    'text-foreground hover:bg-muted h-auto w-fit min-w-full justify-start gap-2 rounded-md px-2 py-1 text-left font-mono text-sm',
-                    index === selectedIndex ? 'bg-muted' : 'bg-background'
-                  )}
-                >
-                  <IconPlaceholder
+      <Command
+        shouldFilter={false}
+        value={
+          items[selectedIndex]
+            ? itemValue(items[selectedIndex], selectedIndex)
+            : ''
+        }
+        onValueChange={(value) => {
+          const nextIndex = items.findIndex(
+            (item, index) => itemValue(item, index) === value
+          );
+          if (nextIndex >= 0) setSelectedIndex(nextIndex);
+        }}
+        className="ring-foreground/10 z-50 w-[min(16rem,calc(100vw-1rem))] rounded-xl shadow-md ring-1"
+      >
+        <CommandList ref={scrollContainerRef} className="max-h-52">
+          <CommandGroup heading={t('variableMenu.title')}>
+            <CommandEmpty>{t('variableMenu.noResult')}</CommandEmpty>
+            {items.map((item, index: number) => (
+              <CommandItem
+                key={itemValue(item, index)}
+                value={itemValue(item, index)}
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
+                onSelect={() => onSelectItem(item)}
+                className="font-mono"
+              >
+                <IconPlaceholder
   lucide="Braces"
   tabler="IconBraces"
   hugeicons="BracesIcon"
@@ -125,21 +131,17 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
   remixicon="RiBracesLine"
   className="size-3 stroke-[2.5] text-rose-600"
 />
-                  {item?.label || item.name}
-                </Button>
-              ))
-            ) : (
-              <div className="text-foreground hover:bg-muted flex h-7 w-full items-center gap-2 rounded-md px-2 py-1 text-left font-mono text-[13px]">
-                {t('variableMenu.noResult')}
-              </div>
-            )}
-          </div>
-        </div>
+                {item?.label || item.name}
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </CommandList>
 
-        <div className="border-border text-muted-foreground flex items-center justify-between gap-2 border-t px-1 py-1.5">
+        <div className="border-border text-muted-foreground flex flex-wrap items-center justify-between gap-x-2 gap-y-1 border-t px-1 py-1.5">
           <div className="flex items-center gap-1">
-            <VariableIcon>
-              <IconPlaceholder
+            <KbdGroup>
+              <Kbd>
+                <IconPlaceholder
   lucide="ArrowDownIcon"
   tabler="IconArrowDown"
   hugeicons="ArrowDown01Icon"
@@ -147,9 +149,9 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
   remixicon="RiArrowDownLine"
   className="size-3 stroke-[2.5]"
 />
-            </VariableIcon>
-            <VariableIcon>
-              <IconPlaceholder
+              </Kbd>
+              <Kbd>
+                <IconPlaceholder
   lucide="ArrowUpIcon"
   tabler="IconArrowUp"
   hugeicons="ArrowUp01Icon"
@@ -157,12 +159,13 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
   remixicon="RiArrowUpLine"
   className="size-3 stroke-[2.5]"
 />
-            </VariableIcon>
+              </Kbd>
+            </KbdGroup>
             <span className="text-muted-foreground text-xs">
               {t('variableMenu.navigate')}
             </span>
           </div>
-          <VariableIcon>
+          <Kbd>
             <IconPlaceholder
   lucide="CornerDownLeftIcon"
   tabler="IconCornerDownLeft"
@@ -171,28 +174,8 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
   remixicon="RiCornerDownLeftLine"
   className="size-3 stroke-[2.5]"
 />
-          </VariableIcon>
+          </Kbd>
         </div>
-      </div>
+      </Command>
     );
   });
-
-type VariableIconProps = {
-  className?: string;
-  children: React.ReactNode;
-};
-
-function VariableIcon(props: VariableIconProps) {
-  const { className, children } = props;
-
-  return (
-    <div
-      className={cn(
-        'border-border flex size-5 items-center justify-center rounded-md border',
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
-}

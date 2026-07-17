@@ -1,5 +1,4 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { cn } from '@/lib/utils';
 import { BubbleMenu } from '@tiptap/react';
 import { useCallback } from 'react';
 import { sticky } from 'tippy.js';
@@ -15,7 +14,8 @@ import {
 } from '@/components/ui/tooltip';
 import { useHtmlState } from './use-html-state';
 import { useMailyContext } from '../../provider';
-import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
 
 export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -60,28 +60,29 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className="border-border bg-background flex items-stretch rounded-lg border p-0.5 shadow-md"
+      className={`${FLOATING_MENU_CLASS} flex items-stretch`}
     >
       <TooltipProvider>
-        <div className="bg-muted flex h-7 items-center rounded-md px-0.5">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'focus-visible:ring-ring flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-                  activeTab === 'code' && 'bg-background'
-                )}
-                disabled={activeTab === 'code'}
-                onClick={() => {
-                  editor?.commands?.updateHtmlCodeBlock({
-                    activeTab: 'code',
-                  });
-                }}
-              >
-                <IconPlaceholder
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            editor.commands.updateHtmlCodeBlock({
+              activeTab: value as 'code' | 'preview',
+            });
+          }}
+          className="gap-0"
+        >
+          <TabsList className="h-7">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <TabsTrigger
+                    value="code"
+                    type="button"
+                    className="size-6 shrink-0 px-0"
+                    aria-label={t('htmlMenu.htmlCode')}
+                  >
+                    <IconPlaceholder
   lucide="CodeXmlIcon"
   tabler="IconCode"
   hugeicons="SourceCodeIcon"
@@ -89,30 +90,23 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   remixicon="RiCodeLine"
   className="size-3 shrink-0 stroke-[2.5]"
 />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={8}>
-              {t('htmlMenu.htmlCode')}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  'focus-visible:ring-ring flex size-6 shrink-0 items-center justify-center rounded focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden',
-                  activeTab === 'preview' && 'bg-background'
-                )}
-                disabled={activeTab === 'preview'}
-                onClick={() => {
-                  editor?.commands?.updateHtmlCodeBlock({
-                    activeTab: 'preview',
-                  });
-                }}
-              >
-                <IconPlaceholder
+                  </TabsTrigger>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                {t('htmlMenu.htmlCode')}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <TabsTrigger
+                    value="preview"
+                    type="button"
+                    className="size-6 shrink-0 px-0"
+                    aria-label={t('htmlMenu.preview')}
+                  >
+                    <IconPlaceholder
   lucide="ViewIcon"
   tabler="IconEye"
   hugeicons="ViewIcon"
@@ -120,13 +114,15 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   remixicon="RiEyeLine"
   className="size-3 shrink-0 stroke-[2.5]"
 />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={8}>
-              {t('htmlMenu.preview')}
-            </TooltipContent>
-          </Tooltip>
-        </div>
+                  </TabsTrigger>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent sideOffset={8}>
+                {t('htmlMenu.preview')}
+              </TooltipContent>
+            </Tooltip>
+          </TabsList>
+        </Tabs>
         <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}

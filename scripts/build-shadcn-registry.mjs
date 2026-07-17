@@ -49,11 +49,17 @@ const EXTERNALIZED_MODULES = {
   'editor/components/input': '@/components/ui/input',
   'editor/components/textarea': '@/components/ui/textarea',
   'editor/components/ui/toggle': '@/components/ui/toggle',
+  'editor/components/ui/toggle-group': '@/components/ui/toggle-group',
   'editor/components/ui/tooltip': '@/components/ui/tooltip',
   'editor/components/ui/divider': '@/components/ui/separator',
   'editor/components/ui/native-select': '@/components/ui/native-select',
   'editor/components/ui/kbd': '@/components/ui/kbd',
   'editor/components/ui/dropdown-menu': '@/components/ui/dropdown-menu',
+  'editor/components/popover': '@/components/ui/popover',
+  'editor/components/ui/tabs': '@/components/ui/tabs',
+  'editor/components/ui/input-group': '@/components/ui/input-group',
+  'editor/components/ui/command': '@/components/ui/command',
+  'editor/components/ui/badge': '@/components/ui/badge',
 };
 
 // shadcn registry items the consumer must have for the externalized imports
@@ -63,11 +69,17 @@ const REGISTRY_DEPENDENCIES = [
   'input',
   'textarea',
   'toggle',
+  'toggle-group',
   'tooltip',
   'separator',
   'native-select',
   'kbd',
   'dropdown-menu',
+  'popover',
+  'tabs',
+  'input-group',
+  'command',
+  'badge',
 ];
 
 // These packages are implementation details of source files replaced by the
@@ -76,6 +88,11 @@ const EXTERNALIZED_PACKAGE_DEPENDENCIES = [
   '@radix-ui/react-slot',
   '@radix-ui/react-tooltip',
   '@radix-ui/react-dropdown-menu',
+  '@radix-ui/react-popover',
+  '@radix-ui/react-tabs',
+  '@radix-ui/react-toggle',
+  '@radix-ui/react-toggle-group',
+  'cmdk',
 ];
 
 function externalizedModuleKey(relativePosixPath) {

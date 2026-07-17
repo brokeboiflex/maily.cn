@@ -1,16 +1,29 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { forwardRef, useMemo, type ComponentPropsWithoutRef } from 'react';
+import {
+  Fragment,
+  forwardRef,
+  useMemo,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from 'react';
 import { Editor as EditorType } from '@tiptap/core';
+import { useEditorState } from '@tiptap/react';
 import { type EditorProps } from '..';
 import { cn } from '@/lib/utils';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
-import { Toggle } from '@/components/ui/toggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../provider';
+import { Toggle } from '@/components/ui/toggle';
+import {
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from './ui/toggle-group-compat';
+import { LinkInputPopover } from './ui/link-input-popover';
 
 interface EditorMenuItem extends BubbleMenuItem {
   group: 'alignment' | 'image' | 'mark' | 'custom' | 'email';
+  render?: ReactNode;
 }
 
 type EditorMenuBarProps = {
@@ -22,21 +35,67 @@ type EditorMenuBarProps = {
 // eraser, are one-shot actions and stay plain buttons).
 const MARK_TOGGLE_NAMES = new Set(['bold', 'italic', 'underline', 'strike']);
 
+function ToolbarLink({ editor }: { editor: EditorType }) {
+  const { t } = useMailyContext();
+  const state = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      href: editor.getAttributes('link').href ?? '',
+      isVariable: editor.getAttributes('link').isUrlVariable ?? false,
+    }),
+    equalityFn: (previous, next) =>
+      previous?.href === next?.href &&
+      previous?.isVariable === next?.isVariable,
+  }) ?? { href: '', isVariable: false };
+
+  return (
+    <LinkInputPopover
+      defaultValue={state.href}
+      isVariable={state.isVariable}
+      tooltip={t('toolbar.link')}
+      editor={editor}
+      onValueChange={(value, isVariable) => {
+        if (!value) {
+          editor
+            .chain()
+            .focus()
+            .extendMarkRange('link')
+            .unsetLink()
+            .unsetUnderline()
+            .run();
+          return;
+        }
+
+        editor
+          .chain()
+          .focus()
+          .extendMarkRange('link')
+          .setLink({ href: value })
+          .setIsUrlVariable(isVariable ?? false)
+          .setUnderline()
+          .run();
+      }}
+    />
+  );
+}
+
 function ToggleItem({
   item,
-  pressed,
+  groupItem = false,
 }: {
   item: EditorMenuItem;
-  pressed: boolean;
+  groupItem?: boolean;
 }) {
   if (!item.tooltip) {
-    return <ToggleItemControl item={item} pressed={pressed} />;
+    return <ToggleItemControl item={item} groupItem={groupItem} />;
   }
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <ToggleItemControl item={item} pressed={pressed} />
+        <span className="inline-flex shrink-0">
+          <ToggleItemControl item={item} groupItem={groupItem} />
+        </span>
       </TooltipTrigger>
       <TooltipContent sideOffset={8}>{item.tooltip}</TooltipContent>
     </Tooltip>
@@ -45,33 +104,54 @@ function ToggleItem({
 
 type ToggleItemControlProps = {
   item: EditorMenuItem;
-  pressed: boolean;
-} & ComponentPropsWithoutRef<typeof Toggle>;
+  groupItem?: boolean;
+} & Omit<ComponentPropsWithoutRef<'button'>, 'value'>;
 
 const ToggleItemControl = forwardRef<HTMLButtonElement, ToggleItemControlProps>(
-  ({ item, pressed, className, ...triggerProps }, ref) => {
+  ({ item, groupItem = false, className, ...triggerProps }, ref) => {
+    const controlClassName = cn(
+      'size-7! min-w-7! px-2.5 disabled:cursor-not-allowed',
+      className
+    );
+    const content = item.icon ? (
+      <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
+        {item.icon}
+      </span>
+    ) : (
+      <span className="text-muted-foreground text-sm font-medium">
+        {item.name}
+      </span>
+    );
+
+    if (groupItem) {
+      return (
+        <ToggleGroupCompatItem
+          ref={ref}
+          value={item.name ?? ''}
+          pressed={!!item.isActive?.()}
+          onClick={() => item.command?.()}
+          aria-label={item.tooltip ?? item.name}
+          disabled={item.disbabled}
+          className={controlClassName}
+          type="button"
+          {...triggerProps}
+        >
+          {content}
+        </ToggleGroupCompatItem>
+      );
+    }
+
     return (
       <Toggle
         ref={ref}
-        pressed={pressed}
+        pressed={!!item.isActive?.()}
         onPressedChange={() => item.command?.()}
         aria-label={item.tooltip ?? item.name}
         disabled={item.disbabled}
-        className={cn(
-          'size-7! min-w-7! px-2.5 disabled:cursor-not-allowed',
-          className
-        )}
+        className={controlClassName}
         {...triggerProps}
       >
-        {item.icon ? (
-          <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
-            {item.icon}
-          </span>
-        ) : (
-          <span className="text-muted-foreground text-sm font-medium">
-            {item.name}
-          </span>
-        )}
+        {content}
       </Toggle>
     );
   }
@@ -172,35 +252,9 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: 'link',
-        command: () => {
-          const previousUrl = editor.getAttributes('link').href;
-          const url = window.prompt(t('toolbar.linkPrompt'), previousUrl);
-          // If the user cancels the prompt, we don't want to toggle the link
-          if (url === null) return;
-          // If the user deletes the URL entirely, we'll unlink the selected text
-          if (url === '') {
-            editor.chain().focus().extendMarkRange('link').unsetLink().run();
-            return;
-          }
-
-          // Otherwise, we set the link to the given URL
-          editor
-            .chain()
-            .focus()
-            .extendMarkRange('link')
-            .setLink({ href: url })
-            .run();
-        },
-        isActive: () => editor.isActive('link'),
         group: 'custom',
-        icon: <IconPlaceholder
-  lucide="LinkIcon"
-  tabler="IconLink"
-  hugeicons="Link01Icon"
-  phosphor="Link"
-  remixicon="RiLink"
-/>,
         tooltip: t('toolbar.link'),
+        render: <ToolbarLink editor={editor} />,
       },
       {
         name: 'left',
@@ -264,7 +318,12 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
   }
 
   return (
-    <div className={cn('flex items-center gap-3', config?.toolbarClassName)}>
+    <div
+      className={cn(
+        'flex min-w-0 flex-wrap items-center gap-2',
+        config?.toolbarClassName
+      )}
+    >
       {groups.map((group) => {
         const groupItems = items.filter((item) => item.group === group);
 
@@ -284,16 +343,18 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
 function renderGroup(group: string, groupItems: EditorMenuItem[]) {
   // Single-select alignment toggle (left / center / right).
   if (group === 'alignment') {
+    const activeValue =
+      groupItems.find((item) => item.isActive?.())?.name ?? '';
     return (
-      <>
+      <ToggleGroupCompat
+        selectionMode="single"
+        value={activeValue}
+        className="gap-1"
+      >
         {groupItems.map((item) => (
-          <ToggleItem
-            key={item.name}
-            item={item}
-            pressed={!!item.isActive?.()}
-          />
+          <ToggleItem key={item.name} item={item} groupItem />
         ))}
-      </>
+      </ToggleGroupCompat>
     );
   }
 
@@ -306,15 +367,20 @@ function renderGroup(group: string, groupItems: EditorMenuItem[]) {
     const actionItems = groupItems.filter(
       (item) => !MARK_TOGGLE_NAMES.has(item.name!)
     );
+    const activeValues = toggleItems
+      .filter((item) => item.isActive?.())
+      .map((item) => item.name!);
     return (
       <>
-        {toggleItems.map((item) => (
-          <ToggleItem
-            key={item.name}
-            item={item}
-            pressed={!!item.isActive?.()}
-          />
-        ))}
+        <ToggleGroupCompat
+          selectionMode="multiple"
+          value={activeValues}
+          className="gap-1"
+        >
+          {toggleItems.map((item) => (
+            <ToggleItem key={item.name} item={item} groupItem />
+          ))}
+        </ToggleGroupCompat>
         {actionItems.map((item) => (
           <BubbleMenuButton key={item.name} {...item} />
         ))}
@@ -324,6 +390,8 @@ function renderGroup(group: string, groupItems: EditorMenuItem[]) {
 
   // Everything else (divider, link, …) stays a plain action button.
   return groupItems.map((item) => (
-    <BubbleMenuButton key={item.name} {...item} />
+    <Fragment key={item.name}>
+      {item.render ?? <BubbleMenuButton {...item} />}
+    </Fragment>
   ));
 }

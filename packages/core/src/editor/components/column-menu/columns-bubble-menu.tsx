@@ -5,6 +5,7 @@ import { sticky } from 'tippy.js';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { isTextSelected } from '@/editor/utils/is-text-selected';
 import { ColumnsBubbleMenuContent } from './columns-bubble-menu-content';
+import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
 
 export function ColumnsBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -51,10 +52,7 @@ export function ColumnsBubbleMenu(props: EditorBubbleMenuProps) {
   };
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className="border-border bg-background rounded-lg border p-0.5 shadow-md"
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_MENU_CLASS}>
       <ColumnsBubbleMenuContent editor={editor} />
     </BubbleMenu>
   );

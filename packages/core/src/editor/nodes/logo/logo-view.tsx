@@ -192,6 +192,7 @@ export function LogoView(props: NodeViewProps) {
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0"
           multiple={false}
+          aria-label={t('imageStatus.dropImage')}
         />
       )}
 

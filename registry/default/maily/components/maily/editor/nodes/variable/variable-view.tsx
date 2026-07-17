@@ -3,10 +3,15 @@ import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '../../components/popover';
+} from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Input } from '@/components/ui/input';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
 import { useMailyContext } from '../../provider';
 import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
@@ -65,10 +70,8 @@ export function VariableView(props: NodeViewProps) {
         <PopoverContent
           align="start"
           side="bottom"
-          className="w-max rounded-lg p-0.5!"
+          className="p-0.5! w-max rounded-lg"
           sideOffset={8}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <TooltipProvider>
             <div className="text-foreground flex items-stretch">
@@ -85,7 +88,7 @@ export function VariableView(props: NodeViewProps) {
                     });
                   }}
                   placeholder={t('variableMenu.variablePlaceholder')}
-                  className="bg-muted text-foreground focus:bg-muted h-7 w-36 rounded-md px-2 text-sm focus:outline-hidden disabled:cursor-not-allowed"
+                  className="h-7 w-36"
                 />
               </label>
 
@@ -93,31 +96,33 @@ export function VariableView(props: NodeViewProps) {
                 <>
                   <Separator orientation="vertical" className="mx-1.5" />
 
-                  <label className="relative">
+                  <label>
                     <span className="text-foreground inline-block px-2 pl-1 text-xs">
                       {t('variableMenu.default')}
                     </span>
-                    <Input
-                      {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                      value={fallback ?? ''}
-                      onChange={(e) => {
-                        updateAttributes({
-                          fallback: e.target.value,
-                        });
-                      }}
-                      placeholder={t('variableMenu.defaultPlaceholder')}
-                      className="bg-muted text-foreground focus:bg-muted h-7 w-32 rounded-md px-2 pr-6 text-sm focus:outline-none"
-                    />
-                    <div className="absolute inset-y-0 right-1 flex items-center">
-                      <IconPlaceholder
+                    <InputGroup className="h-7 w-32">
+                      <InputGroupInput
+                        {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
+                        value={fallback ?? ''}
+                        onChange={(e) => {
+                          updateAttributes({
+                            fallback: e.target.value,
+                          });
+                        }}
+                        placeholder={t('variableMenu.defaultPlaceholder')}
+                        className="h-full min-w-0 px-2 text-sm"
+                      />
+                      <InputGroupAddon align="inline-end" className="pr-1.5">
+                        <IconPlaceholder
   lucide="Pencil"
   tabler="IconPencil"
   hugeicons="PencilIcon"
   phosphor="Pencil"
   remixicon="RiPencilLine"
-  className="text-foreground h-3 w-3 stroke-[2.5]"
+  className="size-3 stroke-[2.5]"
 />
-                    </div>
+                      </InputGroupAddon>
+                    </InputGroup>
                   </label>
                 </>
               )}
@@ -136,7 +141,7 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
 
   if (from === 'button-variable') {
     return (
-      <div className="inline-grid max-w-xs grid-cols-[12px_1fr] items-center gap-1.5 rounded-md border border-(--button-var-border-color) px-2 py-px font-mono text-xs">
+      <div className="border-(--button-var-border-color) inline-grid max-w-xs grid-cols-[12px_1fr] items-center gap-1.5 rounded-md border px-2 py-px font-mono text-xs">
         <IconPlaceholder
   lucide="Braces"
   tabler="IconBraces"
@@ -154,7 +159,7 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
     return (
       <div
         className={cn(
-          'border-border hover:bg-accent hover:text-accent-foreground inline-grid h-7 max-w-xs min-w-28 grid-cols-[12px_1fr] items-center gap-1.5 rounded-md border px-2 font-mono text-sm',
+          'border-border hover:bg-accent hover:text-accent-foreground inline-grid h-7 min-w-28 max-w-xs grid-cols-[12px_1fr] items-center gap-1.5 rounded-md border px-2 font-mono text-sm',
           !valid && 'border-rose-400 bg-rose-50 text-rose-600 hover:bg-rose-100'
         )}
       >
@@ -174,7 +179,7 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
   return (
     <span
       tabIndex={-1}
-      className="border-border inline-flex items-center gap-(--variable-icon-gap) rounded-full border px-1.5 py-0.5 leading-none"
+      className="border-border gap-(--variable-icon-gap) inline-flex items-center rounded-full border px-1.5 py-0.5 leading-none"
     >
       <IconPlaceholder
   lucide="Braces"

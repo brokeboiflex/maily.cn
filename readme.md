@@ -72,6 +72,9 @@ way modern shadcn applications are built.
 - **Consumer icon choice** — icon placeholders resolve to the library selected in
   `components.json`.
 
+The maintained [shadcn alignment boundary](./SHADCN_ALIGNMENT.md) lists every
+host-owned primitive and explains the remaining editor-specific composites.
+
 ## Included blocks
 
 - Logo and cover layouts
@@ -123,6 +126,9 @@ export function ComposeEmail() {
 
 `<Editor />` includes the toolbar, slash-command menu, bubble menus, and writing
 surface. Its chrome and canvas inherit the host application's light or dark theme.
+Interactive chrome also inherits the host's installed shadcn primitives: buttons,
+toggles, toggle groups, menus, popovers, tabs, command lists, inputs, tooltips, separators, and
+keyboard hints come from the consumer's selected shadcn style.
 
 ### Key props
 

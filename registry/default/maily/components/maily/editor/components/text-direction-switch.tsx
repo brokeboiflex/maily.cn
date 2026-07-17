@@ -1,13 +1,16 @@
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import {
   type AllowedTextDirection,
   allowedTextDirection,
 } from '../nodes/paragraph/paragraph';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Toggle } from '@/components/ui/toggle';
-import { LtrIcon, RtlIcon } from './icons/text-direction-icon';
 import { useMailyContext } from '../provider';
+import { Button } from '@/components/ui/button';
+import {
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from './ui/toggle-group-compat';
 
 type TextDirectionSwitchProps = {
   direction: AllowedTextDirection;
@@ -25,11 +28,25 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
 
   const directions = {
     ltr: {
-      icon: <LtrIcon className="size-3 stroke-[2.5]" />,
+      icon: <IconPlaceholder
+  lucide="PilcrowLeft"
+  tabler="IconTextDirectionLtr"
+  hugeicons="LeftToRightBlockQuoteIcon"
+  phosphor="TextAlignLeft"
+  remixicon="RiTextDirectionL"
+  className="size-3 stroke-[2.5]"
+/>,
       tooltip: t('direction.ltr'),
     },
     rtl: {
-      icon: <RtlIcon className="size-3 stroke-[2.5]" />,
+      icon: <IconPlaceholder
+  lucide="PilcrowRight"
+  tabler="IconTextDirectionRtl"
+  hugeicons="RightToLeftBlockQuoteIcon"
+  phosphor="TextAlignRight"
+  remixicon="RiTextDirectionR"
+  className="size-3 stroke-[2.5]"
+/>,
       tooltip: t('direction.rtl'),
     },
   };
@@ -40,49 +57,57 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
     <Popover>
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger
-            className={cn(
-              'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
-            )}
-          >
-            {activeDirection.icon}
-          </PopoverTrigger>
+          <span className="inline-flex shrink-0">
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={t('direction.label')}
+              >
+                {activeDirection.icon}
+              </Button>
+            </PopoverTrigger>
+          </span>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>{t('direction.label')}</TooltipContent>
       </Tooltip>
       <PopoverContent
-        className="flex w-max gap-0.5 rounded-lg p-0.5!"
+        className="p-0.5! flex w-max gap-0.5 rounded-lg"
         side="top"
         sideOffset={8}
         align="center"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-        }}
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-        }}
       >
-        <>
+        <ToggleGroupCompat
+          selectionMode="single"
+          value={direction}
+          className="gap-0.5"
+        >
           {Object.entries(directions).map(([key, value]) => {
             return (
               <Tooltip key={key}>
                 <TooltipTrigger asChild>
-                  <Toggle
-                    pressed={key === direction}
-                    onPressedChange={() =>
-                      onDirectionChange(key as AllowedTextDirection)
-                    }
-                    aria-label={value.tooltip}
-                    className="size-7! min-w-7! px-2.5"
-                  >
-                    {value.icon}
-                  </Toggle>
+                  <span className="inline-flex shrink-0">
+                    <ToggleGroupCompatItem
+                      value={key}
+                      pressed={key === direction}
+                      onClick={() =>
+                        onDirectionChange(key as AllowedTextDirection)
+                      }
+                      aria-label={value.tooltip}
+                      className="size-7! min-w-7! px-2.5"
+                      type="button"
+                    >
+                      {value.icon}
+                    </ToggleGroupCompatItem>
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
               </Tooltip>
             );
           })}
-        </>
+        </ToggleGroupCompat>
       </PopoverContent>
     </Popover>
   );

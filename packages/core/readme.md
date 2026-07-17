@@ -78,6 +78,16 @@ not a partial. Omit a key and TypeScript fails to compile, naming the missing ke
 so you always know exactly what you must declare. Omit the whole prop and the editor
 uses the shipped English defaults (`defaultLabels`) unchanged.
 
+Registry consumers receive the host project's stock shadcn primitives for the
+editor chrome, including Popover, DropdownMenu, Tabs, Toggle, ToggleGroup, Command,
+InputGroup, Tooltip, NativeSelect, Separator, Kbd, and Badge. The local source versions
+remain only as standalone package fallbacks.
+
+Grouped formatting and alignment controls retain the host ToggleGroup's roving
+keyboard focus. Compound Tooltip + Popover/Dropdown/Toggle controls keep each
+primitive on a separate DOM element so their open/pressed state attributes do not
+overwrite each other.
+
 ```tsx
 import { Editor, defaultLabels, type MailyLabels } from '@maily-to/core';
 

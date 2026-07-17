@@ -10,7 +10,7 @@ export const text = (t: TranslateFn): BlockItem => ({
   lucide="Text"
   tabler="IconTypography"
   hugeicons="TextFontIcon"
-  phosphor="Text"
+  phosphor="TextT"
   remixicon="RiParagraph"
   className="h-4 w-4"
 />,

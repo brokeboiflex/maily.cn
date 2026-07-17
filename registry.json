@@ -13,14 +13,19 @@
         "input",
         "textarea",
         "toggle",
+        "toggle-group",
         "tooltip",
         "separator",
         "native-select",
         "kbd",
-        "dropdown-menu"
+        "dropdown-menu",
+        "popover",
+        "tabs",
+        "input-group",
+        "command",
+        "badge"
       ],
       "dependencies": [
-        "@radix-ui/react-popover@^1.1.6",
         "@tailwindcss/postcss@^4.1.8",
         "@tiptap/core@^2.11.5",
         "@tiptap/extension-code-block-lowlight@^2.11.5",
@@ -141,11 +146,6 @@
           "target": "@components/maily/editor/components/column-menu/columns-width-config.tsx"
         },
         {
-          "path": "registry/default/maily/components/maily/editor/components/column-menu/columns-width.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/column-menu/columns-width.tsx"
-        },
-        {
           "path": "registry/default/maily/components/maily/editor/components/column-menu/use-columns-state.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/column-menu/use-columns-state.tsx"
@@ -169,16 +169,6 @@
           "path": "registry/default/maily/components/maily/editor/components/html-menu/use-html-state.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/components/html-menu/use-html-state.ts"
-        },
-        {
-          "path": "registry/default/maily/components/maily/editor/components/icons/border-color.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/icons/border-color.tsx"
-        },
-        {
-          "path": "registry/default/maily/components/maily/editor/components/icons/grid-lines.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/icons/grid-lines.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/icons/logo-with-cover-image.tsx",
@@ -206,11 +196,6 @@
           "target": "@components/maily/editor/components/icons/padding-icon.tsx"
         },
         {
-          "path": "registry/default/maily/components/maily/editor/components/icons/text-direction-icon.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/icons/text-direction-icon.tsx"
-        },
-        {
           "path": "registry/default/maily/components/maily/editor/components/image-menu/image-bubble-menu.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/image-menu/image-bubble-menu.tsx"
@@ -219,11 +204,6 @@
           "path": "registry/default/maily/components/maily/editor/components/image-menu/image-size.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/image-menu/image-size.tsx"
-        },
-        {
-          "path": "registry/default/maily/components/maily/editor/components/image-menu/lock-aspect-ratio-button.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/image-menu/lock-aspect-ratio-button.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/image-menu/use-image-state.tsx",
@@ -239,11 +219,6 @@
           "path": "registry/default/maily/components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx"
-        },
-        {
-          "path": "registry/default/maily/components/maily/editor/components/popover.tsx",
-          "type": "registry:component",
-          "target": "@components/maily/editor/components/popover.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/repeat-menu/repeat-bubble-menu.tsx",
@@ -316,9 +291,9 @@
           "target": "@components/maily/editor/components/ui/color-picker.tsx"
         },
         {
-          "path": "registry/default/maily/components/maily/editor/components/ui/edge-spacing-controls.tsx",
+          "path": "registry/default/maily/components/maily/editor/components/ui/floating-menu.ts",
           "type": "registry:component",
-          "target": "@components/maily/editor/components/ui/edge-spacing-controls.tsx"
+          "target": "@components/maily/editor/components/ui/floating-menu.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/ui/input-autocomplete.tsx",
@@ -334,6 +309,11 @@
           "path": "registry/default/maily/components/maily/editor/components/ui/select.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/ui/select.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/toggle-group-compat.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/toggle-group-compat.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/variable-menu/variable-bubble-menu.tsx",

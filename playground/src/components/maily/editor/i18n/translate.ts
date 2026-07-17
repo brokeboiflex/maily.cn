@@ -1,4 +1,8 @@
-import { defaultLabels, type LabelKey, type MailyLabels } from './default-labels';
+import {
+  defaultLabels,
+  type LabelKey,
+  type MailyLabels,
+} from './default-labels';
 
 export type TranslateFn = (
   key: LabelKey,

@@ -375,8 +375,7 @@ export function getColumnWidths(editor: Editor): {
   id: string;
   width: string;
 }[] {
-  const { node: columnsNode } =
-    getClosestNodeByName(editor, 'columns') || {};
+  const { node: columnsNode } = getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
     return [];
   }

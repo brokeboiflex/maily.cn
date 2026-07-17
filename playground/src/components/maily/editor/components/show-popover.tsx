@@ -3,7 +3,7 @@ import { memo, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useVariableOptions } from '../utils/node-options';
 import { processVariables } from '../utils/variable';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { InputAutocomplete } from './ui/input-autocomplete';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../provider';
@@ -49,41 +49,41 @@ function _ShowPopover(props: ShowPopoverProps) {
     >
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className={cn(
-                'size-7',
-                showIfKey &&
-                  'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary data-[state=open]:bg-primary/15 data-[state=open]:text-primary'
-              )}
-            >
-              <Eye className="h-3 w-3 stroke-[2.5]" />
-            </Button>
-          </PopoverTrigger>
+          <span className="inline-flex shrink-0">
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  'size-7',
+                  showIfKey &&
+                    'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary'
+                )}
+                aria-label={t('showPopover.showConditionally')}
+              >
+                <Eye className="h-3 w-3 stroke-[2.5]" />
+              </Button>
+            </PopoverTrigger>
+          </span>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>
           {t('showPopover.showConditionally')}
         </TooltipContent>
       </Tooltip>
       <PopoverContent
-        className="flex w-max rounded-lg p-0.5!"
+        className="p-0.5! flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg"
         side="top"
         sideOffset={8}
         align="end"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-        }}
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-        }}
       >
         <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">
           {t('showPopover.showIf')}
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger
+              type="button"
+              aria-label={t('showPopover.showIfHint')}
+            >
               <InfoIcon className={cn('text-muted-foreground size-3 stroke-[2.5]')} />
             </TooltipTrigger>
             <TooltipContent

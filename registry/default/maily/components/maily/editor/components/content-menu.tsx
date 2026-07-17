@@ -169,15 +169,16 @@ export function ContentMenu(props: ContentMenuProps) {
           >
             <Tooltip>
               <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-foreground relative z-1 size-7! cursor-grab"
-                    aria-label={t('contentMenu.nodeActions')}
-                    type="button"
-                  >
-                    <IconPlaceholder
+                <span className="inline-flex shrink-0">
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-foreground z-1 size-7! relative cursor-grab"
+                      aria-label={t('contentMenu.nodeActions')}
+                      type="button"
+                    >
+                      <IconPlaceholder
   lucide="GripVertical"
   tabler="IconGripVertical"
   hugeicons="GripVerticalIcon"
@@ -185,8 +186,9 @@ export function ContentMenu(props: ContentMenuProps) {
   remixicon="RiDraggable"
   className="size-4 shrink-0"
 />
-                  </Button>
-                </DropdownMenuTrigger>
+                    </Button>
+                  </DropdownMenuTrigger>
+                </span>
               </TooltipTrigger>
               <TooltipContent sideOffset={8}>
                 {t('contentMenu.nodeActions')}

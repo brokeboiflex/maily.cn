@@ -1,4 +1,4 @@
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useRef, useState, type ReactNode } from 'react';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -9,6 +9,7 @@ import { useMemo } from 'react';
 import { Editor } from '@tiptap/core';
 import { useVariableOptions } from '../../utils/node-options';
 import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../../nodes/variable/variable';
+import { Toggle } from '@/components/ui/toggle';
 import { Link, LinkIcon } from "lucide-react";
 
 type LinkInputPopoverProps = {
@@ -74,48 +75,47 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
       {tooltip ? (
         <Tooltip>
           <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                type="button"
-                className="h-7! w-7!"
-                data-state={!!defaultValue}
-                aria-label={tooltip}
-              >
-                <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
-                  {icon ?? <Link
+            <span className="inline-flex shrink-0">
+              <PopoverTrigger asChild>
+                <Toggle
+                  pressed={!!defaultValue}
+                  onPressedChange={() => undefined}
+                  type="button"
+                  className="h-7! w-7! px-0"
+                  aria-label={tooltip}
+                >
+                  <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
+                    {icon ?? <Link
 />}
-                </span>
-              </Button>
-            </PopoverTrigger>
+                  </span>
+                </Toggle>
+              </PopoverTrigger>
+            </span>
           </TooltipTrigger>
           <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
         </Tooltip>
       ) : (
         <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
+          <Toggle
+            pressed={!!defaultValue}
+            onPressedChange={() => undefined}
             type="button"
-            className="h-7! w-7!"
-            data-state={!!defaultValue}
+            className="h-7! w-7! px-0"
             aria-label={t('toolbar.link')}
           >
             <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
               {icon ?? <Link
 />}
             </span>
-          </Button>
+          </Toggle>
         </PopoverTrigger>
       )}
 
       <PopoverContent
         align="end"
         side="top"
-        className="w-max rounded-none border-none bg-transparent p-0! shadow-none"
+        className="w-max p-1"
         sideOffset={8}
-        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <form
           onSubmit={(e) => {
@@ -129,9 +129,9 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
             setIsOpen(false);
           }}
         >
-          <div className="isolate flex rounded-lg">
+          <div className="isolate flex">
             {!isEditing && (
-              <div className="border-border bg-background flex h-8 items-center rounded-lg border px-0.5">
+              <div className="flex h-8 items-center px-0.5">
                 <Button
                   type="button"
                   variant="ghost"
@@ -171,7 +171,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                   autoCompleteOptions={autoCompleteOptions}
                   ref={linkInputRef}
                   placeholder={placeholderUrl}
-                  className="border-border placeholder:text-muted-foreground -ms-px block h-8 w-56 rounded-lg border px-2 py-1.5 pr-6 pl-6 text-sm shadow-sm outline-hidden"
+                  className="placeholder:text-muted-foreground h-8 w-56 pl-6 pr-6"
                   triggerChar={variableTriggerCharacter}
                   onSelectOption={(value) => {
                     const isVariable =

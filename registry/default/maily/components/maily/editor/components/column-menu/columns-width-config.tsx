@@ -1,11 +1,19 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useMailyContext } from '../../provider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import {
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from '../ui/toggle-group-compat';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from '@/components/ui/input-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ColumnsWidthConfigProps = {
   columnsCount: number;
@@ -26,9 +34,18 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
 
   return (
     <Popover>
-      <PopoverTrigger asChild>
-        <Button type="button" variant="ghost" size="icon" className="size-7">
-          <IconPlaceholder
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex shrink-0">
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={t('columnMenu.configureWidths')}
+              >
+                <IconPlaceholder
   lucide="SlidersVertical"
   tabler="IconAdjustments"
   hugeicons="SlidersVerticalIcon"
@@ -36,24 +53,31 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
   remixicon="RiEqualizerLine"
   className="h-3 w-3 stroke-[2.5]"
 />
-        </Button>
-      </PopoverTrigger>
+              </Button>
+            </PopoverTrigger>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={8}>
+          {t('columnMenu.configureWidths')}
+        </TooltipContent>
+      </Tooltip>
       <PopoverContent
-        className="w-[300px] rounded-lg p-0.5!"
+        className="p-0.5! w-[calc(100vw-1rem)] max-w-[300px] rounded-lg"
         side="top"
         sideOffset={8}
         align="center"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-        }}
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-        }}
       >
-        <div className="grid grid-cols-2 gap-1">
-          <SwitchButton
+        <ToggleGroupCompat
+          selectionMode="single"
+          value={String(columnsCount)}
+          className="grid w-full grid-cols-2 gap-1"
+        >
+          <ToggleGroupCompatItem
+            value="2"
+            pressed={columnsCount === 2}
             onClick={() => onColumnsCountChange(2)}
-            isActive={columnsCount === 2}
+            className="text-muted-foreground h-7 gap-1 px-2 text-sm"
+            type="button"
           >
             <IconPlaceholder
   lucide="Columns2"
@@ -64,10 +88,13 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
   className="h-4 w-4 stroke-[2.5]"
 />
             <span>{t('columnMenu.twoColumns')}</span>
-          </SwitchButton>
-          <SwitchButton
+          </ToggleGroupCompatItem>
+          <ToggleGroupCompatItem
+            value="3"
+            pressed={columnsCount === 3}
             onClick={() => onColumnsCountChange(3)}
-            isActive={columnsCount === 3}
+            className="text-muted-foreground h-7 gap-1 px-2 text-sm"
+            type="button"
           >
             <IconPlaceholder
   lucide="Columns3"
@@ -78,8 +105,8 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
   className="h-4 w-4 stroke-[2.5]"
 />
             <span>{t('columnMenu.threeColumns')}</span>
-          </SwitchButton>
-        </div>
+          </ToggleGroupCompatItem>
+        </ToggleGroupCompat>
 
         <Separator orientation="horizontal" className="my-0.5" />
 
@@ -105,54 +132,32 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
               <div className="flex flex-col gap-1" key={index}>
                 <span className="text-muted-foreground text-xs">{label}</span>
 
-                <label className="relative">
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                     placeholder={t('columnMenu.autoPlaceholder')}
                     min={1}
                     max={90}
                     type="number"
-                    className="bg-muted focus:bg-muted focus:ring-foreground/50 w-full [appearance:textfield] appearance-none rounded-md px-1.5 py-1 pr-6 text-sm tabular-nums outline-hidden focus:ring-1 focus:outline-hidden [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="appearance-none px-1.5 text-sm tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     value={value}
                     onChange={(e) => {
                       const value = e.target.value;
                       onColumnWidthChange?.(index, value);
                     }}
                   />
-                  <span className="text-muted-foreground absolute inset-y-0 right-0 flex aspect-square items-center justify-center text-xs tabular-nums">
+                  <InputGroupAddon
+                    align="inline-end"
+                    className="pr-1.5 text-xs tabular-nums"
+                  >
                     {t('columnMenu.unitPercent')}
-                  </span>
-                </label>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
             );
           })}
         </div>
       </PopoverContent>
     </Popover>
-  );
-}
-
-type SwitchButtonProps = {
-  isActive?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-};
-
-function SwitchButton(props: SwitchButtonProps) {
-  const { onClick, isActive = false, children } = props;
-
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      className={cn(
-        'text-muted-foreground hover:bg-muted hover:text-foreground flex h-7 items-center gap-1 rounded-md px-2 text-sm',
-        isActive && 'bg-muted text-foreground'
-      )}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
   );
 }

@@ -11,6 +11,7 @@ import {
   DEFAULT_INLINE_IMAGE_WIDTH,
 } from '@/editor/nodes/inline-image/inline-image';
 import { useMailyContext } from '../../provider';
+import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
@@ -42,10 +43,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   };
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className="border-border bg-background flex rounded-lg border p-0.5 shadow-md"
-    >
+    <BubbleMenu {...bubbleMenuProps} className={`${FLOATING_MENU_CLASS} flex`}>
       <TooltipProvider>
         <div className="flex gap-x-0.5">
           <LinkInputPopover

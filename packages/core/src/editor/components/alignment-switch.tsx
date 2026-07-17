@@ -4,10 +4,13 @@ import {
   allowedLogoAlignment,
 } from '../nodes/logo/logo';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import { cn } from '../utils/classname';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { Toggle } from './ui/toggle';
 import { useMailyContext } from '../provider';
+import { Button } from './base-button';
+import {
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from './ui/toggle-group-compat';
 
 type AlignmentSwitchProps = {
   alignment: AllowedLogoAlignment;
@@ -44,49 +47,57 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
     <Popover>
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger
-            className={cn(
-              'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring flex size-7 items-center justify-center gap-1 rounded-md px-1.5 text-sm focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden'
-            )}
-          >
-            {activeAlignment.icon}
-          </PopoverTrigger>
+          <span className="inline-flex shrink-0">
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label={t('alignment.label')}
+              >
+                {activeAlignment.icon}
+              </Button>
+            </PopoverTrigger>
+          </span>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>{t('alignment.label')}</TooltipContent>
       </Tooltip>
       <PopoverContent
-        className="flex w-max gap-0.5 rounded-lg p-0.5!"
+        className="p-0.5! flex w-max gap-0.5 rounded-lg"
         side="top"
         sideOffset={8}
         align="center"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-        }}
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-        }}
       >
-        <>
+        <ToggleGroupCompat
+          selectionMode="single"
+          value={alignment}
+          className="gap-0.5"
+        >
           {Object.entries(alignments).map(([key, value]) => {
             return (
               <Tooltip key={key}>
                 <TooltipTrigger asChild>
-                  <Toggle
-                    pressed={key === alignment}
-                    onPressedChange={() =>
-                      onAlignmentChange(key as AllowedLogoAlignment)
-                    }
-                    aria-label={value.tooltip}
-                    className="size-7! min-w-7! px-2.5"
-                  >
-                    {value.icon}
-                  </Toggle>
+                  <span className="inline-flex shrink-0">
+                    <ToggleGroupCompatItem
+                      value={key}
+                      pressed={key === alignment}
+                      onClick={() =>
+                        onAlignmentChange(key as AllowedLogoAlignment)
+                      }
+                      aria-label={value.tooltip}
+                      className="size-7! min-w-7! px-2.5"
+                      type="button"
+                    >
+                      {value.icon}
+                    </ToggleGroupCompatItem>
+                  </span>
                 </TooltipTrigger>
                 <TooltipContent sideOffset={8}>{value.tooltip}</TooltipContent>
               </Tooltip>
             );
           })}
-        </>
+        </ToggleGroupCompat>
       </PopoverContent>
     </Popover>
   );

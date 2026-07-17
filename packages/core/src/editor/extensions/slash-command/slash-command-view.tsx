@@ -406,8 +406,8 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   }
 
   return (
-    <div ref={wrapperRef} className="relative w-72">
-      <div className="border-border bg-popover text-popover-foreground z-50 w-full overflow-hidden rounded-md border shadow-md transition-all">
+    <div ref={wrapperRef} className="relative w-[min(18rem,calc(100vw-1rem))]">
+      <div className="bg-popover text-popover-foreground ring-foreground/10 z-50 w-full overflow-hidden rounded-lg shadow-md ring-1 transition-[opacity,transform] duration-100">
         <div
           id="slash-command"
           ref={commandListContainer}
@@ -443,17 +443,17 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           ))}
         </div>
         <div className="border-border border-t px-3 py-2">
-          <div className="flex items-center justify-between gap-2">
-            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
               <div className="flex items-center gap-1">
                 <Kbd>↑</Kbd>
                 <Kbd>↓</Kbd>
               </div>
-              <span className="select-none">{navigateLabel}</span>
+              <span className="min-w-0 select-none">{navigateLabel}</span>
             </div>
-            <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-xs">
               <Kbd>{enterLabel}</Kbd>
-              <span className="select-none">{selectLabel}</span>
+              <span className="min-w-0 select-none">{selectLabel}</span>
             </div>
           </div>
         </div>

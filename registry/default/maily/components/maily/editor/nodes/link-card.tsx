@@ -1,10 +1,11 @@
 import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '../components/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { useMailyContext } from '../provider';
 import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
+import { Badge } from '@/components/ui/badge';
 
 export function LinkCardComponent(props: NodeViewProps) {
   const { t } = useMailyContext();
@@ -44,19 +45,19 @@ export function LinkCardComponent(props: NodeViewProps) {
               <div className="flex items-stretch p-3">
                 <div className={cn('flex flex-col')}>
                   <div className="!mb-1.5 flex items-center gap-1.5">
-                    <h2 className="!mb-0 text-lg! font-semibold">{title}</h2>
+                    <h2 className="text-lg! !mb-0 font-semibold">{title}</h2>
                     {badgeText && (
-                      <span className="!font-base rounded-md bg-yellow-200 px-2 py-1 text-xs leading-none font-semibold">
+                      <Badge variant="secondary" className="!font-base">
                         {badgeText}
-                      </span>
+                      </Badge>
                     )}{' '}
                     {subTitle && !badgeText && (
-                      <span className="!font-base font-regular text-muted-foreground rounded-md text-xs leading-none">
+                      <Badge variant="outline" className="!font-base">
                         {subTitle}
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                  <p className="text-muted-foreground !my-0 text-base!">
+                  <p className="text-muted-foreground text-base! !my-0">
                     {description}{' '}
                     {linkTitle ? (
                       <a href={link} className="font-semibold">
@@ -71,10 +72,8 @@ export function LinkCardComponent(props: NodeViewProps) {
         </PopoverTrigger>
         <PopoverContent
           align="end"
-          className="flex w-96 flex-col gap-2"
+          className="flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-96 flex-col gap-2 overflow-y-auto"
           sideOffset={10}
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <label className="w-full space-y-1">
             <span className="text-muted-foreground text-xs font-normal">
