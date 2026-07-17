@@ -1,17 +1,35 @@
-<h1 align="center"><img height="150" src="https://maily.to/brand/icon.svg" /><br> @maily-to/core</h1>
+<h1 align="center"><img height="150" src="../../assets/branding/maily-cn-avatar.png" alt="maily.cn avatar" /><br>maily.cn / @maily-to/core</h1>
 
 <p align="center">
-  <a href="https://github.com/arikchakma/maily.to/blob/main/license">
+  <a href="https://github.com/brokeboiflex/maily.cn/blob/main/license">
     <img src="https://img.shields.io/badge/License-MIT-222222.svg" />
   </a>
-  <a href="https://maily.to">
-    <img src="https://img.shields.io/badge/%E2%9C%A8-Get%20Editor-0a0a0a.svg?style=flat&colorA=0a0a0a" alt="Get Maily Editor" />
+  <a href="https://github.com/brokeboiflex/maily.cn">
+    <img src="https://img.shields.io/badge/Repository-maily.cn-222222.svg" alt="maily.cn repository" />
+  </a>
+  <a href="https://github.com/sponsors/brokeboiflex">
+    <img src="https://img.shields.io/badge/Sponsor-brokeboiflex-EA4AAA.svg?logo=githubsponsors&logoColor=white" alt="Sponsor brokeboiflex" />
   </a>
 </p>
 
-> Currently, this package is under development. You can follow the progress [here](https://github.com/arikchakma/maily.to).
+The canonical editor source for [maily.cn](../../readme.md): a production-ready,
+shadcn-installable fork of [maily.to](https://github.com/arikchakma/maily.to).
+The workspace keeps the upstream `@maily-to/core` package name for package-build
+compatibility, while the recommended distribution installs this source through the
+fork's shadcn registry.
 
-## Installation
+## Recommended installation: maily.cn source
+
+Install the fork through shadcn by following the
+[root maily.cn instructions](../../readme.md). That is the distribution path that
+includes this repository's production hardening and copies the editor into the
+consumer's codebase.
+
+## Upstream-compatible package build
+
+The commands below install the published `@maily-to/core` npm package. They are kept
+for compatibility and workspace-package development; they do **not** install the
+source-owned `maily.cn` registry block.
 
 ```bash
 pnpm add @maily-to/core
@@ -20,11 +38,12 @@ pnpm add @maily-to/core
 pnpm add -D @tiptap/core
 ```
 
+In either mode, the host supplies Tailwind v4 and shadcn theme tokens; the editor
+ships no private stylesheet.
+
 ## Usage
 
 ```tsx
-import '@maily-to/core/style.css';
-
 import { useState } from 'react';
 import { Editor } from '@maily-to/core';
 import type { Editor as TiptapEditor, JSONContent } from '@tiptap/core';
@@ -104,7 +123,7 @@ const t = createTranslator(defaultLabels);
       commands: [text(t), heading1(t)],
     },
   ]}
-/>
+/>;
 ```
 
 > **Note:** The order of the groups and the order of commands within each group determine how they are displayed in the editor.
@@ -191,19 +210,24 @@ You can pass variables to the editor in two ways:
 
    ```tsx
    // (Omitted repeated imports)
-   import { VariableExtension, getVariableSuggestions } from '@maily-to/core/extensions';
+   import {
+     VariableExtension,
+     getVariableSuggestions,
+   } from '@maily-to/core/extensions';
 
    <Editor
      extensions={[
        VariableExtension.configure({
          suggestion: getVariableSuggestions('@'),
-         variables: [{
-            name: 'currentTime',
-            required: false,
-         }],
+         variables: [
+           {
+             name: 'currentTime',
+             required: false,
+           },
+         ],
        }),
      ]}
-   />
+   />;
    ```
 
 2. As a Function:
@@ -212,7 +236,10 @@ You can pass variables to the editor in two ways:
 
    ```tsx
    // (Omitted repeated imports)
-   import { VariableExtension, getVariableSuggestions } from '@maily-to/core/extensions';
+   import {
+     VariableExtension,
+     getVariableSuggestions,
+   } from '@maily-to/core/extensions';
 
    <Editor
      extensions={[
@@ -225,10 +252,7 @@ You can pass variables to the editor in two ways:
            // editor: the editor instance
            if (from === 'repeat-variable') {
              // return variables for the Repeat block `each` key
-             return [
-               { name: 'notifications' },
-               { name: 'comments' },
-             ];
+             return [{ name: 'notifications' }, { name: 'comments' }];
            }
 
            return [
@@ -245,7 +269,7 @@ You can pass variables to the editor in two ways:
          },
        }),
      ]}
-   />
+   />;
    ```
 
 > Keep it in mind that if you pass an array of variable object Maily will take care of the filtering based on the query. But if you pass a function you have to take care of the filtering.
@@ -256,7 +280,11 @@ Extensions are a way to extend the editor's functionality. You can add custom bl
 
 ```tsx
 // (Omitted repeated imports)
-import { MailyKit, VariableExtension, getVariableSuggestions } from '@maily-to/core/extensions';
+import {
+  MailyKit,
+  VariableExtension,
+  getVariableSuggestions,
+} from '@maily-to/core/extensions';
 
 <Editor
   extensions={[
@@ -271,7 +299,7 @@ import { MailyKit, VariableExtension, getVariableSuggestions } from '@maily-to/c
         // now you can replace the default
         // VariableView with your custom view
         return ReactNodeViewRenderer(VariableView, {
-          className: 'mly:relative mly:inline-block',
+          className: 'relative inline-block',
           as: 'div',
         });
       },
@@ -279,7 +307,7 @@ import { MailyKit, VariableExtension, getVariableSuggestions } from '@maily-to/c
       suggestion: getVariableSuggestions(variableTriggerCharacter),
     }),
   ]}
-/>
+/>;
 ```
 
 Or, you can add your own custom extensions, like shown below:
@@ -294,7 +322,7 @@ import { CustomExtension } from './extensions/custom-extension';
       // your configuration
     }),
   ]}
-/>
+/>;
 ```
 
 ### Image Upload
@@ -315,7 +343,7 @@ import { ImageUploadExtension } from '@maily-to/core/extensions';
       },
     }),
   ]}
-/>
+/>;
 ```
 
 See the [@maily-to/render](../render) package for more information on how to render the editor content to HTML.
@@ -324,31 +352,15 @@ See the [@maily-to/render](../render) package for more information on how to ren
 
 ## Sponsors
 
-Sponsorship at any level is appreciated and encouraged. If you built a paid product using Maily, consider one of the [sponsorship tiers](https://github.com/sponsors/arikchakma).
-
-<br/>
-
-<h3 align="center">Gold</h3>
-
-<table align="center" style="justify-content: center;align-items: center;display: flex;">
-  <tr>
-    <td align="center">
-      <p></p>
-      <p></p>
-      <a href="https://novu.co?ref=maily.to">
-        <picture height="60px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/5e2b9ef1-5ded-4863-995d-62c7e40f946a">
-          <img alt="Novu Logo" height="60px" src="https://github.com/user-attachments/assets/d2fdaf14-2211-4946-ab67-a4ce547aabc0">
-        </picture>
-      </a>
-      <p></p>
-      <p></p>
-    </td>
-  </tr>
-</table>
+If the fork saves you time or helps a paid product ship, I will very happily accept
+[GitHub sponsorships](https://github.com/sponsors/brokeboiflex) xD. You can support
+the original Maily project separately through
+[Arik Chakma's sponsorship page](https://github.com/sponsors/arikchakma).
 
 <br/>
 
 ## License
 
-MIT &copy; [Arik Chakma](https://twitter.com/imarikchakma)
+MIT. Original Maily copyright &copy; [Arik Chakma](https://github.com/arikchakma)
+and contributors; maily.cn modifications are maintained by
+[brokeboiflex](https://github.com/brokeboiflex).
