@@ -1,7 +1,7 @@
-# maily playground
+# maily.cn playground
 
 A throwaway **Vite + React + Tailwind v4 + shadcn** app used to dev-test the
-Maily editor the way a real consumer would: by installing it from the local
+`maily.cn` editor the way a real consumer would: by installing it from the local
 shadcn registry with `shadcn add`, instead of importing the workspace packages.
 
 It was scaffolded with the shadcn CLI:
@@ -63,25 +63,17 @@ The installed editor ships an `i18n/` directory (`default-labels.ts`,
 To smoke-test translation, pass a `labels` prop to `<Editor>` in `src/App.tsx` —
 copy `defaultLabels`, change a few values, and confirm the chrome and default-block
 menu update. Omitting a key is a TypeScript error naming the missing key. See the
-"Translating the editor" section in `packages/core/README.md` for the full API.
+[Translating the editor](../packages/core/readme.md#translating-the-editor) section
+for the full API.
 
-## Known issue — `verbatimModuleSyntax`
+## Consumer compatibility check
 
-`shadcn init -t vite` enables `verbatimModuleSyntax: true` in `tsconfig.app.json`.
-The current editor source value-imports type-only symbols, e.g.:
+The playground intentionally keeps the modern shadcn/Vite defaults, including
+`verbatimModuleSyntax: true`. A successful `bun run build` therefore verifies that
+the installed registry source uses portable type-only imports and needs no consumer
+TypeScript workaround.
 
-```ts
-import { Command } from '@tiptap/core'   // Command is a *type*
-```
-
-With `verbatimModuleSyntax` on, Vite/esbuild keeps that as a runtime import and
-the browser throws:
-
-```
-The requested module '@tiptap_core.js' does not provide an export named 'Command'
-```
-
-This playground works around it by setting `verbatimModuleSyntax: false` in
-`tsconfig.app.json`. **The proper fix is in the source** (`packages/core`): change
-these to `import type { ... }`. Until then, any consumer whose project has
-`verbatimModuleSyntax` enabled (the modern shadcn/Vite default) will hit this.
+The registry is also fixture-tested with shadcn's Base UI style. Its externalized
+`Button`, `Input`, `Textarea`, `Toggle`, `Tooltip`, `Separator`, `NativeSelect`, `Kbd`, and `DropdownMenu`
+resolve to the consumer's stock implementations; icon placeholders resolve to the
+icon library selected in that consumer's `components.json`.
