@@ -4,6 +4,8 @@ A throwaway **Vite + React + Tailwind v4 + shadcn** app used to dev-test the
 `maily.cn` editor the way a real consumer would: by installing it from the local
 shadcn registry with `shadcn add`, instead of importing the workspace packages.
 
+**Live playground:** https://brokeboiflex.github.io/maily.cn/
+
 It was scaffolded with the shadcn CLI:
 
 ```bash
@@ -82,3 +84,11 @@ resolve to the icon library selected in that consumer's `components.json`.
 Run `bun run test:e2e` for the committed Chromium regression suite. It covers
 host-theme hover tokens, narrow-viewport overflow, real Tabs state, ToggleGroup
 roving focus, toolbar link composition, and invalid nested interactive DOM.
+
+## GitHub Pages
+
+`.github/workflows/deploy-playground.yml` builds this app with
+`bun run build:pages` and deploys `dist/` through GitHub's Pages artifact
+workflow after playground changes land on `main`. The Pages build uses
+`/maily.cn/` as Vite's base path; local development and `bun run build` keep `/`
+so the local shadcn registry URL remains unchanged.
