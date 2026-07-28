@@ -118,6 +118,9 @@ pnpm lint               # eslint
 with `bunx --bun shadcn@latest init -t vite`) that consumes this repo's registry the
 way an end user would. Its `components.json` declares a local namespace
 `@maily → http://localhost:5173/r/{name}.json`, served from `playground/public/r`.
+The same app is published at `https://brokeboiflex.github.io/maily.cn/` by
+`.github/workflows/deploy-playground.yml`; its Pages build uses the `/maily.cn/`
+Vite base while local development keeps `/`.
 
 Loop: edit `packages/*` → `pnpm playground:sync` (rebuild + reserve) → in `playground/`,
 run `bun run dev` and `shadcn add @maily/maily --overwrite`. Full details and commands

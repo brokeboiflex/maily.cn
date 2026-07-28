@@ -31,6 +31,10 @@ distribution path: run one `shadcn add` command and the editor plus renderer arr
 plain source files inside your project. You own them, theme them, and change them like
 any other shadcn component.
 
+Try the editor and mailbox components in the
+[live playground](https://brokeboiflex.github.io/maily.cn/), including light,
+dark, and system mode selection powered by `shadcn-theme-provider`.
+
 > Maily itself was created by [Arik Chakma](https://github.com/arikchakma) and its
 > contributors. `maily.cn` maintains a source-owned shadcn distribution and the
 > production hardening documented below.
