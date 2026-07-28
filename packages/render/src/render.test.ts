@@ -269,6 +269,28 @@ describe('render', () => {
     expect(result.match(/latin-400-normal\.woff2/g)).toHaveLength(1);
   });
 
+  it('renders granular font sizes on text style marks', async () => {
+    const content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'Small detail',
+              marks: [{ type: 'textStyle', attrs: { fontSize: '12px' } }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = await render(content);
+
+    expect(result).toContain('font-size:12px');
+  });
+
   it('should remove preview header from text', async () => {
     const content = {
       type: 'doc',

@@ -13,6 +13,7 @@ import Dropcursor from '@tiptap/extension-dropcursor';
 
 import { Color } from './color';
 import { FontFamilyExtension } from './font-family';
+import { FontSizeExtension } from './font-size';
 import { HorizontalRule } from './horizontal-rule';
 import { Footer } from '../nodes/footer';
 import { Spacer } from '../nodes/spacer';
@@ -95,6 +96,7 @@ export const MailyKit = Extension.create<MailyKitOptions>({
       Color.configure({ types: [TextStyle.name, ListItem.name] }),
       TextStyle.configure(),
       FontFamilyExtension,
+      FontSizeExtension,
       TextAlign.configure({
         types: [Paragraph.name, Heading.name, Footer.name],
       }),

@@ -83,6 +83,7 @@ export function ButtonView(props: NodeViewProps) {
       <Popover open={props.selected && editor.isEditable}>
         <PopoverTrigger asChild>
           <div>
+            {/* shadcn-audit-ignore-next-line email content preview renders the actual message button */}
             <button
               className={cn(
                 'ring-offset-background inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50',

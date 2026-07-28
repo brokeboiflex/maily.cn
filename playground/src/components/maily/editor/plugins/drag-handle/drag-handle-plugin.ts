@@ -325,6 +325,17 @@ export function DragHandlePlugin(
   let x = false;
   let currentNode: TNode | null = null;
   let lastNodePos = -1;
+
+  function hideDragHandle() {
+    tippyInstance?.hide();
+
+    if (currentNode || lastNodePos !== -1) {
+      currentNode = null;
+      lastNodePos = -1;
+      onNodeChange?.({ editor: editor, node: null, pos: -1 });
+    }
+  }
+
   element.addEventListener('dragstart', (e) => {
     const { view } = editor;
     if (!e.dataTransfer) return;
@@ -466,15 +477,16 @@ export function DragHandlePlugin(
           x ||
             (event.target &&
               !container.contains(event?.relatedTarget as Node) &&
-              (null == tippyInstance || tippyInstance.hide(),
-              (currentNode = null),
-              (lastNodePos = -1),
-              null == onNodeChange ||
-                onNodeChange({ editor: editor, node: null, pos: -1 }))),
+              hideDragHandle()),
           false
         ),
         mousemove(e, t) {
           if (!element || !tippyInstance || x) return false;
+          if (t.buttons === 1) {
+            hideDragHandle();
+            return false;
+          }
+
           const n = findElementNextToCoords({
             x: t.clientX,
             y: t.clientY,

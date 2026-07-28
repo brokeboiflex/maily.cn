@@ -17,6 +17,7 @@ export const useTextMenuState = (editor: Editor) => {
         currentFont: fontSelectionFromAttrs(
           ctx.editor.getAttributes('textStyle')
         ),
+        currentFontSize: ctx.editor.getAttributes('textStyle').fontSize || '',
         currentTextColor:
           ctx.editor.getAttributes('textStyle').color || DEFAULT_TEXT_COLOR,
 

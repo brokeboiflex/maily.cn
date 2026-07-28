@@ -6,13 +6,14 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "clean": "turbo run clean",
-    "lint": "turbo run lint",
+    "lint": "pnpm shadcn:audit && turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "format:write": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,md}\"",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
-    "registry:build": "node scripts/build-shadcn-registry.mjs && node scripts/normalize-shadcn-registry.mjs",
+    "shadcn:audit": "node scripts/audit-shadcn-primitives.mjs",
+    "registry:build": "node scripts/build-shadcn-registry.mjs && node scripts/normalize-shadcn-registry.mjs && pnpm shadcn:audit",
     "playground:sync": "pnpm registry:build && pnpm dlx shadcn@latest build registry.json --output playground/public/r"
   },
   "devDependencies": {

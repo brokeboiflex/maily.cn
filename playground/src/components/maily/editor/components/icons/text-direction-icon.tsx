@@ -1,4 +1,4 @@
-import { type SVGProps } from 'react';
+import { type SVGProps } from "react"
 
 export function LtrIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -20,7 +20,7 @@ export function LtrIcon(props: SVGProps<SVGSVGElement>) {
       <path d="M6 18l-3-3 3-3" />
       <path d="M3 15h5" />
     </svg>
-  );
+  )
 }
 
 export function RtlIcon(props: SVGProps<SVGSVGElement>) {
@@ -43,5 +43,5 @@ export function RtlIcon(props: SVGProps<SVGSVGElement>) {
       <path d="M18 18l3-3-3-3" />
       <path d="M16 15h5" />
     </svg>
-  );
+  )
 }

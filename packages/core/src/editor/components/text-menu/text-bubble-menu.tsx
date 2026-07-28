@@ -4,7 +4,7 @@ import { SectionExtension } from '@/editor/nodes/section/section';
 import { isCustomNodeSelected } from '@/editor/utils/is-custom-node-selected';
 import { isTextSelected } from '@/editor/utils/is-text-selected';
 import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Separator } from '../ui/divider';
 import { TooltipProvider } from '../ui/tooltip';
 import { TextBubbleContent } from './text-bubble-content';
@@ -33,17 +33,71 @@ export type EditorBubbleMenuProps = Omit<BubbleMenuProps, 'children'> & {
 
 export function TextBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
+  const isPointerSelectingRef = useRef(false);
+  const [selectionGestureVersion, setSelectionGestureVersion] = useState(0);
 
   if (!editor) {
     return null;
   }
+
+  const activeEditor = editor;
+
+  useEffect(() => {
+    const editorElement = activeEditor.view.dom;
+    const ownerDocument = editorElement.ownerDocument;
+
+    function handlePointerDown(event: PointerEvent | MouseEvent) {
+      if (
+        event.button === 0 &&
+        event.target instanceof Node &&
+        editorElement.contains(event.target)
+      ) {
+        isPointerSelectingRef.current = true;
+      }
+    }
+
+    function handlePointerDone() {
+      const wasPointerSelecting = isPointerSelectingRef.current;
+
+      isPointerSelectingRef.current = false;
+
+      if (wasPointerSelecting) {
+        requestAnimationFrame(() => {
+          if (!activeEditor.isDestroyed) {
+            const { selection } = activeEditor.state;
+            activeEditor.view.dispatch(
+              activeEditor.state.tr
+                .setSelection(selection)
+                .setMeta('mailyPointerSelectionDone', true)
+            );
+          }
+
+          setSelectionGestureVersion((version) => version + 1);
+        });
+      }
+    }
+
+    editorElement.addEventListener('pointerdown', handlePointerDown);
+    editorElement.addEventListener('mousedown', handlePointerDown);
+    ownerDocument.addEventListener('pointerup', handlePointerDone);
+    ownerDocument.addEventListener('mouseup', handlePointerDone);
+    ownerDocument.addEventListener('pointercancel', handlePointerDone);
+
+    return () => {
+      editorElement.removeEventListener('pointerdown', handlePointerDown);
+      editorElement.removeEventListener('mousedown', handlePointerDown);
+      ownerDocument.removeEventListener('pointerup', handlePointerDone);
+      ownerDocument.removeEventListener('mouseup', handlePointerDone);
+      ownerDocument.removeEventListener('pointercancel', handlePointerDone);
+    };
+  }, [activeEditor]);
 
   const bubbleMenuProps: EditorBubbleMenuProps = {
     ...props,
     ...(appendTo ? { appendTo: appendTo.current } : {}),
     pluginKey: 'text-menu',
     shouldShow: ({ editor, from, view }) => {
-      if (!view || editor.view.dragging) {
+      if (!view || editor.view.dragging || isPointerSelectingRef.current) {
         return false;
       }
 
@@ -94,6 +148,7 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
 
   return (
     <BubbleMenu
+      key={`text-menu-${selectionGestureVersion}`}
       {...bubbleMenuProps}
       className={`${FLOATING_MENU_CLASS} flex gap-0.5`}
     >

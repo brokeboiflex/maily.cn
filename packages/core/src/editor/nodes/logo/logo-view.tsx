@@ -186,6 +186,7 @@ export function LogoView(props: NodeViewProps) {
       )}
 
       {isDroppable && (
+        /* shadcn-audit-ignore-next-line invisible native file input overlay */
         <input
           type="file"
           accept="image/*"

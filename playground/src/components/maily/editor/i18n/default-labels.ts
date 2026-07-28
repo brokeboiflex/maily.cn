@@ -88,6 +88,8 @@ export const defaultLabels = {
   'toolbar.linkPrompt': 'Enter a URL',
   'toolbar.textColor': 'Text Color',
   'toolbar.fontFamily': 'Font Family',
+  'toolbar.fontSize': 'Font Size',
+  'fontSize.default': 'Default',
 
   // ── Font family picker ──
   'fontPicker.search': 'Search Fontsource fonts...',

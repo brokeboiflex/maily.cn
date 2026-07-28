@@ -18,7 +18,7 @@ imports to the consumer aliases, and declares the corresponding stock items in
 | Independent and grouped formatting state                     | `toggle`, `toggle-group` |
 | Help and control descriptions                                | `tooltip`                |
 | Menu and form dividers                                       | `separator`              |
-| Compact native option controls                               | `native-select`          |
+| Compact option controls                                      | `select`                 |
 | Keyboard hints                                               | `kbd`                    |
 | Node actions and “Turn into”                                 | `dropdown-menu`          |
 | Alignment, direction, color, link, and configuration flyouts | `popover`                |
@@ -31,18 +31,35 @@ always uses the consumer's actual shadcn files, including their selected Radix o
 Base UI implementation, radius, variants, focus treatment, motion, and theme
 tokens.
 
+The optional `MailboxView` uses the same host-owned `button`, `input`,
+`textarea`, `badge`, `separator`, `dropdown-menu`, `popover`, `command`,
+`resizable`, and `scroll-area` primitives. It is a data-adapter component:
+mailbox state and layout live in Maily source, while accounts, messages, drafts,
+delivery, polling data, recipient contact suggestions, and optional message
+actions come from the consumer's backend adapter.
+
 ## Intentional Maily composites
 
 These are not replacement primitives:
 
-- `Select` adds an editor label, optional icon, and Tooltip around stock
-  `NativeSelect`.
+- `Select` adds an editor label, optional icon, and options mapping around stock
+  shadcn `Select`. It deliberately does not render Tooltip around its trigger in
+  floating editor surfaces.
+- `FontSizePicker` uses the same bubble-menu pattern as alignment and direction:
+  stock Button + Popover + ToggleGroup. It avoids Radix Select inside the text
+  bubble because that primitive traps focus and intercepts outside pointer events
+  while open.
 - `ColorPicker` combines `react-colorful` with stock Button, Popover, Separator,
   and Tooltip.
 - `LinkInputPopover` combines stock Toggle, Popover, and InputGroup with Maily
   variable completion.
 - `InputAutocomplete` positions Maily variable suggestions in a viewport-aware
   portal; the suggestions themselves use stock Command.
+- `MailboxView` combines a CRM/Veyme-style resizable folder rail, searchable
+  message list, Gmail-like reader actions, reply/forward compose seeding,
+  compose form, and recipient autocomplete around caller-provided
+  mailbox/contact/action data. It is application chrome, not an email-rendering
+  primitive.
 - Bubble menus and the hierarchical slash menu are TipTap/ProseMirror integration
   surfaces. Their controls are stock shadcn primitives, while positioning and
   editor command routing remain Maily-specific.
@@ -65,6 +82,10 @@ therefore still inherit the host text color.
 
 - A stateful control uses Toggle, ToggleGroup, Tabs, Popover, or DropdownMenu;
   state is never simulated with a manually assigned `data-state`.
+- Application chrome uses host-owned shadcn primitives before raw HTML. Run
+  `pnpm shadcn:audit` after UI changes; the audit fails on raw interactive
+  controls, handmade `border-input` input chrome, simulated `data-state`, and
+  missing `registryDependencies` for generated `@/components/ui/*` imports.
 - Tooltip composition uses a neutral non-interactive wrapper when necessary so
   Tooltip state cannot overwrite another primitive's trigger state.
 - Icon-only buttons have translated accessible names.
@@ -73,10 +94,11 @@ therefore still inherit the host text color.
 
 ## Release verification
 
-Run the package checks, regenerate the registry, install it into fresh Radix and
-Base UI consumers, then run the playground Chromium suite. The suite covers host
-theme hover tokens, narrow viewport overflow, Tabs state, ToggleGroup roving focus,
-toolbar link composition, and nested-interactive-DOM regressions.
+Run `pnpm shadcn:audit`, the package checks, regenerate the registry, install it
+into fresh Radix and Base UI consumers, then run the playground Chromium suite.
+The suite covers host theme hover tokens, narrow viewport overflow, Tabs state,
+ToggleGroup roving focus, toolbar link composition, and
+nested-interactive-DOM regressions.
 
 The icon release gate uses genuinely initialized shadcn consumers—not a changed
 `iconLibrary` value on an existing Lucide app—and mounts and production-builds the

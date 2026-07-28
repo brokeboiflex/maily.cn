@@ -1,21 +1,21 @@
-'use client';
+"use client"
 
-import * as React from 'react';
-import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import { cn } from '@/lib/utils';
+import * as React from "react"
+import * as TooltipPrimitive from "@radix-ui/react-tooltip"
+import { cn } from "@/lib/utils"
 
 // Explicit type annotations to avoid TS2742 errors
 const TooltipProvider: React.FC<
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Provider>
-> = TooltipPrimitive.Provider;
+> = TooltipPrimitive.Provider
 
 const Tooltip: React.FC<
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root>
-> = TooltipPrimitive.Root;
+> = TooltipPrimitive.Root
 
 const TooltipTrigger: React.FC<
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Trigger>
-> = TooltipPrimitive.Trigger;
+> = TooltipPrimitive.Trigger
 
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
@@ -25,7 +25,7 @@ const TooltipContent = React.forwardRef<
     ref={ref}
     sideOffset={sideOffset}
     className={cn(
-      'border-border bg-background animate-in fade-in-0 zoom-in-95 z-50 overflow-hidden rounded-md border px-2 py-1 text-xs',
+      "z-50 animate-in overflow-hidden rounded-md border border-border bg-background px-2 py-1 text-xs fade-in-0 zoom-in-95",
       className
     )}
     {...props}
@@ -33,8 +33,8 @@ const TooltipContent = React.forwardRef<
 )) as React.ForwardRefExoticComponent<
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> &
     React.RefAttributes<React.ElementRef<typeof TooltipPrimitive.Content>>
->;
+>
 
-TooltipContent.displayName = TooltipPrimitive.Content.displayName;
+TooltipContent.displayName = TooltipPrimitive.Content.displayName
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }

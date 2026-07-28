@@ -75,7 +75,7 @@ TypeScript workaround.
 
 The registry is also fixture-tested with shadcn's Base UI style. Its externalized
 `Button`, `Input`, `Textarea`, `Toggle`, `ToggleGroup`, `Tooltip`, `Separator`,
-`NativeSelect`, `Kbd`, `DropdownMenu`, `Popover`, `Tabs`, `InputGroup`, and
+`Select`, `Kbd`, `DropdownMenu`, `Popover`, `Tabs`, `InputGroup`, and
 `Command` and `Badge` resolve to the consumer's stock implementations; icon placeholders
 resolve to the icon library selected in that consumer's `components.json`.
 

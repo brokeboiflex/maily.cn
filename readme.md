@@ -97,6 +97,7 @@ host-owned primitive and explains the remaining editor-specific composites.
 | ------------ | --------------------- | -------------------- | ---------------------------------------- |
 | **Editor**   | `components/maily/**` | `@/components/maily` | The `<Editor />` WYSIWYG email composer. |
 | **Renderer** | `lib/maily-render/**` | `@/lib/maily-render` | Editor JSON to email-safe HTML.          |
+| **Mailbox**  | `components/maily/**` | `@/components/maily` | Optional inbox / sent / drafts view.     |
 
 ## Requirements
 
@@ -188,6 +189,54 @@ import { ImageUploadExtension } from '@/components/maily/editor/extensions';
 ```
 
 Users can still paste a URL when an upload handler is not appropriate.
+
+## Mailbox view
+
+`<MailboxView />` is an optional application-shell component for the CRM/Veyme
+style inbox / sent / drafts / bounced surface. It owns local folder, search,
+selection, compose, draft, and polling state inside a shadcn
+`ResizablePanelGroup` shell, but it does not assume a backend. Wire your own API
+through the `dataSource` adapter.
+
+```tsx
+import {
+  MailboxView,
+  defaultMailboxLabels,
+  type MailyMailboxDataSource,
+} from '@/components/maily';
+
+const dataSource: MailyMailboxDataSource = {
+  listMessages: ({ folder, q }) => api.mail.messages({ folder, q }),
+  getMessage: (messageId) => api.mail.message(messageId),
+  getCounts: () => api.mail.counts(),
+  listContactSuggestions: ({ q, limit }) => api.contacts.search({ q, limit }),
+  createDraft: (draft) => api.mail.createDraft(draft),
+  updateDraft: (messageId, draft) => api.mail.updateDraft(messageId, draft),
+  discardDraft: (messageId) => api.mail.discardDraft(messageId),
+  sendDraft: (messageId) => api.mail.sendDraft(messageId),
+  runMessageAction: ({ messageId, action, value }) =>
+    api.mail.runMessageAction(messageId, action, value),
+};
+
+<MailboxView
+  account={{ address: 'hello@example.com' }}
+  dataSource={dataSource}
+  labels={defaultMailboxLabels}
+/>;
+```
+
+Recipient fields support autocomplete when the host provides contacts through
+`dataSource.listContactSuggestions` or the `contactSuggestions` prop. Each
+suggestion uses `{ address, displayName }` and is matched by both email address
+and display name.
+
+Reader actions are Gmail-like but backend-agnostic. Reply and forward seed the
+existing draft flow; favorite, archive, delete, mark unread, report, print,
+download, and show-original controls call `dataSource.runMessageAction` when the
+host supplies it.
+
+`defaultMailboxLabels` is exhaustive, matching the editor translation contract:
+copy it, translate every value, and pass the complete object back as `labels`.
 
 ## Font selection
 

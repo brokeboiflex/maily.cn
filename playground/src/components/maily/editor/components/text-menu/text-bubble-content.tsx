@@ -15,6 +15,7 @@ import {
   ToggleGroupCompatItem,
 } from '../ui/toggle-group-compat';
 import { FontFamilyPicker } from './font-family-picker';
+import { FontSizePicker } from './font-size-picker';
 import { BoldIcon, ItalicIcon, UnderlineIcon, StrikethroughIcon, CodeIcon, List, ListOrdered } from "lucide-react";
 
 type TextBubbleContentProps = {
@@ -76,6 +77,17 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
   return (
     <>
       <FontFamilyPicker editor={editor} currentFont={state.currentFont} />
+      <FontSizePicker
+        value={state.currentFontSize}
+        onValueChange={(value) => {
+          if (value) {
+            editor.chain().focus().setFontSize(value).run();
+            return;
+          }
+
+          editor.chain().focus().unsetFontSize().run();
+        }}
+      />
 
       <Separator orientation="vertical" />
 

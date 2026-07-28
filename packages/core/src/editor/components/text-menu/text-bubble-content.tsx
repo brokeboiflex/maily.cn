@@ -24,6 +24,7 @@ import {
   ToggleGroupCompatItem,
 } from '../ui/toggle-group-compat';
 import { FontFamilyPicker } from './font-family-picker';
+import { FontSizePicker } from './font-size-picker';
 
 type TextBubbleContentProps = {
   editor: Editor;
@@ -79,6 +80,17 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
   return (
     <>
       <FontFamilyPicker editor={editor} currentFont={state.currentFont} />
+      <FontSizePicker
+        value={state.currentFontSize}
+        onValueChange={(value) => {
+          if (value) {
+            editor.chain().focus().setFontSize(value).run();
+            return;
+          }
+
+          editor.chain().focus().unsetFontSize().run();
+        }}
+      />
 
       <Separator orientation="vertical" />
 

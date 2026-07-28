@@ -16,14 +16,16 @@
         "toggle-group",
         "tooltip",
         "separator",
-        "native-select",
+        "select",
         "kbd",
         "dropdown-menu",
         "popover",
         "tabs",
         "input-group",
         "command",
-        "badge"
+        "badge",
+        "resizable",
+        "scroll-area"
       ],
       "dependencies": [
         "@tailwindcss/postcss@^4.1.8",
@@ -267,6 +269,11 @@
           "target": "@components/maily/editor/components/text-menu/font-family-picker.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/font-size-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/font-size-picker.tsx"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/components/text-menu/text-bubble-content.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/text-menu/text-bubble-content.tsx"
@@ -340,6 +347,11 @@
           "path": "registry/default/maily/components/maily/editor/extensions/font-family.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/font-family.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/font-size.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/font-size.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/extensions/horizontal-rule.tsx",
@@ -670,6 +682,16 @@
           "path": "registry/default/maily/components/maily/index.ts",
           "type": "registry:component",
           "target": "@components/maily/index.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/contacts.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/contacts.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/index.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/index.tsx"
         },
         {
           "path": "registry/default/maily/lib/maily-render/fontsource.ts",

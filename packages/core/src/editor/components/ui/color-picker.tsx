@@ -8,6 +8,7 @@ import { cn } from '@/editor/utils/classname';
 import { type ReactNode } from 'react';
 import { useMailyContext } from '../../provider';
 import { Separator } from './divider';
+import { InputGroup } from './input-group';
 
 type ColorPickerProps = {
   color: string;
@@ -125,13 +126,16 @@ export function ColorPicker(props: ColorPickerProps) {
             onChange={handleColorChange}
             className="w-full! flex flex-col gap-4"
           />
-          <HexColorInput
-            alpha={true}
-            color={color}
-            onChange={handleColorChange}
-            className="border-input bg-background focus-visible:border-ring focus-visible:ring-ring/50 shadow-xs focus-visible:ring-3 mt-4 h-8 w-full min-w-0 rounded-lg border px-2.5 text-sm uppercase outline-none"
-            prefixed
-          />
+          <InputGroup className="mt-4">
+            <HexColorInput
+              alpha={true}
+              color={color}
+              onChange={handleColorChange}
+              data-slot="input-group-control"
+              className="h-7 flex-1 border-0 bg-transparent px-2.5 py-0 text-sm uppercase outline-none focus-visible:ring-0"
+              prefixed
+            />
+          </InputGroup>
 
           {suggestedColors.length > 0 && (
             <div>

@@ -80,7 +80,7 @@ uses the shipped English defaults (`defaultLabels`) unchanged.
 
 Registry consumers receive the host project's stock shadcn primitives for the
 editor chrome, including Popover, DropdownMenu, Tabs, Toggle, ToggleGroup, Command,
-InputGroup, Tooltip, NativeSelect, Separator, Kbd, and Badge. The local source versions
+InputGroup, Tooltip, Select, Separator, Kbd, and Badge. The local source versions
 remain only as standalone package fallbacks.
 
 Grouped formatting and alignment controls retain the host ToggleGroup's roving

@@ -1,9 +1,9 @@
-import { type SVGProps } from 'react';
+import { type SVGProps } from "react"
 
 export function BorderColor(
   props: SVGProps<SVGSVGElement> & { topBarClassName?: string }
 ) {
-  const { topBarClassName, ...rest } = props;
+  const { topBarClassName, ...rest } = props
 
   return (
     <svg
@@ -21,5 +21,5 @@ export function BorderColor(
         className={topBarClassName}
       />
     </svg>
-  );
+  )
 }

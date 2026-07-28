@@ -739,6 +739,7 @@ export class Maily {
     const { attrs } = mark;
     const {
       color = this.config.theme?.colors?.paragraph,
+      fontSize,
       fontFamily,
       fontFallback,
     } = attrs || {};
@@ -752,6 +753,7 @@ export class Maily {
       <span
         style={{
           color,
+          ...(typeof fontSize === 'string' && fontSize ? { fontSize } : {}),
           ...(selectedFontStack ? { fontFamily: selectedFontStack } : {}),
         }}
       >
