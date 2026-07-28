@@ -15,6 +15,8 @@ import {
 } from "@/components/maily"
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 
+const playgroundBaseUrl = import.meta.env.BASE_URL
+
 const promotionalNewsletterText = `The July Launch Kit is live.
 
 Build a polished campaign in minutes with new launch sections, product grids, countdown-ready CTAs, and reusable brand footers.
@@ -50,7 +52,7 @@ const promotionalNewsletterHtml = `
 
           <tr>
             <td>
-              <img src="/maily-cn-hero.png" width="640" alt="Maily email builder preview" style="display:block;width:100%;max-width:640px;height:auto;border:0;" />
+              <img src="${playgroundBaseUrl}maily-cn-hero.png" width="640" alt="Maily email builder preview" style="display:block;width:100%;max-width:640px;height:auto;border:0;" />
             </td>
           </tr>
 

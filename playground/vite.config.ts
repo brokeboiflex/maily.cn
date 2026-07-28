@@ -4,7 +4,8 @@ import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  base: mode === "github-pages" ? "/maily.cn/" : "/",
   plugins: [react(), tailwindcss()],
   // Pinned so the local shadcn registry URL in components.json stays stable.
   server: {
@@ -16,4 +17,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-})
+}))

@@ -5,13 +5,15 @@ import { ThemeProvider } from "shadcn-theme-provider"
 import "./index.css"
 import App from "./App.tsx"
 
+const publicAsset = (path: string) => `${import.meta.env.BASE_URL}${path}`
+
 const themes = {
-  default: "/themes/default.css",
-  corporate: "/themes/corporate.css",
-  marshmallow: "/themes/marshmallow.css",
-  "neo-brutalism": "/themes/neo-brutalism.css",
-  paper: "/themes/paper.css",
-  shadcn: "/themes/shadcn.css",
+  default: publicAsset("themes/default.css"),
+  corporate: publicAsset("themes/corporate.css"),
+  marshmallow: publicAsset("themes/marshmallow.css"),
+  "neo-brutalism": publicAsset("themes/neo-brutalism.css"),
+  paper: publicAsset("themes/paper.css"),
+  shadcn: publicAsset("themes/shadcn.css"),
 }
 
 createRoot(document.getElementById("root")!).render(
