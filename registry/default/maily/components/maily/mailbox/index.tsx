@@ -887,12 +887,12 @@ export function MailboxView(props: MailyMailboxViewProps) {
           groupResizeBehavior="preserve-pixel-size"
           className="min-w-12"
         >
-          <div className="@container/rail @[10rem]/rail:items-stretch @[10rem]/rail:p-3 flex h-full flex-col items-center gap-2 p-2">
+          <div className="@container/rail @[4rem]/rail:items-stretch @[4rem]/rail:p-3 flex h-full flex-col items-center gap-2 p-2">
             <Button
               type="button"
               size="icon"
               onClick={openNewDraft}
-              className="@[10rem]/rail:w-full @[10rem]/rail:justify-start @[10rem]/rail:gap-2 @[10rem]/rail:px-2.5 justify-center gap-0"
+              className="@[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5 justify-center gap-0"
               title={t('compose.new')}
               aria-label={t('compose.new')}
             >
@@ -904,11 +904,11 @@ export function MailboxView(props: MailyMailboxViewProps) {
   remixicon="RiPencilLine"
   className="size-4"
 />
-              <span className="@[10rem]/rail:inline hidden truncate">
+              <span className="@[4rem]/rail:inline hidden min-w-0 truncate">
                 {t('compose.new')}
               </span>
             </Button>
-            <nav className="@[10rem]/rail:items-stretch flex w-full flex-col items-center gap-0.5">
+            <nav className="@[4rem]/rail:items-stretch flex w-full flex-col items-center gap-0.5">
               {FOLDERS.map((item) => {
                 const active = folder === item;
                 const count = counts[item] ?? 0;
@@ -923,26 +923,26 @@ export function MailboxView(props: MailyMailboxViewProps) {
                     aria-current={active ? 'page' : undefined}
                     onClick={() => selectFolder(item)}
                     className={cn(
-                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground @[10rem]/rail:w-full @[10rem]/rail:justify-start @[10rem]/rail:gap-2 @[10rem]/rail:px-2.5 relative justify-center gap-0',
+                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground @[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5 relative justify-center gap-0',
                       active &&
                         'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium'
                     )}
                   >
                     {folderIcon(item, 'size-4')}
-                    <span className="@[10rem]/rail:inline hidden flex-1 truncate text-left">
+                    <span className="@[4rem]/rail:inline hidden min-w-0 flex-1 truncate text-left">
                       {t(`folders.${item}`)}
                     </span>
                     {count > 0 && (
                       <>
                         <Badge
                           variant={active ? 'default' : 'outline'}
-                          className="@[10rem]/rail:inline-flex hidden"
+                          className="@[4rem]/rail:inline-flex hidden"
                         >
                           {count}
                         </Badge>
                         <span
                           aria-hidden
-                          className="bg-primary @[10rem]/rail:hidden absolute right-1 top-1 size-1.5 rounded-full"
+                          className="bg-primary @[4rem]/rail:hidden absolute right-1 top-1 size-1.5 rounded-full"
                         />
                       </>
                     )}
