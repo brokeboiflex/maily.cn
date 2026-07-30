@@ -484,7 +484,7 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
 
 export function App() {
   const [json, setJson] = useState<unknown>(null)
-  const [polish, setPolish] = useState(true)
+  const [polish, setPolish] = useState(false)
   const mailboxDataSource = usePlaygroundMailbox()
 
   return (
