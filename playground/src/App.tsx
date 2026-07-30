@@ -1,8 +1,17 @@
 import { useMemo, useRef, useState } from "react"
 import type { Editor as TiptapEditor } from "@tiptap/core"
+import { Braces, Code2 } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   Editor,
   MailboxView,
@@ -16,6 +25,25 @@ import {
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL
+const initialEditorContent = {
+  type: "doc",
+  content: [
+    {
+      type: "heading",
+      attrs: { level: 1 },
+      content: [{ type: "text", text: "Design your next email with Maily" }],
+    },
+    {
+      type: "paragraph",
+      content: [
+        {
+          type: "text",
+          text: "Start typing, select text to format it, or enter / to explore the email blocks.",
+        },
+      ],
+    },
+  ],
+}
 
 const promotionalNewsletterText = `The July Launch Kit is live.
 
@@ -488,69 +516,125 @@ export function App() {
   const mailboxDataSource = usePlaygroundMailbox()
 
   return (
-    <div className="min-h-svh bg-muted/30 p-4 md:p-6">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6">
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-medium">Maily playground</h1>
-            <p className="text-sm text-muted-foreground">
-              Editor and inbox/outbox components installed from the local shadcn
-              registry.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setPolish((p) => !p)}
-            >
-              {polish ? "Język: Polski" : "Language: English"}
-            </Button>
-            <ThemeToggle />
-          </div>
-        </header>
-
-        <section className="grid gap-3">
-          <div>
-            <h2 className="text-sm font-medium">Inbox / outbox view</h2>
-            <p className="text-sm text-muted-foreground">
-              Same component shape as the CRM/Veyme mailbox, backed here by a
-              local dataSource adapter.
-            </p>
-          </div>
-          <MailboxView
-            account={{
-              address: "studio@maily.cn",
-              displayName: "Maily Studio",
-            }}
-            dataSource={mailboxDataSource}
-            pollIntervalMs={0}
-            labels={polish ? polishMailboxLabels : undefined}
+    <div className="min-h-svh bg-background">
+      <header className="mx-auto max-w-5xl px-4 pt-16 pb-10">
+        <div className="animate-demo-intro text-center">
+          <img
+            src={`${playgroundBaseUrl}maily-cn-hero.png`}
+            alt=""
+            aria-hidden="true"
+            className="mx-auto mb-6 size-14 rounded-2xl object-cover ring-1 ring-foreground/10"
           />
+          <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+            Maily for shadcn
+          </h1>
+          <p className="mx-auto mt-4 max-w-3xl text-lg text-balance text-muted-foreground">
+            A production-ready email editor, renderer, and mailbox that installs
+            as source through shadcn and follows your application&apos;s theme.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <Button asChild variant="outline" className="rounded-full px-4">
+              <a
+                href="https://github.com/brokeboiflex/maily.cn"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Code2 />
+                GitHub
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full px-4">
+              <a
+                href={`${playgroundBaseUrl}r/maily.json`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Braces />
+                Registry
+              </a>
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+          <ThemeToggle />
+          <ToggleGroup
+            type="single"
+            value={polish ? "pl" : "en"}
+            onValueChange={(value) => {
+              if (value) setPolish(value === "pl")
+            }}
+            variant="outline"
+            spacing={0}
+            aria-label="Language"
+          >
+            <ToggleGroupItem value="en">English</ToggleGroupItem>
+            <ToggleGroupItem value="pl">Polski</ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+      </header>
+
+      <main className="mx-auto grid max-w-7xl min-w-0 gap-6 px-4 pb-20">
+        <section className="min-w-0" aria-labelledby="editor-demo-title">
+          <Card className="min-w-0">
+            <CardHeader className="border-b">
+              <CardTitle>
+                <h2 id="editor-demo-title">Email editor</h2>
+              </CardTitle>
+              <CardDescription>
+                Compose responsive emails with blocks, inline formatting,
+                variables, uploads, and email-safe rendering.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="min-w-0">
+              <Editor
+                key={polish ? "pl" : "en"}
+                labels={polish ? polishLabels : undefined}
+                contentJson={initialEditorContent}
+                config={{ bodyClassName: "min-h-72" }}
+                onUpdate={(editor: TiptapEditor) => setJson(editor.getJSON())}
+              />
+            </CardContent>
+          </Card>
         </section>
 
-        <section className="grid gap-3">
-          <div>
-            <h2 className="text-sm font-medium">Email editor</h2>
-          </div>
-          <Editor
-            key={polish ? "pl" : "en"}
-            labels={polish ? polishLabels : undefined}
-            contentJson={{ type: "doc", content: [{ type: "paragraph" }] }}
-            onUpdate={(editor: TiptapEditor) => setJson(editor.getJSON())}
-          />
+        <section className="min-w-0" aria-labelledby="mailbox-demo-title">
+          <Card className="min-w-0 gap-0 py-0">
+            <CardHeader className="border-b py-4">
+              <CardTitle>
+                <h2 id="mailbox-demo-title">Inbox and outbox</h2>
+              </CardTitle>
+              <CardDescription>
+                A backend-agnostic mailbox with folders, message reading,
+                drafts, rich compose, and caller-owned actions.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="min-w-0 overflow-x-auto">
+                <MailboxView
+                  account={{
+                    address: "studio@maily.cn",
+                    displayName: "Maily Studio",
+                  }}
+                  dataSource={mailboxDataSource}
+                  pollIntervalMs={0}
+                  labels={polish ? polishMailboxLabels : undefined}
+                  className="max-h-none min-w-[56rem] rounded-none! border-0!"
+                />
+              </div>
+            </CardContent>
+          </Card>
         </section>
 
         <details className="text-xs">
-          <summary className="cursor-pointer text-muted-foreground">
+          <summary className="w-fit cursor-pointer text-muted-foreground">
             Editor JSON
           </summary>
-          <pre className="mt-2 overflow-auto rounded bg-background p-3">
+          <pre className="mt-2 max-h-96 overflow-auto rounded-lg bg-muted p-4 text-foreground">
             {JSON.stringify(json, null, 2)}
           </pre>
         </details>
-      </div>
+      </main>
     </div>
   )
 }

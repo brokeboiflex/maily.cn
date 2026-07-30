@@ -1,15 +1,14 @@
-import { Check, Monitor, Moon, Palette, Sun } from "lucide-react"
+import { Monitor, Moon, Sun } from "lucide-react"
 import { type ThemeMode, useTheme } from "shadcn-theme-provider"
 
-import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 const MODES: ThemeMode[] = ["light", "dark", "system"]
 
@@ -34,70 +33,46 @@ function formatThemeName(name: string) {
 
 export function ThemeToggle() {
   const { mode, setMode, palette, setPalette, themes } = useTheme()
-  const ModeIcon = modeIcons[mode]
 
   return (
-    <div className="flex items-center gap-1.5">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon-sm"
-            aria-label={`Mode: ${modeLabels[mode]}`}
-            title={`Mode: ${modeLabels[mode]}`}
-          >
-            <ModeIcon />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Mode</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {MODES.map((m) => {
-            const Icon = modeIcons[m]
-            return (
-              <DropdownMenuItem
-                key={m}
-                onSelect={() => setMode(m)}
-                aria-checked={mode === m}
-                role="menuitemradio"
-              >
-                <Icon />
-                <span>{modeLabels[m]}</span>
-                {mode === m && <Check className="ml-auto" />}
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            aria-label={`Theme: ${formatThemeName(palette)}`}
-            className="gap-1.5"
-          >
-            <Palette />
-            <span>{formatThemeName(palette)}</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Theme</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {themes.map((t) => (
-            <DropdownMenuItem
-              key={t}
-              onSelect={() => setPalette(t)}
-              aria-checked={palette === t}
-              role="menuitemradio"
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <ToggleGroup
+        type="single"
+        value={mode}
+        onValueChange={(value) => {
+          if (value) setMode(value as ThemeMode)
+        }}
+        variant="outline"
+        spacing={0}
+        aria-label="Color mode"
+      >
+        {MODES.map((value) => {
+          const Icon = modeIcons[value]
+          return (
+            <ToggleGroupItem
+              key={value}
+              value={value}
+              aria-label={modeLabels[value]}
             >
-              <span>{formatThemeName(t)}</span>
-              {palette === t && <Check className="ml-auto" />}
-            </DropdownMenuItem>
+              <Icon />
+              {modeLabels[value]}
+            </ToggleGroupItem>
+          )
+        })}
+      </ToggleGroup>
+
+      <Select value={palette} onValueChange={setPalette}>
+        <SelectTrigger className="w-44" aria-label="Color theme">
+          <SelectValue>{formatThemeName(palette)}</SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {themes.map((theme) => (
+            <SelectItem key={theme} value={theme}>
+              {formatThemeName(theme)}
+            </SelectItem>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+        </SelectContent>
+      </Select>
     </div>
   )
 }
