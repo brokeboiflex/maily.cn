@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react"
 import type { Editor as TiptapEditor } from "@tiptap/core"
-import { Braces, Code2, Palette } from "lucide-react"
+import { Braces, Code2, ExternalLink, Palette } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -644,6 +644,47 @@ export function App() {
             {JSON.stringify(json, null, 2)}
           </pre>
         </details>
+
+        <section
+          className="mt-6 min-w-0"
+          aria-labelledby="other-projects-title"
+        >
+          <div className="mb-5">
+            <h2
+              id="other-projects-title"
+              className="text-2xl font-semibold tracking-tight"
+            >
+              Check out my other projects
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              More open-source tools built for React and shadcn/ui.
+            </p>
+          </div>
+
+          <Card className="max-w-xl">
+            <CardHeader>
+              <CardTitle>
+                <h3>shadcn-theme-provider</h3>
+              </CardTitle>
+              <CardDescription>
+                Dual-axis theming for mode and palette switching, built for
+                React and shadcn/ui.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline">
+                <a
+                  href="https://brokeboiflex.github.io/shadcn-theme-provider-demo/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View demo
+                  <ExternalLink />
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   )
