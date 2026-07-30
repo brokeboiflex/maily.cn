@@ -121,6 +121,11 @@ way an end user would. Its `components.json` declares a local namespace
 The same app is published at `https://brokeboiflex.github.io/maily.cn/` by
 `.github/workflows/deploy-playground.yml`; its Pages build uses the `/maily.cn/`
 Vite base while local development keeps `/`.
+Its presentation follows the sibling `shadcn-theme-provider-demo`: centered
+product hero and resource links, visible mode/palette and component-language
+controls, then framed editor and mailbox showcases. Keep the editor as the
+primary example; on narrow screens, contain the desktop mailbox in its own
+horizontal scroller so it never widens the page.
 
 Loop: edit `packages/*` → `pnpm playground:sync` (rebuild + reserve) → in `playground/`,
 run `bun run dev` and `shadcn add @maily/maily --overwrite`. Full details and commands
