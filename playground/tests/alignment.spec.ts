@@ -1,18 +1,32 @@
 import { expect, test, type Page } from "@playwright/test"
 
 async function useEnglish(page: Page) {
-  const language = page.getByRole("button", { name: "Język: Polski" })
-  if (await language.count()) await language.click()
+  const language = page.getByText("English", { exact: true })
+  if ((await language.getAttribute("data-state")) !== "on") {
+    await language.click()
+  }
 }
 
 async function openSlashCommand(page: Page) {
   const editor = page.locator(".ProseMirror").first()
-  await editor.click()
+  await editor.evaluate((element) => {
+    element.editor.commands.focus("end")
+  })
   await expect(editor).toBeFocused()
+  await page.keyboard.press("Enter")
   await page.keyboard.type("/")
   const command = page.locator("#slash-command")
   await expect(command).toBeVisible()
   return command
+}
+
+async function setEditorText(page: Page, text: string) {
+  const editor = page.locator(".ProseMirror").first()
+  await editor.evaluate((element, content) => {
+    element.editor.commands.setContent(`<p>${content}</p>`)
+    element.editor.commands.focus("start")
+  }, text)
+  return editor
 }
 
 test("inherits host theme hover tokens and keeps the whole slash item interactive", async ({
@@ -21,9 +35,9 @@ test("inherits host theme hover tokens and keeps the whole slash item interactiv
   await page.goto("/")
   await useEnglish(page)
 
-  const themeTrigger = page.getByRole("button", { name: /^Theme:/ })
+  const themeTrigger = page.getByRole("combobox", { name: "Color theme" })
   await themeTrigger.click()
-  await page.getByRole("menuitemradio", { name: "Neo-Brutalism" }).click()
+  await page.getByRole("option", { name: "Neo-Brutalism" }).click()
   await expect(themeTrigger).toBeFocused()
 
   const command = await openSlashCommand(page)
@@ -64,6 +78,33 @@ test("stays within a narrow viewport without horizontal document overflow", asyn
   expect(commandBox!.x + commandBox!.width).toBeLessThanOrEqual(widths.client)
 })
 
+test("keeps the app mounted after a triple-click text selection", async ({
+  page,
+}) => {
+  const pageErrors: string[] = []
+  page.on("pageerror", (error) => pageErrors.push(error.message))
+
+  await page.goto("/")
+  const editor = page.locator(".ProseMirror").first()
+  await editor
+    .getByText("Design your next email with Maily")
+    .click({ clickCount: 3, delay: 50 })
+
+  await expect(editor).toBeVisible()
+  await expect(
+    page.getByRole("heading", { name: "Maily for shadcn" })
+  ).toBeVisible()
+  await expect
+    .poll(() =>
+      editor.evaluate((element) => {
+        const { from, to } = element.editor.view.state.selection
+        return to > from
+      })
+    )
+    .toBe(true)
+  expect(pageErrors).toEqual([])
+})
+
 test("preserves real Tabs state through Tooltip composition", async ({
   page,
 }) => {
@@ -92,9 +133,7 @@ test("uses ToggleGroup roving focus and never nests interactive buttons", async 
   })
 
   await page.goto("/")
-  const editor = page.locator(".ProseMirror").first()
-  await editor.click()
-  await page.keyboard.type("keyboard check")
+  const editor = await setEditorText(page, "keyboard check")
   await page.keyboard.press("Home")
   await page.keyboard.down("Shift")
   await page.keyboard.press("End")
@@ -128,9 +167,7 @@ test("uses the shadcn link popover in the top toolbar instead of a browser promp
 
   await page.goto("/")
   await useEnglish(page)
-  const editor = page.locator(".ProseMirror").first()
-  await editor.click()
-  await page.keyboard.type("linked text")
+  const editor = await setEditorText(page, "linked text")
   await page.keyboard.press("Home")
   await page.keyboard.down("Shift")
   await page.keyboard.press("End")
@@ -157,6 +194,7 @@ test("uses a Popover and ToggleGroup for vertical column alignment", async ({
   await useEnglish(page)
   const command = await openSlashCommand(page)
   await command.locator("button", { hasText: "Columns" }).click()
+  await page.locator('[data-type="column"]').last().click()
 
   const trigger = page.getByRole("button", { name: "Vertical Alignment" })
   await expect(trigger).toBeVisible()
