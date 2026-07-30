@@ -1,14 +1,9 @@
 import { updateAttributes } from '@/editor/utils/update-attribute';
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import CodeBlock from '@tiptap/extension-code-block';
 import { TextSelection } from '@tiptap/pm/state';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import html from 'highlight.js/lib/languages/xml';
-import { createLowlight, common } from 'lowlight';
 import { HTMLCodeBlockView } from './html-view';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '@/extensions';
-
-const lowlight = createLowlight(common);
-lowlight.register('html', html);
 
 export type HtmlCodeBlockAttributes = {
   activeTab: string;
@@ -38,7 +33,7 @@ declare module '@tiptap/core' {
   }
 }
 
-export const HTMLCodeBlockExtension = CodeBlockLowlight.extend({
+export const HTMLCodeBlockExtension = CodeBlock.extend({
   name: 'htmlCodeBlock',
   content: '(text|variable)*',
 
@@ -137,6 +132,4 @@ export const HTMLCodeBlockExtension = CodeBlockLowlight.extend({
       },
     };
   },
-}).configure({
-  lowlight,
 });

@@ -13,8 +13,9 @@
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "shadcn:audit": "node scripts/audit-shadcn-primitives.mjs",
-    "registry:build": "node scripts/build-shadcn-registry.mjs && node scripts/normalize-shadcn-registry.mjs && pnpm shadcn:audit",
-    "playground:sync": "pnpm registry:build && pnpm dlx shadcn@latest build registry.json --output playground/public/r"
+    "registry:build": "node scripts/build-shadcn-registry.mjs && pnpm shadcn:audit",
+    "playground:sync": "pnpm registry:build && pnpm dlx shadcn@latest build registry.json --output playground/public/r",
+    "registry:consumer-test": "pnpm playground:sync && node scripts/test-shadcn-consumers.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.7",

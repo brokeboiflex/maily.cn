@@ -34,10 +34,12 @@ through a local namespace declared in `components.json`:
 }
 ```
 
-The served JSON lives in `playground/public/r/` (`maily.json` + a `registry.json`
-index). Vite serves `public/` at the web root, so the registry is reachable at
-`http://localhost:5173/r/...` while the dev server is running. The port is
-pinned (`strictPort`) in `vite.config.ts` so that URL stays valid.
+The served JSON lives in `playground/public/r/` (`maily-editor.json`,
+`maily-mailbox.json`, `maily-render.json`, the backward-compatible `maily.json`,
+and a `registry.json` index). Vite serves `public/` at the web root, so the
+registry is reachable at `http://localhost:5173/r/...` while the dev server is
+running. The port is pinned (`strictPort`) in `vite.config.ts` so that URL stays
+valid.
 
 ## Usage
 
@@ -60,14 +62,16 @@ local namespace:
 
 ```bash
 bunx --bun shadcn@latest list @maily                     # list registry items
-bunx --bun shadcn@latest view @maily/maily               # inspect the maily block
-bunx --bun shadcn@latest add  @maily/maily --overwrite   # (re)install the editor source
+bunx --bun shadcn@latest view @maily/maily-editor        # inspect the editor
+bunx --bun shadcn@latest add @maily/maily-editor @maily/maily-mailbox --overwrite
 ```
 
-`add` writes the editor into `src/components/maily/**` and the renderer into
-`src/lib/maily-render/**` (the targets declared in `registry.json`), and installs
-the editor's npm dependencies. `src/App.tsx` renders `<Editor />` from
-`@/components/maily` as a smoke test.
+`add` writes the editor into `src/components/maily/**` and the optional mailbox
+into `src/components/maily/mailbox/**`, with only their imported npm and stock
+shadcn dependencies. `src/App.tsx` renders `<Editor />` from
+`@/components/maily` and `<MailboxView />` from `@/components/maily/mailbox` as
+smoke tests. Install `@maily/maily-render` separately when testing
+`src/lib/maily-render/**`.
 
 The installed editor ships an `i18n/` directory (`default-labels.ts`,
 `translate.ts`); `pnpm playground:sync` carries those files into the served block.
@@ -84,11 +88,27 @@ The playground intentionally keeps the modern shadcn/Vite defaults, including
 the installed registry source uses portable type-only imports and needs no consumer
 TypeScript workaround.
 
-The registry is also fixture-tested with shadcn's Base UI style. Its externalized
-`Button`, `Input`, `Textarea`, `Toggle`, `ToggleGroup`, `Tooltip`, `Separator`,
-`Select`, `Kbd`, `DropdownMenu`, `Popover`, `Tabs`, `InputGroup`, and
-`Command` and `Badge` resolve to the consumer's stock implementations; icon placeholders
-resolve to the icon library selected in that consumer's `components.json`.
+Run `pnpm registry:consumer-test` from the repository root for clean-current
+consumer fixtures. It initializes fresh Radix and Base UI Vite applications,
+installs the granular registry items, mounts the editor, and runs TypeScript plus
+production builds. The complete Base fixture is also launched in Chromium to
+verify ToggleGroup focus/state, Popover focus and Escape handling, mailbox rich
+compose, nested-interactive safety, and runtime errors. Externalized `Button`,
+`Input`, `Textarea`, `Toggle`,
+`ToggleGroup`, `Tooltip`, `Separator`, `Select`, `Kbd`, `DropdownMenu`,
+`Popover`, `Tabs`, `InputGroup`, `Command`, and `Badge` resolve to each
+consumer's stock implementations; icon placeholders resolve to the selected icon
+library.
+
+The current Base UI `scroll-area` item contains one upstream unused React import
+under strict TypeScript. The matrix accepts only that exact diagnostic for the
+optional mailbox fixture, then reruns the whole fixture with unused-import
+checking relaxed. Any diagnostic in Maily source still fails the gate; the
+editor-only Base fixture remains fully strict.
+
+The custom HTML block uses the plain TipTap `CodeBlock` extension. Editing,
+variables, and code/preview tabs remain supported without shipping Lowlight,
+Highlight.js, or bundled syntax languages.
 
 Run `bun run test:e2e` for the committed Chromium regression suite. It covers
 host-theme hover tokens, narrow-viewport overflow, real Tabs state, ToggleGroup

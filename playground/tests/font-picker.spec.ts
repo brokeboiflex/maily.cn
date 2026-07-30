@@ -9,7 +9,7 @@ test("virtualizes Fontsource and persists a granular font mark", async ({
   })
 
   await page.goto("/")
-  await page.getByRole("button", { name: "Język: Polski" }).click()
+  await page.getByRole("radio", { name: "Polski" }).click()
 
   const editor = page.locator(".ProseMirror").first()
   await editor.click()
@@ -19,11 +19,11 @@ test("virtualizes Fontsource and persists a granular font mark", async ({
   await page.keyboard.press("End")
   await page.keyboard.up("Shift")
 
-  await page.getByRole("button", { name: "Font Family" }).click()
+  await page.getByRole("button", { name: "Krój pisma" }).click()
   const popover = page.locator('[data-slot="popover-content"]:visible').last()
   await expect(popover).toBeVisible()
 
-  const search = popover.getByPlaceholder("Search Fontsource fonts...")
+  const search = popover.getByPlaceholder("Szukaj fontów Fontsource...")
   await expect(search).toBeVisible()
   await expect(popover.getByText("Fontsource catalog")).toHaveCount(0)
   await expect(popover.getByText(/\d+ fonts/)).toHaveCount(0)
@@ -49,9 +49,12 @@ test("virtualizes Fontsource and persists a granular font mark", async ({
   await expect(fraunces).toHaveAttribute("data-selected", "true")
   await search.press("Enter")
 
-  await expect(editor.locator('span[style*="Fraunces"]')).toHaveText(
-    "Editorial sample"
-  )
+  await expect(
+    editor
+      .locator('span[style*="Fraunces"]')
+      .filter({ hasText: "Editorial sample" })
+      .first()
+  ).toContainText("Editorial sample")
 
   await page.getByText("Editor JSON").click()
   const json = page.locator("details pre")

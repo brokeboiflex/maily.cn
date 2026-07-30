@@ -24,6 +24,7 @@ const sharedSourceDir = path.join(root, 'packages/shared/src');
 const coreOutDir = path.join(itemRoot, 'components/maily');
 const renderOutDir = path.join(itemRoot, 'lib/maily-render');
 const sharedOutDir = path.join(renderOutDir, 'shared');
+const editorIndexVariantPath = path.join(itemRoot, 'variants/editor-index.ts');
 
 const corePackagePath = path.join(root, 'packages/core/package.json');
 const renderPackagePath = path.join(root, 'packages/render/package.json');
@@ -85,6 +86,12 @@ const REGISTRY_DEPENDENCIES = [
   'resizable',
   'scroll-area',
 ];
+
+const REGISTRY_DEPENDENCY_BY_UI_IMPORT = new Map(
+  REGISTRY_DEPENDENCIES.map((name) => [name, name])
+);
+
+const HOST_PACKAGE_DEPENDENCIES = new Set(['react', 'react-dom']);
 
 // These packages are implementation details of source files replaced by the
 // consumer's stock shadcn primitives and must not leak into registry installs.
@@ -479,16 +486,103 @@ function addDeps(map, deps = {}) {
   }
 }
 
-function dependencyList(map) {
-  return [...map.entries()].map(([name, version]) => `${name}@${version}`);
+function packageNameFromSpecifier(specifier) {
+  if (specifier.startsWith('@')) {
+    return specifier.split('/').slice(0, 2).join('/');
+  }
+
+  return specifier.split('/')[0];
 }
 
-function registryFiles() {
+function importedPackageNames(files) {
+  const packageNames = new Set();
+  const patterns = [
+    /\bfrom\s+['"]([^'"]+)['"]/g,
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /^\s*import\s+['"]([^'"]+)['"]/gm,
+  ];
+
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(root, file.path), 'utf8');
+
+    for (const pattern of patterns) {
+      pattern.lastIndex = 0;
+      for (const match of content.matchAll(pattern)) {
+        const specifier = match[1];
+
+        if (
+          specifier.startsWith('.') ||
+          specifier.startsWith('@/') ||
+          specifier.startsWith('node:')
+        ) {
+          continue;
+        }
+
+        packageNames.add(packageNameFromSpecifier(specifier));
+      }
+    }
+  }
+
+  return packageNames;
+}
+
+function dependencyListForFiles(files, dependencyVersions) {
+  const dependencies = [];
+
+  for (const name of [...importedPackageNames(files)].sort()) {
+    if (HOST_PACKAGE_DEPENDENCIES.has(name)) continue;
+
+    const version = dependencyVersions.get(name);
+    if (!version) {
+      throw new Error(
+        `Registry source imports "${name}", but no package version is declared.`
+      );
+    }
+
+    dependencies.push(`${name}@${version}`);
+  }
+
+  return dependencies;
+}
+
+function registryDependenciesForFiles(files, extra = []) {
+  const imports = new Set();
+
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(root, file.path), 'utf8');
+
+    for (const match of content.matchAll(
+      /from\s+['"]@\/components\/ui\/([^'"]+)['"]/g
+    )) {
+      const dependency = REGISTRY_DEPENDENCY_BY_UI_IMPORT.get(match[1]);
+
+      if (!dependency) {
+        throw new Error(
+          `Generated registry imports unknown shadcn primitive "${match[1]}".`
+        );
+      }
+
+      imports.add(dependency);
+    }
+  }
+
+  return [
+    ...extra,
+    ...REGISTRY_DEPENDENCIES.filter((name) => imports.has(name)),
+  ];
+}
+
+function coreRegistryFiles({ section = 'all', editorOnlyIndex = false } = {}) {
   const files = [];
 
   for (const file of walk(coreOutDir)) {
     const relativeToRoot = toPosix(path.relative(root, file));
     const relativeToCore = toPosix(path.relative(coreOutDir, file));
+    const isMailbox = relativeToCore.startsWith('mailbox/');
+
+    if (section === 'editor' && isMailbox) continue;
+    if (section === 'mailbox' && !isMailbox) continue;
+    if (editorOnlyIndex && relativeToCore === 'index.ts') continue;
 
     files.push({
       path: relativeToRoot,
@@ -496,6 +590,20 @@ function registryFiles() {
       target: `@components/maily/${relativeToCore}`,
     });
   }
+
+  if (editorOnlyIndex) {
+    files.push({
+      path: toPosix(path.relative(root, editorIndexVariantPath)),
+      type: 'registry:component',
+      target: '@components/maily/index.ts',
+    });
+  }
+
+  return files;
+}
+
+function renderRegistryFiles() {
+  const files = [];
 
   for (const file of walk(renderOutDir)) {
     const relativeToRoot = toPosix(path.relative(root, file));
@@ -516,46 +624,31 @@ function buildRegistryJson() {
   const renderPackage = readJson(renderPackagePath);
   const sharedPackage = readJson(sharedPackagePath);
 
-  const dependencies = new Map();
-  const devDependencies = new Map();
+  const dependencyVersions = new Map();
 
-  addDeps(dependencies, corePackage.dependencies);
-  addDeps(dependencies, renderPackage.dependencies);
-  addDeps(dependencies, sharedPackage.dependencies);
+  addDeps(dependencyVersions, corePackage.dependencies);
+  addDeps(dependencyVersions, renderPackage.dependencies);
+  addDeps(dependencyVersions, sharedPackage.dependencies);
 
   for (const name of EXTERNALIZED_PACKAGE_DEPENDENCIES) {
-    dependencies.delete(name);
+    dependencyVersions.delete(name);
   }
 
-  // packages/render/src imports this at runtime even though the package lists it as devDependency.
-  if (renderPackage.devDependencies?.['@antfu/utils']) {
-    dependencies.set(
-      '@antfu/utils',
-      renderPackage.devDependencies['@antfu/utils']
-    );
-  }
-
-  const cssBuildDeps = ['@tailwindcss/typography', 'tw-animate-css'];
-
-  for (const name of cssBuildDeps) {
-    const version = corePackage.devDependencies?.[name];
-    if (version) {
-      devDependencies.set(name, version);
-    }
-  }
-
-  const iconLibraryDeps = [
-    'lucide-react',
-    '@tabler/icons-react',
-    '@hugeicons/react',
-    '@hugeicons/core-free-icons',
-    '@phosphor-icons/react',
-    '@remixicon/react',
-  ];
-
-  for (const name of iconLibraryDeps) {
-    dependencies.set(name, 'latest');
-  }
+  const editorFiles = coreRegistryFiles({
+    section: 'editor',
+    editorOnlyIndex: true,
+  });
+  const mailboxFiles = coreRegistryFiles({ section: 'mailbox' });
+  const rendererFiles = renderRegistryFiles();
+  const fullFiles = [...coreRegistryFiles(), ...rendererFiles];
+  const typographyVersion =
+    corePackage.devDependencies?.['@tailwindcss/typography'];
+  const editorDevDependencies = typographyVersion
+    ? [`@tailwindcss/typography@${typographyVersion}`]
+    : [];
+  const editorCss = {
+    '@plugin "@tailwindcss/typography"': {},
+  };
 
   const registry = {
     $schema: 'https://ui.shadcn.com/schema/registry.json',
@@ -563,39 +656,90 @@ function buildRegistryJson() {
     homepage: 'https://github.com/brokeboiflex/maily.cn',
     items: [
       {
-        name: 'maily',
+        name: 'maily-editor',
         type: 'registry:block',
-        title: 'Maily',
+        title: 'Maily Editor',
         description:
-          'A local, shadcn-installable Maily email editor with HTML email rendering.',
-        registryDependencies: REGISTRY_DEPENDENCIES,
-        dependencies: dependencyList(dependencies),
-        devDependencies: dependencyList(devDependencies),
-        files: registryFiles(),
-        // Maily is a plain-Tailwind shadcn component: it ships no stylesheet and
-        // paints its chrome and canvas entirely with the consumer's shadcn theme
-        // tokens. The only build requirement is the typography plugin, which
-        // provides the `prose` utilities used by the editor content area. The
-        // `css` key makes `shadcn add` wire it into the consumer's stylesheet.
-        css: {
-          '@plugin "@tailwindcss/typography"': {},
-        },
+          'The source-owned Maily email editor without optional mailbox or server renderer code.',
+        registryDependencies: registryDependenciesForFiles(editorFiles),
+        dependencies: dependencyListForFiles(editorFiles, dependencyVersions),
+        devDependencies: editorDevDependencies,
+        files: editorFiles,
+        css: editorCss,
         docs: [
           'Editor usage:',
           '',
           "import { Editor } from '@/components/maily'",
+          '',
+          'The root barrel exports the editor only.',
           '',
           'Maily ships no CSS — its chrome and canvas use your shadcn theme',
           'tokens directly. Ensure your app defines the standard shadcn tokens',
           '(--background, --foreground, --primary, --muted, --border, …) and has',
           'the Tailwind typography plugin enabled (added automatically on install',
           'via this item\'s `css`): @plugin "@tailwindcss/typography";',
+        ].join('\n'),
+      },
+      {
+        name: 'maily-mailbox',
+        type: 'registry:block',
+        title: 'Maily Mailbox',
+        description:
+          'The optional backend-agnostic mailbox surface for Maily editor consumers.',
+        registryDependencies: registryDependenciesForFiles(mailboxFiles, [
+          '@maily/maily-editor',
+        ]),
+        dependencies: dependencyListForFiles(mailboxFiles, dependencyVersions),
+        files: mailboxFiles,
+        docs: [
+          'Mailbox usage:',
           '',
+          "import { MailboxView } from '@/components/maily/mailbox'",
+          '',
+          'This item installs the editor dependency because rich compose mode',
+          'embeds the Maily Editor.',
+        ].join('\n'),
+      },
+      {
+        name: 'maily-render',
+        type: 'registry:block',
+        title: 'Maily Renderer',
+        description:
+          'Server-side Maily JSON to email-safe HTML rendering source.',
+        dependencies: dependencyListForFiles(rendererFiles, dependencyVersions),
+        files: rendererFiles,
+        docs: [
           'Renderer usage:',
           '',
           "import { render } from '@/lib/maily-render'",
           '',
-          'const html = await render(editorJson)',
+          'Install this item only in applications that render email HTML.',
+        ].join('\n'),
+      },
+      {
+        name: 'maily',
+        type: 'registry:block',
+        title: 'Maily Full',
+        description:
+          'Backward-compatible full Maily install: editor, mailbox, and server renderer.',
+        registryDependencies: registryDependenciesForFiles(fullFiles),
+        dependencies: dependencyListForFiles(fullFiles, dependencyVersions),
+        devDependencies: editorDevDependencies,
+        files: fullFiles,
+        css: editorCss,
+        docs: [
+          'This is the backward-compatible full install.',
+          'For the smallest consumer footprint, install only the items you use:',
+          '',
+          'shadcn add @maily/maily-editor',
+          'shadcn add @maily/maily-mailbox',
+          'shadcn add @maily/maily-render',
+          '',
+          "Editor: import { Editor } from '@/components/maily'",
+          "Mailbox: import { MailboxView } from '@/components/maily/mailbox'",
+          "Renderer: import { render } from '@/lib/maily-render'",
+          '',
+          'The root @/components/maily barrel exports the editor only.',
         ].join('\n'),
       },
     ],
@@ -742,6 +886,9 @@ copySource(
   isTestFile
 );
 copySource(renderSourceDir, renderOutDir, rewriteRenderImports, isTestFile);
+
+ensureDir(path.dirname(editorIndexVariantPath));
+fs.writeFileSync(editorIndexVariantPath, "export * from './editor/index';\n");
 
 buildRegistryJson();
 

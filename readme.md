@@ -27,9 +27,9 @@ TipTap-based WYSIWYG editor for composing beautiful, mobile-ready emails from
 pre-designed blocks.
 
 The upstream project publishes Maily as npm packages. This fork takes a different
-distribution path: run one `shadcn add` command and the editor plus renderer arrive as
-plain source files inside your project. You own them, theme them, and change them like
-any other shadcn component.
+distribution path: install only the editor, optional mailbox, and renderer source you
+actually use through the shadcn registry. You own those files, theme them, and change
+them like any other shadcn component.
 
 Try the editor and mailbox components in the
 [live playground](https://brokeboiflex.github.io/maily.cn/), including light,
@@ -51,15 +51,24 @@ Add the registry namespace to your existing shadcn project's `components.json`:
 }
 ```
 
-Then install the block:
+Then install the editor:
 
 ```bash
-npx shadcn@latest add @maily/maily
+npx shadcn@latest add @maily/maily-editor
 ```
 
-This writes the editor to `components/maily/**`, the renderer to
-`lib/maily-render/**`, installs the required shadcn primitives, and wires the Tailwind
-typography plugin used by the writing surface.
+Add the optional parts only when the application uses them:
+
+```bash
+npx shadcn@latest add @maily/maily-mailbox
+npx shadcn@latest add @maily/maily-render
+```
+
+`maily-mailbox` depends on `maily-editor`, so adding it to a fresh project installs
+both. `@maily/maily` remains available as the backward-compatible full install.
+Every item declares only the npm packages and stock shadcn primitives imported by
+its own emitted source. The editor item also wires the Tailwind typography plugin
+used by the writing surface.
 
 ## Why use maily.cn?
 
@@ -73,6 +82,8 @@ way modern shadcn applications are built.
 - **Generic i18n** — replace every user-facing label without coupling to an i18n framework.
 - **Caller-driven image upload** — provide your own upload handler and storage backend.
 - **Email-safe rendering** — turn the editor JSON into HTML independently of editor theming.
+- **Dependency-light custom HTML** — edit and preview HTML without shipping a
+  client-side syntax-language bundle.
 - **Consumer icon choice** — icon placeholders resolve to the library selected in
   `components.json`.
 
@@ -97,11 +108,16 @@ host-owned primitive and explains the remaining editor-specific composites.
 
 ## What gets installed
 
-| Part         | Target                | Import               | Purpose                                  |
-| ------------ | --------------------- | -------------------- | ---------------------------------------- |
-| **Editor**   | `components/maily/**` | `@/components/maily` | The `<Editor />` WYSIWYG email composer. |
-| **Renderer** | `lib/maily-render/**` | `@/lib/maily-render` | Editor JSON to email-safe HTML.          |
-| **Mailbox**  | `components/maily/**` | `@/components/maily` | Optional inbox / sent / drafts view.     |
+| Registry item   | Target                        | Import                       | Purpose                                  |
+| --------------- | ----------------------------- | ---------------------------- | ---------------------------------------- |
+| `maily-editor`  | `components/maily/**`         | `@/components/maily`         | The `<Editor />` WYSIWYG email composer. |
+| `maily-mailbox` | `components/maily/mailbox/**` | `@/components/maily/mailbox` | Optional inbox / sent / drafts view.     |
+| `maily-render`  | `lib/maily-render/**`         | `@/lib/maily-render`         | Editor JSON to email-safe HTML.          |
+| `maily`         | All targets above             | All imports above            | Backward-compatible full install.        |
+
+The root `@/components/maily` barrel intentionally exports the editor only.
+Import mailbox code from `@/components/maily/mailbox` so editor-only consumers
+do not compile the optional mailbox surface.
 
 ## Requirements
 
@@ -207,7 +223,7 @@ import {
   MailboxView,
   defaultMailboxLabels,
   type MailyMailboxDataSource,
-} from '@/components/maily';
+} from '@/components/maily/mailbox';
 
 const dataSource: MailyMailboxDataSource = {
   listMessages: ({ folder, q }) => api.mail.messages({ folder, q }),
@@ -261,6 +277,8 @@ render readable fallback fonts when a client blocks remote web fonts.
 
 ## Renderer usage
 
+Install `@maily/maily-render` before using the server-side renderer.
+
 ```ts
 import { render } from '@/lib/maily-render';
 
@@ -274,6 +292,25 @@ const html = await render(editorJson, {
 
 The renderer is independent of the editor's on-screen theme and produces the final
 email-client-safe HTML from the saved JSON.
+
+## Upgrading an existing full install
+
+The shadcn CLI overwrites current registry files but does not delete files removed
+from a newer item. After upgrading, remove these obsolete private primitive or icon
+copies if they still exist and are not locally modified:
+
+```text
+components/maily/editor/components/popover.tsx
+components/maily/editor/components/ui/divider.tsx
+components/maily/editor/components/ui/tooltip.tsx
+components/maily/editor/components/icons/border-color.tsx
+components/maily/editor/components/icons/grid-lines.tsx
+components/maily/editor/components/icons/text-direction-icon.tsx
+```
+
+When intentionally moving from the legacy full item to `maily-editor`, also remove
+`components/maily/mailbox/**` and `lib/maily-render/**` after confirming the
+application no longer imports them.
 
 ## Theming and customization
 

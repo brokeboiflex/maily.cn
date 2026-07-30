@@ -1,4 +1,5 @@
-import type { MailyLabels, MailyMailboxLabels } from "@/components/maily"
+import type { MailyLabels } from "@/components/maily"
+import type { MailyMailboxLabels } from "@/components/maily/mailbox"
 
 /**
  * A complete Polish translation of the Maily editor.

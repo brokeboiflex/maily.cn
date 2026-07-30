@@ -1,0 +1,49 @@
+name: Registry consumers
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/registry-consumers.yml'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'registry.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/registry-consumers.yml'
+      - 'packages/**'
+      - 'scripts/**'
+      - 'registry.json'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+  workflow_dispatch:
+
+jobs:
+  consumer-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 11.9.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium for Base UI runtime checks
+        run: pnpm dlx playwright@1.55.0 install --with-deps chromium
+
+      - name: Build and test clean shadcn consumers
+        run: pnpm registry:consumer-test

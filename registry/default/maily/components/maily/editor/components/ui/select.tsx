@@ -1,12 +1,4 @@
-import {
-  useCallback,
-  useId,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from 'react';
+import { useId, useRef, useState, type ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 import {
   Select as SelectPrimitive,
@@ -17,10 +9,6 @@ import {
 } from '@/components/ui/select';
 
 const EMPTY_SELECT_VALUE = '__maily-empty-value__';
-const FLOATING_VIEWPORT_PADDING = 8;
-const FLOATING_GAP = 4;
-const SELECT_ITEM_ESTIMATED_HEIGHT = 28;
-const SELECT_CONTENT_MAX_HEIGHT = 320;
 
 type SelectProps = {
   label: string;
@@ -93,83 +81,31 @@ function SelectControl({
   placeholder,
   onCloseAutoFocus,
 }: SelectControlProps) {
-  const triggerWrapperRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [contentStyle, setContentStyle] = useState<CSSProperties>();
+  const wasOpenRef = useRef(false);
 
-  const updateContentPosition = useCallback(() => {
-    const trigger = triggerWrapperRef.current?.querySelector(
-      '[data-slot="select-trigger"]'
-    );
-    const rect = trigger?.getBoundingClientRect();
+  const handleOpenChange = (nextOpen: boolean) => {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = nextOpen;
+    setOpen(nextOpen);
 
-    if (!rect) {
-      return;
+    if (wasOpen && !nextOpen && onCloseAutoFocus) {
+      window.requestAnimationFrame(onCloseAutoFocus);
     }
-
-    const estimatedContentHeight = Math.min(
-      SELECT_CONTENT_MAX_HEIGHT,
-      options.length * SELECT_ITEM_ESTIMATED_HEIGHT + FLOATING_VIEWPORT_PADDING
-    );
-    const availableBelow =
-      window.innerHeight - rect.bottom - FLOATING_VIEWPORT_PADDING;
-    const availableAbove = rect.top - FLOATING_VIEWPORT_PADDING;
-    const placeAbove =
-      availableBelow < estimatedContentHeight &&
-      availableAbove > availableBelow;
-    const maxHeight = Math.max(
-      120,
-      Math.min(
-        SELECT_CONTENT_MAX_HEIGHT,
-        (placeAbove ? availableAbove : availableBelow) - FLOATING_GAP
-      )
-    );
-    const height = Math.min(estimatedContentHeight, maxHeight);
-
-    setContentStyle({
-      position: 'fixed',
-      left: Math.min(
-        Math.max(rect.left, FLOATING_VIEWPORT_PADDING),
-        window.innerWidth - rect.width - FLOATING_VIEWPORT_PADDING
-      ),
-      top: placeAbove
-        ? Math.max(FLOATING_VIEWPORT_PADDING, rect.top - height - FLOATING_GAP)
-        : Math.min(
-            rect.bottom + FLOATING_GAP,
-            window.innerHeight - FLOATING_VIEWPORT_PADDING
-          ),
-      minWidth: rect.width,
-      maxHeight,
-    });
-  }, [options.length]);
-
-  useLayoutEffect(() => {
-    if (!open) {
-      setContentStyle(undefined);
-      return;
-    }
-
-    updateContentPosition();
-    window.addEventListener('resize', updateContentPosition);
-    window.addEventListener('scroll', updateContentPosition, true);
-    return () => {
-      window.removeEventListener('resize', updateContentPosition);
-      window.removeEventListener('scroll', updateContentPosition, true);
-    };
-  }, [open, updateContentPosition]);
+  };
 
   return (
-    <div className="relative inline-flex" ref={triggerWrapperRef}>
+    <div className="relative inline-flex">
       <label htmlFor={selectId} className="sr-only">
         {label}
       </label>
 
       <SelectPrimitive
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={handleOpenChange}
         value={toPrimitiveValue(value || '')}
         onValueChange={(nextValue) => {
-          onValueChange(fromPrimitiveValue(nextValue));
+          onValueChange(fromPrimitiveValue(nextValue ?? EMPTY_SELECT_VALUE));
         }}
       >
         <SelectTrigger
@@ -190,14 +126,8 @@ function SelectControl({
         </SelectTrigger>
         <SelectContent
           align="start"
-          position="popper"
           sideOffset={4}
-          onCloseAutoFocus={(event) => {
-            event.preventDefault();
-            window.requestAnimationFrame(() => onCloseAutoFocus?.());
-          }}
-          style={contentStyle}
-          className="min-w-(--radix-select-trigger-width) data-[side=bottom]:translate-y-0 data-[side=left]:translate-x-0 data-[side=right]:translate-x-0 data-[side=top]:translate-y-0"
+          className="max-h-80 min-w-36 data-[side=bottom]:translate-y-0 data-[side=left]:translate-x-0 data-[side=right]:translate-x-0 data-[side=top]:translate-y-0"
         >
           {options.map((option) => (
             <SelectItem

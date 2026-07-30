@@ -38,4 +38,14 @@ export default defineConfig([
     },
     outDir: 'dist/extensions',
   },
+  {
+    ...packageOptions,
+    entry: {
+      index: 'src/mailbox/index.tsx',
+    },
+    banner: {
+      js: "'use client'",
+    },
+    outDir: 'dist/mailbox',
+  },
 ]);

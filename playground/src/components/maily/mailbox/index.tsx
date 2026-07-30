@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   Popover,
-  PopoverAnchor,
   PopoverContent,
+  PopoverTrigger,
 } from '@/components/ui/popover';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -858,21 +858,21 @@ export function MailboxView(props: MailyMailboxViewProps) {
           groupResizeBehavior="preserve-pixel-size"
           className="min-w-12"
         >
-          <div className="@container/rail flex h-full flex-col items-center gap-2 p-2 @[10rem]/rail:items-stretch @[10rem]/rail:p-3">
+          <div className="@container/rail @[10rem]/rail:items-stretch @[10rem]/rail:p-3 flex h-full flex-col items-center gap-2 p-2">
             <Button
               type="button"
               size="icon"
               onClick={openNewDraft}
-              className="justify-center gap-0 @[10rem]/rail:w-full @[10rem]/rail:justify-start @[10rem]/rail:gap-2 @[10rem]/rail:px-2.5"
+              className="@[10rem]/rail:w-full @[10rem]/rail:justify-start @[10rem]/rail:gap-2 @[10rem]/rail:px-2.5 justify-center gap-0"
               title={t('compose.new')}
               aria-label={t('compose.new')}
             >
               <Pencil className="size-4" />
-              <span className="hidden truncate @[10rem]/rail:inline">
+              <span className="@[10rem]/rail:inline hidden truncate">
                 {t('compose.new')}
               </span>
             </Button>
-            <nav className="flex w-full flex-col items-center gap-0.5 @[10rem]/rail:items-stretch">
+            <nav className="@[10rem]/rail:items-stretch flex w-full flex-col items-center gap-0.5">
               {FOLDERS.map((item) => {
                 const active = folder === item;
                 const count = counts[item] ?? 0;
@@ -887,26 +887,26 @@ export function MailboxView(props: MailyMailboxViewProps) {
                     aria-current={active ? 'page' : undefined}
                     onClick={() => selectFolder(item)}
                     className={cn(
-                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative justify-center gap-0 @[10rem]/rail:w-full @[10rem]/rail:justify-start @[10rem]/rail:gap-2 @[10rem]/rail:px-2.5',
+                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground @[10rem]/rail:w-full @[10rem]/rail:justify-start @[10rem]/rail:gap-2 @[10rem]/rail:px-2.5 relative justify-center gap-0',
                       active &&
                         'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium'
                     )}
                   >
                     {folderIcon(item, 'size-4')}
-                    <span className="hidden flex-1 truncate text-left @[10rem]/rail:inline">
+                    <span className="@[10rem]/rail:inline hidden flex-1 truncate text-left">
                       {t(`folders.${item}`)}
                     </span>
                     {count > 0 && (
                       <>
                         <Badge
                           variant={active ? 'default' : 'outline'}
-                          className="hidden @[10rem]/rail:inline-flex"
+                          className="@[10rem]/rail:inline-flex hidden"
                         >
                           {count}
                         </Badge>
                         <span
                           aria-hidden
-                          className="bg-primary absolute top-1 right-1 size-1.5 rounded-full @[10rem]/rail:hidden"
+                          className="bg-primary @[10rem]/rail:hidden absolute right-1 top-1 size-1.5 rounded-full"
                         />
                       </>
                     )}
@@ -1059,7 +1059,7 @@ function MessageList(props: {
                 variant="ghost"
                 onClick={() => onSelect(row)}
                 className={cn(
-                  'hover:bg-accent h-auto w-full flex-col items-stretch justify-start gap-1.5 rounded-none px-3 py-2.5 text-left font-normal whitespace-normal',
+                  'hover:bg-accent h-auto w-full flex-col items-stretch justify-start gap-1.5 whitespace-normal rounded-none px-3 py-2.5 text-left font-normal',
                   active && 'bg-accent'
                 )}
               >
@@ -1217,7 +1217,7 @@ function MessageReader(props: {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="min-w-0 text-xl leading-tight font-semibold">
+              <h2 className="min-w-0 text-xl font-semibold leading-tight">
                 {detail.subject || t('message.noSubject')}
               </h2>
               {labelsToShow.map((label) => (
@@ -1308,7 +1308,7 @@ function MessageReader(props: {
             {detail.bodyHtml ? (
               <HtmlBody html={detail.bodyHtml} />
             ) : detail.bodyText ? (
-              <pre className="px-4 py-2 font-sans text-sm leading-relaxed whitespace-pre-wrap">
+              <pre className="whitespace-pre-wrap px-4 py-2 font-sans text-sm leading-relaxed">
                 {detail.bodyText}
               </pre>
             ) : (
@@ -1667,14 +1667,8 @@ function Compose(props: {
   };
 
   const editorConfig = editorProps?.config;
-  const editorBodyClassName = cn(
-    'mt-2 min-h-56',
-    editorConfig?.bodyClassName
-  );
-  const editorContentClassName = cn(
-    'min-h-48',
-    editorConfig?.contentClassName
-  );
+  const editorBodyClassName = cn('mt-2 min-h-56', editorConfig?.bodyClassName);
+  const editorContentClassName = cn('min-h-48', editorConfig?.contentClassName);
 
   return (
     <form
@@ -2001,6 +1995,20 @@ function RecipientAutocompleteInput(props: {
     }
   }, [autoFocus]);
 
+  React.useEffect(() => {
+    if (!open) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+
+      input.focus();
+      input.setSelectionRange(caretRef.current, caretRef.current);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [open]);
+
   const selectSuggestion = (suggestion: MailyMailboxContactSuggestion) => {
     const next = replaceRecipientToken(value, caretRef.current, suggestion);
     onChange(next.value);
@@ -2014,7 +2022,7 @@ function RecipientAutocompleteInput(props: {
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverAnchor asChild data-slot="input-group-control">
+      <PopoverTrigger asChild data-slot="input-group-control">
         <InputGroupInput
           id={id}
           ref={inputRef}
@@ -2056,11 +2064,13 @@ function RecipientAutocompleteInput(props: {
           autoComplete="off"
           className={className}
         />
-      </PopoverAnchor>
+      </PopoverTrigger>
       <PopoverContent
         align="start"
-        onOpenAutoFocus={(event: Event) => event.preventDefault()}
-        className="w-[var(--radix-popover-trigger-width)] min-w-72 p-0"
+        style={{
+          width: 'var(--radix-popover-trigger-width, var(--anchor-width))',
+        }}
+        className="min-w-72 p-0"
       >
         <Command shouldFilter={false}>
           <CommandList className="max-h-56">

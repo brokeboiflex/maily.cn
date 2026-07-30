@@ -1,15 +1,5 @@
-import {
-  SelectionRange,
-  Selection,
-  PluginKey,
-  Plugin,
-  EditorState,
-} from '@tiptap/pm/state';
+import { SelectionRange, Selection, PluginKey, Plugin } from '@tiptap/pm/state';
 import tippy, { type Instance } from 'tippy.js';
-import {
-  ySyncPluginKey,
-  absolutePositionToRelativePosition,
-} from 'y-prosemirror';
 import { NodeRange } from '@tiptap/pm/model';
 import { ResolvedPos, Node as TNode } from '@tiptap/pm/model';
 import { Mapping } from '@tiptap/pm/transform';
@@ -282,13 +272,6 @@ const getAncestorNodeAtDepth = (e: TNode, t: number) => {
   }
   return i;
 };
-const getOuterNode = (doc: EditorState, pos: number) => {
-  const n = ySyncPluginKey.getState(doc);
-  return n
-    ? absolutePositionToRelativePosition(pos, n.type, n.binding.mapping)
-    : null;
-};
-
 // @ts-ignore
 const getOuterNodePos = (e, t) => {
   let n = t;
@@ -378,7 +361,7 @@ export function DragHandlePlugin(
     key: typeof e === 'string' ? new PluginKey(e) : e,
     state: {
       init: () => ({ locked: false }) as { locked: boolean },
-      apply(e, t, _n, o) {
+      apply(e, t) {
         const l = e.getMeta('lockDragHandle');
         const a = e.getMeta('hideDragHandle');
         if ((undefined !== l && (x = l), a && tippyInstance)) {
@@ -394,8 +377,9 @@ export function DragHandlePlugin(
         }
         if (e.docChanged && -1 !== lastNodePos && element && tippyInstance) {
           const t = e.mapping.map(lastNodePos);
-          t !== lastNodePos &&
-            ((lastNodePos = t), getOuterNode(o, lastNodePos));
+          if (t !== lastNodePos) {
+            lastNodePos = t;
+          }
         }
         return t;
       },
@@ -451,7 +435,6 @@ export function DragHandlePlugin(
               const t = getPreviousNodeStartPosition(editor.state.doc, r);
               (currentNode = s),
                 (lastNodePos = t),
-                getOuterNode(e.state, lastNodePos),
                 null == onNodeChange ||
                   onNodeChange({
                     editor: editor,
@@ -503,7 +486,6 @@ export function DragHandlePlugin(
             const t = getPreviousNodeStartPosition(editor.state.doc, r);
             (currentNode = s),
               (lastNodePos = t),
-              getOuterNode(e.state, lastNodePos),
               null == onNodeChange ||
                 onNodeChange({
                   editor: editor,

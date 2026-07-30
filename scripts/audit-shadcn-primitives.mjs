@@ -120,30 +120,34 @@ function auditRegistryDependencies() {
   if (!fs.existsSync(registryPath)) return;
 
   const registry = JSON.parse(fs.readFileSync(registryPath, 'utf8'));
-  const item = Array.isArray(registry.items) ? registry.items[0] : undefined;
-  const registryDependencies = new Set(item?.registryDependencies ?? []);
-  const registryDir = path.join(root, 'registry/default/maily');
-  const imports = new Set();
+  const items = Array.isArray(registry.items) ? registry.items : [];
 
-  if (fs.existsSync(registryDir)) {
-    for (const file of walk(registryDir)) {
-      if (!/\.(tsx|ts)$/.test(file)) continue;
-      const content = fs.readFileSync(file, 'utf8');
+  for (const item of items) {
+    const registryDependencies = new Set(item.registryDependencies ?? []);
+    const imports = new Set();
+
+    for (const file of item.files ?? []) {
+      if (!/\.(tsx|ts)$/.test(file.path)) continue;
+
+      const absolutePath = path.join(root, file.path);
+      if (!fs.existsSync(absolutePath)) continue;
+
+      const content = fs.readFileSync(absolutePath, 'utf8');
       for (const match of content.matchAll(uiImportPattern)) {
         const dependency = dependencyNameByImport.get(match[1]);
         if (dependency) imports.add(dependency);
       }
     }
-  }
 
-  for (const dependency of imports) {
-    if (!registryDependencies.has(dependency)) {
-      findings.push({
-        file: 'registry.json',
-        line: 1,
-        rule: 'missing-registry-dependency',
-        message: `Generated registry imports @/components/ui/${dependency}, but registryDependencies does not include "${dependency}".`,
-      });
+    for (const dependency of imports) {
+      if (!registryDependencies.has(dependency)) {
+        findings.push({
+          file: 'registry.json',
+          line: 1,
+          rule: 'missing-registry-dependency',
+          message: `Registry item "${item.name}" imports @/components/ui/${dependency}, but registryDependencies does not include "${dependency}".`,
+        });
+      }
     }
   }
 
@@ -156,14 +160,18 @@ function auditRegistryDependencies() {
       .map((match) => dependencyNameByImport.get(match[1]))
       .filter(Boolean)
   );
+  const fullItem = items.find((item) => item.name === 'maily');
+  const fullRegistryDependencies = new Set(
+    fullItem?.registryDependencies ?? []
+  );
 
   for (const dependency of externalizedImports) {
-    if (!registryDependencies.has(dependency)) {
+    if (!fullRegistryDependencies.has(dependency)) {
       findings.push({
         file: 'registry.json',
         line: 1,
         rule: 'missing-externalized-registry-dependency',
-        message: `scripts/build-shadcn-registry.mjs externalizes @/components/ui/${dependency}, but registryDependencies does not include "${dependency}".`,
+        message: `scripts/build-shadcn-registry.mjs externalizes @/components/ui/${dependency}, but the full "maily" item does not include "${dependency}".`,
       });
     }
   }

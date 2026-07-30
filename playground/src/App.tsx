@@ -12,8 +12,8 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Editor } from "@/components/maily"
 import {
-  Editor,
   MailboxView,
   type MailyMailboxContactSuggestion,
   type MailyMailboxCounts,
@@ -21,7 +21,7 @@ import {
   type MailyMailboxDraftInput,
   type MailyMailboxFolder,
   type MailyMailboxMessageDetail,
-} from "@/components/maily"
+} from "@/components/maily/mailbox"
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL

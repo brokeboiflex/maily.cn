@@ -66,6 +66,10 @@ function App(props: AppProps) {
 }
 ```
 
+The package root intentionally exports the editor only. Optional mailbox
+components live under `@maily-to/core/mailbox` so editor-only consumers do not
+compile the mailbox entrypoint.
+
 ### Translating the editor
 
 Every user-facing string in the editor (menus, tooltips, placeholders, and the

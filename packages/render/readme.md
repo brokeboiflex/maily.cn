@@ -25,9 +25,10 @@ This workspace package is the renderer source used by the
 
 ## Recommended installation: maily.cn source
 
-Install the complete fork through shadcn using the
-[root maily.cn instructions](../../readme.md). The registry copies this renderer to
-`lib/maily-render/**` together with the editor.
+Install `@maily/maily-render` through shadcn using the
+[root maily.cn instructions](../../README.md). The granular item copies only the
+renderer source and its runtime dependencies to `lib/maily-render/**`; install
+`@maily/maily-editor` separately when the application also needs the editor.
 
 ## Upstream-compatible package build
 

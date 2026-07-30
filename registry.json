@@ -4,10 +4,785 @@
   "homepage": "https://github.com/brokeboiflex/maily.cn",
   "items": [
     {
+      "name": "maily-editor",
+      "type": "registry:block",
+      "title": "Maily Editor",
+      "description": "The source-owned Maily email editor without optional mailbox or server renderer code.",
+      "registryDependencies": [
+        "button",
+        "input",
+        "textarea",
+        "toggle",
+        "toggle-group",
+        "tooltip",
+        "separator",
+        "select",
+        "kbd",
+        "dropdown-menu",
+        "popover",
+        "tabs",
+        "input-group",
+        "command",
+        "badge"
+      ],
+      "dependencies": [
+        "@tanstack/react-virtual@^3.14.6",
+        "@tiptap/core@^2.11.5",
+        "@tiptap/extension-code-block@^2.11.5",
+        "@tiptap/extension-color@^2.11.5",
+        "@tiptap/extension-document@^2.11.5",
+        "@tiptap/extension-dropcursor@^2.11.5",
+        "@tiptap/extension-focus@^2.11.5",
+        "@tiptap/extension-heading@^2.11.5",
+        "@tiptap/extension-horizontal-rule@^2.11.5",
+        "@tiptap/extension-image@^2.11.5",
+        "@tiptap/extension-link@^2.11.5",
+        "@tiptap/extension-list-item@^2.11.5",
+        "@tiptap/extension-paragraph@^2.11.5",
+        "@tiptap/extension-placeholder@^2.11.5",
+        "@tiptap/extension-text-align@^2.11.5",
+        "@tiptap/extension-text-style@^2.11.5",
+        "@tiptap/extension-underline@^2.11.5",
+        "@tiptap/pm@^2.11.5",
+        "@tiptap/react@^2.11.5",
+        "@tiptap/starter-kit@^2.11.5",
+        "@tiptap/suggestion@^2.11.5",
+        "fast-deep-equal@^3.1.3",
+        "react-colorful@^5.6.1",
+        "tippy.js@^6.3.7",
+        "uuid@^11.1.0"
+      ],
+      "devDependencies": [
+        "@tailwindcss/typography@^0.5.16"
+      ],
+      "files": [
+        {
+          "path": "registry/default/maily/components/maily/blocks/button.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/button.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/code.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/code.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/footers.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/footers.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/headers.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/headers.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/image.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/image.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/layout.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/layout.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/list.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/list.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/types.ts",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/types.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks/typography.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/blocks/typography.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/blocks.ts",
+          "type": "registry:component",
+          "target": "@components/maily/blocks.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/alignment-switch.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/alignment-switch.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/bubble-menu-button.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/bubble-menu-button.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/column-menu/columns-bubble-menu-content.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/column-menu/columns-bubble-menu-content.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/column-menu/columns-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/column-menu/columns-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/column-menu/columns-width-config.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/column-menu/columns-width-config.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/column-menu/use-columns-state.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/column-menu/use-columns-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/content-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/content-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/editor-menu-bar.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/editor-menu-bar.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/html-menu/html-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/html-menu/html-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/html-menu/use-html-state.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/html-menu/use-html-state.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/icons/logo-with-cover-image.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/icons/logo-with-cover-image.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/icons/logo-with-text-horizon.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/icons/logo-with-text-horizon.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/icons/logo-with-text-vertical.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/icons/logo-with-text-vertical.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/icons/margin-icon.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/icons/margin-icon.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/icons/padding-icon.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/icons/padding-icon.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/image-menu/image-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/image-menu/image-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/image-menu/image-size.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/image-menu/image-size.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/image-menu/use-image-state.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/image-menu/use-image-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/inline-image-menu/inline-image-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/inline-image-menu/inline-image-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/repeat-menu/repeat-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/repeat-menu/repeat-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/repeat-menu/use-repeat-state.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/repeat-menu/use-repeat-state.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/section-menu/section-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/section-menu/section-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/section-menu/use-section-state.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/section-menu/use-section-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/show-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/show-popover.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/spacer-menu/spacer-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/spacer-menu/spacer-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/spacer-menu/use-spacer-state.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/spacer-menu/use-spacer-state.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-direction-switch.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-direction-switch.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/font-family-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/font-family-picker.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/font-size-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/font-size-picker.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/text-bubble-content.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/text-bubble-content.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/text-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/text-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/turn-into-block.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/turn-into-block.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/use-text-menu-state.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/use-text-menu-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/text-menu/use-turn-into-block-options.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/text-menu/use-turn-into-block-options.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/color-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/color-picker.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/floating-menu.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/floating-menu.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/input-autocomplete.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/input-autocomplete.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/link-input-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/link-input-popover.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/select.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/select.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/toggle-group-compat.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/toggle-group-compat.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/variable-menu/variable-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/variable-menu/variable-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/vertical-alignment-switch.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/vertical-alignment-switch.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/color.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/color.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/font-family.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/font-family.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/font-size.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/font-size.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/horizontal-rule.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/horizontal-rule.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/image-upload/image-upload.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/image-upload/image-upload.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/index.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/link-card.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/link-card.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/maily-kit.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/maily-kit.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/placeholder.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/placeholder.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/selection/selection.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/selection/selection.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/default-slash-commands.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/default-slash-commands.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command-item.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/slash-command-item.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command-search.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/slash-command-search.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command-submenu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/slash-command-submenu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/slash-command-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/slash-command/slash-command.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/slash-command/slash-command.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/extensions/tailing-node/tailing-node.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/tailing-node/tailing-node.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/fonts/fontsource.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/fonts/fontsource.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/i18n/default-labels.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/i18n/default-labels.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/i18n/index.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/i18n/index.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/i18n/translate.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/i18n/translate.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/index.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/button/button-label-input.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/button/button-label-input.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/button/button-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/button/button-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/button/button.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/button/button.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/columns/column.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/columns/column.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/columns/columns.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/columns/columns.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/footer.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/footer.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/heading/heading.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/heading/heading.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/html/html-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/html/html-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/html/html.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/html/html.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/image/image-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/image/image-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/image/image.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/image/image.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/inline-image/inline-image.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/inline-image/inline-image.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/link-card.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/link-card.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/link.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/link.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/logo/logo-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/logo/logo-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/logo/logo.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/logo/logo.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/paragraph/paragraph.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/paragraph/paragraph.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/repeat/repeat-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/repeat/repeat-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/repeat/repeat.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/repeat/repeat.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/section/section.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/section/section.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/spacer.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/spacer.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/variable/variable-suggestions-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/variable/variable-suggestions-popover.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/variable/variable-suggestions.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/variable/variable-suggestions.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/variable/variable-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/variable/variable-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/nodes/variable/variable.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/nodes/variable/variable.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/plugins/drag-handle/drag-handle-plugin.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/plugins/drag-handle/drag-handle-plugin.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/plugins/drag-handle/drag-handle.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/plugins/drag-handle/drag-handle.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/plugins/image-upload/image-upload-plugin.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/plugins/image-upload/image-upload-plugin.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/provider.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/provider.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/aspect-ratio.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/aspect-ratio.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/border-radius.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/border-radius.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/columns.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/columns.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/constants.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/constants.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/delete-node.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/delete-node.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/get-render-container.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/get-render-container.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/is-custom-node-selected.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/is-custom-node-selected.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/is-text-selected.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/is-text-selected.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/node-options.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/node-options.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/replace-deprecated.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/replace-deprecated.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/spacing.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/spacing.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/update-attribute.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/update-attribute.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/update-scroll-view.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/update-scroll-view.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/use-event.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/use-event.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/use-outside-click.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/use-outside-click.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/variable.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/variable.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/extensions.ts",
+          "type": "registry:component",
+          "target": "@components/maily/extensions.ts"
+        },
+        {
+          "path": "registry/default/maily/variants/editor-index.ts",
+          "type": "registry:component",
+          "target": "@components/maily/index.ts"
+        }
+      ],
+      "css": {
+        "@plugin \"@tailwindcss/typography\"": {}
+      },
+      "docs": "Editor usage:\n\nimport { Editor } from '@/components/maily'\n\nThe root barrel exports the editor only.\n\nMaily ships no CSS — its chrome and canvas use your shadcn theme\ntokens directly. Ensure your app defines the standard shadcn tokens\n(--background, --foreground, --primary, --muted, --border, …) and has\nthe Tailwind typography plugin enabled (added automatically on install\nvia this item's `css`): @plugin \"@tailwindcss/typography\";"
+    },
+    {
+      "name": "maily-mailbox",
+      "type": "registry:block",
+      "title": "Maily Mailbox",
+      "description": "The optional backend-agnostic mailbox surface for Maily editor consumers.",
+      "registryDependencies": [
+        "@maily/maily-editor",
+        "button",
+        "input",
+        "textarea",
+        "dropdown-menu",
+        "popover",
+        "input-group",
+        "command",
+        "badge",
+        "resizable",
+        "scroll-area"
+      ],
+      "dependencies": [],
+      "files": [
+        {
+          "path": "registry/default/maily/components/maily/mailbox/contacts.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/contacts.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/index.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/index.tsx"
+        }
+      ],
+      "docs": "Mailbox usage:\n\nimport { MailboxView } from '@/components/maily/mailbox'\n\nThis item installs the editor dependency because rich compose mode\nembeds the Maily Editor."
+    },
+    {
+      "name": "maily-render",
+      "type": "registry:block",
+      "title": "Maily Renderer",
+      "description": "Server-side Maily JSON to email-safe HTML rendering source.",
+      "dependencies": [
+        "@antfu/utils@^9.2.0",
+        "@react-email/components@^0.5.1",
+        "@react-email/render@^1.2.1",
+        "@tiptap/core@^2.11.5",
+        "csstype@^3.1.3",
+        "juice@^11.0.1",
+        "node-html-parser@^7.0.1"
+      ],
+      "files": [
+        {
+          "path": "registry/default/maily/lib/maily-render/fontsource.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/fontsource.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/index.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/index.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/maily.tsx",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/maily.tsx"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/meta.tsx",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/meta.tsx"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/preheader.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/preheader.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/render.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/render.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/shared/css-variables.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/shared/css-variables.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/shared/font.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/shared/font.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/shared/index.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/shared/index.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/shared/theme.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/shared/theme.ts"
+        },
+        {
+          "path": "registry/default/maily/lib/maily-render/utils.ts",
+          "type": "registry:lib",
+          "target": "@lib/maily-render/utils.ts"
+        }
+      ],
+      "docs": "Renderer usage:\n\nimport { render } from '@/lib/maily-render'\n\nInstall this item only in applications that render email HTML."
+    },
+    {
       "name": "maily",
       "type": "registry:block",
-      "title": "Maily",
-      "description": "A local, shadcn-installable Maily email editor with HTML email rendering.",
+      "title": "Maily Full",
+      "description": "Backward-compatible full Maily install: editor, mailbox, and server renderer.",
       "registryDependencies": [
         "button",
         "input",
@@ -28,10 +803,12 @@
         "scroll-area"
       ],
       "dependencies": [
-        "@tailwindcss/postcss@^4.1.8",
+        "@antfu/utils@^9.2.0",
+        "@react-email/components@^0.5.1",
+        "@react-email/render@^1.2.1",
         "@tanstack/react-virtual@^3.14.6",
         "@tiptap/core@^2.11.5",
-        "@tiptap/extension-code-block-lowlight@^2.11.5",
+        "@tiptap/extension-code-block@^2.11.5",
         "@tiptap/extension-color@^2.11.5",
         "@tiptap/extension-document@^2.11.5",
         "@tiptap/extension-dropcursor@^2.11.5",
@@ -41,7 +818,6 @@
         "@tiptap/extension-image@^2.11.5",
         "@tiptap/extension-link@^2.11.5",
         "@tiptap/extension-list-item@^2.11.5",
-        "@tiptap/extension-mention@^2.11.5",
         "@tiptap/extension-paragraph@^2.11.5",
         "@tiptap/extension-placeholder@^2.11.5",
         "@tiptap/extension-text-align@^2.11.5",
@@ -51,26 +827,16 @@
         "@tiptap/react@^2.11.5",
         "@tiptap/starter-kit@^2.11.5",
         "@tiptap/suggestion@^2.11.5",
-        "clsx@^2.1.1",
+        "csstype@^3.1.3",
         "fast-deep-equal@^3.1.3",
-        "highlight.js@^11.11.1",
-        "lowlight@^3.3.0",
-        "react-colorful@^5.6.1",
-        "tailwindcss@^4.1.8",
-        "tippy.js@^6.3.7",
-        "uuid@^11.1.0",
-        "y-prosemirror@^1.3.0",
-        "@react-email/components@^0.5.1",
-        "@react-email/render@^1.2.1",
         "juice@^11.0.1",
         "node-html-parser@^7.0.1",
-        "csstype@^3.1.3",
-        "zod@^3.24.2",
-        "@antfu/utils@^9.2.0"
+        "react-colorful@^5.6.1",
+        "tippy.js@^6.3.7",
+        "uuid@^11.1.0"
       ],
       "devDependencies": [
-        "@tailwindcss/typography@^0.5.16",
-        "tw-animate-css@^1.3.6"
+        "@tailwindcss/typography@^0.5.16"
       ],
       "files": [
         {
@@ -752,7 +1518,7 @@
       "css": {
         "@plugin \"@tailwindcss/typography\"": {}
       },
-      "docs": "Editor usage:\n\nimport { Editor } from '@/components/maily'\n\nMaily ships no CSS — its chrome and canvas use your shadcn theme\ntokens directly. Ensure your app defines the standard shadcn tokens\n(--background, --foreground, --primary, --muted, --border, …) and has\nthe Tailwind typography plugin enabled (added automatically on install\nvia this item's `css`): @plugin \"@tailwindcss/typography\";\n\nRenderer usage:\n\nimport { render } from '@/lib/maily-render'\n\nconst html = await render(editorJson)"
+      "docs": "This is the backward-compatible full install.\nFor the smallest consumer footprint, install only the items you use:\n\nshadcn add @maily/maily-editor\nshadcn add @maily/maily-mailbox\nshadcn add @maily/maily-render\n\nEditor: import { Editor } from '@/components/maily'\nMailbox: import { MailboxView } from '@/components/maily/mailbox'\nRenderer: import { render } from '@/lib/maily-render'\n\nThe root @/components/maily barrel exports the editor only."
     }
   ]
 }
