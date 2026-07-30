@@ -4,7 +4,7 @@ import { SectionExtension } from '../../nodes/section/section';
 import { isCustomNodeSelected } from '../../utils/is-custom-node-selected';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { TextBubbleContent } from './text-bubble-content';
@@ -34,7 +34,6 @@ export type EditorBubbleMenuProps = Omit<BubbleMenuProps, 'children'> & {
 export function TextBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
   const isPointerSelectingRef = useRef(false);
-  const [selectionGestureVersion, setSelectionGestureVersion] = useState(0);
 
   if (!editor) {
     return null;
@@ -71,8 +70,6 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
                 .setMeta('mailyPointerSelectionDone', true)
             );
           }
-
-          setSelectionGestureVersion((version) => version + 1);
         });
       }
     }
@@ -148,7 +145,6 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
 
   return (
     <BubbleMenu
-      key={`text-menu-${selectionGestureVersion}`}
       {...bubbleMenuProps}
       className={`${FLOATING_MENU_CLASS} flex gap-0.5`}
     >
