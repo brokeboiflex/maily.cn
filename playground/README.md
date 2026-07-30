@@ -7,11 +7,12 @@ shadcn registry with `shadcn add`, instead of importing the workspace packages.
 **Live playground:** https://brokeboiflex.github.io/maily.cn/
 
 The published page uses the same centered demo hierarchy as the
-`shadcn-theme-provider` showcase: product introduction and resource links,
-visible Light/Dark/System and palette controls, an English/Polish component
-language switch, then framed editor and mailbox examples. The editor is seeded
-with editable content; on narrow screens, the desktop split-pane mailbox scrolls
-inside its own frame instead of widening the page.
+[`shadcn-theme-provider`](https://github.com/brokeboiflex/shadcn-theme-provider)
+showcase: product introduction and resource links, visible Light/Dark/System and
+palette controls, an English/Polish component language switch, then framed
+editor and mailbox examples. The editor is seeded with editable content; on
+narrow screens, the desktop split-pane mailbox scrolls inside its own frame
+instead of widening the page.
 
 It was scaffolded with the shadcn CLI:
 

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react"
 import type { Editor as TiptapEditor } from "@tiptap/core"
-import { Braces, Code2 } from "lucide-react"
+import { Braces, Code2, Palette } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -551,6 +551,16 @@ export function App() {
               >
                 <Braces />
                 Registry
+              </a>
+            </Button>
+            <Button asChild variant="outline" className="rounded-full px-4">
+              <a
+                href="https://github.com/brokeboiflex/shadcn-theme-provider"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Palette />
+                Theme provider
               </a>
             </Button>
           </div>
