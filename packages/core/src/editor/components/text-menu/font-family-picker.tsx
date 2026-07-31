@@ -13,6 +13,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { Button } from '../base-button';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
+import { FLOATING_MENU_TRIGGER_CLASS } from '../ui/floating-menu';
 import {
   Command,
   CommandEmpty,
@@ -20,7 +22,9 @@ import {
   CommandItem,
   CommandList,
 } from '../ui/command';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import { useMailyContext } from '../../provider';
+import { cn } from '../../utils/classname';
 import {
   createFontSelection,
   fontsourceFileUrl,
@@ -46,6 +50,8 @@ type CatalogState =
 type FontFamilyPickerProps = {
   editor: Editor;
   currentFont: MailyFontSelection | null;
+  onFontChange?: (font: MailyFontSelection) => void;
+  onFontUnset?: () => void;
 };
 
 function usePreviewFont(font: FontsourceFont) {
@@ -128,7 +134,7 @@ function FontRow({
         >
           {font.family}
         </span>
-        <span className="text-muted-foreground block truncate text-[10px] leading-4 tracking-wide uppercase">
+        <span className="text-muted-foreground block truncate text-[10px] uppercase leading-4 tracking-wide">
           {categoryLabel}
         </span>
       </span>
@@ -144,6 +150,8 @@ function FontRow({
 export function FontFamilyPicker({
   editor,
   currentFont,
+  onFontChange,
+  onFontUnset,
 }: FontFamilyPickerProps) {
   const { t } = useMailyContext();
   const [open, setOpen] = useState(false);
@@ -215,20 +223,28 @@ export function FontFamilyPicker({
   );
 
   const selectDefault = useCallback(() => {
-    editor.chain().focus().unsetMailyFont().run();
+    if (onFontUnset) {
+      onFontUnset();
+    } else {
+      editor.chain().focus().unsetMailyFont().run();
+    }
     setOpen(false);
-  }, [editor]);
+  }, [editor, onFontUnset]);
 
   const selectFont = useCallback(
     async (font: FontsourceFont) => {
       setLoadingFontId(font.id);
       const selection = await resolveFontSelection(font);
       loadEditorFont(selection);
-      editor.chain().focus().setMailyFont(selection).run();
+      if (onFontChange) {
+        onFontChange(selection);
+      } else {
+        editor.chain().focus().setMailyFont(selection).run();
+      }
       setLoadingFontId(null);
       setOpen(false);
     },
-    [editor]
+    [editor, onFontChange]
   );
 
   const retry = useCallback(() => {
@@ -290,25 +306,34 @@ export function FontFamilyPicker({
     },
     [activeValue, filteredFonts, selectDefault, selectFont, virtualizer]
   );
+  const label = t('toolbar.fontFamily');
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 max-w-36 gap-1.5 px-2"
-          aria-label={t('toolbar.fontFamily')}
-        >
-          <TypeIcon className="size-3.5 shrink-0" />
-          <span className="max-w-24 truncate text-xs font-medium">
-            {currentFont?.fontFamily ?? t('fontPicker.default')}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex shrink-0">
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className={cn(FLOATING_MENU_TRIGGER_CLASS, 'max-w-36 gap-1.5')}
+                aria-label={label}
+              >
+                <TypeIcon className="size-3.5 shrink-0" />
+                <span className="max-w-24 truncate text-xs font-medium">
+                  {currentFont?.fontFamily ?? t('fontPicker.default')}
+                </span>
+                <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
+              </Button>
+            </PopoverTrigger>
           </span>
-          <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
-        </Button>
-      </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={8}>{label}</TooltipContent>
+      </Tooltip>
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         align="start"
         sideOffset={8}
         className="w-[min(22rem,calc(100vw-1rem))] gap-0 overflow-hidden p-0"
@@ -399,7 +424,7 @@ export function FontFamilyPicker({
                         return (
                           <div
                             key={font.id}
-                            className="absolute top-0 left-0 w-full py-0.5"
+                            className="absolute left-0 top-0 w-full py-0.5"
                             style={{
                               height: virtualItem.size,
                               transform: `translateY(${virtualItem.start}px)`,

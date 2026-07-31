@@ -7,6 +7,9 @@ import {
   ToggleGroupCompatItem,
 } from '../ui/toggle-group-compat';
 import { useMailyContext } from '../../provider';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
+import { FLOATING_MENU_TRIGGER_CLASS } from '../ui/floating-menu';
+import { cn } from '@/lib/utils';
 
 const DEFAULT_FONT_SIZE_VALUE = '__maily-default-font-size__';
 
@@ -50,7 +53,10 @@ export function FontSizePicker(props: FontSizePickerProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 w-[5.5rem] justify-between px-2"
+                className={cn(
+                  FLOATING_MENU_TRIGGER_CLASS,
+                  'w-[5.5rem] justify-between'
+                )}
                 aria-label={label}
               >
                 <span className="truncate text-xs font-medium">
@@ -72,8 +78,8 @@ export function FontSizePicker(props: FontSizePickerProps) {
       </Tooltip>
 
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="w-[6.25rem] gap-0 p-1"
-        side="top"
         sideOffset={8}
         align="start"
       >

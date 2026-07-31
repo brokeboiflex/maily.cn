@@ -4,6 +4,7 @@ import { ButtonView } from './button-view';
 import { updateAttributes } from '@/editor/utils/update-attribute';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
 import { type AllowedLogoAlignment } from '../logo/logo';
+import type { MailyFontSelection } from '@/editor/fonts/fontsource';
 
 export const DEFAULT_BUTTON_ALIGNMENT: AllowedLogoAlignment = 'left';
 export const DEFAULT_BUTTON_VARIANT: AllowedButtonVariant = 'filled';
@@ -15,6 +16,7 @@ export const DEFAULT_BUTTON_PADDING_TOP = null;
 export const DEFAULT_BUTTON_PADDING_RIGHT = null;
 export const DEFAULT_BUTTON_PADDING_BOTTOM = null;
 export const DEFAULT_BUTTON_PADDING_LEFT = null;
+export const DEFAULT_BUTTON_FONT_SIZE = null;
 
 export const allowedButtonVariant = ['filled', 'outline'] as const;
 export type AllowedButtonVariant = (typeof allowedButtonVariant)[number];
@@ -42,7 +44,51 @@ export type ButtonAttributes = {
   paddingRight: number;
   paddingBottom: number;
   paddingLeft: number;
+
+  fontSize: string | null;
+  fontFamily: string | null;
+  fontId: string | null;
+  fontFallback: MailyFontSelection['fontFallback'] | null;
+  fontSubset: string | null;
+  fontVersion: string | null;
+  fontRegularWeight: number | null;
+  fontBoldWeight: number | null;
+  fontHasItalic: boolean;
 };
+
+function dataAttribute(name: string) {
+  return `data-maily-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
+}
+
+function parseStringAttribute(element: HTMLElement, name: string) {
+  return element.getAttribute(dataAttribute(name)) || null;
+}
+
+function parseNumberAttribute(element: HTMLElement, name: string) {
+  const value = element.getAttribute(dataAttribute(name));
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function renderStringAttribute(
+  attributes: Record<string, unknown>,
+  name: string
+) {
+  const value = attributes[name];
+  return typeof value === 'string' && value
+    ? { [dataAttribute(name)]: value }
+    : {};
+}
+
+function renderNumberAttribute(
+  attributes: Record<string, unknown>,
+  name: string
+) {
+  const value = attributes[name];
+  return typeof value === 'number' && Number.isFinite(value)
+    ? { [dataAttribute(name)]: value }
+    : {};
+}
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -182,6 +228,68 @@ export const ButtonExtension = Node.create({
       paddingRight: DEFAULT_BUTTON_PADDING_RIGHT,
       paddingBottom: DEFAULT_BUTTON_PADDING_BOTTOM,
       paddingLeft: DEFAULT_BUTTON_PADDING_LEFT,
+      fontSize: {
+        default: DEFAULT_BUTTON_FONT_SIZE,
+        parseHTML: (element) =>
+          element.getAttribute('data-maily-font-size') ||
+          element.style.fontSize ||
+          null,
+        renderHTML: (attributes) =>
+          attributes.fontSize
+            ? { 'data-maily-font-size': attributes.fontSize }
+            : {},
+      },
+      fontFamily: {
+        default: null,
+        parseHTML: (element) => parseStringAttribute(element, 'fontFamily'),
+        renderHTML: (attributes) =>
+          renderStringAttribute(attributes, 'fontFamily'),
+      },
+      fontId: {
+        default: null,
+        parseHTML: (element) => parseStringAttribute(element, 'fontId'),
+        renderHTML: (attributes) => renderStringAttribute(attributes, 'fontId'),
+      },
+      fontFallback: {
+        default: null,
+        parseHTML: (element) => parseStringAttribute(element, 'fontFallback'),
+        renderHTML: (attributes) =>
+          renderStringAttribute(attributes, 'fontFallback'),
+      },
+      fontSubset: {
+        default: null,
+        parseHTML: (element) => parseStringAttribute(element, 'fontSubset'),
+        renderHTML: (attributes) =>
+          renderStringAttribute(attributes, 'fontSubset'),
+      },
+      fontVersion: {
+        default: null,
+        parseHTML: (element) => parseStringAttribute(element, 'fontVersion'),
+        renderHTML: (attributes) =>
+          renderStringAttribute(attributes, 'fontVersion'),
+      },
+      fontRegularWeight: {
+        default: null,
+        parseHTML: (element) =>
+          parseNumberAttribute(element, 'fontRegularWeight'),
+        renderHTML: (attributes) =>
+          renderNumberAttribute(attributes, 'fontRegularWeight'),
+      },
+      fontBoldWeight: {
+        default: null,
+        parseHTML: (element) => parseNumberAttribute(element, 'fontBoldWeight'),
+        renderHTML: (attributes) =>
+          renderNumberAttribute(attributes, 'fontBoldWeight'),
+      },
+      fontHasItalic: {
+        default: false,
+        parseHTML: (element) =>
+          element.getAttribute(dataAttribute('fontHasItalic')) === 'true',
+        renderHTML: (attributes) =>
+          attributes.fontHasItalic
+            ? { [dataAttribute('fontHasItalic')]: 'true' }
+            : {},
+      },
     };
   },
 

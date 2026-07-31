@@ -7,9 +7,14 @@ import {
 import { ShowPopover } from '@/editor/components/show-popover';
 import { ColorPicker } from '@/editor/components/ui/color-picker';
 import { Separator } from '@/editor/components/ui/divider';
+import { BUBBLE_MENU_CONTENT_CLASS } from '@/editor/components/ui/floating-menu';
 import { LinkInputPopover } from '@/editor/components/ui/link-input-popover';
 import { Select } from '@/editor/components/ui/select';
 import { TooltipProvider } from '@/editor/components/ui/tooltip';
+import { FontFamilyPicker } from '@/editor/components/text-menu/font-family-picker';
+import { FontSizePicker } from '@/editor/components/text-menu/font-size-picker';
+import { FONT_ATTRIBUTE_KEYS } from '@/editor/extensions/font-family';
+import { fontSelectionFromAttrs, fontStack } from '@/editor/fonts/fontsource';
 import { useMailyContext } from '@/editor/provider';
 import { cn } from '@/editor/utils/classname';
 import { useVariableOptions } from '@/editor/utils/node-options';
@@ -41,10 +46,15 @@ export function ButtonView(props: NodeViewProps) {
     paddingRight,
     paddingBottom,
     paddingLeft,
+    fontSize,
   } = node.attrs as ButtonAttributes;
 
   const opts = useVariableOptions(editor);
   const renderVariable = opts?.renderVariable;
+  const currentFont = fontSelectionFromAttrs(node.attrs);
+  const currentFontStack = currentFont ? fontStack(currentFont) : undefined;
+  const popoverAlign =
+    alignment === 'right' ? 'end' : alignment === 'center' ? 'center' : 'start';
 
   const sizes = useMemo(
     () => ({
@@ -65,9 +75,12 @@ export function ButtonView(props: NodeViewProps) {
   );
 
   const size = useMemo(() => {
+    const currentPaddingRight = parsePaddingValue(paddingRight) ?? 32;
+    const currentPaddingTop = parsePaddingValue(paddingTop) ?? 10;
+
     return Object.entries(sizes).find(
       ([, { paddingX, paddingY }]) =>
-        paddingRight === paddingX && paddingTop === paddingY
+        currentPaddingRight === paddingX && currentPaddingTop === paddingY
     )?.[0] as 'small' | 'medium' | 'large';
   }, [paddingRight, paddingTop, sizes]);
 
@@ -82,7 +95,7 @@ export function ButtonView(props: NodeViewProps) {
     >
       <Popover open={props.selected && editor.isEditable}>
         <PopoverTrigger asChild>
-          <div>
+          <div className="inline-flex">
             {/* shadcn-audit-ignore-next-line email content preview renders the actual message button */}
             <button
               className={cn(
@@ -116,6 +129,8 @@ export function ButtonView(props: NodeViewProps) {
                   paddingRight: paddingRight || '32px',
                   paddingBottom: paddingBottom || '10px',
                   paddingLeft: paddingLeft || '32px',
+                  ...(fontSize ? { fontSize } : {}),
+                  ...(currentFontStack ? { fontFamily: currentFontStack } : {}),
                 } as CSSProperties
               }
               onClick={(e) => {
@@ -140,13 +155,13 @@ export function ButtonView(props: NodeViewProps) {
           </div>
         </PopoverTrigger>
         <PopoverContent
-          align="end"
+          align={popoverAlign}
           side="top"
           className="p-0.5! w-max rounded-lg"
           sideOffset={8}
         >
           <TooltipProvider>
-            <div className="text-foreground flex items-stretch">
+            <div className={cn('text-foreground', BUBBLE_MENU_CONTENT_CLASS)}>
               <ButtonLabelInput
                 value={text}
                 onValueChange={(value, isVariable) => {
@@ -158,6 +173,37 @@ export function ButtonView(props: NodeViewProps) {
                 isVariable={isTextVariable}
                 editor={editor}
               />
+
+              <Separator orientation="vertical" />
+
+              <div className="flex gap-x-0.5">
+                <FontFamilyPicker
+                  editor={editor}
+                  currentFont={currentFont}
+                  onFontChange={(font) => {
+                    updateAttributes(font);
+                  }}
+                  onFontUnset={() => {
+                    updateAttributes(
+                      Object.fromEntries(
+                        FONT_ATTRIBUTE_KEYS.map((key) => [
+                          key,
+                          key === 'fontHasItalic' ? false : null,
+                        ])
+                      ) as Partial<ButtonAttributes>
+                    );
+                  }}
+                />
+
+                <FontSizePicker
+                  value={fontSize || ''}
+                  onValueChange={(value) => {
+                    updateAttributes({
+                      fontSize: value || null,
+                    });
+                  }}
+                />
+              </div>
 
               <Separator orientation="vertical" />
 
@@ -289,6 +335,19 @@ export function ButtonView(props: NodeViewProps) {
       </Popover>
     </NodeViewWrapper>
   );
+}
+
+function parsePaddingValue(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
 }
 
 type ColorPickerProps = {

@@ -1,6 +1,9 @@
 import type { FontProps } from './theme';
 
-type Font = Pick<FontProps, 'fontFamily' | 'fallbackFontFamily' | 'webFont'>;
+type Font = Pick<
+  FontProps,
+  'fontFamily' | 'fallbackFontFamily' | 'webFont' | 'fontStyle' | 'fontWeight'
+>;
 
 export function loadFont(font: Font): void {
   const style = fontStyle(font);
@@ -11,7 +14,13 @@ export function loadFont(font: Font): void {
 }
 
 export function fontStyle(font: Font): string {
-  const { fontFamily, fallbackFontFamily, webFont } = font;
+  const {
+    fontFamily,
+    fallbackFontFamily,
+    webFont,
+    fontStyle = 'normal',
+    fontWeight = 400,
+  } = font;
 
   const src = webFont
     ? `src: url(${webFont.url}) format('${webFont.format}');`
@@ -20,8 +29,8 @@ export function fontStyle(font: Font): string {
   const style = `
   @font-face {
     font-family: '${fontFamily}';
-    font-style: normal;
-    font-weight: 400;
+    font-style: ${fontStyle};
+    font-weight: ${fontWeight};
     mso-font-alt: '${fallbackFontFamily}';
     ${src}
   }`;

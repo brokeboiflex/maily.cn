@@ -10,7 +10,7 @@ import {
   DEFAULT_INLINE_IMAGE_WIDTH,
 } from '../../nodes/inline-image/inline-image';
 import { useMailyContext } from '../../provider';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
 import { ImageDownIcon } from "lucide-react";
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
@@ -43,7 +43,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   };
 
   return (
-    <BubbleMenu {...bubbleMenuProps} className={`${FLOATING_MENU_CLASS} flex`}>
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <div className="flex gap-x-0.5">
           <LinkInputPopover

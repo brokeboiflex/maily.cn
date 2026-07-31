@@ -7,19 +7,20 @@ import {
 } from 'react';
 import { Editor as EditorType } from '@tiptap/core';
 import { useEditorState } from '@tiptap/react';
-import { type EditorProps } from '..';
+import { type EditorProps, type EditorViewMode } from '..';
 import { cn } from '@/lib/utils';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../provider';
 import { Toggle } from '@/components/ui/toggle';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from './ui/toggle-group-compat';
 import { LinkInputPopover } from './ui/link-input-popover';
-import { BoldIcon, ItalicIcon, UnderlineIcon, StrikethroughIcon, EraserIcon, SeparatorHorizontal, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import { BoldIcon, ItalicIcon, UnderlineIcon, StrikethroughIcon, EraserIcon, SeparatorHorizontal, AlignLeft, AlignCenter, AlignRight, Pencil, Eye } from "lucide-react";
 
 interface EditorMenuItem extends BubbleMenuItem {
   group: 'alignment' | 'image' | 'mark' | 'custom' | 'email';
@@ -29,6 +30,8 @@ interface EditorMenuItem extends BubbleMenuItem {
 type EditorMenuBarProps = {
   config: EditorProps['config'];
   editor: EditorType;
+  viewMode: EditorViewMode;
+  onViewModeChange: (mode: EditorViewMode) => void;
 };
 
 // Items in the `mark` group that are real on/off toggles (the rest, e.g. the
@@ -160,7 +163,7 @@ const ToggleItemControl = forwardRef<HTMLButtonElement, ToggleItemControlProps>(
 ToggleItemControl.displayName = 'ToggleItemControl';
 
 export const EditorMenuBar = (props: EditorMenuBarProps) => {
-  const { editor, config } = props;
+  const { editor, config, viewMode, onViewModeChange } = props;
   const { t } = useMailyContext();
 
   const items: EditorMenuItem[] = useMemo(
@@ -275,22 +278,56 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
   return (
     <div
       className={cn(
-        'flex min-w-0 flex-wrap items-center gap-2',
+        'flex min-w-0 flex-wrap items-center justify-between gap-2',
         config?.toolbarClassName
       )}
     >
-      {groups.map((group) => {
-        const groupItems = items.filter((item) => item.group === group);
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        {groups.map((group) => {
+          const groupItems = items.filter((item) => item.group === group);
 
-        return (
-          <div
-            key={group}
-            className="border-border bg-background flex items-center gap-1 rounded-md border p-1"
+          return (
+            <div
+              key={group}
+              className="border-border bg-background flex items-center gap-1 rounded-md border p-1"
+            >
+              {renderGroup(group, groupItems)}
+            </div>
+          );
+        })}
+      </div>
+      <div className="border-border bg-background flex items-center gap-1 rounded-md border p-1">
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(value) => {
+            if (value === 'design' || value === 'render') {
+              onViewModeChange(value);
+            }
+          }}
+          aria-label={t('toolbar.viewMode')}
+          className="gap-1"
+        >
+          <ToggleGroupItem
+            value="design"
+            aria-label={t('toolbar.viewMode.design')}
+            className="h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium"
+            type="button"
           >
-            {renderGroup(group, groupItems)}
-          </div>
-        );
-      })}
+            <Pencil className="size-3.5" />
+            <span>{t('toolbar.viewMode.design')}</span>
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="render"
+            aria-label={t('toolbar.viewMode.render')}
+            className="h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium"
+            type="button"
+          >
+            <Eye className="size-3.5" />
+            <span>{t('toolbar.viewMode.render')}</span>
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
     </div>
   );
 };

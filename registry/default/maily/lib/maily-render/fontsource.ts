@@ -58,7 +58,7 @@ export function emailFontStack(
   return `'${escapeCssString(fontFamily.trim())}', ${fallback}`;
 }
 
-function selectionFromAttrs(
+export function selectionFromAttrs(
   attrs?: Record<string, unknown>
 ): EmailFontSelection | null {
   if (!attrs) {
@@ -118,6 +118,14 @@ export function fontsourceStyles(content: JSONContent): string {
   const selections = new Map<string, EmailFontSelection>();
 
   const visit = (node: JSONContent) => {
+    const nodeSelection = selectionFromAttrs(node.attrs);
+    if (nodeSelection) {
+      selections.set(
+        `${nodeSelection.fontId}@${nodeSelection.fontVersion}/${nodeSelection.fontSubset}`,
+        nodeSelection
+      );
+    }
+
     for (const mark of node.marks ?? []) {
       if (mark.type !== 'textStyle') {
         continue;

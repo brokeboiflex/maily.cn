@@ -168,8 +168,15 @@ through callbacks.
 | `config`      | `object`           | Chrome toggles and class hooks.                            |
 
 `config` supports `hasMenuBar`, `hideContextMenu`, `spellCheck`, `autofocus`,
-`immediatelyRender`, `wrapClassName`, `toolbarClassName`, `bodyClassName`, and
+`immediatelyRender`, `initialViewMode`, `renderPreview`, `wrapClassName`,
+`toolbarClassName`, `bodyClassName`, `renderPreviewClassName`, and
 `contentClassName`.
+
+The toolbar includes a Design / Render toggle. Design mode keeps the editable
+TipTap canvas active. Render mode shows a read-only iframe preview from
+`editor.getHTML()` by default; pass `config.renderPreview` when your app wants to
+mount its own preview component backed by `@/lib/maily-render` or a server-side
+rendering endpoint.
 
 ## Translation
 

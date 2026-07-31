@@ -3,7 +3,7 @@ import { sticky } from 'tippy.js';
 import { TextBubbleContent } from '../text-menu/text-bubble-content';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '../ui/tooltip';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
 
 export function VariableBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
@@ -32,7 +32,7 @@ export function VariableBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className={`${FLOATING_MENU_CLASS} flex gap-0.5`}
+      className={FLOATING_BUBBLE_MENU_CLASS}
     >
       <TooltipProvider>
         <TextBubbleContent showListMenu={false} editor={editor} />

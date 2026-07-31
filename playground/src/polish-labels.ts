@@ -95,6 +95,10 @@ export const polishLabels: MailyLabels = {
   "toolbar.textColor": "Kolor tekstu",
   "toolbar.fontFamily": "Krój pisma",
   "toolbar.fontSize": "Rozmiar tekstu",
+  "toolbar.viewMode": "Tryb widoku edytora",
+  "toolbar.viewMode.design": "Projekt",
+  "toolbar.viewMode.render": "Render",
+  "toolbar.viewMode.previewTitle": "Podgląd wyrenderowanej wiadomości",
   "fontSize.default": "Domyślny",
 
   // ── Font family picker ──

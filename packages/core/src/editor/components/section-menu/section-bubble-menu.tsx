@@ -23,7 +23,11 @@ import { getClosestNodeByName } from '@/editor/utils/columns';
 import { spacing } from '@/editor/utils/spacing';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '@/editor/i18n';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import {
+  BUBBLE_MENU_CONTENT_CLASS,
+  FLOATING_BUBBLE_MENU_CLASS,
+} from '../ui/floating-menu';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor } = props;
@@ -103,10 +107,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
   ];
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className={`${FLOATING_MENU_CLASS} flex items-stretch`}
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <AlignmentSwitch
           alignment={state.currentAlignment}
@@ -119,7 +120,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
         <Separator orientation="vertical" />
 
-        <div className="flex gap-x-0.5">
+        <div className={BUBBLE_MENU_CONTENT_CLASS}>
           <Select
             label={t('sectionMenu.borderRadius')}
             value={String(state.currentBorderRadius)}
@@ -194,7 +195,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
         <Separator orientation="vertical" />
 
-        <div className="flex gap-x-0.5">
+        <div className={BUBBLE_MENU_CONTENT_CLASS}>
           <ColorPicker
             color={state.currentBorderColor}
             onColorChange={(color) => {
@@ -251,8 +252,8 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
+                {...BOTTOM_FLOATING_CONTENT_PROPS}
                 className="p-0.5! w-max rounded-lg"
-                side="top"
                 sideOffset={8}
                 align="end"
               >

@@ -2,7 +2,7 @@ import { Extension } from '@tiptap/core';
 import type { MailyFontSelection } from '../fonts/fontsource';
 import { fontStack } from '../fonts/fontsource';
 
-const FONT_ATTRIBUTE_KEYS = [
+export const FONT_ATTRIBUTE_KEYS = [
   'fontFamily',
   'fontId',
   'fontFallback',

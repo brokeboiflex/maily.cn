@@ -9,6 +9,7 @@ import { type ReactNode } from 'react';
 import { useMailyContext } from '../../provider';
 import { Separator } from './divider';
 import { InputGroup } from './input-group';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
 
 type ColorPickerProps = {
   color: string;
@@ -117,6 +118,7 @@ export function ColorPicker(props: ColorPickerProps) {
       )}
 
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="w-[calc(100vw-1rem)] max-w-[260px]"
         sideOffset={8}
       >

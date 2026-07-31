@@ -33,7 +33,7 @@ imports to the consumer aliases, and declares the corresponding stock items in
 | Independent and grouped formatting state                     | `toggle`, `toggle-group` |
 | Help and control descriptions                                | `tooltip`                |
 | Menu and form dividers                                       | `separator`              |
-| Compact option controls                                      | `select`                 |
+| Compact option controls                                      | `button`, `popover`, `toggle-group` |
 | Keyboard hints                                               | `kbd`                    |
 | Node actions and “Turn into”                                 | `dropdown-menu`          |
 | Alignment, direction, color, link, and configuration flyouts | `popover`                |
@@ -58,10 +58,10 @@ actions come from the consumer's backend adapter.
 These are not replacement primitives:
 
 - `Select` adds an editor label, optional icon, and options mapping around stock
-  shadcn `Select`. It deliberately does not render Tooltip around its trigger in
-  floating editor surfaces. It uses only props shared by current Radix and Base
-  items; controlled open-state callbacks restore editor focus without passing
-  Radix-only autofocus props through the host primitive.
+  shadcn Button + Popover + ToggleGroup primitives. It deliberately does not
+  render Tooltip around its trigger in floating editor surfaces. Controlled
+  open-state callbacks restore editor focus without passing Radix-only autofocus
+  props through the host primitive.
 - `FontSizePicker` uses the same bubble-menu pattern as alignment and direction:
   stock Button + Popover + ToggleGroup. It avoids Radix Select inside the text
   bubble because that primitive traps focus and intercepts outside pointer events

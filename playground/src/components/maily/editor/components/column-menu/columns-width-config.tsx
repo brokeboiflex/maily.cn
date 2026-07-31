@@ -13,6 +13,7 @@ import {
   InputGroupInput,
 } from '@/components/ui/input-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 import { SlidersVertical, Columns2, Columns3 } from "lucide-react";
 
 type ColumnsWidthConfigProps = {
@@ -55,8 +56,8 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
         </TooltipContent>
       </Tooltip>
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="p-0.5! w-[calc(100vw-1rem)] max-w-[300px] rounded-lg"
-        side="top"
         sideOffset={8}
         align="center"
       >

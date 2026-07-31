@@ -95,7 +95,7 @@ production builds. The complete Base fixture is also launched in Chromium to
 verify ToggleGroup focus/state, Popover focus and Escape handling, mailbox rich
 compose, nested-interactive safety, and runtime errors. Externalized `Button`,
 `Input`, `Textarea`, `Toggle`,
-`ToggleGroup`, `Tooltip`, `Separator`, `Select`, `Kbd`, `DropdownMenu`,
+`ToggleGroup`, `Tooltip`, `Separator`, `Kbd`, `DropdownMenu`,
 `Popover`, `Tabs`, `InputGroup`, `Command`, and `Badge` resolve to each
 consumer's stock implementations; icon placeholders resolve to the selected icon
 library.

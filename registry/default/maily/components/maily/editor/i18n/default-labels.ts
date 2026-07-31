@@ -97,6 +97,10 @@ export const defaultLabels = {
   'toolbar.textColor': 'Text Color',
   'toolbar.fontFamily': 'Font Family',
   'toolbar.fontSize': 'Font Size',
+  'toolbar.viewMode': 'Editor view mode',
+  'toolbar.viewMode.design': 'Design',
+  'toolbar.viewMode.render': 'Render',
+  'toolbar.viewMode.previewTitle': 'Rendered email preview',
   'fontSize.default': 'Default',
 
   // ── Font family picker ──

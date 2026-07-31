@@ -20,7 +20,7 @@ import { processVariables } from '../../utils/variable';
 import { useVariableOptions } from '../../utils/node-options';
 import { useMailyContext } from '../../provider';
 import { Button } from '@/components/ui/button';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
 import { InfoIcon } from "lucide-react";
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
@@ -98,7 +98,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className={`${FLOATING_MENU_CLASS} flex items-stretch`}
+      className={FLOATING_BUBBLE_MENU_CLASS}
     >
       <TooltipProvider>
         <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">

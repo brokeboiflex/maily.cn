@@ -85,7 +85,7 @@ export interface BaseThemeOptions {
   link?: Partial<Pick<CSS.Properties, 'color'>>;
   font?: Pick<
     FontProps,
-    'fontFamily' | 'fallbackFontFamily' | 'webFont'
+    'fontFamily' | 'fallbackFontFamily' | 'webFont' | 'fontStyle' | 'fontWeight'
   > | null;
 }
 
@@ -131,8 +131,10 @@ export interface RendererThemeOptions extends BaseThemeOptions {
 export const DEFAULT_FONT: FontProps = {
   fallbackFontFamily: 'sans-serif',
   fontFamily: 'Inter',
+  fontStyle: 'normal',
+  fontWeight: '100 900',
   webFont: {
-    url: 'https://rsms.me/inter/font-files/Inter-Regular.woff2?v=3.19',
+    url: 'https://rsms.me/inter/font-files/InterVariable.woff2?v=4.1',
     format: 'woff2',
   },
 };

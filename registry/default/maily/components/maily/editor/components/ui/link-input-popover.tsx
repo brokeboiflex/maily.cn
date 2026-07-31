@@ -11,6 +11,7 @@ import { Editor } from '@tiptap/core';
 import { useVariableOptions } from '../../utils/node-options';
 import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../../nodes/variable/variable';
 import { Toggle } from '@/components/ui/toggle';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
 
 type LinkInputPopoverProps = {
   defaultValue?: string;
@@ -122,8 +123,8 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
       )}
 
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         align="end"
-        side="top"
         className="w-max p-1"
         sideOffset={8}
       >

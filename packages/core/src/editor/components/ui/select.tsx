@@ -1,12 +1,16 @@
 import { useId, useRef, useState, type ReactNode } from 'react';
+import { ChevronDownIcon } from 'lucide-react';
+
 import { cn } from '@/editor/utils/classname';
+import { Button } from '../base-button';
+import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import {
-  Select as SelectPrimitive,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './select-primitive';
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from './toggle-group-compat';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
+import { FLOATING_MENU_TRIGGER_CLASS } from './floating-menu';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const EMPTY_SELECT_VALUE = '__maily-empty-value__';
 
@@ -47,6 +51,7 @@ export function Select(props: SelectProps) {
     icon,
     placeholder,
     onCloseAutoFocus,
+    tooltip,
   } = props;
 
   const selectId = `mly${useId()}`;
@@ -62,11 +67,12 @@ export function Select(props: SelectProps) {
       icon={icon}
       placeholder={placeholder}
       onCloseAutoFocus={onCloseAutoFocus}
+      tooltip={tooltip}
     />
   );
 }
 
-type SelectControlProps = Omit<SelectProps, 'tooltip'> & {
+type SelectControlProps = SelectProps & {
   selectId: string;
 };
 
@@ -80,9 +86,15 @@ function SelectControl({
   icon,
   placeholder,
   onCloseAutoFocus,
+  tooltip,
 }: SelectControlProps) {
   const [open, setOpen] = useState(false);
   const wasOpenRef = useRef(false);
+  const selectedValue = toPrimitiveValue(value || '');
+  const activeLabel =
+    options.find((option) => option.value === (value || ''))?.label ||
+    placeholder ||
+    label;
 
   const handleOpenChange = (nextOpen: boolean) => {
     const wasOpen = wasOpenRef.current;
@@ -100,45 +112,101 @@ function SelectControl({
         {label}
       </label>
 
-      <SelectPrimitive
-        open={open}
-        onOpenChange={handleOpenChange}
-        value={toPrimitiveValue(value || '')}
-        onValueChange={(nextValue) => {
-          onValueChange(fromPrimitiveValue(nextValue ?? EMPTY_SELECT_VALUE));
-        }}
-      >
-        <SelectTrigger
-          id={selectId}
-          size="sm"
-          aria-label={label}
-          className={cn(
-            'max-w-max border-0 bg-transparent shadow-none',
-            className
-          )}
-        >
-          {icon && (
-            <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
-              {icon}
-            </span>
-          )}
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent
-          align="start"
-          sideOffset={4}
-          className="max-h-80 min-w-36 data-[side=bottom]:translate-y-0 data-[side=left]:translate-x-0 data-[side=right]:translate-x-0 data-[side=top]:translate-y-0"
-        >
-          {options.map((option) => (
-            <SelectItem
-              key={option.value}
-              value={toPrimitiveValue(option.value)}
+      <Popover open={open} onOpenChange={handleOpenChange}>
+        {tooltip ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-flex shrink-0">
+                <PopoverTrigger asChild>
+                  <Button
+                    id={selectId}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label={label}
+                    aria-expanded={open}
+                    className={cn(
+                      FLOATING_MENU_TRIGGER_CLASS,
+                      'max-w-max',
+                      className
+                    )}
+                  >
+                    {icon && (
+                      <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
+                        {icon}
+                      </span>
+                    )}
+                    <span className="truncate text-xs font-medium">
+                      {activeLabel}
+                    </span>
+                    <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
+                  </Button>
+                </PopoverTrigger>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <PopoverTrigger asChild>
+            <Button
+              id={selectId}
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={label}
+              aria-expanded={open}
+              className={cn(
+                FLOATING_MENU_TRIGGER_CLASS,
+                'max-w-max',
+                className
+              )}
             >
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </SelectPrimitive>
+              {icon && (
+                <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
+                  {icon}
+                </span>
+              )}
+              <span className="truncate text-xs font-medium">
+                {activeLabel}
+              </span>
+              <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
+            </Button>
+          </PopoverTrigger>
+        )}
+        <PopoverContent
+          {...BOTTOM_FLOATING_CONTENT_PROPS}
+          align="start"
+          sideOffset={8}
+          className="max-h-80 min-w-36 gap-0 overflow-y-auto p-1"
+        >
+          <ToggleGroupCompat
+            selectionMode="single"
+            value={selectedValue}
+            className="flex-col items-stretch gap-0.5"
+          >
+            {options.map((option) => {
+              const optionValue = toPrimitiveValue(option.value);
+
+              return (
+                <ToggleGroupCompatItem
+                  key={optionValue}
+                  value={optionValue}
+                  pressed={selectedValue === optionValue}
+                  onClick={() => {
+                    onValueChange(fromPrimitiveValue(optionValue));
+                    handleOpenChange(false);
+                  }}
+                  aria-label={option.label}
+                  className="h-7! justify-start px-2 text-sm"
+                  type="button"
+                >
+                  {option.label}
+                </ToggleGroupCompatItem>
+              );
+            })}
+          </ToggleGroupCompat>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

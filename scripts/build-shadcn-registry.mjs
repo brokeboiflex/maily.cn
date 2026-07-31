@@ -53,7 +53,6 @@ const EXTERNALIZED_MODULES = {
   'editor/components/ui/toggle-group': '@/components/ui/toggle-group',
   'editor/components/ui/tooltip': '@/components/ui/tooltip',
   'editor/components/ui/divider': '@/components/ui/separator',
-  'editor/components/ui/select-primitive': '@/components/ui/select',
   'editor/components/ui/kbd': '@/components/ui/kbd',
   'editor/components/ui/dropdown-menu': '@/components/ui/dropdown-menu',
   'editor/components/popover': '@/components/ui/popover',

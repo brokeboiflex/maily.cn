@@ -331,6 +331,11 @@ export function fontSelectionFromAttrs(
 
 export function loadDocumentFonts(content: JSONContent) {
   const visit = (node: JSONContent) => {
+    const nodeFont = fontSelectionFromAttrs(node.attrs);
+    if (nodeFont) {
+      loadEditorFont(nodeFont);
+    }
+
     for (const mark of node.marks ?? []) {
       if (mark.type !== 'textStyle') {
         continue;

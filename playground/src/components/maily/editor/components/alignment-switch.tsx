@@ -10,6 +10,7 @@ import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from './ui/toggle-group-compat';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
 import { AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 
 type AlignmentSwitchProps = {
@@ -64,8 +65,8 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
         <TooltipContent sideOffset={8}>{t('alignment.label')}</TooltipContent>
       </Tooltip>
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="p-0.5! flex w-max gap-0.5 rounded-lg"
-        side="top"
         sideOffset={8}
         align="center"
       >

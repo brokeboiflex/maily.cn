@@ -1,5 +1,5 @@
-import { useMemo, useRef, useState } from "react"
-import type { Editor as TiptapEditor } from "@tiptap/core"
+import { useEffect, useMemo, useRef, useState } from "react"
+import type { Editor as TiptapEditor, JSONContent } from "@tiptap/core"
 import { Braces, Code2, ExternalLink, Palette } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -13,6 +13,12 @@ import {
 } from "@/components/ui/card"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Editor } from "@/components/maily"
+import { render as renderEmail } from "@/lib/maily-render"
+import {
+  DEFAULT_RENDERER_THEME,
+  loadFont,
+  type RendererThemeOptions,
+} from "@/lib/maily-render/shared"
 import {
   MailboxView,
   type MailyMailboxContactSuggestion,
@@ -25,7 +31,10 @@ import {
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL
-const initialEditorContent = {
+const emailPreviewTheme: RendererThemeOptions = DEFAULT_RENDERER_THEME
+const emailPreviewFontClassName = "[font-family:Inter,sans-serif]"
+
+const initialEditorContent: JSONContent = {
   type: "doc",
   content: [
     {
@@ -43,6 +52,59 @@ const initialEditorContent = {
       ],
     },
   ],
+}
+
+function RenderedEmailPreview({ json }: { json: JSONContent }) {
+  const [html, setHtml] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const renderKey = useMemo(() => JSON.stringify(json), [json])
+
+  useEffect(() => {
+    let active = true
+
+    setHtml(null)
+    setError(null)
+
+    renderEmail(json, { theme: emailPreviewTheme })
+      .then((nextHtml) => {
+        if (active) setHtml(nextHtml)
+      })
+      .catch((cause) => {
+        if (!active) return
+        setError(
+          cause instanceof Error ? cause.message : "Unable to render email."
+        )
+      })
+
+    return () => {
+      active = false
+    }
+  }, [json, renderKey])
+
+  if (error) {
+    return (
+      <div className="text-destructive flex min-h-[320px] items-center justify-center px-4 text-sm">
+        {error}
+      </div>
+    )
+  }
+
+  if (!html) {
+    return (
+      <div className="text-muted-foreground flex min-h-[320px] items-center justify-center px-4 text-sm">
+        Rendering email...
+      </div>
+    )
+  }
+
+  return (
+    <iframe
+      title="Rendered email preview"
+      className="bg-background h-[480px] w-full rounded-md border-0"
+      sandbox=""
+      srcDoc={html}
+    />
+  )
 }
 
 const promotionalNewsletterText = `The July Launch Kit is live.
@@ -515,6 +577,12 @@ export function App() {
   const [polish, setPolish] = useState(false)
   const mailboxDataSource = usePlaygroundMailbox()
 
+  useEffect(() => {
+    if (emailPreviewTheme.font) {
+      loadFont(emailPreviewTheme.font)
+    }
+  }, [])
+
   return (
     <div className="min-h-svh bg-background">
       <header className="mx-auto max-w-5xl px-4 pt-16 pb-10">
@@ -601,7 +669,13 @@ export function App() {
                 key={polish ? "pl" : "en"}
                 labels={polish ? polishLabels : undefined}
                 contentJson={initialEditorContent}
-                config={{ bodyClassName: "min-h-72" }}
+                config={{
+                  bodyClassName: "min-h-72",
+                  contentClassName: emailPreviewFontClassName,
+                  renderPreview: ({ json }) => (
+                    <RenderedEmailPreview json={json} />
+                  ),
+                }}
                 onUpdate={(editor: TiptapEditor) => setJson(editor.getJSON())}
               />
             </CardContent>

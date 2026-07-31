@@ -20,7 +20,7 @@ import { useImageState } from './use-image-state';
 import { IMAGE_MAX_WIDTH } from '../../nodes/image/image-view';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '../../i18n';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
 
 const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
   Sharp: 'imageMenu.radius.sharp',
@@ -62,7 +62,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { lockAspectRatio } = state;
 
   return (
-    <BubbleMenu {...bubbleMenuProps} className={`${FLOATING_MENU_CLASS} flex`}>
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         {state.isLogoActive && state.imageSrc && (
           <>

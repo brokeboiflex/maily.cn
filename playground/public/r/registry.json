@@ -16,7 +16,6 @@
         "toggle-group",
         "tooltip",
         "separator",
-        "select",
         "kbd",
         "dropdown-menu",
         "popover",
@@ -290,6 +289,11 @@
           "path": "registry/default/maily/components/maily/editor/components/ui/floating-menu.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/components/ui/floating-menu.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/floating-placement.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/floating-placement.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/ui/input-autocomplete.tsx",
@@ -791,7 +795,6 @@
         "toggle-group",
         "tooltip",
         "separator",
-        "select",
         "kbd",
         "dropdown-menu",
         "popover",
@@ -1073,6 +1076,11 @@
           "path": "registry/default/maily/components/maily/editor/components/ui/floating-menu.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/components/ui/floating-menu.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/ui/floating-placement.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/ui/floating-placement.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/ui/input-autocomplete.tsx",

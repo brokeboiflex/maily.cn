@@ -11,6 +11,7 @@ import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from './ui/toggle-group-compat';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
 
 type TextDirectionSwitchProps = {
   direction: AllowedTextDirection;
@@ -60,8 +61,8 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
         <TooltipContent sideOffset={8}>{t('direction.label')}</TooltipContent>
       </Tooltip>
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="p-0.5! flex w-max gap-0.5 rounded-lg"
-        side="top"
         sideOffset={8}
         align="center"
       >

@@ -16,6 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 
 type TurnIntoBlockProps = {
   options: TurnIntoOptions;
@@ -79,8 +80,8 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
         <TooltipContent sideOffset={8}>{t('turnInto.label')}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         align="start"
-        side="bottom"
         sideOffset={8}
         className="w-max min-w-40 max-w-[calc(100vw-1rem)]"
       >

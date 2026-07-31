@@ -140,20 +140,20 @@ export interface MailyConfig {
 
 const CODE_FONT_FAMILY =
   'SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace';
-export const DEFAULT_SECTION_BACKGROUND_COLOR = '#ffffff';
+export const DEFAULT_SECTION_BACKGROUND_COLOR = 'transparent';
 export const DEFAULT_SECTION_ALIGN = 'left';
-export const DEFAULT_SECTION_BORDER_WIDTH = 1;
-export const DEFAULT_SECTION_BORDER_COLOR = '#000000';
+export const DEFAULT_SECTION_BORDER_WIDTH = 2;
+export const DEFAULT_SECTION_BORDER_COLOR = '#e2e2e2';
 
 export const DEFAULT_SECTION_MARGIN_TOP = 0;
 export const DEFAULT_SECTION_MARGIN_RIGHT = 0;
 export const DEFAULT_SECTION_MARGIN_BOTTOM = 0;
 export const DEFAULT_SECTION_MARGIN_LEFT = 0;
 
-export const DEFAULT_SECTION_PADDING_TOP = 5;
-export const DEFAULT_SECTION_PADDING_RIGHT = 5;
-export const DEFAULT_SECTION_PADDING_BOTTOM = 5;
-export const DEFAULT_SECTION_PADDING_LEFT = 5;
+export const DEFAULT_SECTION_PADDING_TOP = 0;
+export const DEFAULT_SECTION_PADDING_RIGHT = 0;
+export const DEFAULT_SECTION_PADDING_BOTTOM = 0;
+export const DEFAULT_SECTION_PADDING_LEFT = 0;
 
 export const DEFAULT_COLUMNS_WIDTH = '100%';
 export const DEFAULT_COLUMNS_GAP = 8;
@@ -481,10 +481,11 @@ export class Maily {
     const tags = meta(this.meta);
     const htmlProps = this.htmlProps;
     const containerStyles = this.config.theme?.container;
+    const configuredFont = this.config.theme?.font || DEFAULT_FONT;
     const fontOptions: FontProps = {
-      ...(this.config.theme?.font || DEFAULT_FONT),
-      fontStyle: 'normal',
-      fontWeight: 400,
+      ...configuredFont,
+      fontStyle: configuredFont.fontStyle ?? 'normal',
+      fontWeight: configuredFont.fontWeight ?? 400,
     };
     const selectedFontStyles = fontsourceStyles(this.content);
 
@@ -1024,10 +1025,14 @@ export class Maily {
       paddingRight: _paddingRight,
       paddingBottom: _paddingBottom,
       paddingLeft: _paddingLeft,
+      fontSize,
+      fontFamily,
+      fontFallback,
     } = attrs || {};
 
     const buttonColor = _buttonColor || buttonTheme?.backgroundColor;
     const textColor = _textColor || buttonTheme?.color;
+    const selectedFontStack = emailFontStack(fontFamily, fontFallback);
 
     let paddingTop =
       parseInt(String(_paddingTop || buttonTheme?.paddingTop)) || 0;
@@ -1081,8 +1086,10 @@ export class Maily {
             borderWidth: '2px',
             borderStyle: 'solid',
             textDecoration: 'none',
-            fontSize: '14px',
+            fontSize:
+              typeof fontSize === 'string' && fontSize ? fontSize : '14px',
             fontWeight: 500,
+            ...(selectedFontStack ? { fontFamily: selectedFontStack } : {}),
             borderRadius: radius,
             padding: `${paddingTop}px ${paddingRight}px ${paddingBottom}px ${paddingLeft}px`,
           }}
@@ -1324,10 +1331,25 @@ export class Maily {
       options
     );
 
-    const { title, description, link, linkTitle, image, badgeText, subTitle } =
-      attrs || {};
+    const {
+      title,
+      description,
+      link,
+      linkTitle,
+      image,
+      badgeText,
+      subTitle,
+      fontSize,
+      fontFamily,
+      fontFallback,
+    } = attrs || {};
     const href =
       this.linkValues.get(link) || this.variableValues.get(link) || link || '#';
+    const selectedFontStack = emailFontStack(fontFamily, fontFallback);
+    const typographyStyle = {
+      ...(typeof fontSize === 'string' && fontSize ? { fontSize } : {}),
+      ...(selectedFontStack ? { fontFamily: selectedFontStack } : {}),
+    };
 
     return (
       <a
@@ -1398,6 +1420,7 @@ export class Maily {
                     color: this.config.theme?.colors?.linkCardTitle,
                     margin: '0px',
                     ...antialiased,
+                    ...typographyStyle,
                   }}
                 >
                   {title}
@@ -1421,6 +1444,7 @@ export class Maily {
                           this.config.theme?.colors?.linkCardBadgeBackground,
                         fontSize: '12px',
                         lineHeight: '12px',
+                        ...typographyStyle,
                       }}
                     >
                       {badgeText}
@@ -1433,6 +1457,7 @@ export class Maily {
                         color: this.config.theme?.colors?.linkCardSubTitle,
                         fontSize: '12px',
                         lineHeight: '12px',
+                        ...typographyStyle,
                       }}
                     >
                       {subTitle}
@@ -1448,6 +1473,7 @@ export class Maily {
                 marginTop: '0px',
                 marginBottom: '0px',
                 ...antialiased,
+                ...typographyStyle,
               }}
             >
               {description}{' '}
@@ -1460,6 +1486,7 @@ export class Maily {
                     fontSize: '14px',
                     fontWeight: 600,
                     textDecoration: 'underline',
+                    ...typographyStyle,
                   }}
                 >
                   {linkTitle}

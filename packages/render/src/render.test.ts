@@ -189,6 +189,104 @@ describe('render', () => {
     );
   });
 
+  it('renders button-specific font family and size', async () => {
+    const content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'button',
+          attrs: {
+            text: 'Read more',
+            url: 'https://maily.to',
+            alignment: 'left',
+            variant: 'filled',
+            borderRadius: 'smooth',
+            buttonColor: '#000000',
+            textColor: '#ffffff',
+            fontSize: '18px',
+            fontFamily: 'Fraunces',
+            fontId: 'fraunces',
+            fontFallback: 'Georgia',
+            fontSubset: 'latin',
+            fontVersion: '5.2.8',
+            fontRegularWeight: 400,
+            fontBoldWeight: 700,
+            fontHasItalic: true,
+          },
+        },
+      ],
+    };
+
+    const result = await render(content);
+
+    expect(result).toContain('font-size:18px');
+    expect(result).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
+    expect(result).toContain(
+      'fontsource/fonts/fraunces@5.2.8/latin-400-normal.woff2'
+    );
+  });
+
+  it('renders link card-specific font family and size', async () => {
+    const content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'linkCard',
+          attrs: {
+            title: 'Launch notes',
+            description: 'Read the latest changes',
+            linkTitle: 'Open changelog',
+            link: 'https://maily.to/changelog',
+            badgeText: 'New',
+            image: '',
+            subTitle: '',
+            fontSize: '20px',
+            fontFamily: 'Fraunces',
+            fontId: 'fraunces',
+            fontFallback: 'Georgia',
+            fontSubset: 'latin',
+            fontVersion: '5.2.8',
+            fontRegularWeight: 400,
+            fontBoldWeight: 700,
+            fontHasItalic: true,
+          },
+        },
+      ],
+    };
+
+    const result = await render(content);
+
+    expect(result).toContain('font-size:20px');
+    expect(result).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
+    expect(result).toContain(
+      'fontsource/fonts/fraunces@5.2.8/latin-400-normal.woff2'
+    );
+  });
+
+  it('renders section defaults consistently with the editor node', async () => {
+    const content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'section',
+          attrs: {},
+          content: [
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'Inside section' }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = await render(content);
+
+    expect(result).toContain('background-color:transparent');
+    expect(result).toContain('border-color:#e2e2e2');
+    expect(result).toContain('border-width:2px');
+  });
+
   it('should apply custom theme', async () => {
     const content = {
       type: 'doc',
@@ -222,6 +320,31 @@ describe('render', () => {
     expect(result).toContain('color:rgb(255, 0, 0)');
     expect(result).toContain('color:rgb(0, 255, 0)');
     expect(result).toContain('font-size:18px');
+  });
+
+  it('renders the default font with its full weight range', async () => {
+    const content = {
+      type: 'doc',
+      content: [
+        {
+          type: 'heading',
+          attrs: { level: 1 },
+          content: [
+            {
+              type: 'text',
+              text: 'Bold italic heading',
+              marks: [{ type: 'bold' }, { type: 'italic' }],
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = await render(content);
+
+    expect(result).toContain('InterVariable.woff2');
+    expect(result).toMatch(/font-weight:\s*100 900/);
+    expect(result).toContain('<em><strong>Bold italic heading</strong></em>');
   });
 
   it('renders granular Fontsource families with pinned faces and fallbacks', async () => {

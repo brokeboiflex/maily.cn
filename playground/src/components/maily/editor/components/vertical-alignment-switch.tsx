@@ -7,6 +7,7 @@ import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from './ui/toggle-group-compat';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
 import { AlignVerticalDistributeStart, AlignVerticalDistributeCenter, AlignVerticalDistributeEnd } from "lucide-react";
 
 type VerticalAlignmentSwitchProps = {
@@ -59,8 +60,8 @@ export function VerticalAlignmentSwitch(props: VerticalAlignmentSwitchProps) {
         </TooltipContent>
       </Tooltip>
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="p-0.5! flex w-max gap-0.5 rounded-lg"
-        side="top"
         sideOffset={8}
         align="center"
       >

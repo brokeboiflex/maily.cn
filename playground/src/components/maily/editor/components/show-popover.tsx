@@ -8,6 +8,7 @@ import { InputAutocomplete } from './ui/input-autocomplete';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../provider';
 import { Button } from '@/components/ui/button';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
 import { Eye, InfoIcon } from "lucide-react";
 
 type ShowPopoverProps = {
@@ -72,8 +73,8 @@ function _ShowPopover(props: ShowPopoverProps) {
         </TooltipContent>
       </Tooltip>
       <PopoverContent
+        {...BOTTOM_FLOATING_CONTENT_PROPS}
         className="p-0.5! flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg"
-        side="top"
         sideOffset={8}
         align="end"
       >

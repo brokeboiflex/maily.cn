@@ -5,9 +5,14 @@ import {
   type FocusPosition,
   Editor as TiptapEditor,
 } from '@tiptap/core';
-import { EditorContent, type JSONContent, useEditor } from '@tiptap/react';
+import {
+  EditorContent,
+  type JSONContent,
+  useEditor,
+  useEditorState,
+} from '@tiptap/react';
 
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
 import { ContentMenu } from './components/content-menu';
 import { EditorMenuBar } from './components/editor-menu-bar';
@@ -26,6 +31,7 @@ import {
   DEFAULT_PLACEHOLDER_URL,
   type MailyContextType,
   MailyProvider,
+  useMailyContext,
 } from './provider';
 import { createTranslator, defaultLabels, type MailyLabels } from './i18n';
 import { cn } from './utils/classname';
@@ -33,6 +39,13 @@ import { replaceDeprecatedNode } from './utils/replace-deprecated';
 import { loadDocumentFonts } from './fonts/fontsource';
 
 type ParitialMailContextType = Partial<MailyContextType>;
+export type EditorViewMode = 'design' | 'render';
+
+export type EditorRenderPreviewContext = {
+  editor: TiptapEditor;
+  json: JSONContent;
+  html: string;
+};
 
 // Everything the editor's content area used to get from a dedicated stylesheet,
 // expressed as token-based Tailwind so the writing surface follows the host's
@@ -76,6 +89,9 @@ export type EditorProps = {
     toolbarClassName?: string;
     contentClassName?: string;
     bodyClassName?: string;
+    renderPreviewClassName?: string;
+    initialViewMode?: EditorViewMode;
+    renderPreview?: (context: EditorRenderPreviewContext) => ReactNode;
     autofocus?: FocusPosition;
     immediatelyRender?: boolean;
   };
@@ -93,6 +109,7 @@ export function Editor(props: EditorProps) {
       bodyClassName = '',
       hasMenuBar = true,
       hideContextMenu = false,
+      initialViewMode = 'design',
       spellCheck = false,
       autofocus = 'end',
       immediatelyRender = false,
@@ -112,6 +129,7 @@ export function Editor(props: EditorProps) {
 
   const resolvedLabels: MailyLabels = labels ?? { ...defaultLabels };
   const t = useMemo(() => createTranslator(resolvedLabels), [resolvedLabels]);
+  const [viewMode, setViewMode] = useState<EditorViewMode>(initialViewMode);
   const resolvedBlocks = useMemo(
     () => blocks ?? getDefaultBlocks(t),
     [blocks, t]
@@ -194,7 +212,12 @@ export function Editor(props: EditorProps) {
           ref={menuContainerRef}
         >
           {hasMenuBar && (
-            <EditorMenuBar config={props.config} editor={editor} />
+            <EditorMenuBar
+              config={props.config}
+              editor={editor}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
           )}
           <div
             className={cn(
@@ -202,24 +225,119 @@ export function Editor(props: EditorProps) {
               bodyClassName
             )}
           >
-            <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <EditorContent editor={editor} />
-            <SectionBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <ColumnsBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            {!hideContextMenu && <ContentMenu editor={editor} />}
-            <VariableBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
-            <InlineImageBubbleMenu
-              editor={editor}
-              appendTo={menuContainerRef}
-            />
+            <div
+              aria-hidden={viewMode !== 'design'}
+              className={cn(viewMode !== 'design' && 'hidden')}
+            >
+              <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <EditorContent editor={editor} />
+              <SectionBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <ColumnsBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              {!hideContextMenu && <ContentMenu editor={editor} />}
+              <VariableBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
+              <InlineImageBubbleMenu
+                editor={editor}
+                appendTo={menuContainerRef}
+              />
+            </div>
+            <div
+              aria-hidden={viewMode !== 'render'}
+              className={cn(viewMode !== 'render' && 'hidden')}
+            >
+              <RenderPreview
+                editor={editor}
+                config={props.config}
+                extensions={extensions}
+              />
+            </div>
           </div>
         </div>
       </TooltipProvider>
     </MailyProvider>
+  );
+}
+
+function RenderPreview({
+  editor,
+  config,
+  extensions,
+}: {
+  editor: TiptapEditor;
+  config: EditorProps['config'];
+  extensions: EditorProps['extensions'];
+}) {
+  const { blocks, t } = useMailyContext();
+  const renderedState = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      html: editor.getHTML(),
+      json: editor.getJSON(),
+    }),
+    equalityFn: (previous, next) => previous?.html === next?.html,
+  });
+
+  const html = renderedState?.html ?? editor.getHTML();
+  const json = renderedState?.json ?? editor.getJSON();
+  const renderedPreview = config?.renderPreview?.({ editor, html, json });
+  const previewExtensions = useMemo(
+    () => defaultExtensions({ extensions, blocks, t }),
+    [extensions, blocks, t]
+  );
+  const previewEditor = useEditor({
+    editorProps: {
+      attributes: {
+        class: cn(
+          EDITOR_CONTENT_CLASS,
+          'pl-4! pr-4 caret-transparent [&_.ProseMirror-selectednode]:outline-none [&_.ProseMirror-selectednode]:after:hidden'
+        ),
+      },
+    },
+    extensions: previewExtensions,
+    content: json,
+    editable: false,
+    immediatelyRender: config?.immediatelyRender,
+  });
+
+  useEffect(() => {
+    if (!previewEditor || previewEditor.isDestroyed) {
+      return;
+    }
+
+    previewEditor.commands.setContent(json, false);
+  }, [previewEditor, json]);
+
+  if (renderedPreview) {
+    return (
+      <div
+        className={cn(
+          'mly-render-preview min-h-[320px] pl-4',
+          config?.renderPreviewClassName
+        )}
+      >
+        {renderedPreview}
+      </div>
+    );
+  }
+
+  if (!previewEditor) {
+    return null;
+  }
+
+  return (
+    <div
+      role="region"
+      aria-label={t('toolbar.viewMode.previewTitle')}
+      className={cn(
+        'mly-render-preview min-h-[320px]',
+        config?.renderPreviewClassName
+      )}
+    >
+      <EditorContent editor={previewEditor} />
+    </div>
   );
 }
 

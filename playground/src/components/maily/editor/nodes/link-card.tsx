@@ -6,12 +6,43 @@ import { useMailyContext } from '../provider';
 import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
 import { Badge } from '@/components/ui/badge';
+import { FontFamilyPicker } from '../components/text-menu/font-family-picker';
+import { FontSizePicker } from '../components/text-menu/font-size-picker';
+import { FONT_ATTRIBUTE_KEYS } from '../extensions/font-family';
+import type { LinkCardAttributes } from '../extensions/link-card';
+import { fontSelectionFromAttrs, fontStack } from '../fonts/fontsource';
+import type { CSSProperties } from 'react';
 
 export function LinkCardComponent(props: NodeViewProps) {
   const { t } = useMailyContext();
-  const { title, description, link, linkTitle, image, badgeText, subTitle } =
-    props.node.attrs;
+  const {
+    title,
+    description,
+    link,
+    linkTitle,
+    image,
+    badgeText,
+    subTitle,
+    fontSize,
+  } = props.node.attrs as LinkCardAttributes;
   const { getPos, editor } = props;
+  const currentFont = fontSelectionFromAttrs(props.node.attrs);
+  const currentFontStack = currentFont ? fontStack(currentFont) : undefined;
+  const typographyStyle = {
+    ...(currentFontStack ? { fontFamily: currentFontStack } : {}),
+  } satisfies CSSProperties;
+  const titleStyle = {
+    ...typographyStyle,
+    fontSize: fontSize || '18px',
+  } satisfies CSSProperties;
+  const descriptionStyle = {
+    ...typographyStyle,
+    fontSize: fontSize || '16px',
+  } satisfies CSSProperties;
+  const compactTextStyle = {
+    ...typographyStyle,
+    ...(fontSize ? { fontSize } : {}),
+  } satisfies CSSProperties;
 
   return (
     <NodeViewWrapper
@@ -45,22 +76,39 @@ export function LinkCardComponent(props: NodeViewProps) {
               <div className="flex items-stretch p-3">
                 <div className={cn('flex flex-col')}>
                   <div className="!mb-1.5 flex items-center gap-1.5">
-                    <h2 className="text-lg! !mb-0 font-semibold">{title}</h2>
+                    <h2 className="!mb-0 font-semibold" style={titleStyle}>
+                      {title}
+                    </h2>
                     {badgeText && (
-                      <Badge variant="secondary" className="!font-base">
+                      <Badge
+                        variant="secondary"
+                        className="!font-base"
+                        style={compactTextStyle}
+                      >
                         {badgeText}
                       </Badge>
                     )}{' '}
                     {subTitle && !badgeText && (
-                      <Badge variant="outline" className="!font-base">
+                      <Badge
+                        variant="outline"
+                        className="!font-base"
+                        style={compactTextStyle}
+                      >
                         {subTitle}
                       </Badge>
                     )}
                   </div>
-                  <p className="text-muted-foreground text-base! !my-0">
+                  <p
+                    className="text-muted-foreground !my-0"
+                    style={descriptionStyle}
+                  >
                     {description}{' '}
                     {linkTitle ? (
-                      <a href={link} className="font-semibold">
+                      <a
+                        href={link}
+                        className="font-semibold"
+                        style={descriptionStyle}
+                      >
                         {linkTitle}
                       </a>
                     ) : null}
@@ -75,6 +123,35 @@ export function LinkCardComponent(props: NodeViewProps) {
           className="flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-96 flex-col gap-2 overflow-y-auto"
           sideOffset={10}
         >
+          <div className="flex items-center gap-1">
+            <FontFamilyPicker
+              editor={editor}
+              currentFont={currentFont}
+              onFontChange={(font) => {
+                props.updateAttributes(font);
+              }}
+              onFontUnset={() => {
+                props.updateAttributes(
+                  Object.fromEntries(
+                    FONT_ATTRIBUTE_KEYS.map((key) => [
+                      key,
+                      key === 'fontHasItalic' ? false : null,
+                    ])
+                  ) as Partial<LinkCardAttributes>
+                );
+              }}
+            />
+
+            <FontSizePicker
+              value={fontSize || ''}
+              onValueChange={(value) => {
+                props.updateAttributes({
+                  fontSize: value || null,
+                });
+              }}
+            />
+          </div>
+
           <label className="w-full space-y-1">
             <span className="text-muted-foreground text-xs font-normal">
               {t('linkCard.image')}

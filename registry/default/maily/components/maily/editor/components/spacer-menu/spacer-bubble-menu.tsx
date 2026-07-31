@@ -11,7 +11,7 @@ import { ShowPopover } from '../show-popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { spacing } from '../../utils/spacing';
 import { useMemo } from 'react';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
 
 export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo } = props;
@@ -55,7 +55,7 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className={`${FLOATING_MENU_CLASS} flex gap-0.5`}
+      className={FLOATING_BUBBLE_MENU_CLASS}
     >
       <TooltipProvider>
         {items.map((item, index) => (

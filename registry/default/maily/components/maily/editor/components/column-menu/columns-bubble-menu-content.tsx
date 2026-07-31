@@ -17,6 +17,7 @@ import { deleteNode } from '../../utils/delete-node';
 import { spacing } from '../../utils/spacing';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '../../i18n';
+import { BUBBLE_MENU_CONTENT_CLASS } from '../ui/floating-menu';
 
 type ColumnsBubbleMenuProps = {
   editor: EditorBubbleMenuProps['editor'];
@@ -35,7 +36,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
 
   return (
     <TooltipProvider>
-      <div className="flex items-stretch">
+      <div className={BUBBLE_MENU_CONTENT_CLASS}>
         {state.isColumnActive && (
           <>
             <ColumnsWidthConfig

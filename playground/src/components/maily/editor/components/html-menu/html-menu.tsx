@@ -14,7 +14,7 @@ import {
 import { useHtmlState } from './use-html-state';
 import { useMailyContext } from '../../provider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FLOATING_MENU_CLASS } from '../ui/floating-menu';
+import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
 import { CodeXmlIcon, ViewIcon } from "lucide-react";
 
 export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
@@ -60,7 +60,7 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   return (
     <BubbleMenu
       {...bubbleMenuProps}
-      className={`${FLOATING_MENU_CLASS} flex items-stretch`}
+      className={FLOATING_BUBBLE_MENU_CLASS}
     >
       <TooltipProvider>
         <Tabs
