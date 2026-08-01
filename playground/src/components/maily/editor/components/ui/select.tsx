@@ -132,7 +132,7 @@ function SelectControl({
           {...BOTTOM_FLOATING_CONTENT_PROPS}
           align="start"
           sideOffset={8}
-          className="max-h-80 min-w-36 gap-0 overflow-y-auto p-1"
+          className="max-h-80 w-max min-w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1rem)] gap-0 overflow-y-auto p-1"
         >
           <ToggleGroupCompat
             selectionMode="single"
@@ -152,7 +152,7 @@ function SelectControl({
                     handleOpenChange(false);
                   }}
                   aria-label={option.label}
-                  className="h-7! justify-start px-2 text-sm"
+                  className="h-7! justify-start whitespace-nowrap px-2 text-sm"
                   type="button"
                 >
                   {option.label}
