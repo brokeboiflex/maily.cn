@@ -124,7 +124,7 @@ export function VariableView(props: NodeViewProps) {
                     label: variable.label || variable.name,
                   }))}
                   placeholder={t('variableMenu.variablePlaceholder')}
-                  className="border-border/70 hover:bg-muted/50 h-9 w-full max-w-none justify-between rounded-lg border bg-transparent px-2.5 text-sm"
+                  className="border-border/70 hover:bg-muted/50 h-9 w-max max-w-full justify-between rounded-lg border bg-transparent px-2.5 text-sm"
                   onValueChange={(value) => {
                     const variable = variableChoices.find(
                       (variable) => variable.name === value
