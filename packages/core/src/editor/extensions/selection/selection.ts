@@ -1,5 +1,5 @@
 import { Extension } from '@tiptap/core';
-import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { NodeSelection, Plugin, PluginKey } from '@tiptap/pm/state';
 import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 export const SelectionExtension = Extension.create({
@@ -13,7 +13,10 @@ export const SelectionExtension = Extension.create({
         key: new PluginKey('selection'),
         props: {
           decorations(state) {
-            if (state.selection.empty) {
+            if (
+              state.selection.empty ||
+              state.selection instanceof NodeSelection
+            ) {
               return null;
             }
 
@@ -25,7 +28,8 @@ export const SelectionExtension = Extension.create({
             // when the editor is not focused (e.g. when trigger a popover or something similar)
             return DecorationSet.create(state.doc, [
               Decoration.inline(state.selection.from, state.selection.to, {
-                class: 'selection bg-blue-200 inline py-1',
+                class:
+                  'selection box-decoration-clone rounded-sm bg-ring/15 text-foreground',
               }),
             ]);
           },

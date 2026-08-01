@@ -71,6 +71,7 @@ const EDITOR_CONTENT_CLASS = [
   '[&_.spacer+*]:mt-0 [&_*:has(+.spacer)]:mb-0!',
   // selected-node ring (literal accent blue, not theme-driven)
   "[&_.ProseMirror-selectednode]:after:content-[''] [&_.ProseMirror-selectednode]:after:absolute [&_.ProseMirror-selectednode]:after:-inset-0.5 [&_.ProseMirror-selectednode]:after:pointer-events-none [&_.ProseMirror-selectednode]:after:rounded-md [&_.ProseMirror-selectednode]:after:bg-[rgba(35,131,226,0.14)]",
+  '[&_.node-variable.ProseMirror-selectednode]:after:rounded-lg [&_.node-variable.ProseMirror-selectednode]:after:bg-transparent [&_.node-variable.ProseMirror-selectednode]:after:ring-2 [&_.node-variable.ProseMirror-selectednode]:after:ring-ring/50',
   // gap cursor
   '[&_.ProseMirror-gapcursor]:after:w-6 [&_.ProseMirror-gapcursor]:after:border-[1.5px] [&_.ProseMirror-gapcursor]:after:border-solid [&_.ProseMirror-gapcursor]:after:border-foreground',
 ].join(' ');

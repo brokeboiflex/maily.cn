@@ -3,21 +3,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/editor/components/popover';
-import { Separator } from '@/editor/components/ui/divider';
-import { TooltipProvider } from '@/editor/components/ui/tooltip';
 import { Input } from '@/editor/components/input';
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/editor/components/ui/input-group';
 import { useMailyContext } from '@/editor/provider';
 import { cn } from '@/editor/utils/classname';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/editor/utils/constants';
 import { getNodeOptions } from '@/editor/utils/node-options';
+import { processVariables } from '@/editor/utils/variable';
 import { type NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
-import { AlertTriangle, Braces, Pencil } from 'lucide-react';
+import { AlertTriangle, Braces } from 'lucide-react';
 import { useMemo } from 'react';
 import {
   DEFAULT_RENDER_VARIABLE_FUNCTION,
@@ -36,13 +30,42 @@ export function VariableView(props: NodeViewProps) {
     label,
   } = node.attrs;
 
-  const renderVariable = useMemo(() => {
-    const variableRender =
-      getNodeOptions<VariableOptions>(editor, 'variable')?.renderVariable ??
-      DEFAULT_RENDER_VARIABLE_FUNCTION;
-
-    return variableRender;
+  const variableOptions = useMemo(() => {
+    return getNodeOptions<VariableOptions>(editor, 'variable');
   }, [editor]);
+  const renderVariable =
+    variableOptions?.renderVariable ?? DEFAULT_RENDER_VARIABLE_FUNCTION;
+  const VariableSuggestionPopoverComponent =
+    variableOptions?.variableSuggestionsPopover;
+  const variableChoices = useMemo(() => {
+    const choices = processVariables(variableOptions?.variables ?? [], {
+      query: '',
+      from: 'bubble-variable',
+      editor,
+    });
+    const current = id
+      ? (choices.find((variable) => variable.name === id) ?? {
+          name: id,
+          label,
+          required,
+          hideDefaultValue,
+        })
+      : null;
+    const remainingChoices = current
+      ? choices.filter((variable) => variable.name !== current.name)
+      : choices;
+
+    return current ? [current, ...remainingChoices] : remainingChoices;
+  }, [
+    editor,
+    hideDefaultValue,
+    id,
+    label,
+    required,
+    variableOptions?.variables,
+  ]);
+  const hasVariableChoices =
+    Boolean(VariableSuggestionPopoverComponent) && variableChoices.length > 0;
 
   return (
     <NodeViewWrapper
@@ -54,7 +77,10 @@ export function VariableView(props: NodeViewProps) {
           editor.storage.variable.popover = open;
         }}
       >
-        <PopoverTrigger>
+        <PopoverTrigger
+          type="button"
+          className="focus-visible:ring-ring/50 focus-visible:ring-offset-background inline-flex select-none items-baseline rounded-md bg-transparent p-0 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+        >
           {renderVariable({
             variable: {
               name: id,
@@ -70,15 +96,42 @@ export function VariableView(props: NodeViewProps) {
         <PopoverContent
           align="start"
           side="bottom"
-          className="p-0.5! w-max rounded-lg"
+          className={cn(
+            'max-w-[calc(100vw-2rem)] rounded-xl p-3 shadow-lg',
+            hasVariableChoices ? 'w-[38rem]' : 'w-80'
+          )}
           sideOffset={8}
         >
-          <TooltipProvider>
-            <div className="text-foreground flex items-stretch">
-              <label className="relative">
-                <span className="text-foreground inline-block px-2 text-xs">
-                  {t('variableMenu.variable')}
-                </span>
+          <div
+            className={cn(
+              'text-foreground grid gap-3',
+              !hideDefaultValue &&
+                hasVariableChoices &&
+                'sm:grid-cols-[minmax(16rem,1fr)_minmax(0,0.85fr)]',
+              !hideDefaultValue &&
+                !hasVariableChoices &&
+                'sm:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]'
+            )}
+          >
+            <div className="grid gap-1.5">
+              <span className="text-muted-foreground text-xs font-medium">
+                {t('variableMenu.variable')}
+              </span>
+              {hasVariableChoices && VariableSuggestionPopoverComponent ? (
+                <div className="border-border/70 bg-muted/30 overflow-hidden rounded-xl border p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-list]]:max-h-44 [&_[cmdk-root]]:w-full [&_[cmdk-root]]:rounded-lg [&_[cmdk-root]]:bg-transparent [&_[cmdk-root]]:shadow-none [&_[cmdk-root]]:ring-0">
+                  <VariableSuggestionPopoverComponent
+                    items={variableChoices}
+                    onSelectItem={(variable) => {
+                      updateAttributes({
+                        id: variable.name,
+                        label: variable.label,
+                        required: variable.required ?? true,
+                        hideDefaultValue: variable.hideDefaultValue ?? false,
+                      });
+                    }}
+                  />
+                </div>
+              ) : (
                 <Input
                   {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
                   value={id ?? ''}
@@ -88,39 +141,30 @@ export function VariableView(props: NodeViewProps) {
                     });
                   }}
                   placeholder={t('variableMenu.variablePlaceholder')}
-                  className="h-7 w-36"
+                  className="selection:bg-muted-foreground/25 selection:text-foreground focus-visible:ring-ring/35 h-9 font-mono text-sm focus-visible:ring-2"
                 />
-              </label>
-
-              {!hideDefaultValue && (
-                <>
-                  <Separator orientation="vertical" className="mx-1.5" />
-
-                  <label>
-                    <span className="text-foreground inline-block px-2 pl-1 text-xs">
-                      {t('variableMenu.default')}
-                    </span>
-                    <InputGroup className="h-7 w-32">
-                      <InputGroupInput
-                        {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                        value={fallback ?? ''}
-                        onChange={(e) => {
-                          updateAttributes({
-                            fallback: e.target.value,
-                          });
-                        }}
-                        placeholder={t('variableMenu.defaultPlaceholder')}
-                        className="h-full min-w-0 px-2 text-sm"
-                      />
-                      <InputGroupAddon align="inline-end" className="pr-1.5">
-                        <Pencil className="size-3 stroke-[2.5]" />
-                      </InputGroupAddon>
-                    </InputGroup>
-                  </label>
-                </>
               )}
             </div>
-          </TooltipProvider>
+
+            {!hideDefaultValue && (
+              <label className="grid gap-1.5">
+                <span className="text-muted-foreground text-xs font-medium">
+                  {t('variableMenu.default')}
+                </span>
+                <Input
+                  {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
+                  value={fallback ?? ''}
+                  onChange={(e) => {
+                    updateAttributes({
+                      fallback: e.target.value,
+                    });
+                  }}
+                  placeholder={t('variableMenu.defaultPlaceholder')}
+                  className="selection:bg-muted-foreground/25 selection:text-foreground focus-visible:ring-ring/35 h-9 text-sm focus-visible:ring-2"
+                />
+              </label>
+            )}
+          </div>
         </PopoverContent>
       </Popover>
     </NodeViewWrapper>
@@ -134,8 +178,8 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
 
   if (from === 'button-variable') {
     return (
-      <div className="border-(--button-var-border-color) inline-grid max-w-xs grid-cols-[12px_1fr] items-center gap-1.5 rounded-md border px-2 py-px font-mono text-xs">
-        <Braces className="h-3 w-3 shrink-0 stroke-[2.5]" />
+      <div className="border-(--button-var-border-color) bg-muted/50 text-foreground inline-flex max-w-xs select-none items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium leading-none">
+        <Braces className="text-muted-foreground size-3 shrink-0 stroke-[2.5]" />
         <span className="min-w-0 truncate text-left">{variableLabel}</span>
       </div>
     );
@@ -145,11 +189,12 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
     return (
       <div
         className={cn(
-          'border-border hover:bg-accent hover:text-accent-foreground inline-grid h-7 min-w-28 max-w-xs grid-cols-[12px_1fr] items-center gap-1.5 rounded-md border px-2 font-mono text-sm',
-          !valid && 'border-rose-400 bg-rose-50 text-rose-600 hover:bg-rose-100'
+          'border-border/70 bg-muted/60 text-foreground hover:bg-muted inline-flex h-8 min-w-28 max-w-xs select-none items-center gap-1.5 rounded-md border px-2 text-sm font-medium transition-colors',
+          !valid &&
+            'border-destructive/50 bg-destructive/10 text-destructive hover:bg-destructive/15'
         )}
       >
-        <Braces className="h-3 w-3 shrink-0 stroke-[2.5] text-rose-600" />
+        <Braces className="text-muted-foreground size-3 shrink-0 stroke-[2.5]" />
         <span className="min-w-0 truncate text-left">{variableLabel}</span>
       </div>
     );
@@ -158,12 +203,12 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
   return (
     <span
       tabIndex={-1}
-      className="border-border gap-(--variable-icon-gap) inline-flex items-center rounded-full border px-1.5 py-0.5 leading-none"
+      className="not-prose gap-(--variable-icon-gap) border-border/70 bg-muted/60 text-foreground hover:bg-muted inline-flex max-w-[14rem] select-none items-center rounded-md border px-1.5 py-0.5 align-baseline text-[0.78em] font-medium leading-[1.25] shadow-sm transition-colors"
     >
-      <Braces className="size-[var(--variable-icon-size)] shrink-0 stroke-[2.5] text-rose-600" />
-      {variableLabel}
+      <Braces className="text-muted-foreground size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]" />
+      <span className="min-w-0 truncate">{variableLabel}</span>
       {required && !fallback && (
-        <AlertTriangle className="size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]" />
+        <AlertTriangle className="text-destructive size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]" />
       )}
     </span>
   );
