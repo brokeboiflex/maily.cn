@@ -5,6 +5,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
+import { Select } from '../../components/ui/select';
 import { useMailyContext } from '../../provider';
 import { cn } from '@/lib/utils';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
@@ -35,8 +36,6 @@ export function VariableView(props: NodeViewProps) {
   }, [editor]);
   const renderVariable =
     variableOptions?.renderVariable ?? DEFAULT_RENDER_VARIABLE_FUNCTION;
-  const VariableSuggestionPopoverComponent =
-    variableOptions?.variableSuggestionsPopover;
   const variableChoices = useMemo(() => {
     const choices = processVariables(variableOptions?.variables ?? [], {
       query: '',
@@ -64,8 +63,7 @@ export function VariableView(props: NodeViewProps) {
     required,
     variableOptions?.variables,
   ]);
-  const hasVariableChoices =
-    Boolean(VariableSuggestionPopoverComponent) && variableChoices.length > 0;
+  const hasVariableChoices = variableChoices.length > 0;
 
   return (
     <NodeViewWrapper
@@ -98,7 +96,7 @@ export function VariableView(props: NodeViewProps) {
           side="bottom"
           className={cn(
             'max-w-[calc(100vw-2rem)] rounded-xl p-3 shadow-lg',
-            hasVariableChoices ? 'w-[38rem]' : 'w-80'
+            hasVariableChoices ? 'w-[28rem]' : 'w-80'
           )}
           sideOffset={8}
         >
@@ -107,7 +105,7 @@ export function VariableView(props: NodeViewProps) {
               'text-foreground grid gap-3',
               !hideDefaultValue &&
                 hasVariableChoices &&
-                'sm:grid-cols-[minmax(16rem,1fr)_minmax(0,0.85fr)]',
+                'sm:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]',
               !hideDefaultValue &&
                 !hasVariableChoices &&
                 'sm:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)]'
@@ -117,20 +115,30 @@ export function VariableView(props: NodeViewProps) {
               <span className="text-muted-foreground text-xs font-medium">
                 {t('variableMenu.variable')}
               </span>
-              {hasVariableChoices && VariableSuggestionPopoverComponent ? (
-                <div className="border-border/70 bg-muted/30 overflow-hidden rounded-xl border p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-list]]:max-h-44 [&_[cmdk-root]]:w-full [&_[cmdk-root]]:rounded-lg [&_[cmdk-root]]:bg-transparent [&_[cmdk-root]]:shadow-none [&_[cmdk-root]]:ring-0">
-                  <VariableSuggestionPopoverComponent
-                    items={variableChoices}
-                    onSelectItem={(variable) => {
+              {hasVariableChoices ? (
+                <Select
+                  label={t('variableMenu.variable')}
+                  value={id ?? ''}
+                  options={variableChoices.map((variable) => ({
+                    value: variable.name,
+                    label: variable.label || variable.name,
+                  }))}
+                  placeholder={t('variableMenu.variablePlaceholder')}
+                  className="border-border/70 hover:bg-muted/50 h-9 w-full max-w-none justify-between rounded-lg border bg-transparent px-2.5 text-sm"
+                  onValueChange={(value) => {
+                    const variable = variableChoices.find(
+                      (variable) => variable.name === value
+                    );
+                    if (variable) {
                       updateAttributes({
                         id: variable.name,
                         label: variable.label,
                         required: variable.required ?? true,
                         hideDefaultValue: variable.hideDefaultValue ?? false,
                       });
-                    }}
-                  />
-                </div>
+                    }
+                  }}
+                />
               ) : (
                 <Input
                   {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
