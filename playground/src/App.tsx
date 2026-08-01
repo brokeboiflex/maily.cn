@@ -13,6 +13,10 @@ import {
 } from "@/components/ui/card"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Editor } from "@/components/maily"
+import {
+  getVariableSuggestions,
+  VariableExtension,
+} from "@/components/maily/extensions"
 import { render as renderEmail } from "@/lib/maily-render"
 import {
   DEFAULT_RENDERER_THEME,
@@ -47,12 +51,47 @@ const initialEditorContent: JSONContent = {
       content: [
         {
           type: "text",
-          text: "Start typing, select text to format it, or enter / to explore the email blocks.",
+          text: "Hi ",
+        },
+        {
+          type: "variable",
+          attrs: {
+            id: "first_name",
+            label: "First name",
+            fallback: "there",
+            required: false,
+          },
+        },
+        {
+          type: "text",
+          text: ", start typing, select text to format it, or enter / to explore the email blocks.",
         },
       ],
     },
   ],
 }
+
+const playgroundVariableExtension = VariableExtension.configure({
+  suggestion: getVariableSuggestions("@"),
+  variables: [
+    {
+      name: "first_name",
+      label: "First name",
+      required: false,
+    },
+    {
+      name: "company_name",
+      label: "Company name",
+      required: false,
+    },
+    {
+      name: "unsubscribe_url",
+      label: "Unsubscribe URL",
+      required: true,
+      hideDefaultValue: true,
+    },
+  ],
+})
 
 function RenderedEmailPreview({ json }: { json: JSONContent }) {
   const [html, setHtml] = useState<string | null>(null)
@@ -669,6 +708,7 @@ export function App() {
                 key={polish ? "pl" : "en"}
                 labels={polish ? polishLabels : undefined}
                 contentJson={initialEditorContent}
+                extensions={[playgroundVariableExtension]}
                 config={{
                   bodyClassName: "min-h-72",
                   contentClassName: emailPreviewFontClassName,
