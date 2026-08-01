@@ -77,7 +77,7 @@ export function VariableView(props: NodeViewProps) {
       >
         <PopoverTrigger
           type="button"
-          className="focus-visible:ring-ring/50 focus-visible:ring-offset-background inline-flex select-none items-baseline rounded-md bg-transparent p-0 text-inherit outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+          className="focus-visible:ring-ring/50 focus-visible:ring-3 inline-flex select-none items-center rounded-md bg-transparent p-0 text-inherit outline-none"
         >
           {renderVariable({
             variable: {
@@ -95,7 +95,7 @@ export function VariableView(props: NodeViewProps) {
           align="start"
           side="bottom"
           className={cn(
-            'max-w-[calc(100vw-2rem)] rounded-xl p-3 shadow-lg',
+            'max-w-[calc(100vw-2rem)] p-3',
             hasVariableChoices ? 'w-[28rem]' : 'w-80'
           )}
           sideOffset={8}
@@ -116,29 +116,31 @@ export function VariableView(props: NodeViewProps) {
                 {t('variableMenu.variable')}
               </span>
               {hasVariableChoices ? (
-                <Select
-                  label={t('variableMenu.variable')}
-                  value={id ?? ''}
-                  options={variableChoices.map((variable) => ({
-                    value: variable.name,
-                    label: variable.label || variable.name,
-                  }))}
-                  placeholder={t('variableMenu.variablePlaceholder')}
-                  className="border-border/70 hover:bg-muted/50 h-9 w-max max-w-full justify-between rounded-lg border bg-transparent px-2.5 text-sm"
-                  onValueChange={(value) => {
-                    const variable = variableChoices.find(
-                      (variable) => variable.name === value
-                    );
-                    if (variable) {
-                      updateAttributes({
-                        id: variable.name,
-                        label: variable.label,
-                        required: variable.required ?? true,
-                        hideDefaultValue: variable.hideDefaultValue ?? false,
-                      });
-                    }
-                  }}
-                />
+                <div className="[&>div]:w-full">
+                  <Select
+                    label={t('variableMenu.variable')}
+                    value={id ?? ''}
+                    options={variableChoices.map((variable) => ({
+                      value: variable.name,
+                      label: variable.label || variable.name,
+                    }))}
+                    placeholder={t('variableMenu.variablePlaceholder')}
+                    className="h-8! min-h-8! border-border bg-background hover:bg-muted/50 focus-visible:ring-ring/50 focus-visible:ring-3 w-full max-w-none justify-between rounded-lg border px-2.5 text-sm font-normal shadow-none [&>span]:text-sm [&>span]:font-normal"
+                    onValueChange={(value) => {
+                      const variable = variableChoices.find(
+                        (variable) => variable.name === value
+                      );
+                      if (variable) {
+                        updateAttributes({
+                          id: variable.name,
+                          label: variable.label,
+                          required: variable.required ?? true,
+                          hideDefaultValue: variable.hideDefaultValue ?? false,
+                        });
+                      }
+                    }}
+                  />
+                </div>
               ) : (
                 <Input
                   {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
@@ -149,7 +151,7 @@ export function VariableView(props: NodeViewProps) {
                     });
                   }}
                   placeholder={t('variableMenu.variablePlaceholder')}
-                  className="selection:bg-muted-foreground/25 selection:text-foreground focus-visible:ring-ring/35 h-9 font-mono text-sm focus-visible:ring-2"
+                  className="font-mono text-sm"
                 />
               )}
             </div>
@@ -168,7 +170,7 @@ export function VariableView(props: NodeViewProps) {
                     });
                   }}
                   placeholder={t('variableMenu.defaultPlaceholder')}
-                  className="selection:bg-muted-foreground/25 selection:text-foreground focus-visible:ring-ring/35 h-9 text-sm focus-visible:ring-2"
+                  className="text-sm"
                 />
               </label>
             )}

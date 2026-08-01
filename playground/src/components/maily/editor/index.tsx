@@ -1,51 +1,51 @@
-'use client';
+"use client"
 
 import {
   type AnyExtension,
   type FocusPosition,
   Editor as TiptapEditor,
-} from '@tiptap/core';
+} from "@tiptap/core"
 import {
   EditorContent,
   type JSONContent,
   useEditor,
   useEditorState,
-} from '@tiptap/react';
+} from "@tiptap/react"
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
-import { ContentMenu } from './components/content-menu';
-import { EditorMenuBar } from './components/editor-menu-bar';
-import { HTMLBubbleMenu } from './components/html-menu/html-menu';
-import { ImageBubbleMenu } from './components/image-menu/image-bubble-menu';
-import { InlineImageBubbleMenu } from './components/inline-image-menu/inline-image-bubble-menu';
-import { RepeatBubbleMenu } from './components/repeat-menu/repeat-bubble-menu';
-import { SectionBubbleMenu } from './components/section-menu/section-bubble-menu';
-import { SpacerBubbleMenu } from './components/spacer-menu/spacer-bubble-menu';
-import { TextBubbleMenu } from './components/text-menu/text-bubble-menu';
-import { VariableBubbleMenu } from './components/variable-menu/variable-bubble-menu';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { extensions as defaultExtensions } from './extensions';
-import { getDefaultBlocks } from './extensions/slash-command/default-slash-commands';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { ColumnsBubbleMenu } from "./components/column-menu/columns-bubble-menu"
+import { ContentMenu } from "./components/content-menu"
+import { EditorMenuBar } from "./components/editor-menu-bar"
+import { HTMLBubbleMenu } from "./components/html-menu/html-menu"
+import { ImageBubbleMenu } from "./components/image-menu/image-bubble-menu"
+import { InlineImageBubbleMenu } from "./components/inline-image-menu/inline-image-bubble-menu"
+import { RepeatBubbleMenu } from "./components/repeat-menu/repeat-bubble-menu"
+import { SectionBubbleMenu } from "./components/section-menu/section-bubble-menu"
+import { SpacerBubbleMenu } from "./components/spacer-menu/spacer-bubble-menu"
+import { TextBubbleMenu } from "./components/text-menu/text-bubble-menu"
+import { VariableBubbleMenu } from "./components/variable-menu/variable-bubble-menu"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { extensions as defaultExtensions } from "./extensions"
+import { getDefaultBlocks } from "./extensions/slash-command/default-slash-commands"
 import {
   DEFAULT_PLACEHOLDER_URL,
   type MailyContextType,
   MailyProvider,
   useMailyContext,
-} from './provider';
-import { createTranslator, defaultLabels, type MailyLabels } from './i18n';
-import { cn } from '@/lib/utils';
-import { replaceDeprecatedNode } from './utils/replace-deprecated';
-import { loadDocumentFonts } from './fonts/fontsource';
+} from "./provider"
+import { createTranslator, defaultLabels, type MailyLabels } from "./i18n"
+import { cn } from "@/lib/utils"
+import { replaceDeprecatedNode } from "./utils/replace-deprecated"
+import { loadDocumentFonts } from "./fonts/fontsource"
 
-type ParitialMailContextType = Partial<MailyContextType>;
-export type EditorViewMode = 'design' | 'render';
+type ParitialMailContextType = Partial<MailyContextType>
+export type EditorViewMode = "design" | "render"
 
 export type EditorRenderPreviewContext = {
-  editor: TiptapEditor;
-  json: JSONContent;
-  html: string;
-};
+  editor: TiptapEditor
+  json: JSONContent
+  html: string
+}
 
 // Everything the editor's content area used to get from a dedicated stylesheet,
 // expressed as token-based Tailwind so the writing surface follows the host's
@@ -55,64 +55,64 @@ const EDITOR_CONTENT_CLASS = [
   // content element (not the body wrapper) so the whole gutter is part of the
   // ProseMirror hover surface — moving the mouse there fires the plugin's
   // mousemove and reveals the handle, instead of only over the text.
-  'prose w-full max-w-none pl-16 focus:outline-none',
+  "prose w-full max-w-none pl-16 focus:outline-none",
   // prose colors -> shadcn tokens (keeps the canvas readable in light & dark)
-  '[--tw-prose-body:var(--foreground)] [--tw-prose-headings:var(--foreground)] [--tw-prose-bold:var(--foreground)] [--tw-prose-links:var(--foreground)] [--tw-prose-quotes:var(--foreground)] [--tw-prose-code:var(--foreground)] [--tw-prose-bullets:var(--muted-foreground)] [--tw-prose-counters:var(--muted-foreground)] [--tw-prose-hr:var(--border)] [--tw-prose-quote-borders:var(--border)] text-foreground',
+  "[--tw-prose-body:var(--foreground)] [--tw-prose-headings:var(--foreground)] [--tw-prose-bold:var(--foreground)] [--tw-prose-links:var(--foreground)] [--tw-prose-quotes:var(--foreground)] [--tw-prose-code:var(--foreground)] [--tw-prose-bullets:var(--muted-foreground)] [--tw-prose-counters:var(--muted-foreground)] [--tw-prose-hr:var(--border)] [--tw-prose-quote-borders:var(--border)] text-foreground",
   // email-content typography sizing / spacing
-  'prose-strong:text-current prose-headings:mt-0 prose-headings:mb-3 prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-p:text-[15px] prose-p:mb-5 prose-ol:mt-0 prose-ol:mb-5 prose-ul:mt-0 prose-ul:mb-5 prose-li:mb-2 prose-img:mt-0 prose-img:mb-8 prose-hr:my-8 prose-code:before:content-none prose-code:after:content-none',
-  '[&_p.text-sm]:text-base [&_:is(h1,h2,h3,hr,table)+p]:mt-0',
+  "prose-strong:text-current prose-headings:mt-0 prose-headings:mb-3 prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-p:text-[15px] prose-p:mb-5 prose-ol:mt-0 prose-ol:mb-5 prose-ul:mt-0 prose-ul:mb-5 prose-li:mb-2 prose-img:mt-0 prose-img:mb-8 prose-hr:my-8 prose-code:before:content-none prose-code:after:content-none",
+  "[&_p.text-sm]:text-base [&_:is(h1,h2,h3,hr,table)+p]:mt-0",
   // ProseMirror text rendering
   "[font-variant-ligatures:none] [font-feature-settings:'liga'_0]",
   // variable-pill icon scales with heading level
-  '[--variable-icon-size:12px] [--variable-icon-gap:4px] [&_h1]:[--variable-icon-size:28px] [&_h2]:[--variable-icon-size:24px] [&_h3]:[--variable-icon-size:20px] [&_:is(h1,h2,h3)]:[--variable-icon-gap:8px]',
+  "[--variable-icon-size:12px] [--variable-icon-gap:4px] [&_h1]:[--variable-icon-size:28px] [&_h2]:[--variable-icon-size:24px] [&_h3]:[--variable-icon-size:20px] [&_:is(h1,h2,h3)]:[--variable-icon-gap:8px]",
   // block-node spacing
-  '[&_.node-button]:mt-0 [&_.node-button]:mb-5 [&_.node-linkCard]:mt-0 [&_.node-linkCard]:mb-5 [&_.node-image]:mt-0 [&_.node-image]:mb-8 [&_.node-image]:leading-none [&_.node-image]:outline-none [&_.node-logo]:mt-0 [&_.node-logo]:mb-8',
+  "[&_.node-button]:mt-0 [&_.node-button]:mb-5 [&_.node-linkCard]:mt-0 [&_.node-linkCard]:mb-5 [&_.node-image]:mt-0 [&_.node-image]:mb-8 [&_.node-image]:leading-none [&_.node-image]:outline-none [&_.node-logo]:mt-0 [&_.node-logo]:mb-8",
   // spacer collapses surrounding margins
-  '[&_.spacer+*]:mt-0 [&_*:has(+.spacer)]:mb-0!',
+  "[&_.spacer+*]:mt-0 [&_*:has(+.spacer)]:mb-0!",
   // selected-node ring (literal accent blue, not theme-driven)
   "[&_.ProseMirror-selectednode]:after:content-[''] [&_.ProseMirror-selectednode]:after:absolute [&_.ProseMirror-selectednode]:after:-inset-0.5 [&_.ProseMirror-selectednode]:after:pointer-events-none [&_.ProseMirror-selectednode]:after:rounded-md [&_.ProseMirror-selectednode]:after:bg-[rgba(35,131,226,0.14)]",
-  '[&_.node-variable.ProseMirror-selectednode]:after:rounded-lg [&_.node-variable.ProseMirror-selectednode]:after:bg-transparent [&_.node-variable.ProseMirror-selectednode]:after:ring-2 [&_.node-variable.ProseMirror-selectednode]:after:ring-ring/50',
+  "[&_.node-variable.ProseMirror-selectednode]:after:-inset-px [&_.node-variable.ProseMirror-selectednode]:after:rounded-md [&_.node-variable.ProseMirror-selectednode]:after:bg-transparent [&_.node-variable.ProseMirror-selectednode]:after:ring-1 [&_.node-variable.ProseMirror-selectednode]:after:ring-ring/35",
   // gap cursor
-  '[&_.ProseMirror-gapcursor]:after:w-6 [&_.ProseMirror-gapcursor]:after:border-[1.5px] [&_.ProseMirror-gapcursor]:after:border-solid [&_.ProseMirror-gapcursor]:after:border-foreground',
-].join(' ');
+  "[&_.ProseMirror-gapcursor]:after:w-6 [&_.ProseMirror-gapcursor]:after:border-[1.5px] [&_.ProseMirror-gapcursor]:after:border-solid [&_.ProseMirror-gapcursor]:after:border-foreground",
+].join(" ")
 
 export type EditorProps = {
-  contentHtml?: string;
-  contentJson?: JSONContent;
-  onUpdate?: (editor: TiptapEditor) => void;
-  onCreate?: (editor: TiptapEditor) => void;
-  extensions?: AnyExtension[];
+  contentHtml?: string
+  contentJson?: JSONContent
+  onUpdate?: (editor: TiptapEditor) => void
+  onCreate?: (editor: TiptapEditor) => void
+  extensions?: AnyExtension[]
   config?: {
-    hasMenuBar?: boolean;
-    hideContextMenu?: boolean;
-    spellCheck?: boolean;
-    wrapClassName?: string;
-    toolbarClassName?: string;
-    contentClassName?: string;
-    bodyClassName?: string;
-    renderPreviewClassName?: string;
-    initialViewMode?: EditorViewMode;
-    renderPreview?: (context: EditorRenderPreviewContext) => ReactNode;
-    autofocus?: FocusPosition;
-    immediatelyRender?: boolean;
-  };
-  editable?: boolean;
-  scrollThreshold?: number;
-  scrollMargin?: number;
-  labels?: MailyLabels;
-} & ParitialMailContextType;
+    hasMenuBar?: boolean
+    hideContextMenu?: boolean
+    spellCheck?: boolean
+    wrapClassName?: string
+    toolbarClassName?: string
+    contentClassName?: string
+    bodyClassName?: string
+    renderPreviewClassName?: string
+    initialViewMode?: EditorViewMode
+    renderPreview?: (context: EditorRenderPreviewContext) => ReactNode
+    autofocus?: FocusPosition
+    immediatelyRender?: boolean
+  }
+  editable?: boolean
+  scrollThreshold?: number
+  scrollMargin?: number
+  labels?: MailyLabels
+} & ParitialMailContextType
 
 export function Editor(props: EditorProps) {
   const {
     config: {
-      wrapClassName = '',
-      contentClassName = '',
-      bodyClassName = '',
+      wrapClassName = "",
+      contentClassName = "",
+      bodyClassName = "",
       hasMenuBar = true,
       hideContextMenu = false,
-      initialViewMode = 'design',
+      initialViewMode = "design",
       spellCheck = false,
-      autofocus = 'end',
+      autofocus = "end",
       immediatelyRender = false,
     } = {},
     onCreate,
@@ -126,60 +126,60 @@ export function Editor(props: EditorProps) {
     placeholderUrl = DEFAULT_PLACEHOLDER_URL,
     scrollThreshold = 40,
     scrollMargin = 40,
-  } = props;
+  } = props
 
-  const resolvedLabels: MailyLabels = labels ?? { ...defaultLabels };
-  const t = useMemo(() => createTranslator(resolvedLabels), [resolvedLabels]);
-  const [viewMode, setViewMode] = useState<EditorViewMode>(initialViewMode);
+  const resolvedLabels: MailyLabels = labels ?? { ...defaultLabels }
+  const t = useMemo(() => createTranslator(resolvedLabels), [resolvedLabels])
+  const [viewMode, setViewMode] = useState<EditorViewMode>(initialViewMode)
   const resolvedBlocks = useMemo(
     () => blocks ?? getDefaultBlocks(t),
     [blocks, t]
-  );
+  )
 
   const formattedContent = useMemo(() => {
     if (contentJson) {
       const json =
-        contentJson?.type === 'doc'
+        contentJson?.type === "doc"
           ? contentJson
           : ({
-              type: 'doc',
+              type: "doc",
               content: contentJson,
-            } as JSONContent);
+            } as JSONContent)
 
-      return replaceDeprecatedNode(json);
+      return replaceDeprecatedNode(json)
     } else if (contentHtml) {
-      return contentHtml;
+      return contentHtml
     } else {
       return {
-        type: 'doc',
+        type: "doc",
         content: [
           {
-            type: 'paragraph',
+            type: "paragraph",
             content: [],
           },
         ],
-      };
+      }
     }
-  }, [contentHtml, contentJson, replaceDeprecatedNode]);
+  }, [contentHtml, contentJson, replaceDeprecatedNode])
 
-  const menuContainerRef = useRef(null);
+  const menuContainerRef = useRef(null)
   const editor = useEditor({
     editorProps: {
       scrollThreshold,
       scrollMargin,
       attributes: {
         class: cn(EDITOR_CONTENT_CLASS, contentClassName),
-        spellCheck: spellCheck ? 'true' : 'false',
+        spellCheck: spellCheck ? "true" : "false",
       },
     },
     immediatelyRender,
     onCreate: ({ editor }) => {
-      loadDocumentFonts(editor.getJSON());
-      onCreate?.(editor);
+      loadDocumentFonts(editor.getJSON())
+      onCreate?.(editor)
     },
     onUpdate: ({ editor }) => {
-      loadDocumentFonts(editor.getJSON());
-      onUpdate?.(editor);
+      loadDocumentFonts(editor.getJSON())
+      onUpdate?.(editor)
     },
     extensions: defaultExtensions({
       extensions,
@@ -189,10 +189,10 @@ export function Editor(props: EditorProps) {
     content: formattedContent,
     autofocus,
     editable,
-  });
+  })
 
   if (!editor) {
-    return null;
+    return null
   }
 
   return (
@@ -206,8 +206,8 @@ export function Editor(props: EditorProps) {
         <div
           id="mly-editor"
           className={cn(
-            'mly-editor antialiased',
-            editor.isEditable ? 'mly-editable' : 'mly-not-editable',
+            "mly-editor antialiased",
+            editor.isEditable ? "mly-editable" : "mly-not-editable",
             wrapClassName
           )}
           ref={menuContainerRef}
@@ -222,13 +222,13 @@ export function Editor(props: EditorProps) {
           )}
           <div
             className={cn(
-              'border-border bg-background mt-4 rounded-lg border py-4 pr-4',
+              "mt-4 rounded-lg border border-border bg-background py-4 pr-4",
               bodyClassName
             )}
           >
             <div
-              aria-hidden={viewMode !== 'design'}
-              className={cn(viewMode !== 'design' && 'hidden')}
+              aria-hidden={viewMode !== "design"}
+              className={cn(viewMode !== "design" && "hidden")}
             >
               <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
               <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
@@ -246,8 +246,8 @@ export function Editor(props: EditorProps) {
               />
             </div>
             <div
-              aria-hidden={viewMode !== 'render'}
-              className={cn(viewMode !== 'render' && 'hidden')}
+              aria-hidden={viewMode !== "render"}
+              className={cn(viewMode !== "render" && "hidden")}
             >
               <RenderPreview
                 editor={editor}
@@ -259,7 +259,7 @@ export function Editor(props: EditorProps) {
         </div>
       </TooltipProvider>
     </MailyProvider>
-  );
+  )
 }
 
 function RenderPreview({
@@ -267,11 +267,11 @@ function RenderPreview({
   config,
   extensions,
 }: {
-  editor: TiptapEditor;
-  config: EditorProps['config'];
-  extensions: EditorProps['extensions'];
+  editor: TiptapEditor
+  config: EditorProps["config"]
+  extensions: EditorProps["extensions"]
 }) {
-  const { blocks, t } = useMailyContext();
+  const { blocks, t } = useMailyContext()
   const renderedState = useEditorState({
     editor,
     selector: ({ editor }) => ({
@@ -279,21 +279,21 @@ function RenderPreview({
       json: editor.getJSON(),
     }),
     equalityFn: (previous, next) => previous?.html === next?.html,
-  });
+  })
 
-  const html = renderedState?.html ?? editor.getHTML();
-  const json = renderedState?.json ?? editor.getJSON();
-  const renderedPreview = config?.renderPreview?.({ editor, html, json });
+  const html = renderedState?.html ?? editor.getHTML()
+  const json = renderedState?.json ?? editor.getJSON()
+  const renderedPreview = config?.renderPreview?.({ editor, html, json })
   const previewExtensions = useMemo(
     () => defaultExtensions({ extensions, blocks, t }),
     [extensions, blocks, t]
-  );
+  )
   const previewEditor = useEditor({
     editorProps: {
       attributes: {
         class: cn(
           EDITOR_CONTENT_CLASS,
-          'pl-4! pr-4 caret-transparent [&_.ProseMirror-selectednode]:outline-none [&_.ProseMirror-selectednode]:after:hidden'
+          "pr-4 pl-4! caret-transparent [&_.ProseMirror-selectednode]:outline-none [&_.ProseMirror-selectednode]:after:hidden"
         ),
       },
     },
@@ -301,51 +301,51 @@ function RenderPreview({
     content: json,
     editable: false,
     immediatelyRender: config?.immediatelyRender,
-  });
+  })
 
   useEffect(() => {
     if (!previewEditor || previewEditor.isDestroyed) {
-      return;
+      return
     }
 
-    previewEditor.commands.setContent(json, false);
-  }, [previewEditor, json]);
+    previewEditor.commands.setContent(json, false)
+  }, [previewEditor, json])
 
   if (renderedPreview) {
     return (
       <div
         className={cn(
-          'mly-render-preview min-h-[320px] pl-4',
+          "mly-render-preview min-h-[320px] pl-4",
           config?.renderPreviewClassName
         )}
       >
         {renderedPreview}
       </div>
-    );
+    )
   }
 
   if (!previewEditor) {
-    return null;
+    return null
   }
 
   return (
     <div
       role="region"
-      aria-label={t('toolbar.viewMode.previewTitle')}
+      aria-label={t("toolbar.viewMode.previewTitle")}
       className={cn(
-        'mly-render-preview min-h-[320px]',
+        "mly-render-preview min-h-[320px]",
         config?.renderPreviewClassName
       )}
     >
       <EditorContent editor={previewEditor} />
     </div>
-  );
+  )
 }
 
-export { defaultLabels, createTranslator } from './i18n';
-export type { MailyLabels, LabelKey, TranslateFn } from './i18n';
+export { defaultLabels, createTranslator } from "./i18n"
+export type { MailyLabels, LabelKey, TranslateFn } from "./i18n"
 export type {
   FontsourceCategory,
   FontsourceFont,
   MailyFontSelection,
-} from './fonts/fontsource';
+} from "./fonts/fontsource"
