@@ -10,6 +10,10 @@ const registryOutput = path.join(root, 'playground/public/r');
 const tempRoot = fs.mkdtempSync(
   path.join(os.tmpdir(), 'maily-shadcn-consumers-')
 );
+const commandEnv = {
+  ...process.env,
+  npm_config_ignore_workspace_root_check: 'true',
+};
 
 const editorFixture = `import { Editor } from "@/components/maily"
 
@@ -186,7 +190,7 @@ async function verifyBaseFullConsumer(project) {
     .split(/\r?\n/)
     .filter((line) => /error TS\d+:/.test(line));
   const knownUpstreamError =
-    /^src\/components\/ui\/scroll-area\.tsx\(1,1\): error TS6133: 'React' is declared but its value is never read\.$/;
+    /^src\/components\/ui\/scroll-area\.tsx\(\d+,1\): error TS6133: 'React' is declared but its value is never read\.$/;
 
   if (
     diagnosticLines.length !== 1 ||
@@ -291,7 +295,7 @@ test("inherits current Base UI primitive behavior", async ({ page }) => {
     ],
     {
       cwd: project,
-      env: process.env,
+      env: commandEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
     }
   );
@@ -404,7 +408,7 @@ function run(command, args, options = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      env: process.env,
+      env: commandEnv,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';

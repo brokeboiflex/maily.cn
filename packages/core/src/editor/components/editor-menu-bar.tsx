@@ -27,7 +27,6 @@ import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { useMailyContext } from '../provider';
 import { Toggle } from './ui/toggle';
-import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
@@ -300,36 +299,35 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         })}
       </div>
       <div className="border-border bg-background flex items-center gap-1 rounded-md border p-1">
-        <ToggleGroup
-          type="single"
+        <ToggleGroupCompat
+          selectionMode="single"
           value={viewMode}
-          onValueChange={(value) => {
-            if (value === 'design' || value === 'render') {
-              onViewModeChange(value);
-            }
-          }}
           aria-label={t('toolbar.viewMode')}
           className="gap-1"
         >
-          <ToggleGroupItem
+          <ToggleGroupCompatItem
             value="design"
+            pressed={viewMode === 'design'}
+            onClick={() => onViewModeChange('design')}
             aria-label={t('toolbar.viewMode.design')}
             className="h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium"
             type="button"
           >
             <Pencil className="size-3.5" />
             <span>{t('toolbar.viewMode.design')}</span>
-          </ToggleGroupItem>
-          <ToggleGroupItem
+          </ToggleGroupCompatItem>
+          <ToggleGroupCompatItem
             value="render"
+            pressed={viewMode === 'render'}
+            onClick={() => onViewModeChange('render')}
             aria-label={t('toolbar.viewMode.render')}
             className="h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium"
             type="button"
           >
             <Eye className="size-3.5" />
             <span>{t('toolbar.viewMode.render')}</span>
-          </ToggleGroupItem>
-        </ToggleGroup>
+          </ToggleGroupCompatItem>
+        </ToggleGroupCompat>
       </div>
     </div>
   );
