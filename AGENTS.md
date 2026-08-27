@@ -114,7 +114,7 @@ pnpm test               # run vitest across packages
 pnpm shadcn:audit       # fail on handmade shadcn primitive replacements
 pnpm registry:build     # regenerate registry/** and registry.json from packages/*/src
 pnpm playground:sync    # registry:build + serve the built JSON into playground/public/r
-pnpm registry:consumer-test # clean Radix/Base shadcn install and build matrix
+pnpm registry:consumer-test # clean Radix/Base/Bun isolated shadcn install and build matrix
 pnpm format:write       # prettier
 pnpm lint               # eslint
 ```
@@ -139,11 +139,13 @@ installs all granular items; Base UI must pass a strict editor-only build before
 the optional mailbox is added. The complete Base fixture must then run its
 Playwright primitive checks for ToggleGroup roving focus/state, Popover focus and
 Escape behavior, mailbox rich-compose switching, nested interactive DOM, and
-console/page errors. Current upstream Base `scroll-area.tsx` contains one unused
-React import under strict TypeScript, so the full Base fixture accepts only that
-exact external diagnostic and then rebuilds with unused-import checking relaxed.
-Never allow a Maily-source diagnostic through that exception and never patch the
-consumer-owned primitive.
+console/page errors. The Bun fixture installs the editor and mailbox through the
+shadcn CLI, runs `bun install --linker isolated`, and must pass the strict
+TypeScript/Vite production build. Current upstream Base `scroll-area.tsx` contains
+one unused React import under strict TypeScript, so the full Base fixture accepts
+only that exact external diagnostic and then rebuilds with unused-import checking
+relaxed. Never allow a Maily-source diagnostic through that exception and never
+patch the consumer-owned primitive.
 
 Loop: edit `packages/*` → `pnpm playground:sync` (rebuild + reserve) → in `playground/`,
 run `bun run dev` and install `@maily/maily-editor` plus `@maily/maily-mailbox`

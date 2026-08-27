@@ -119,6 +119,15 @@ try {
   await verifyBaseFullConsumer(baseProject);
   await verifyBaseRuntime(baseProject);
   console.log('Base full granular consumer passed');
+
+  const bunProject = await createBunConsumer('bun', 'radix', registryTemplate);
+  await addBunRegistryItems(bunProject, [
+    '@maily/maily-editor',
+    '@maily/maily-mailbox',
+  ]);
+  await writeBaseRuntimeFixture(bunProject);
+  await runProjectCommand(bunProject, ['run', 'build']);
+  console.log('Bun isolated full granular consumer passed');
 } finally {
   if (server) {
     await new Promise((resolve) => server.close(resolve));
@@ -168,6 +177,51 @@ async function addRegistryItems(project, items) {
     '--cwd',
     project,
   ]);
+}
+
+async function createBunConsumer(name, base, registryTemplate) {
+  await run('bunx', [
+    '--bun',
+    'shadcn@latest',
+    'init',
+    '-t',
+    'vite',
+    '-n',
+    name,
+    '--base',
+    base,
+    '--no-monorepo',
+    '-p',
+    'nova',
+    '-y',
+    '--cwd',
+    tempRoot,
+  ]);
+
+  const project = path.join(tempRoot, name);
+  const componentsPath = path.join(project, 'components.json');
+  const components = JSON.parse(fs.readFileSync(componentsPath, 'utf8'));
+  components.registries = {
+    ...(components.registries ?? {}),
+    '@maily': registryTemplate,
+  };
+  fs.writeFileSync(componentsPath, `${JSON.stringify(components, null, 2)}\n`);
+
+  return project;
+}
+
+async function addBunRegistryItems(project, items) {
+  await run('bunx', [
+    '--bun',
+    'shadcn@latest',
+    'add',
+    ...items,
+    '--overwrite',
+    '-y',
+    '--cwd',
+    project,
+  ]);
+  await run('bun', ['install', '--linker', 'isolated'], { cwd: project });
 }
 
 async function writeEditorFixture(project) {
@@ -326,9 +380,11 @@ test("inherits current Base UI primitive behavior", async ({ page }) => {
 }
 
 async function runProjectCommand(project, args, options = {}) {
-  const command = fs.existsSync(path.join(project, 'pnpm-lock.yaml'))
-    ? 'pnpm'
-    : 'npm';
+  const command = fs.existsSync(path.join(project, 'bun.lock'))
+    ? 'bun'
+    : fs.existsSync(path.join(project, 'pnpm-lock.yaml'))
+      ? 'pnpm'
+      : 'npm';
 
   return run(command, args, { cwd: project, ...options });
 }

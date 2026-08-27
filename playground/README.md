@@ -89,11 +89,13 @@ the installed registry source uses portable type-only imports and needs no consu
 TypeScript workaround.
 
 Run `pnpm registry:consumer-test` from the repository root for clean-current
-consumer fixtures. It initializes fresh Radix and Base UI Vite applications,
-installs the granular registry items, mounts the editor, and runs TypeScript plus
-production builds. The complete Base fixture is also launched in Chromium to
-verify ToggleGroup focus/state, Popover focus and Escape handling, mailbox rich
-compose, nested-interactive safety, and runtime errors. Externalized `Button`,
+consumer fixtures. It initializes fresh Radix, Base UI, and Bun-isolated Vite
+applications, installs the granular registry items through the shadcn CLI, mounts
+the editor, and runs TypeScript plus production builds. The Bun fixture installs
+with `bun install --linker isolated` so duplicated ProseMirror type trees fail the
+upstream gate. The complete Base fixture is also launched in Chromium to verify
+ToggleGroup focus/state, Popover focus and Escape handling, mailbox rich compose,
+nested-interactive safety, and runtime errors. Externalized `Button`,
 `Input`, `Textarea`, `Toggle`,
 `ToggleGroup`, `Tooltip`, `Separator`, `Kbd`, `DropdownMenu`,
 `Popover`, `Tabs`, `InputGroup`, `Command`, and `Badge` resolve to each
