@@ -1,7 +1,6 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
-import { BubbleMenu } from '@tiptap/react';
+import { IconPlaceholder } from '@/components/icon-placeholder';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { useCallback } from 'react';
-import { sticky } from 'tippy.js';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
@@ -15,10 +14,13 @@ import {
 import { useHtmlState } from './use-html-state';
 import { useMailyContext } from '../../provider';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -35,33 +37,35 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
     return rect;
   }, [editor]);
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       return editor.isActive('htmlCodeBlock');
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: 'top' as const,
+      offset: 8,
+      flip: false,
     },
     pluginKey: 'htmlCodeBlockBubbleMenu',
-  };
+  });
 
   const { activeTab = 'code' } = state;
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className={FLOATING_BUBBLE_MENU_CLASS}
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <Tabs
           value={activeTab}
@@ -83,13 +87,13 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
                     aria-label={t('htmlMenu.htmlCode')}
                   >
                     <IconPlaceholder
-  lucide="CodeXmlIcon"
-  tabler="IconCode"
-  hugeicons="SourceCodeIcon"
-  phosphor="Code"
-  remixicon="RiCodeLine"
-  className="size-3 shrink-0 stroke-[2.5]"
-/>
+                      lucide="CodeXmlIcon"
+                      tabler="IconCode"
+                      hugeicons="SourceCodeIcon"
+                      phosphor="Code"
+                      remixicon="RiCodeLine"
+                      className="size-3 shrink-0 stroke-[2.5]"
+                    />
                   </TabsTrigger>
                 </span>
               </TooltipTrigger>
@@ -107,13 +111,13 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
                     aria-label={t('htmlMenu.preview')}
                   >
                     <IconPlaceholder
-  lucide="ViewIcon"
-  tabler="IconEye"
-  hugeicons="ViewIcon"
-  phosphor="Eye"
-  remixicon="RiEyeLine"
-  className="size-3 shrink-0 stroke-[2.5]"
-/>
+                      lucide="ViewIcon"
+                      tabler="IconEye"
+                      hugeicons="ViewIcon"
+                      phosphor="Eye"
+                      remixicon="RiEyeLine"
+                      className="size-3 shrink-0 stroke-[2.5]"
+                    />
                   </TabsTrigger>
                 </span>
               </TooltipTrigger>

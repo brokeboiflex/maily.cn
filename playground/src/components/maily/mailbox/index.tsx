@@ -232,7 +232,7 @@ export const defaultMailboxLabels = {
   "compose.wrote": "On {date}, {sender} wrote:",
   "compose.forwardedHeader": "Forwarded message",
   "compose.mode.plainText": "Plain text",
-  "compose.mode.mailyEditor": "Maily editor",
+  "compose.mode.mailyEditor": "Visual editor",
   "folders.inbox": "Inbox",
   "folders.sent": "Sent",
   "folders.drafts": "Drafts",

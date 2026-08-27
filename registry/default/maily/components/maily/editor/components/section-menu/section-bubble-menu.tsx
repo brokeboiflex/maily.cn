@@ -1,9 +1,9 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
 import { deleteNode } from '../../utils/delete-node';
 import { isTextSelected } from '../../utils/is-text-selected';
-import { BubbleMenu, findChildren } from '@tiptap/react';
+import { findChildren } from '@tiptap/core';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { useCallback } from 'react';
-import { sticky } from 'tippy.js';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { AlignmentSwitch } from '../alignment-switch';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,11 @@ import { BubbleMenuButton } from '../bubble-menu-button';
 import { ColumnsBubbleMenuContent } from '../column-menu/columns-bubble-menu-content';
 import { MarginIcon } from '../icons/margin-icon';
 import { PaddingIcon } from '../icons/padding-icon';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { ColorPicker } from '../ui/color-picker';
@@ -26,11 +30,12 @@ import type { LabelKey } from '../../i18n';
 import {
   BUBBLE_MENU_CONTENT_CLASS,
   FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
 } from '../ui/floating-menu';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -44,9 +49,17 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
     return rect;
   }, [editor]);
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       const activeSectionNode = getClosestNodeByName(editor, 'section');
       const repeatNodeChildren = activeSectionNode
@@ -75,19 +88,16 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('section');
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: 'top' as const,
+      offset: 8,
+      flip: false,
     },
     pluginKey: 'sectionBubbleMenu',
-  };
+  });
 
   const state = useSectionState(editor);
   const { t } = useMailyContext();
@@ -222,13 +232,15 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={<IconPlaceholder
-  lucide="Trash"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-/>}
+          icon={
+            <IconPlaceholder
+              lucide="Trash"
+              tabler="IconTrash"
+              hugeicons="Delete02Icon"
+              phosphor="Trash"
+              remixicon="RiDeleteBinLine"
+            />
+          }
           tooltip={t('sectionMenu.delete')}
           command={() => {
             deleteNode(editor, 'section');
@@ -255,13 +267,13 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
                 <Button type="button" variant="ghost" size="sm">
                   {t('sectionMenu.column')}
                   <IconPlaceholder
-  lucide="ChevronUp"
-  tabler="IconChevronUp"
-  hugeicons="ChevronUpIcon"
-  phosphor="CaretUp"
-  remixicon="RiArrowUpSLine"
-  className="size-3"
-/>
+                    lucide="ChevronUp"
+                    tabler="IconChevronUp"
+                    hugeicons="ChevronUpIcon"
+                    phosphor="CaretUp"
+                    remixicon="RiArrowUpSLine"
+                    className="size-3"
+                  />
                 </Button>
               </PopoverTrigger>
               <PopoverContent

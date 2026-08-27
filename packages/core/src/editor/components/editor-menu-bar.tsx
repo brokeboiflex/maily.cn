@@ -176,13 +176,30 @@ ToggleItemControl.displayName = 'ToggleItemControl';
 export const EditorMenuBar = (props: EditorMenuBarProps) => {
   const { editor, config, viewMode, onViewModeChange } = props;
   const { t } = useMailyContext();
+  const editorState = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      bold: editor.isActive('bold'),
+      italic: editor.isActive('italic'),
+      underline: editor.isActive('underline'),
+      strike: editor.isActive('strike'),
+      horizontalRule: editor.isActive('horizontalRule'),
+      textAlign: editor.isActive({ textAlign: 'center' })
+        ? 'center'
+        : editor.isActive({ textAlign: 'right' })
+          ? 'right'
+          : editor.isActive({ textAlign: 'left' })
+            ? 'left'
+            : '',
+    }),
+  });
 
   const items: EditorMenuItem[] = useMemo(
     () => [
       {
         name: 'bold',
         command: () => editor.chain().focus().toggleBold().run(),
-        isActive: () => editor.isActive('bold'),
+        isActive: () => editorState.bold,
         group: 'mark',
         icon: <BoldIcon />,
         tooltip: t('toolbar.bold'),
@@ -190,7 +207,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'italic',
         command: () => editor.chain().focus().toggleItalic().run(),
-        isActive: () => editor.isActive('italic'),
+        isActive: () => editorState.italic,
         group: 'mark',
         icon: <ItalicIcon />,
         tooltip: t('toolbar.italic'),
@@ -198,7 +215,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'underline',
         command: () => editor.chain().focus().toggleUnderline().run(),
-        isActive: () => editor.isActive('underline'),
+        isActive: () => editorState.underline,
         group: 'mark',
         icon: <UnderlineIcon />,
         tooltip: t('toolbar.underline'),
@@ -206,7 +223,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'strike',
         command: () => editor.chain().focus().toggleStrike().run(),
-        isActive: () => editor.isActive('strike'),
+        isActive: () => editorState.strike,
         group: 'mark',
         icon: <StrikethroughIcon />,
         tooltip: t('toolbar.strikethrough'),
@@ -223,7 +240,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'divider',
         command: () => editor.chain().focus().setHorizontalRule().run(),
-        isActive: () => editor.isActive('horizontalRule'),
+        isActive: () => editorState.horizontalRule,
         group: 'custom',
         icon: <SeparatorHorizontal />,
         tooltip: t('block.divider.title'),
@@ -237,7 +254,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'left',
         command: () => editor.chain().focus().setTextAlign('left').run(),
-        isActive: () => editor.isActive({ textAlign: 'left' }),
+        isActive: () => editorState.textAlign === 'left',
         group: 'alignment',
         icon: <AlignLeft />,
         tooltip: t('alignment.left'),
@@ -245,7 +262,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'center',
         command: () => editor.chain().focus().setTextAlign('center').run(),
-        isActive: () => editor.isActive({ textAlign: 'center' }),
+        isActive: () => editorState.textAlign === 'center',
         group: 'alignment',
         icon: <AlignCenter />,
         tooltip: t('alignment.center'),
@@ -253,13 +270,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       {
         name: 'right',
         command: () => editor.chain().focus().setTextAlign('right').run(),
-        isActive: () => editor.isActive({ textAlign: 'right' }),
+        isActive: () => editorState.textAlign === 'right',
         group: 'alignment',
         icon: <AlignRight />,
         tooltip: t('alignment.right'),
       },
     ],
-    [editor, t]
+    [editor, editorState, t]
   );
 
   const groups = useMemo(

@@ -1,78 +1,85 @@
-import { Editor } from '@tiptap/core';
-import { type BubbleMenuItem } from './text-bubble-menu';
+import { Editor } from "@tiptap/core"
+import { type BubbleMenuItem } from "./text-bubble-menu"
 
-import { BubbleMenuButton } from '../bubble-menu-button';
-import { AlignmentSwitch } from '../alignment-switch';
-import { TextDirectionSwitch } from '../text-direction-switch';
-import { useTextMenuState } from './use-text-menu-state';
-import { LinkInputPopover } from '../ui/link-input-popover';
-import { Separator } from '@/components/ui/separator';
-import { ColorPicker } from '../ui/color-picker';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMailyContext } from '../../provider';
+import { BubbleMenuButton } from "../bubble-menu-button"
+import { AlignmentSwitch } from "../alignment-switch"
+import { TextDirectionSwitch } from "../text-direction-switch"
+import { useTextMenuState } from "./use-text-menu-state"
+import { LinkInputPopover } from "../ui/link-input-popover"
+import { Separator } from "@/components/ui/separator"
+import { ColorPicker } from "../ui/color-picker"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { useMailyContext } from "../../provider"
 import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
-} from '../ui/toggle-group-compat';
-import { FontFamilyPicker } from './font-family-picker';
-import { FontSizePicker } from './font-size-picker';
-import { BoldIcon, ItalicIcon, UnderlineIcon, StrikethroughIcon, CodeIcon, List, ListOrdered } from "lucide-react";
+} from "../ui/toggle-group-compat"
+import { FontFamilyPicker } from "./font-family-picker"
+import { FontSizePicker } from "./font-size-picker"
+import {
+  BoldIcon,
+  ItalicIcon,
+  UnderlineIcon,
+  StrikethroughIcon,
+  CodeIcon,
+  List,
+  ListOrdered,
+} from "lucide-react"
 
 type TextBubbleContentProps = {
-  editor: Editor;
-  showListMenu?: boolean;
-};
+  editor: Editor
+  showListMenu?: boolean
+}
 
 export function TextBubbleContent(props: TextBubbleContentProps) {
-  const { editor, showListMenu = true } = props;
+  const { editor, showListMenu = true } = props
 
-  const { t } = useMailyContext();
-  const state = useTextMenuState(editor);
-  const colors = editor?.storage.color.colors as Set<string>;
-  const suggestedColors = Array?.from(colors)?.reverse()?.slice(0, 6) ?? [];
+  const { t } = useMailyContext()
+  const state = useTextMenuState(editor)
+  const colors = editor?.storage.color.colors as Set<string>
+  const suggestedColors = Array?.from(colors)?.reverse()?.slice(0, 6) ?? []
 
   const items: BubbleMenuItem[] = [
     {
-      name: 'bold',
-      isActive: () => editor?.isActive('bold')!,
+      name: "bold",
+      isActive: () => editor?.isActive("bold")!,
       command: () => editor?.chain().focus().toggleBold().run()!,
-      icon: <BoldIcon
-/>,
-      tooltip: t('toolbar.bold'),
+      icon: <BoldIcon />,
+      tooltip: t("toolbar.bold"),
     },
     {
-      name: 'italic',
-      isActive: () => editor?.isActive('italic')!,
+      name: "italic",
+      isActive: () => editor?.isActive("italic")!,
       command: () => editor?.chain().focus().toggleItalic().run()!,
-      icon: <ItalicIcon
-/>,
-      tooltip: t('toolbar.italic'),
+      icon: <ItalicIcon />,
+      tooltip: t("toolbar.italic"),
     },
     {
-      name: 'underline',
-      isActive: () => editor?.isActive('underline')!,
+      name: "underline",
+      isActive: () => editor?.isActive("underline")!,
       command: () => editor?.chain().focus().toggleUnderline().run()!,
-      icon: <UnderlineIcon
-/>,
-      tooltip: t('toolbar.underline'),
+      icon: <UnderlineIcon />,
+      tooltip: t("toolbar.underline"),
     },
     {
-      name: 'strike',
-      isActive: () => editor?.isActive('strike')!,
+      name: "strike",
+      isActive: () => editor?.isActive("strike")!,
       command: () => editor?.chain().focus().toggleStrike().run()!,
-      icon: <StrikethroughIcon
-/>,
-      tooltip: t('toolbar.strikethrough'),
+      icon: <StrikethroughIcon />,
+      tooltip: t("toolbar.strikethrough"),
     },
     {
-      name: 'code',
-      isActive: () => editor?.isActive('code')!,
+      name: "code",
+      isActive: () => editor?.isActive("code")!,
       command: () => editor?.chain().focus().toggleCode().run()!,
-      icon: <CodeIcon
-/>,
-      tooltip: t('toolbar.code'),
+      icon: <CodeIcon />,
+      tooltip: t("toolbar.code"),
     },
-  ];
+  ]
 
   return (
     <>
@@ -81,11 +88,11 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         value={state.currentFontSize}
         onValueChange={(value) => {
           if (value) {
-            editor.chain().focus().setFontSize(value).run();
-            return;
+            editor.chain().focus().setFontSize(value).run()
+            return
           }
 
-          editor.chain().focus().unsetFontSize().run();
+          editor.chain().focus().unsetFontSize().run()
         }}
       />
 
@@ -103,7 +110,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
             <TooltipTrigger asChild>
               <span className="inline-flex shrink-0">
                 <ToggleGroupCompatItem
-                  value={item.name ?? ''}
+                  value={item.name ?? ""}
                   pressed={!!item.isActive?.()}
                   onClick={() => item.command?.()}
                   aria-label={item.tooltip ?? item.name}
@@ -116,7 +123,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
                       {item.icon}
                     </span>
                   ) : (
-                    <span className="text-muted-foreground text-sm font-medium">
+                    <span className="text-sm font-medium text-muted-foreground">
                       {item.name}
                     </span>
                   )}
@@ -133,7 +140,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       <AlignmentSwitch
         alignment={state.textAlign}
         onAlignmentChange={(alignment) => {
-          editor?.chain().focus().setTextAlign(alignment).run();
+          editor?.chain().focus().setTextAlign(alignment).run()
         }}
       />
 
@@ -141,15 +148,15 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         direction={state.textDirection}
         onDirectionChange={(direction) => {
           if (state.isFooterActive) {
-            editor?.chain().focus().setFooterTextDirection(direction).run();
+            editor?.chain().focus().setFooterTextDirection(direction).run()
           } else if (state.isHeadingActive) {
             editor
               ?.chain()
               .focus()
-              .updateAttributes('heading', { textDirection: direction })
-              .run();
+              .updateAttributes("heading", { textDirection: direction })
+              .run()
           } else {
-            editor?.chain().focus().setTextDirection(direction).run();
+            editor?.chain().focus().setMailyTextDirection(direction).run()
           }
         }}
       />
@@ -157,47 +164,45 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       {!state.isListActive && showListMenu && (
         <>
           <BubbleMenuButton
-            icon={<List
-/>}
+            icon={<List />}
             command={() => {
-              editor.chain().focus().toggleBulletList().run();
+              editor.chain().focus().toggleBulletList().run()
             }}
-            tooltip={t('toolbar.bulletList')}
+            tooltip={t("toolbar.bulletList")}
           />
           <BubbleMenuButton
-            icon={<ListOrdered
-/>}
+            icon={<ListOrdered />}
             command={() => {
-              editor.chain().focus().toggleOrderedList().run();
+              editor.chain().focus().toggleOrderedList().run()
             }}
-            tooltip={t('toolbar.orderedList')}
+            tooltip={t("toolbar.orderedList")}
           />
         </>
       )}
 
       <LinkInputPopover
-        defaultValue={state?.linkUrl ?? ''}
+        defaultValue={state?.linkUrl ?? ""}
         onValueChange={(value, isVariable) => {
           if (!value) {
             editor
               ?.chain()
               .focus()
-              .extendMarkRange('link')
+              .extendMarkRange("link")
               .unsetLink()
               .unsetUnderline()
-              .run();
-            return;
+              .run()
+            return
           }
 
           editor
             ?.chain()
-            .extendMarkRange('link')
+            .extendMarkRange("link")
             .setLink({ href: value })
             .setIsUrlVariable(isVariable ?? false)
             .setUnderline()
-            .run()!;
+            .run()!
         }}
-        tooltip={t('toolbar.link')}
+        tooltip={t("toolbar.link")}
         editor={editor}
         isVariable={state.isUrlVariable}
       />
@@ -207,13 +212,13 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       <ColorPicker
         color={state.currentTextColor}
         onColorChange={(color) => {
-          editor?.chain().setColor(color).run();
+          editor?.chain().setColor(color).run()
         }}
-        tooltip={t('toolbar.textColor')}
+        tooltip={t("toolbar.textColor")}
         suggestedColors={suggestedColors}
       >
         <div className="flex flex-col items-center justify-center gap-px">
-          <span className="font-bolder text-foreground font-mono text-xs">
+          <span className="font-bolder font-mono text-xs text-foreground">
             A
           </span>
           <div
@@ -223,5 +228,5 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         </div>
       </ColorPicker>
     </>
-  );
+  )
 }

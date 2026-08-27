@@ -1,5 +1,5 @@
-import { InputRule } from '@tiptap/core';
-import { HorizontalRule as TipTapHorizontalRule } from '@tiptap/extension-horizontal-rule';
+import { InputRule } from "@tiptap/core"
+import { HorizontalRule as TipTapHorizontalRule } from "@tiptap/extension-horizontal-rule"
 
 export const HorizontalRule = TipTapHorizontalRule.extend({
   addInputRules() {
@@ -7,25 +7,29 @@ export const HorizontalRule = TipTapHorizontalRule.extend({
       new InputRule({
         find: /^(?:---|—-|___\s|\*\*\*\s)$/,
         handler: ({ state, range }) => {
-          const attributes = {};
+          const attributes = {}
 
-          const { tr } = state;
-          const start = range.from;
-          const end = range.to;
+          const { tr } = state
+          const start = range.from
+          const end = range.to
 
           tr.insert(start - 1, this.type.create(attributes)).delete(
             tr.mapping.map(start),
             tr.mapping.map(end)
-          );
+          )
         },
       }),
-    ];
+    ]
   },
   addOptions() {
+    const parentOptions = this.parent?.()
+
     return {
+      ...parentOptions,
+      nextNodeType: parentOptions?.nextNodeType ?? "paragraph",
       HTMLAttributes: {
-        class: 'relative',
+        class: "relative",
       },
-    };
+    }
   },
-});
+})

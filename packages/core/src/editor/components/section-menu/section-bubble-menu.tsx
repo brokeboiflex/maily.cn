@@ -1,9 +1,9 @@
 import { deleteNode } from '@/editor/utils/delete-node';
 import { isTextSelected } from '@/editor/utils/is-text-selected';
-import { BubbleMenu, findChildren } from '@tiptap/react';
+import { findChildren } from '@tiptap/core';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { ChevronUp, Trash } from 'lucide-react';
 import { useCallback } from 'react';
-import { sticky } from 'tippy.js';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { AlignmentSwitch } from '../alignment-switch';
 import { Button } from '../base-button';
@@ -26,11 +26,12 @@ import type { LabelKey } from '@/editor/i18n';
 import {
   BUBBLE_MENU_CONTENT_CLASS,
   FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
 } from '../ui/floating-menu';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -44,9 +45,17 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
     return rect;
   }, [editor]);
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       const activeSectionNode = getClosestNodeByName(editor, 'section');
       const repeatNodeChildren = activeSectionNode
@@ -75,19 +84,16 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('section');
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: 'top' as const,
+      offset: 8,
+      flip: false,
     },
     pluginKey: 'sectionBubbleMenu',
-  };
+  });
 
   const state = useSectionState(editor);
   const { t } = useMailyContext();

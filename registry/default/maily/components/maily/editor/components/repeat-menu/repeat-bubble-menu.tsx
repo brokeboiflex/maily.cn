@@ -1,9 +1,9 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
 import { cn } from '@/lib/utils';
 import { isTextSelected } from '../../utils/is-text-selected';
-import { BubbleMenu, findChildren } from '@tiptap/react';
+import { findChildren } from '@tiptap/core';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { sticky } from 'tippy.js';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
@@ -21,10 +21,13 @@ import { processVariables } from '../../utils/variable';
 import { useVariableOptions } from '../../utils/node-options';
 import { useMailyContext } from '../../provider';
 import { Button } from '@/components/ui/button';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -41,9 +44,17 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
     return rect;
   }, [editor]);
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       const activeForNode = getClosestNodeByName(editor, 'repeat');
       const sectionNodeChildren = activeForNode
@@ -64,19 +75,16 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('repeat');
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: 'top' as const,
+      offset: 8,
+      flip: false,
     },
     pluginKey: 'repeatBubbleMenu',
-  };
+  });
 
   const opts = useVariableOptions(editor);
   const variables = opts?.variables;
@@ -96,10 +104,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   const isValidEachKey = eachKey;
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className={FLOATING_BUBBLE_MENU_CLASS}
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">
           {t('repeatMenu.label')}
@@ -109,13 +114,13 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
               aria-label={t('repeatMenu.iterableHint')}
             >
               <IconPlaceholder
-  lucide="InfoIcon"
-  tabler="IconInfoCircle"
-  hugeicons="InformationCircleIcon"
-  phosphor="Info"
-  remixicon="RiInformationLine"
-  className={cn('text-muted-foreground size-3 stroke-[2.5]')}
-/>
+                lucide="InfoIcon"
+                tabler="IconInfoCircle"
+                hugeicons="InformationCircleIcon"
+                phosphor="Info"
+                remixicon="RiInformationLine"
+                className={cn('text-muted-foreground size-3 stroke-[2.5]')}
+              />
             </TooltipTrigger>
             <TooltipContent
               sideOffset={14}

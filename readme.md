@@ -122,11 +122,14 @@ do not compile the optional mailbox surface.
 ## Requirements
 
 - React 18 or 19
+- TipTap 3.30.5-compatible extensions when supplying custom `extensions`
 - Tailwind CSS v4 with standard shadcn theme tokens
 - A project initialized with the shadcn CLI (`components.json` present)
 
 The registry automatically declares its stock shadcn dependencies and adds
 `@plugin "@tailwindcss/typography";` for the editor's `prose` content area.
+It installs the TipTap 3 runtime itself; consumers only need to keep custom
+extensions on the same major version.
 
 ## Editor usage
 

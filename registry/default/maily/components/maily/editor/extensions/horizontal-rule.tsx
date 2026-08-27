@@ -22,7 +22,11 @@ export const HorizontalRule = TipTapHorizontalRule.extend({
     ];
   },
   addOptions() {
+    const parentOptions = this.parent?.();
+
     return {
+      ...parentOptions,
+      nextNodeType: parentOptions?.nextNodeType ?? 'paragraph',
       HTMLAttributes: {
         class: 'relative',
       },

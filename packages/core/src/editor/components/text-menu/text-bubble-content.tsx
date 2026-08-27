@@ -152,7 +152,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
               .updateAttributes('heading', { textDirection: direction })
               .run();
           } else {
-            editor?.chain().focus().setTextDirection(direction).run();
+            editor?.chain().focus().setMailyTextDirection(direction).run();
           }
         }}
       />

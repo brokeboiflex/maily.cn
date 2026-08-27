@@ -8,8 +8,8 @@ export const DEFAULT_TEXT_DIRECTION: AllowedTextDirection = 'ltr';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    textDirection: {
-      setTextDirection: (direction: AllowedTextDirection) => ReturnType;
+    mailyTextDirection: {
+      setMailyTextDirection: (direction: AllowedTextDirection) => ReturnType;
     };
   }
 }
@@ -65,7 +65,7 @@ export const ParagraphExtension = TiptapParagraph.extend({
   addCommands() {
     return {
       ...this.parent?.(),
-      setTextDirection:
+      setMailyTextDirection:
         (direction: AllowedTextDirection): Command =>
         ({ commands }) => {
           return commands.updateAttributes(this.name, {

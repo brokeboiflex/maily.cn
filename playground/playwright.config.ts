@@ -1,11 +1,14 @@
 import { defineConfig, devices } from "@playwright/test"
 
+const port = process.env.PLAYWRIGHT_PORT ?? "5173"
+const baseURL = `http://127.0.0.1:${port}`
+
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: true,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL,
     trace: "retain-on-failure",
   },
   projects: [
@@ -15,8 +18,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bun run dev --host 127.0.0.1 --port 5173",
-    url: "http://127.0.0.1:5173",
+    command: `bun run dev --host 127.0.0.1 --port ${port}`,
+    url: baseURL,
     reuseExistingServer: true,
   },
 })

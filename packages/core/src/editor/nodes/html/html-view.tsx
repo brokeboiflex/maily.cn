@@ -52,7 +52,7 @@ export function HTMLCodeBlockView(props: NodeViewProps) {
             'border-border bg-background text-foreground my-0 rounded-lg border p-2 [&_code]:bg-transparent [&_code]:text-inherit'
           )}
         >
-          <NodeViewContent
+          <NodeViewContent<'code'>
             as="code"
             className={cn('is-editable', languageClass)}
           />

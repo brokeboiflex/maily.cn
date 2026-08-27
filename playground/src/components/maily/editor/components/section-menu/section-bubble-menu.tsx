@@ -1,68 +1,81 @@
-import { deleteNode } from '../../utils/delete-node';
-import { isTextSelected } from '../../utils/is-text-selected';
-import { BubbleMenu, findChildren } from '@tiptap/react';
-import { useCallback } from 'react';
-import { sticky } from 'tippy.js';
-import { getRenderContainer } from '../../utils/get-render-container';
-import { AlignmentSwitch } from '../alignment-switch';
-import { Button } from '@/components/ui/button';
-import { BubbleMenuButton } from '../bubble-menu-button';
-import { ColumnsBubbleMenuContent } from '../column-menu/columns-bubble-menu-content';
-import { MarginIcon } from '../icons/margin-icon';
-import { PaddingIcon } from '../icons/padding-icon';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ShowPopover } from '../show-popover';
-import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { ColorPicker } from '../ui/color-picker';
-import { Separator } from '@/components/ui/separator';
-import { Select } from '../ui/select';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { useSectionState } from './use-section-state';
-import { getClosestNodeByName } from '../../utils/columns';
-import { spacing } from '../../utils/spacing';
-import { useMailyContext } from '../../provider';
-import type { LabelKey } from '../../i18n';
+import { deleteNode } from "../../utils/delete-node"
+import { isTextSelected } from "../../utils/is-text-selected"
+import { findChildren } from "@tiptap/core"
+import { BubbleMenu } from "@tiptap/react/menus"
+import { useCallback } from "react"
+import { getRenderContainer } from "../../utils/get-render-container"
+import { AlignmentSwitch } from "../alignment-switch"
+import { Button } from "@/components/ui/button"
+import { BubbleMenuButton } from "../bubble-menu-button"
+import { ColumnsBubbleMenuContent } from "../column-menu/columns-bubble-menu-content"
+import { MarginIcon } from "../icons/margin-icon"
+import { PaddingIcon } from "../icons/padding-icon"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { ShowPopover } from "../show-popover"
+import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
+import { ColorPicker } from "../ui/color-picker"
+import { Separator } from "@/components/ui/separator"
+import { Select } from "../ui/select"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { useSectionState } from "./use-section-state"
+import { getClosestNodeByName } from "../../utils/columns"
+import { spacing } from "../../utils/spacing"
+import { useMailyContext } from "../../provider"
+import type { LabelKey } from "../../i18n"
 import {
   BUBBLE_MENU_CONTENT_CLASS,
   FLOATING_BUBBLE_MENU_CLASS,
-} from '../ui/floating-menu';
-import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
-import { Trash, ChevronUp } from "lucide-react";
+  useStableBubbleMenuProps,
+} from "../ui/floating-menu"
+import { BOTTOM_FLOATING_CONTENT_PROPS } from "../ui/floating-placement"
+import { Trash, ChevronUp } from "lucide-react"
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props
   if (!editor) {
-    return null;
+    return null
   }
 
   const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor!, 'section');
+    const renderContainer = getRenderContainer(editor!, "section")
     const rect =
       renderContainer?.getBoundingClientRect() ||
-      new DOMRect(-1000, -1000, 0, 0);
+      new DOMRect(-1000, -1000, 0, 0)
 
-    return rect;
-  }, [editor]);
+    return rect
+  }, [editor])
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
-      const activeSectionNode = getClosestNodeByName(editor, 'section');
+      const activeSectionNode = getClosestNodeByName(editor, "section")
       const repeatNodeChildren = activeSectionNode
         ? findChildren(activeSectionNode?.node, (node) => {
-            return node.type.name === 'repeat';
+            return node.type.name === "repeat"
           })?.[0]
-        : null;
+        : null
       const inlineImageNodeChildren = activeSectionNode
         ? findChildren(activeSectionNode?.node, (node) => {
-            return node.type.name === 'inlineImage';
+            return node.type.name === "inlineImage"
           })?.[0]
-        : null;
+        : null
       const hasActiveRepeatNodeChildren =
-        repeatNodeChildren && editor.isActive('repeat');
+        repeatNodeChildren && editor.isActive("repeat")
       const hasActiveInlineImageNodeChildren =
-        inlineImageNodeChildren && editor.isActive('inlineImage');
+        inlineImageNodeChildren && editor.isActive("inlineImage")
 
       if (
         isTextSelected(editor) ||
@@ -70,41 +83,38 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
         hasActiveInlineImageNodeChildren ||
         !editor.isEditable
       ) {
-        return false;
+        return false
       }
 
-      return editor.isActive('section');
+      return editor.isActive("section")
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: "top" as const,
+      offset: 8,
+      flip: false,
     },
-    pluginKey: 'sectionBubbleMenu',
-  };
+    pluginKey: "sectionBubbleMenu",
+  })
 
-  const state = useSectionState(editor);
-  const { t } = useMailyContext();
+  const state = useSectionState(editor)
+  const { t } = useMailyContext()
 
   const borderRadiusOptions = [
-    { value: '0', label: t('sectionMenu.radius.sharp') },
-    { value: '6', label: t('sectionMenu.radius.smooth') },
-    { value: '9999', label: t('sectionMenu.radius.round') },
-  ];
+    { value: "0", label: t("sectionMenu.radius.sharp") },
+    { value: "6", label: t("sectionMenu.radius.smooth") },
+    { value: "9999", label: t("sectionMenu.radius.round") },
+  ]
 
   const spacingOptions = (noneKey: LabelKey) => [
-    { value: '0', label: t(noneKey) },
+    { value: "0", label: t(noneKey) },
     ...spacing.map((space) => ({
       label: t(`spacing.${space.short}` as LabelKey),
       value: String(space.value),
     })),
-  ];
+  ]
 
   return (
     <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
@@ -114,7 +124,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           onAlignmentChange={(alignment) => {
             editor?.commands?.updateSection({
               align: alignment,
-            });
+            })
           }}
         />
 
@@ -122,33 +132,33 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
         <div className={BUBBLE_MENU_CONTENT_CLASS}>
           <Select
-            label={t('sectionMenu.borderRadius')}
+            label={t("sectionMenu.borderRadius")}
             value={String(state.currentBorderRadius)}
             options={borderRadiusOptions}
             onValueChange={(value) => {
               editor?.commands?.updateSection({
                 borderRadius: Number(value),
-              });
+              })
             }}
-            tooltip={t('sectionMenu.borderRadius')}
+            tooltip={t("sectionMenu.borderRadius")}
             className="capitalize"
           />
 
           <Select
-            label={t('sectionMenu.borderWidth')}
+            label={t("sectionMenu.borderWidth")}
             value={String(state.currentBorderWidth)}
             options={[
-              { value: '0', label: t('sectionMenu.borderWidth.none') },
-              { value: '1', label: t('sectionMenu.borderWidth.thin') },
-              { value: '2', label: t('sectionMenu.borderWidth.medium') },
-              { value: '3', label: t('sectionMenu.borderWidth.thick') },
+              { value: "0", label: t("sectionMenu.borderWidth.none") },
+              { value: "1", label: t("sectionMenu.borderWidth.thin") },
+              { value: "2", label: t("sectionMenu.borderWidth.medium") },
+              { value: "3", label: t("sectionMenu.borderWidth.thick") },
             ]}
             onValueChange={(value) => {
               editor?.commands?.updateSection({
                 borderWidth: Number(value),
-              });
+              })
             }}
-            tooltip={t('sectionMenu.borderWidth')}
+            tooltip={t("sectionMenu.borderWidth")}
             className="capitalize"
           />
         </div>
@@ -157,19 +167,19 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
         <Select
           icon={<MarginIcon className="size-3.5 stroke-[1.2]" />}
-          label={t('sectionMenu.margin')}
+          label={t("sectionMenu.margin")}
           value={String(state.currentMarginTop)}
-          options={spacingOptions('sectionMenu.margin.none')}
+          options={spacingOptions("sectionMenu.margin.none")}
           onValueChange={(_value) => {
-            const value = Number(_value);
+            const value = Number(_value)
             editor?.commands?.updateSection({
               marginTop: value,
               marginRight: value,
               marginBottom: value,
               marginLeft: value,
-            });
+            })
           }}
-          tooltip={t('sectionMenu.margin')}
+          tooltip={t("sectionMenu.margin")}
           className="capitalize"
         />
 
@@ -177,19 +187,19 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
 
         <Select
           icon={<PaddingIcon className="stroke-[1]" />}
-          label={t('sectionMenu.padding')}
+          label={t("sectionMenu.padding")}
           value={String(state.currentPaddingTop)}
-          options={spacingOptions('sectionMenu.padding.none')}
+          options={spacingOptions("sectionMenu.padding.none")}
           onValueChange={(_value) => {
-            const value = Number(_value);
+            const value = Number(_value)
             editor?.commands?.updateSection({
               paddingTop: value,
               paddingRight: value,
               paddingBottom: value,
               paddingLeft: value,
-            });
+            })
           }}
-          tooltip={t('sectionMenu.padding')}
+          tooltip={t("sectionMenu.padding")}
           className="capitalize"
         />
 
@@ -201,9 +211,9 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
             onColorChange={(color) => {
               editor?.commands?.updateSection({
                 borderColor: color,
-              });
+              })
             }}
-            tooltip={t('sectionMenu.borderColor')}
+            tooltip={t("sectionMenu.borderColor")}
             borderColor={state.currentBorderColor}
           />
           <ColorPicker
@@ -211,22 +221,21 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
             onColorChange={(color) => {
               editor?.commands?.updateSection({
                 backgroundColor: color,
-              });
+              })
             }}
             backgroundColor={state.currentBackgroundColor}
-            tooltip={t('sectionMenu.backgroundColor')}
-            className="border-background rounded-full border-[1.5px] shadow"
+            tooltip={t("sectionMenu.backgroundColor")}
+            className="rounded-full border-[1.5px] border-background shadow"
           />
         </div>
 
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={<Trash
-/>}
-          tooltip={t('sectionMenu.delete')}
+          icon={<Trash />}
+          tooltip={t("sectionMenu.delete")}
           command={() => {
-            deleteNode(editor, 'section');
+            deleteNode(editor, "section")
           }}
         />
 
@@ -237,7 +246,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
           onShowIfKeyValueChange={(value) => {
             editor.commands.updateSection({
               showIfKey: value,
-            });
+            })
           }}
           editor={editor}
         />
@@ -248,13 +257,13 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
             <Popover>
               <PopoverTrigger asChild>
                 <Button type="button" variant="ghost" size="sm">
-                  {t('sectionMenu.column')}
+                  {t("sectionMenu.column")}
                   <ChevronUp className="size-3" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
                 {...BOTTOM_FLOATING_CONTENT_PROPS}
-                className="p-0.5! w-max rounded-lg"
+                className="w-max rounded-lg p-0.5!"
                 sideOffset={8}
                 align="end"
               >
@@ -265,5 +274,5 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
         )}
       </TooltipProvider>
     </BubbleMenu>
-  );
+  )
 }

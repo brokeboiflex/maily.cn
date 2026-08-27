@@ -88,6 +88,12 @@ export type VariableStorage = {
   popover: boolean;
 };
 
+declare module '@tiptap/core' {
+  interface Storage {
+    variable: VariableStorage;
+  }
+}
+
 export const VariablePluginKey = new PluginKey('variable');
 
 export const VariableExtension = Node.create<VariableOptions, VariableStorage>({

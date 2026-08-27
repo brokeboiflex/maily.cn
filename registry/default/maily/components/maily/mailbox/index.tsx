@@ -1,6 +1,6 @@
 'use client';
 
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -213,7 +213,7 @@ export const defaultMailboxLabels = {
   'compose.wrote': 'On {date}, {sender} wrote:',
   'compose.forwardedHeader': 'Forwarded message',
   'compose.mode.plainText': 'Plain text',
-  'compose.mode.mailyEditor': 'Maily editor',
+  'compose.mode.mailyEditor': 'Visual editor',
   'folders.inbox': 'Inbox',
   'folders.sent': 'Sent',
   'folders.drafts': 'Drafts',
@@ -334,171 +334,201 @@ const MESSAGE_ACTION_METADATA: Record<
 > = {
   archive: {
     label: 'actions.archive',
-    icon: (className) => <IconPlaceholder
-  lucide="Archive"
-  tabler="IconArchive"
-  hugeicons="ArchiveIcon"
-  phosphor="Archive"
-  remixicon="RiArchiveLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Archive"
+        tabler="IconArchive"
+        hugeicons="ArchiveIcon"
+        phosphor="Archive"
+        remixicon="RiArchiveLine"
+        className={className}
+      />
+    ),
   },
   delete: {
     label: 'actions.delete',
-    icon: (className) => <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Trash2"
+        tabler="IconTrash"
+        hugeicons="Delete02Icon"
+        phosphor="Trash"
+        remixicon="RiDeleteBinLine"
+        className={className}
+      />
+    ),
     variant: 'destructive',
   },
   favorite: {
     label: 'actions.favorite',
-    icon: (className) => <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Star"
+        tabler="IconStar"
+        hugeicons="StarIcon"
+        phosphor="Star"
+        remixicon="RiStarLine"
+        className={className}
+      />
+    ),
   },
   markUnread: {
     label: 'actions.markUnread',
-    icon: (className) => <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="MailOpen"
+        tabler="IconMailOpened"
+        hugeicons="MailOpenIcon"
+        phosphor="EnvelopeOpen"
+        remixicon="RiMailOpenLine"
+        className={className}
+      />
+    ),
     value: true,
   },
   blockSender: {
     label: 'actions.blockSender',
-    icon: (className) => <IconPlaceholder
-  lucide="Ban"
-  tabler="IconBan"
-  hugeicons="Cancel01Icon"
-  phosphor="Prohibit"
-  remixicon="RiForbidLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Ban"
+        tabler="IconBan"
+        hugeicons="Cancel01Icon"
+        phosphor="Prohibit"
+        remixicon="RiForbidLine"
+        className={className}
+      />
+    ),
   },
   reportSpam: {
     label: 'actions.reportSpam',
-    icon: (className) => <IconPlaceholder
-  lucide="ShieldAlert"
-  tabler="IconShieldExclamation"
-  hugeicons="SpamIcon"
-  phosphor="ShieldWarning"
-  remixicon="RiSpam2Line"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="ShieldAlert"
+        tabler="IconShieldExclamation"
+        hugeicons="SpamIcon"
+        phosphor="ShieldWarning"
+        remixicon="RiSpam2Line"
+        className={className}
+      />
+    ),
   },
   reportPhishing: {
     label: 'actions.reportPhishing',
-    icon: (className) => <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Flag"
+        tabler="IconFlag"
+        hugeicons="Flag01Icon"
+        phosphor="Flag"
+        remixicon="RiFlagLine"
+        className={className}
+      />
+    ),
   },
   reportIllegal: {
     label: 'actions.reportIllegal',
-    icon: (className) => <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Flag"
+        tabler="IconFlag"
+        hugeicons="Flag01Icon"
+        phosphor="Flag"
+        remixicon="RiFlagLine"
+        className={className}
+      />
+    ),
   },
   filterSimilar: {
     label: 'actions.filterSimilar',
-    icon: (className) => <IconPlaceholder
-  lucide="Filter"
-  tabler="IconFilter"
-  hugeicons="FilterIcon"
-  phosphor="Funnel"
-  remixicon="RiFilter3Line"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Filter"
+        tabler="IconFilter"
+        hugeicons="FilterIcon"
+        phosphor="Funnel"
+        remixicon="RiFilter3Line"
+        className={className}
+      />
+    ),
   },
   translate: {
     label: 'actions.translate',
-    icon: (className) => <IconPlaceholder
-  lucide="Languages"
-  tabler="IconLanguage"
-  hugeicons="TranslateIcon"
-  phosphor="Translate"
-  remixicon="RiTranslate"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Languages"
+        tabler="IconLanguage"
+        hugeicons="TranslateIcon"
+        phosphor="Translate"
+        remixicon="RiTranslate"
+        className={className}
+      />
+    ),
   },
   print: {
     label: 'actions.print',
-    icon: (className) => <IconPlaceholder
-  lucide="Printer"
-  tabler="IconPrinter"
-  hugeicons="PrinterIcon"
-  phosphor="Printer"
-  remixicon="RiPrinterLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Printer"
+        tabler="IconPrinter"
+        hugeicons="PrinterIcon"
+        phosphor="Printer"
+        remixicon="RiPrinterLine"
+        className={className}
+      />
+    ),
   },
   download: {
     label: 'actions.download',
-    icon: (className) => <IconPlaceholder
-  lucide="Download"
-  tabler="IconDownload"
-  hugeicons="Download01Icon"
-  phosphor="DownloadSimple"
-  remixicon="RiDownloadLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Download"
+        tabler="IconDownload"
+        hugeicons="Download01Icon"
+        phosphor="DownloadSimple"
+        remixicon="RiDownloadLine"
+        className={className}
+      />
+    ),
   },
   showOriginal: {
     label: 'actions.showOriginal',
     toolbarLabel: 'actions.openExternal',
-    icon: (className) => <IconPlaceholder
-  lucide="Code2"
-  tabler="IconCode"
-  hugeicons="SourceCodeIcon"
-  phosphor="Code"
-  remixicon="RiCodeLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Code2"
+        tabler="IconCode"
+        hugeicons="SourceCodeIcon"
+        phosphor="Code"
+        remixicon="RiCodeLine"
+        className={className}
+      />
+    ),
   },
   feedback: {
     label: 'actions.feedback',
-    icon: (className) => <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="AlertCircle"
+        tabler="IconAlertCircle"
+        hugeicons="AlertCircleIcon"
+        phosphor="WarningCircle"
+        remixicon="RiErrorWarningLine"
+        className={className}
+      />
+    ),
   },
   react: {
     label: 'actions.react',
-    icon: (className) => <IconPlaceholder
-  lucide="Smile"
-  tabler="IconMoodSmile"
-  hugeicons="SmileIcon"
-  phosphor="Smiley"
-  remixicon="RiEmotionHappyLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Smile"
+        tabler="IconMoodSmile"
+        hugeicons="SmileIcon"
+        phosphor="Smiley"
+        remixicon="RiEmotionHappyLine"
+        className={className}
+      />
+    ),
     value: 'smile',
   },
 };
@@ -648,41 +678,49 @@ function interpolate(label: string, vars?: Record<string, string | number>) {
 function folderIcon(folder: MailyMailboxFolder, className: string) {
   switch (folder) {
     case 'inbox':
-      return <IconPlaceholder
-  lucide="Inbox"
-  tabler="IconInbox"
-  hugeicons="InboxIcon"
-  phosphor="Tray"
-  remixicon="RiInboxLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Inbox"
+          tabler="IconInbox"
+          hugeicons="InboxIcon"
+          phosphor="Tray"
+          remixicon="RiInboxLine"
+          className={className}
+        />
+      );
     case 'sent':
-      return <IconPlaceholder
-  lucide="Send"
-  tabler="IconSend"
-  hugeicons="MailSend02Icon"
-  phosphor="PaperPlaneTilt"
-  remixicon="RiSendPlaneLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Send"
+          tabler="IconSend"
+          hugeicons="MailSend02Icon"
+          phosphor="PaperPlaneTilt"
+          remixicon="RiSendPlaneLine"
+          className={className}
+        />
+      );
     case 'drafts':
-      return <IconPlaceholder
-  lucide="FileText"
-  tabler="IconFileText"
-  hugeicons="File02Icon"
-  phosphor="FileText"
-  remixicon="RiFileTextLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="FileText"
+          tabler="IconFileText"
+          hugeicons="File02Icon"
+          phosphor="FileText"
+          remixicon="RiFileTextLine"
+          className={className}
+        />
+      );
     case 'bounced':
-      return <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="AlertCircle"
+          tabler="IconAlertCircle"
+          hugeicons="AlertCircleIcon"
+          phosphor="WarningCircle"
+          remixicon="RiErrorWarningLine"
+          className={className}
+        />
+      );
   }
 }
 
@@ -1109,13 +1147,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
               aria-label={t('compose.new')}
             >
               <IconPlaceholder
-  lucide="Pencil"
-  tabler="IconPencil"
-  hugeicons="PencilIcon"
-  phosphor="Pencil"
-  remixicon="RiPencilLine"
-  className="size-4"
-/>
+                lucide="Pencil"
+                tabler="IconPencil"
+                hugeicons="PencilIcon"
+                phosphor="Pencil"
+                remixicon="RiPencilLine"
+                className="size-4"
+              />
               <span className="@[4rem]/rail:inline hidden min-w-0 truncate">
                 {t('compose.new')}
               </span>
@@ -1173,13 +1211,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
               <InputGroup className="bg-muted/30 h-8">
                 <InputGroupAddon>
                   <IconPlaceholder
-  lucide="Search"
-  tabler="IconSearch"
-  hugeicons="Search01Icon"
-  phosphor="MagnifyingGlass"
-  remixicon="RiSearchLine"
-  className="size-4"
-/>
+                    lucide="Search"
+                    tabler="IconSearch"
+                    hugeicons="Search01Icon"
+                    phosphor="MagnifyingGlass"
+                    remixicon="RiSearchLine"
+                    className="size-4"
+                  />
                 </InputGroupAddon>
                 <InputGroupInput
                   value={search}
@@ -1192,14 +1230,14 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 {refreshing && (
                   <InputGroupAddon align="inline-end">
                     <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
+                      lucide="Loader2"
+                      tabler="IconLoader2"
+                      hugeicons="Loading03Icon"
+                      phosphor="CircleNotch"
+                      remixicon="RiLoader2Line"
+                      className="size-4 animate-spin"
                       aria-label={t('refresh')}
-/>
+                    />
                   </InputGroupAddon>
                 )}
               </InputGroup>
@@ -1228,13 +1266,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 className="border-destructive/30 bg-destructive/10 text-destructive flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm"
               >
                 <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className="size-4 shrink-0"
-/>
+                  lucide="AlertCircle"
+                  tabler="IconAlertCircle"
+                  hugeicons="AlertCircleIcon"
+                  phosphor="WarningCircle"
+                  remixicon="RiErrorWarningLine"
+                  className="size-4 shrink-0"
+                />
                 <span>{t(errorKey)}</span>
               </div>
             )}
@@ -1304,13 +1342,13 @@ function MessageList(props: {
     return (
       <div className="text-muted-foreground flex h-40 items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="Loader2"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
         {t('loading')}
       </div>
     );
@@ -1357,13 +1395,13 @@ function MessageList(props: {
                 <div className="flex items-center gap-1.5">
                   {row.isFavorite && (
                     <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className="size-3.5 shrink-0 fill-current text-amber-500"
-/>
+                      lucide="Star"
+                      tabler="IconStar"
+                      hugeicons="StarIcon"
+                      phosphor="Star"
+                      remixicon="RiStarLine"
+                      className="size-3.5 shrink-0 fill-current text-amber-500"
+                    />
                   )}
                   <span
                     className={cn(
@@ -1375,13 +1413,13 @@ function MessageList(props: {
                   </span>
                   {row.hasAttachments && (
                     <IconPlaceholder
-  lucide="Paperclip"
-  tabler="IconPaperclip"
-  hugeicons="AttachmentIcon"
-  phosphor="Paperclip"
-  remixicon="RiAttachmentLine"
-  className="text-muted-foreground size-3 shrink-0"
-/>
+                      lucide="Paperclip"
+                      tabler="IconPaperclip"
+                      hugeicons="AttachmentIcon"
+                      phosphor="Paperclip"
+                      remixicon="RiAttachmentLine"
+                      className="text-muted-foreground size-3 shrink-0"
+                    />
                   )}
                 </div>
                 {row.snippet && (
@@ -1443,13 +1481,13 @@ function MessageReader(props: {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="Loader2"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
         {t('loading')}
       </div>
     );
@@ -1507,13 +1545,13 @@ function MessageReader(props: {
     >
       {action === 'showOriginal' ? (
         <IconPlaceholder
-  lucide="ExternalLink"
-  tabler="IconExternalLink"
-  hugeicons="ArrowUpRight01Icon"
-  phosphor="ArrowSquareOut"
-  remixicon="RiExternalLinkLine"
-  className="size-4"
-/>
+          lucide="ExternalLink"
+          tabler="IconExternalLink"
+          hugeicons="ArrowUpRight01Icon"
+          phosphor="ArrowSquareOut"
+          remixicon="RiExternalLinkLine"
+          className="size-4"
+        />
       ) : (
         MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
       )}
@@ -1555,13 +1593,13 @@ function MessageReader(props: {
               onClick={() => onReply(detail)}
             >
               <IconPlaceholder
-  lucide="Reply"
-  tabler="IconCornerUpLeft"
-  hugeicons="MailReply01Icon"
-  phosphor="ArrowBendUpLeft"
-  remixicon="RiReplyLine"
-  className="size-4"
-/>
+                lucide="Reply"
+                tabler="IconCornerUpLeft"
+                hugeicons="MailReply01Icon"
+                phosphor="ArrowBendUpLeft"
+                remixicon="RiReplyLine"
+                className="size-4"
+              />
             </MessageActionButton>
             <MessageActionButton
               label={t('actions.forward')}
@@ -1569,13 +1607,13 @@ function MessageReader(props: {
               onClick={() => onForward(detail)}
             >
               <IconPlaceholder
-  lucide="Forward"
-  tabler="IconArrowForward"
-  hugeicons="Forward01Icon"
-  phosphor="ArrowBendUpRight"
-  remixicon="RiShareForwardLine"
-  className="size-4"
-/>
+                lucide="Forward"
+                tabler="IconArrowForward"
+                hugeicons="Forward01Icon"
+                phosphor="ArrowBendUpRight"
+                remixicon="RiShareForwardLine"
+                className="size-4"
+              />
             </MessageActionButton>
             {messageActions.length > 0 && (
               <MessageMoreMenu
@@ -1669,13 +1707,13 @@ function MessageActionButton(props: {
     >
       {props.pending ? (
         <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="Loader2"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
       ) : (
         props.children
       )}
@@ -1724,13 +1762,13 @@ function MessageMoreMenu(props: {
       >
         {actionPending === action ? (
           <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+            lucide="Loader2"
+            tabler="IconLoader2"
+            hugeicons="Loading03Icon"
+            phosphor="CircleNotch"
+            remixicon="RiLoader2Line"
+            className="size-4 animate-spin"
+          />
         ) : (
           metadata.icon(
             cn(
@@ -1757,13 +1795,13 @@ function MessageMoreMenu(props: {
           aria-label={t('actions.more')}
         >
           <IconPlaceholder
-  lucide="MoreVertical"
-  tabler="IconDotsVertical"
-  hugeicons="MoreVerticalIcon"
-  phosphor="DotsThreeVertical"
-  remixicon="RiMore2Line"
-  className="size-4"
-/>
+            lucide="MoreVertical"
+            tabler="IconDotsVertical"
+            hugeicons="MoreVerticalIcon"
+            phosphor="DotsThreeVertical"
+            remixicon="RiMore2Line"
+            className="size-4"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
@@ -1995,13 +2033,13 @@ function Compose(props: {
             disabled={isDiscarding}
           >
             <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className="size-4"
-/>
+              lucide="Trash2"
+              tabler="IconTrash"
+              hugeicons="Delete02Icon"
+              phosphor="Trash"
+              remixicon="RiDeleteBinLine"
+              className="size-4"
+            />
             {t('compose.discard')}
           </Button>
           <Button
@@ -2011,35 +2049,37 @@ function Compose(props: {
             onClick={() => onSave(values)}
             disabled={isSaving}
           >
-            {isSaving && <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>}
+            {isSaving && (
+              <IconPlaceholder
+                lucide="Loader2"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
+            )}
             {t('compose.saveDraft')}
           </Button>
           <Button type="submit" size="sm" disabled={isSending}>
             {isSending ? (
               <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                lucide="Loader2"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
             ) : (
               <IconPlaceholder
-  lucide="Send"
-  tabler="IconSend"
-  hugeicons="MailSend02Icon"
-  phosphor="PaperPlaneTilt"
-  remixicon="RiSendPlaneLine"
-  className="size-4"
-/>
+                lucide="Send"
+                tabler="IconSend"
+                hugeicons="MailSend02Icon"
+                phosphor="PaperPlaneTilt"
+                remixicon="RiSendPlaneLine"
+                className="size-4"
+              />
             )}
             {t('compose.send')}
           </Button>
@@ -2409,13 +2449,13 @@ function RecipientAutocompleteInput(props: {
             {loading ? (
               <div className="text-muted-foreground flex items-center justify-center gap-2 px-3 py-4 text-sm">
                 <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                  lucide="Loader2"
+                  tabler="IconLoader2"
+                  hugeicons="Loading03Icon"
+                  phosphor="CircleNotch"
+                  remixicon="RiLoader2Line"
+                  className="size-4 animate-spin"
+                />
                 {loadingLabel}
               </div>
             ) : suggestions.length > 0 ? (

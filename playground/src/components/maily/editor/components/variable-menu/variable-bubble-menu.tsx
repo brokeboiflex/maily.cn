@@ -1,42 +1,44 @@
-import { BubbleMenu } from '@tiptap/react';
-import { sticky } from 'tippy.js';
-import { TextBubbleContent } from '../text-menu/text-bubble-content';
-import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import { BubbleMenu } from "@tiptap/react/menus"
+import { TextBubbleContent } from "../text-menu/text-bubble-content"
+import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from "../ui/floating-menu"
 
 export function VariableBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, ...menuProps } = props
   if (!editor) {
-    return null;
+    return null
   }
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    pluginKey: 'variable-menu',
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
+    pluginKey: "variable-menu",
     shouldShow: ({ editor }) => {
-      return editor.isActive('variable') && !editor.storage.variable?.popover;
+      return editor.isActive("variable") && !editor.storage.variable?.popover
     },
-    tippyOptions: {
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: '100%',
-      appendTo: () => appendTo?.current || 'parent',
-      placement: 'top-start',
+    options: {
+      placement: "top-start" as const,
+      flip: false,
     },
-  };
+  })
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className={FLOATING_BUBBLE_MENU_CLASS}
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <TextBubbleContent showListMenu={false} editor={editor} />
       </TooltipProvider>
     </BubbleMenu>
-  );
+  )
 }

@@ -41,6 +41,20 @@ import { loadDocumentFonts } from './fonts/fontsource';
 type ParitialMailContextType = Partial<MailyContextType>;
 export type EditorViewMode = 'design' | 'render';
 
+function useShallowStableArray<T>(values: T[] | undefined) {
+  const valuesRef = useRef(values);
+
+  if (
+    valuesRef.current !== values &&
+    (valuesRef.current?.length !== values?.length ||
+      valuesRef.current?.some((value, index) => value !== values?.[index]))
+  ) {
+    valuesRef.current = values;
+  }
+
+  return valuesRef.current;
+}
+
 export type EditorRenderPreviewContext = {
   editor: TiptapEditor;
   json: JSONContent;
@@ -128,12 +142,23 @@ export function Editor(props: EditorProps) {
     scrollMargin = 40,
   } = props;
 
-  const resolvedLabels: MailyLabels = labels ?? { ...defaultLabels };
+  const stableBlocks = useShallowStableArray(blocks);
+  const stableExtensions = useShallowStableArray(extensions);
+  const resolvedLabels: MailyLabels = labels ?? defaultLabels;
   const t = useMemo(() => createTranslator(resolvedLabels), [resolvedLabels]);
   const [viewMode, setViewMode] = useState<EditorViewMode>(initialViewMode);
   const resolvedBlocks = useMemo(
-    () => blocks ?? getDefaultBlocks(t),
-    [blocks, t]
+    () => stableBlocks ?? getDefaultBlocks(t),
+    [stableBlocks, t]
+  );
+  const resolvedExtensions = useMemo(
+    () =>
+      defaultExtensions({
+        extensions: stableExtensions,
+        blocks: resolvedBlocks,
+        t,
+      }),
+    [stableExtensions, resolvedBlocks, t]
   );
 
   const formattedContent = useMemo(() => {
@@ -162,16 +187,20 @@ export function Editor(props: EditorProps) {
     }
   }, [contentHtml, contentJson, replaceDeprecatedNode]);
 
-  const menuContainerRef = useRef(null);
-  const editor = useEditor({
-    editorProps: {
+  const editorProps = useMemo(
+    () => ({
       scrollThreshold,
       scrollMargin,
       attributes: {
         class: cn(EDITOR_CONTENT_CLASS, contentClassName),
         spellCheck: spellCheck ? 'true' : 'false',
       },
-    },
+    }),
+    [contentClassName, scrollMargin, scrollThreshold, spellCheck]
+  );
+  const menuContainerRef = useRef(null);
+  const editor = useEditor({
+    editorProps,
     immediatelyRender,
     onCreate: ({ editor }) => {
       loadDocumentFonts(editor.getJSON());
@@ -181,11 +210,7 @@ export function Editor(props: EditorProps) {
       loadDocumentFonts(editor.getJSON());
       onUpdate?.(editor);
     },
-    extensions: defaultExtensions({
-      extensions,
-      blocks: resolvedBlocks,
-      t,
-    }),
+    extensions: resolvedExtensions,
     content: formattedContent,
     autofocus,
     editable,
@@ -288,15 +313,19 @@ function RenderPreview({
     () => defaultExtensions({ extensions, blocks, t }),
     [extensions, blocks, t]
   );
-  const previewEditor = useEditor({
-    editorProps: {
+  const previewEditorProps = useMemo(
+    () => ({
       attributes: {
         class: cn(
           EDITOR_CONTENT_CLASS,
           'pl-4! pr-4 caret-transparent [&_.ProseMirror-selectednode]:outline-none [&_.ProseMirror-selectednode]:after:hidden'
         ),
       },
-    },
+    }),
+    []
+  );
+  const previewEditor = useEditor({
+    editorProps: previewEditorProps,
     extensions: previewExtensions,
     content: json,
     editable: false,
@@ -308,7 +337,7 @@ function RenderPreview({
       return;
     }
 
-    previewEditor.commands.setContent(json, false);
+    previewEditor.commands.setContent(json, { emitUpdate: false });
   }, [previewEditor, json]);
 
   if (renderedPreview) {

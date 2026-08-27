@@ -1,12 +1,8 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
-import {
-  type AllowedLogoSize,
-  allowedLogoSize,
-} from '../../nodes/logo/logo';
+import { IconPlaceholder } from '@/components/icon-placeholder';
+import { type AllowedLogoSize, allowedLogoSize } from '../../nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '../../utils/aspect-ratio';
 import { borderRadius } from '../../utils/border-radius';
-import { BubbleMenu } from '@tiptap/react';
-import { sticky } from 'tippy.js';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { AlignmentSwitch } from '../alignment-switch';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { ShowPopover } from '../show-popover';
@@ -20,7 +16,10 @@ import { useImageState } from './use-image-state';
 import { IMAGE_MAX_WIDTH } from '../../nodes/image/image-view';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '../../i18n';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
   Sharp: 'imageMenu.radius.sharp',
@@ -31,7 +30,7 @@ const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
 };
 
 export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -39,9 +38,17 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
   const state = useImageState(editor);
   const { t } = useMailyContext();
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       if (!editor.isEditable) {
         return false;
@@ -49,15 +56,11 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('logo') || editor.isActive('image');
     },
-    tippyOptions: {
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: '100%',
+    options: {
+      placement: 'top' as const,
+      flip: false,
     },
-  };
+  });
 
   const { lockAspectRatio } = state;
 
@@ -126,13 +129,15 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }
             }}
             tooltip={t('imageMenu.sourceUrl')}
-            icon={<IconPlaceholder
-  lucide="ImageDown"
-  tabler="IconPhotoDown"
-  hugeicons="ImageDownloadIcon"
-  phosphor="Image"
-  remixicon="RiImageDownloadLine"
-/>}
+            icon={
+              <IconPlaceholder
+                lucide="ImageDown"
+                tabler="IconPhotoDown"
+                hugeicons="ImageDownloadIcon"
+                phosphor="Image"
+                remixicon="RiImageDownloadLine"
+              />
+            }
             editor={editor}
             isVariable={state.isSrcVariable}
           />
@@ -270,19 +275,25 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                     })
                     .run();
                 }}
-                icon={lockAspectRatio ? <IconPlaceholder
-  lucide="LockIcon"
-  tabler="IconLock"
-  hugeicons="LockIcon"
-  phosphor="Lock"
-  remixicon="RiLockLine"
-/> : <IconPlaceholder
-  lucide="LockOpenIcon"
-  tabler="IconLockOpen"
-  hugeicons="SquareUnlock01Icon"
-  phosphor="LockOpen"
-  remixicon="RiLockUnlockLine"
-/>}
+                icon={
+                  lockAspectRatio ? (
+                    <IconPlaceholder
+                      lucide="LockIcon"
+                      tabler="IconLock"
+                      hugeicons="LockIcon"
+                      phosphor="Lock"
+                      remixicon="RiLockLine"
+                    />
+                  ) : (
+                    <IconPlaceholder
+                      lucide="LockOpenIcon"
+                      tabler="IconLockOpen"
+                      hugeicons="SquareUnlock01Icon"
+                      phosphor="LockOpen"
+                      remixicon="RiLockUnlockLine"
+                    />
+                  )
+                }
                 tooltip={t('imageMenu.lockAspectRatio')}
               />
             </div>

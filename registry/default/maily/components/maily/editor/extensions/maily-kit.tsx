@@ -1,15 +1,14 @@
 import { type AnyExtension, Extension } from '@tiptap/core';
 
 import StarterKit from '@tiptap/starter-kit';
-import ListItem from '@tiptap/extension-list-item';
+import { ListItem } from '@tiptap/extension-list';
 import Paragraph from '@tiptap/extension-paragraph';
 import TextAlign from '@tiptap/extension-text-align';
-import TextStyle from '@tiptap/extension-text-style';
+import { TextStyle } from '@tiptap/extension-text-style';
 import Heading from '@tiptap/extension-heading';
 import Underline from '@tiptap/extension-underline';
 import Document from '@tiptap/extension-document';
-import Focus from '@tiptap/extension-focus';
-import Dropcursor from '@tiptap/extension-dropcursor';
+import { Dropcursor, Focus } from '@tiptap/extensions';
 
 import { Color } from './color';
 import { FontFamilyExtension } from './font-family';
@@ -91,6 +90,8 @@ export const MailyKit = Extension.create<MailyKitOptions>({
         horizontalRule: false,
         dropcursor: false,
         document: false,
+        link: false,
+        underline: false,
       }) as AnyExtension,
       Underline,
       Color.configure({ types: [TextStyle.name, ListItem.name] }),

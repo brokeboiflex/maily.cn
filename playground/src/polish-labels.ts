@@ -299,7 +299,7 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "compose.wrote": "W dniu {date} {sender} napisał(a):",
   "compose.forwardedHeader": "Przekazana wiadomość",
   "compose.mode.plainText": "Zwykły tekst",
-  "compose.mode.mailyEditor": "Edytor Maily",
+  "compose.mode.mailyEditor": "Edytor wizualny",
   "folders.inbox": "Odebrane",
   "folders.sent": "Wysłane",
   "folders.drafts": "Szkice",

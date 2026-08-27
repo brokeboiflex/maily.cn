@@ -48,7 +48,7 @@
   "devDependencies": {
     "@babel/preset-react": "^7.27.1",
     "@maily-to/shared": "workspace:*",
-    "@tiptap/core": "^2.11.5",
+    "@tiptap/core": "^3.30.5",
     "@types/react": "^19.1.10",
     "tsconfig": "workspace:*",
     "typescript": "^5.9.2"

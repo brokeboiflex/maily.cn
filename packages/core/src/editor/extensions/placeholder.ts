@@ -1,4 +1,4 @@
-import Placeholder from '@tiptap/extension-placeholder';
+import { Placeholder } from '@tiptap/extensions';
 import type { TranslateFn } from '@/editor/i18n';
 
 // The placeholder text is painted by a `::before` pseudo-element that reads the

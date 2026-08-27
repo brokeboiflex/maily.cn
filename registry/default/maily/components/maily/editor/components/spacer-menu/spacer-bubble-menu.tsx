@@ -1,4 +1,4 @@
-import { BubbleMenu } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 
 import { BubbleMenuButton } from '../bubble-menu-button';
 import {
@@ -11,10 +11,13 @@ import { ShowPopover } from '../show-popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { spacing } from '../../utils/spacing';
 import { useMemo } from 'react';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -34,9 +37,17 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
     [editor]
   );
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       if (!editor.isEditable) {
         return false;
@@ -44,19 +55,15 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('spacer');
     },
-    tippyOptions: {
-      maxWidth: '100%',
-      moveTransition: 'transform 0.15s ease-out',
+    options: {
+      placement: 'top' as const,
     },
-  };
+  });
 
   const state = useSpacerState(editor);
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className={FLOATING_BUBBLE_MENU_CLASS}
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         {items.map((item, index) => (
           <BubbleMenuButton

@@ -7,6 +7,12 @@ type ColorStorage = {
   colors: Set<string>;
 };
 
+declare module '@tiptap/core' {
+  interface Storage {
+    color: ColorStorage;
+  }
+}
+
 export const Color = TiptapColor.extend<ColorOptions, ColorStorage>({
   addStorage() {
     return {

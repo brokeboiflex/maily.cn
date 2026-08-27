@@ -28,7 +28,10 @@ export function RepeatView(props: NodeViewProps) {
         contentEditable={false}
         aria-label={t('repeatMenu.selectBlock')}
         onClick={() => {
-          editor.commands.setNodeSelection(getPos());
+          const pos = getPos();
+          if (pos !== undefined) {
+            editor.commands.setNodeSelection(pos);
+          }
         }}
       >
         <Repeat2 className="text-foreground size-3 stroke-[2.5]" />

@@ -140,7 +140,9 @@ export function ButtonView(props: NodeViewProps) {
                 }
 
                 const pos = getPos();
-                editor.commands.setNodeSelection(pos);
+                if (pos !== undefined) {
+                  editor.commands.setNodeSelection(pos);
+                }
               }}
             >
               {isTextVariable

@@ -5,7 +5,14 @@ test("virtualizes Fontsource and persists a granular font mark", async ({
 }) => {
   const consoleErrors: string[] = []
   page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text())
+    const text = message.text()
+    const isSandboxedPreviewScript =
+      text.startsWith("Blocked script execution in 'about:srcdoc'") &&
+      text.includes("'allow-scripts' permission is not set")
+
+    if (message.type() === "error" && !isSandboxedPreviewScript) {
+      consoleErrors.push(text)
+    }
   })
 
   await page.goto("/")

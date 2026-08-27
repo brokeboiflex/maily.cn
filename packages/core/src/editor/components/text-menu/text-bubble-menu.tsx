@@ -3,7 +3,7 @@ import { ColumnsExtension } from '@/editor/nodes/columns/columns';
 import { SectionExtension } from '@/editor/nodes/section/section';
 import { isCustomNodeSelected } from '@/editor/utils/is-custom-node-selected';
 import { isTextSelected } from '@/editor/utils/is-text-selected';
-import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react';
+import { BubbleMenu, type BubbleMenuProps } from '@tiptap/react/menus';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Separator } from '../ui/divider';
 import { TooltipProvider } from '../ui/tooltip';
@@ -11,7 +11,10 @@ import { TextBubbleContent } from './text-bubble-content';
 import { RepeatExtension } from '@/editor/nodes/repeat/repeat';
 import { TurnIntoBlock } from './turn-into-block';
 import { useTurnIntoBlockOptions } from './use-turn-into-block-options';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 export interface BubbleMenuItem {
   name?: string;
@@ -27,12 +30,15 @@ export interface BubbleMenuItem {
   tooltip?: string;
 }
 
-export type EditorBubbleMenuProps = Omit<BubbleMenuProps, 'children'> & {
-  appendTo?: React.RefObject<any>;
+export type EditorBubbleMenuProps = Omit<
+  BubbleMenuProps,
+  'appendTo' | 'children'
+> & {
+  appendTo?: React.RefObject<HTMLElement | null>;
 };
 
 export function TextBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, ...menuProps } = props;
   const isPointerSelectingRef = useRef(false);
 
   if (!editor) {
@@ -89,9 +95,17 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
     };
   }, [activeEditor]);
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     pluginKey: 'text-menu',
     shouldShow: ({ editor, from, view }) => {
       if (!view || editor.view.dragging || isPointerSelectingRef.current) {
@@ -118,33 +132,25 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
         node?.classList?.contains('ProseMirror-selectednode');
       return isTextSelected(editor) && !isNestedNodeSelected;
     },
-    tippyOptions: {
-      popperOptions: {
-        placement: 'top-start',
-        modifiers: [
-          {
-            name: 'preventOverflow',
-            options: {
-              boundary: 'viewport',
-              padding: 8,
-            },
-          },
-          {
-            name: 'flip',
-            options: {
-              fallbackPlacements: ['bottom-start', 'top-end', 'bottom-end'],
-            },
-          },
-        ],
+    options: {
+      placement: 'top-start' as const,
+      shift: {
+        padding: 8,
       },
-      maxWidth: '100%',
+      flip: {
+        fallbackPlacements: ['bottom-start', 'top-end', 'bottom-end'],
+      },
     },
-  };
+  });
 
   const turnIntoBlockOptions = useTurnIntoBlockOptions(editor);
 
   return (
-    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
+    <BubbleMenu
+      {...bubbleMenuProps}
+      data-maily-bubble-menu="text"
+      className={FLOATING_BUBBLE_MENU_CLASS}
+    >
       <TooltipProvider>
         <TurnIntoBlock options={turnIntoBlockOptions} />
 

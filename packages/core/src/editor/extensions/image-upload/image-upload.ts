@@ -10,7 +10,16 @@ export type ImageUploadStorage = {
   placeholderImages: Set<string>;
 };
 
-export const ImageUploadExtension = Extension.create<ImageUploadOptions>({
+declare module '@tiptap/core' {
+  interface Storage {
+    imageUpload: ImageUploadStorage;
+  }
+}
+
+export const ImageUploadExtension = Extension.create<
+  ImageUploadOptions,
+  ImageUploadStorage
+>({
   name: 'imageUpload',
 
   addOptions() {

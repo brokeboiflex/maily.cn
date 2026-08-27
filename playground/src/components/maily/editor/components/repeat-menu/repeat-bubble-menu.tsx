@@ -1,121 +1,128 @@
-import { cn } from '@/lib/utils';
-import { isTextSelected } from '../../utils/is-text-selected';
-import { BubbleMenu, findChildren } from '@tiptap/react';
-import { useCallback, useMemo, useRef, useState } from 'react';
-import { sticky } from 'tippy.js';
-import { getRenderContainer } from '../../utils/get-render-container';
-import { ShowPopover } from '../show-popover';
-import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Separator } from '@/components/ui/separator';
-import { InputAutocomplete } from '../ui/input-autocomplete';
+import { cn } from "@/lib/utils"
+import { isTextSelected } from "../../utils/is-text-selected"
+import { findChildren } from "@tiptap/core"
+import { BubbleMenu } from "@tiptap/react/menus"
+import { useCallback, useMemo, useRef, useState } from "react"
+import { getRenderContainer } from "../../utils/get-render-container"
+import { ShowPopover } from "../show-popover"
+import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
+import { Separator } from "@/components/ui/separator"
+import { InputAutocomplete } from "../ui/input-autocomplete"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useRepeatState } from './use-repeat-state';
-import { getClosestNodeByName } from '../../utils/columns';
-import { processVariables } from '../../utils/variable';
-import { useVariableOptions } from '../../utils/node-options';
-import { useMailyContext } from '../../provider';
-import { Button } from '@/components/ui/button';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
-import { InfoIcon } from "lucide-react";
+} from "@/components/ui/tooltip"
+import { useRepeatState } from "./use-repeat-state"
+import { getClosestNodeByName } from "../../utils/columns"
+import { processVariables } from "../../utils/variable"
+import { useVariableOptions } from "../../utils/node-options"
+import { useMailyContext } from "../../provider"
+import { Button } from "@/components/ui/button"
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from "../ui/floating-menu"
+import { InfoIcon } from "lucide-react"
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props
   if (!editor) {
-    return null;
+    return null
   }
 
-  const state = useRepeatState(editor);
-  const { t } = useMailyContext();
+  const state = useRepeatState(editor)
+  const { t } = useMailyContext()
 
   const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor!, 'repeat');
+    const renderContainer = getRenderContainer(editor!, "repeat")
     const rect =
       renderContainer?.getBoundingClientRect() ||
-      new DOMRect(-1000, -1000, 0, 0);
+      new DOMRect(-1000, -1000, 0, 0)
 
-    return rect;
-  }, [editor]);
+    return rect
+  }, [editor])
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
-      const activeForNode = getClosestNodeByName(editor, 'repeat');
+      const activeForNode = getClosestNodeByName(editor, "repeat")
       const sectionNodeChildren = activeForNode
         ? findChildren(activeForNode?.node, (node) => {
-            return node.type.name === 'section';
+            return node.type.name === "section"
           })?.[0]
-        : null;
+        : null
       const hasActiveSectionNodeChildren =
-        sectionNodeChildren && editor.isActive('section');
+        sectionNodeChildren && editor.isActive("section")
 
       if (
         isTextSelected(editor) ||
         hasActiveSectionNodeChildren ||
         !editor.isEditable
       ) {
-        return false;
+        return false
       }
 
-      return editor.isActive('repeat');
+      return editor.isActive("repeat")
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: "top" as const,
+      offset: 8,
+      flip: false,
     },
-    pluginKey: 'repeatBubbleMenu',
-  };
+    pluginKey: "repeatBubbleMenu",
+  })
 
-  const opts = useVariableOptions(editor);
-  const variables = opts?.variables;
-  const renderVariable = opts?.renderVariable;
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isUpdatingKey, setIsUpdatingKey] = useState(false);
+  const opts = useVariableOptions(editor)
+  const variables = opts?.variables
+  const renderVariable = opts?.renderVariable
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [isUpdatingKey, setIsUpdatingKey] = useState(false)
 
-  const eachKey = state?.each || '';
+  const eachKey = state?.each || ""
   const autoCompleteOptions = useMemo(() => {
     return processVariables(variables, {
-      query: eachKey || '',
+      query: eachKey || "",
       editor,
-      from: 'repeat-variable',
-    }).map((variable) => variable.name);
-  }, [variables, eachKey, editor]);
+      from: "repeat-variable",
+    }).map((variable) => variable.name)
+  }, [variables, eachKey, editor])
 
-  const isValidEachKey = eachKey;
+  const isValidEachKey = eachKey
 
   return (
-    <BubbleMenu
-      {...bubbleMenuProps}
-      className={FLOATING_BUBBLE_MENU_CLASS}
-    >
+    <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">
-          {t('repeatMenu.label')}
+          {t("repeatMenu.label")}
           <Tooltip>
             <TooltipTrigger
               type="button"
-              aria-label={t('repeatMenu.iterableHint')}
+              aria-label={t("repeatMenu.iterableHint")}
             >
-              <InfoIcon className={cn('text-muted-foreground size-3 stroke-[2.5]')} />
+              <InfoIcon
+                className={cn("size-3 stroke-[2.5] text-muted-foreground")}
+              />
             </TooltipTrigger>
             <TooltipContent
               sideOffset={14}
               className="max-w-[260px]"
               align="start"
             >
-              {t('repeatMenu.iterableHint')}
+              {t("repeatMenu.iterableHint")}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -125,10 +132,10 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
             variant="ghost"
             className="h-auto p-0"
             onClick={() => {
-              setIsUpdatingKey(true);
+              setIsUpdatingKey(true)
               setTimeout(() => {
-                inputRef.current?.focus();
-              }, 0);
+                inputRef.current?.focus()
+              }, 0)
             }}
           >
             {renderVariable({
@@ -136,8 +143,8 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
                 name: state?.each,
                 valid: isValidEachKey,
               },
-              fallback: '',
-              from: 'bubble-variable',
+              fallback: "",
+              from: "bubble-variable",
               editor,
             })}
           </Button>
@@ -145,32 +152,32 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
         {isUpdatingKey && (
           <form
             onSubmit={(e) => {
-              e.preventDefault();
-              setIsUpdatingKey(false);
+              e.preventDefault()
+              setIsUpdatingKey(false)
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setIsUpdatingKey(false);
+              if (e.key === "Escape") {
+                setIsUpdatingKey(false)
               }
             }}
           >
             <InputAutocomplete
               editor={editor}
-              placeholder={t('repeatMenu.placeholder')}
-              value={state?.each || ''}
+              placeholder={t("repeatMenu.placeholder")}
+              value={state?.each || ""}
               onValueChange={(value) => {
                 editor.commands.updateRepeat({
                   each: value,
-                });
+                })
               }}
               onOutsideClick={() => {
-                setIsUpdatingKey(false);
+                setIsUpdatingKey(false)
               }}
               onSelectOption={(value) => {
                 editor.commands.updateRepeat({
                   each: value,
-                });
-                setIsUpdatingKey(false);
+                })
+                setIsUpdatingKey(false)
               }}
               autoCompleteOptions={autoCompleteOptions}
               ref={inputRef}
@@ -184,11 +191,11 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
           onShowIfKeyValueChange={(value) => {
             editor.commands.updateRepeat({
               showIfKey: value,
-            });
+            })
           }}
           editor={editor}
         />
       </TooltipProvider>
     </BubbleMenu>
-  );
+  )
 }

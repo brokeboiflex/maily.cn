@@ -1,6 +1,5 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
-import { BubbleMenu } from '@tiptap/react';
-import { sticky } from 'tippy.js';
+import { IconPlaceholder } from '@/components/icon-placeholder';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { ImageSize } from '../image-menu/image-size';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -11,10 +10,13 @@ import {
   DEFAULT_INLINE_IMAGE_WIDTH,
 } from '../../nodes/inline-image/inline-image';
 import { useMailyContext } from '../../provider';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -22,9 +24,17 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   const state = useInlineImageState(editor);
   const { t } = useMailyContext();
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       if (!editor.isEditable) {
         return false;
@@ -32,15 +42,11 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('inlineImage');
     },
-    tippyOptions: {
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: '100%',
+    options: {
+      placement: 'top' as const,
+      flip: false,
     },
-  };
+  });
 
   return (
     <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
@@ -58,13 +64,15 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
                 .run();
             }}
             tooltip={t('inlineImageMenu.sourceUrl')}
-            icon={<IconPlaceholder
-  lucide="ImageDownIcon"
-  tabler="IconPhotoDown"
-  hugeicons="ImageDownloadIcon"
-  phosphor="Image"
-  remixicon="RiImageDownloadLine"
-/>}
+            icon={
+              <IconPlaceholder
+                lucide="ImageDownIcon"
+                tabler="IconPhotoDown"
+                hugeicons="ImageDownloadIcon"
+                phosphor="Image"
+                remixicon="RiImageDownloadLine"
+              />
+            }
             editor={editor}
             isVariable={state.isSrcVariable}
           />

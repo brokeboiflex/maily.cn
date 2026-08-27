@@ -1,5 +1,12 @@
 import { expect, test, type Page } from "@playwright/test"
 
+function isSandboxedPreviewScriptError(text: string) {
+  return (
+    text.startsWith("Blocked script execution in 'about:srcdoc'") &&
+    text.includes("'allow-scripts' permission is not set")
+  )
+}
+
 async function useEnglish(page: Page) {
   const language = page.getByText("English", { exact: true })
   if ((await language.getAttribute("data-state")) !== "on") {
@@ -129,7 +136,10 @@ test("uses ToggleGroup roving focus and never nests interactive buttons", async 
 }) => {
   const errors: string[] = []
   page.on("console", (message) => {
-    if (message.type() === "error") errors.push(message.text())
+    const text = message.text()
+    if (message.type() === "error" && !isSandboxedPreviewScriptError(text)) {
+      errors.push(text)
+    }
   })
 
   await page.goto("/")
@@ -140,7 +150,7 @@ test("uses ToggleGroup roving focus and never nests interactive buttons", async 
   await page.keyboard.up("Shift")
 
   const group = page
-    .locator('.tippy-box[data-state="visible"] [data-slot="toggle-group"]')
+    .locator('[data-maily-bubble-menu="text"] [data-slot="toggle-group"]')
     .last()
   await expect(group).toBeVisible()
   const items = group.locator('[data-slot="toggle-group-item"]')

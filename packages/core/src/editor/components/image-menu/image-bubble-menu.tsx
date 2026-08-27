@@ -4,9 +4,8 @@ import {
 } from '@/editor/nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '@/editor/utils/aspect-ratio';
 import { borderRadius } from '@/editor/utils/border-radius';
-import { BubbleMenu } from '@tiptap/react';
+import { BubbleMenu } from '@tiptap/react/menus';
 import { ImageDown, LockIcon, LockOpenIcon } from 'lucide-react';
-import { sticky } from 'tippy.js';
 import { AlignmentSwitch } from '../alignment-switch';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { ShowPopover } from '../show-popover';
@@ -20,7 +19,10 @@ import { useImageState } from './use-image-state';
 import { IMAGE_MAX_WIDTH } from '@/editor/nodes/image/image-view';
 import { useMailyContext } from '../../provider';
 import type { LabelKey } from '@/editor/i18n';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from '../ui/floating-menu';
 
 const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
   Sharp: 'imageMenu.radius.sharp',
@@ -31,7 +33,7 @@ const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
 };
 
 export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo } = props;
+  const { editor, appendTo, ...menuProps } = props;
   if (!editor) {
     return null;
   }
@@ -39,9 +41,17 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
   const state = useImageState(editor);
   const { t } = useMailyContext();
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       if (!editor.isEditable) {
         return false;
@@ -49,15 +59,11 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
 
       return editor.isActive('logo') || editor.isActive('image');
     },
-    tippyOptions: {
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: '100%',
+    options: {
+      placement: 'top' as const,
+      flip: false,
     },
-  };
+  });
 
   const { lockAspectRatio } = state;
 

@@ -15,7 +15,7 @@ export const FONT_ATTRIBUTE_KEYS = [
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    fontFamily: {
+    mailyFontFamily: {
       setMailyFont: (font: MailyFontSelection) => ReturnType;
       unsetMailyFont: () => ReturnType;
     };

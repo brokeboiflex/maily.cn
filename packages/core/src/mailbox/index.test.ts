@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it } from 'vitest';
 
 import {
+  defaultMailboxLabels,
   MailboxView,
   type MailyMailboxDataSource,
   type MailyMailboxMessageDetail,
@@ -118,6 +119,14 @@ describe('filterMailboxContactSuggestions', () => {
         1
       )
     ).toEqual([contacts[0]]);
+  });
+});
+
+describe('defaultMailboxLabels', () => {
+  it('describes the rich compose mode without exposing the implementation name', () => {
+    expect(defaultMailboxLabels['compose.mode.mailyEditor']).toBe(
+      'Visual editor'
+    );
   });
 });
 

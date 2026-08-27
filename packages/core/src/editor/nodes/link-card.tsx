@@ -59,7 +59,9 @@ export function LinkCardComponent(props: NodeViewProps) {
             onClick={(e) => {
               e.preventDefault();
               const pos = getPos();
-              editor.commands.setNodeSelection(pos);
+              if (pos !== undefined) {
+                editor.commands.setNodeSelection(pos);
+              }
             }}
           >
             <div className="no-prose border-border flex flex-col rounded-lg border">

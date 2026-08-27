@@ -35,11 +35,15 @@ source-owned `maily.cn` registry block.
 pnpm add @maily-to/core
 
 # for types
-pnpm add -D @tiptap/core
+pnpm add -D @tiptap/core@^3.30.5
 ```
 
 In either mode, the host supplies Tailwind v4 and shadcn theme tokens; the editor
 ships no private stylesheet.
+
+The canonical editor runs on TipTap 3.30.5. Custom extensions supplied through
+the `extensions` prop must use the same TipTap major so they share one ProseMirror
+type and runtime identity.
 
 ## Usage
 

@@ -1,59 +1,66 @@
-import { BubbleMenu } from '@tiptap/react';
-import { useCallback } from 'react';
-import { getRenderContainer } from '../../utils/get-render-container';
-import { sticky } from 'tippy.js';
-import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { isTextSelected } from '../../utils/is-text-selected';
-import { ColumnsBubbleMenuContent } from './columns-bubble-menu-content';
-import { FLOATING_BUBBLE_MENU_CLASS } from '../ui/floating-menu';
+import { BubbleMenu } from "@tiptap/react/menus"
+import { useCallback } from "react"
+import { getRenderContainer } from "../../utils/get-render-container"
+import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
+import { isTextSelected } from "../../utils/is-text-selected"
+import { ColumnsBubbleMenuContent } from "./columns-bubble-menu-content"
+import {
+  FLOATING_BUBBLE_MENU_CLASS,
+  useStableBubbleMenuProps,
+} from "../ui/floating-menu"
 
 export function ColumnsBubbleMenu(props: EditorBubbleMenuProps) {
-  const { appendTo, editor } = props;
+  const { appendTo, editor, ...menuProps } = props
   if (!editor) {
-    return null;
+    return null
   }
 
   const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor!, 'columns');
+    const renderContainer = getRenderContainer(editor!, "columns")
     const rect =
       renderContainer?.getBoundingClientRect() ||
-      new DOMRect(-1000, -1000, 0, 0);
+      new DOMRect(-1000, -1000, 0, 0)
 
-    return rect;
-  }, [editor]);
+    return rect
+  }, [editor])
 
-  const bubbleMenuProps: EditorBubbleMenuProps = {
-    ...props,
-    ...(appendTo ? { appendTo: appendTo.current } : {}),
+  const bubbleMenuProps = useStableBubbleMenuProps({
+    ...menuProps,
+    editor,
+    ...(appendTo
+      ? {
+          appendTo: () =>
+            appendTo.current ??
+            editor.view.dom.parentElement ??
+            editor.view.dom,
+        }
+      : {}),
     shouldShow: ({ editor }) => {
       if (
         isTextSelected(editor) ||
-        editor.isActive('section') ||
-        editor.isActive('repeat') ||
+        editor.isActive("section") ||
+        editor.isActive("repeat") ||
         !editor.isEditable
       ) {
-        return false;
+        return false
       }
 
-      return editor.isActive('columns');
+      return editor.isActive("columns")
     },
-    tippyOptions: {
-      offset: [0, 8],
-      popperOptions: {
-        modifiers: [{ name: 'flip', enabled: false }],
-      },
-      getReferenceClientRect,
-      appendTo: () => appendTo?.current,
-      plugins: [sticky],
-      sticky: 'popper',
-      maxWidth: 'auto',
+    getReferencedVirtualElement: () => ({
+      getBoundingClientRect: getReferenceClientRect,
+    }),
+    options: {
+      placement: "top" as const,
+      offset: 8,
+      flip: false,
     },
-    pluginKey: 'columnsBubbleMenu',
-  };
+    pluginKey: "columnsBubbleMenu",
+  })
 
   return (
     <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <ColumnsBubbleMenuContent editor={editor} />
     </BubbleMenu>
-  );
+  )
 }

@@ -1,20 +1,24 @@
-import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Textarea } from '@/components/ui/textarea';
-import { useMailyContext } from '../provider';
-import { cn } from '@/lib/utils';
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
-import { Badge } from '@/components/ui/badge';
-import { FontFamilyPicker } from '../components/text-menu/font-family-picker';
-import { FontSizePicker } from '../components/text-menu/font-size-picker';
-import { FONT_ATTRIBUTE_KEYS } from '../extensions/font-family';
-import type { LinkCardAttributes } from '../extensions/link-card';
-import { fontSelectionFromAttrs, fontStack } from '../fonts/fontsource';
-import type { CSSProperties } from 'react';
+import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react"
+import { Input } from "@/components/ui/input"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Textarea } from "@/components/ui/textarea"
+import { useMailyContext } from "../provider"
+import { cn } from "@/lib/utils"
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from "../utils/constants"
+import { Badge } from "@/components/ui/badge"
+import { FontFamilyPicker } from "../components/text-menu/font-family-picker"
+import { FontSizePicker } from "../components/text-menu/font-size-picker"
+import { FONT_ATTRIBUTE_KEYS } from "../extensions/font-family"
+import type { LinkCardAttributes } from "../extensions/link-card"
+import { fontSelectionFromAttrs, fontStack } from "../fonts/fontsource"
+import type { CSSProperties } from "react"
 
 export function LinkCardComponent(props: NodeViewProps) {
-  const { t } = useMailyContext();
+  const { t } = useMailyContext()
   const {
     title,
     description,
@@ -24,30 +28,30 @@ export function LinkCardComponent(props: NodeViewProps) {
     badgeText,
     subTitle,
     fontSize,
-  } = props.node.attrs as LinkCardAttributes;
-  const { getPos, editor } = props;
-  const currentFont = fontSelectionFromAttrs(props.node.attrs);
-  const currentFontStack = currentFont ? fontStack(currentFont) : undefined;
+  } = props.node.attrs as LinkCardAttributes
+  const { getPos, editor } = props
+  const currentFont = fontSelectionFromAttrs(props.node.attrs)
+  const currentFontStack = currentFont ? fontStack(currentFont) : undefined
   const typographyStyle = {
     ...(currentFontStack ? { fontFamily: currentFontStack } : {}),
-  } satisfies CSSProperties;
+  } satisfies CSSProperties
   const titleStyle = {
     ...typographyStyle,
-    fontSize: fontSize || '18px',
-  } satisfies CSSProperties;
+    fontSize: fontSize || "18px",
+  } satisfies CSSProperties
   const descriptionStyle = {
     ...typographyStyle,
-    fontSize: fontSize || '16px',
-  } satisfies CSSProperties;
+    fontSize: fontSize || "16px",
+  } satisfies CSSProperties
   const compactTextStyle = {
     ...typographyStyle,
     ...(fontSize ? { fontSize } : {}),
-  } satisfies CSSProperties;
+  } satisfies CSSProperties
 
   return (
     <NodeViewWrapper
       className={`react-component ${
-        props.selected && 'ProseMirror-selectednode'
+        props.selected && "ProseMirror-selectednode"
       }`}
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
@@ -57,24 +61,26 @@ export function LinkCardComponent(props: NodeViewProps) {
           <div
             tabIndex={-1}
             onClick={(e) => {
-              e.preventDefault();
-              const pos = getPos();
-              editor.commands.setNodeSelection(pos);
+              e.preventDefault()
+              const pos = getPos()
+              if (pos !== undefined) {
+                editor.commands.setNodeSelection(pos)
+              }
             }}
           >
-            <div className="no-prose border-border flex flex-col rounded-lg border">
+            <div className="no-prose flex flex-col rounded-lg border border-border">
               {image && (
                 <div className="relative mb-1.5 w-full shrink-0">
                   <img
                     src={image}
-                    alt={t('linkCard.imageAlt')}
+                    alt={t("linkCard.imageAlt")}
                     className="no-prose mb-0! h-full w-full rounded-t-lg"
                     draggable={editor.isEditable}
                   />
                 </div>
               )}
               <div className="flex items-stretch p-3">
-                <div className={cn('flex flex-col')}>
+                <div className={cn("flex flex-col")}>
                   <div className="!mb-1.5 flex items-center gap-1.5">
                     <h2 className="!mb-0 font-semibold" style={titleStyle}>
                       {title}
@@ -87,7 +93,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                       >
                         {badgeText}
                       </Badge>
-                    )}{' '}
+                    )}{" "}
                     {subTitle && !badgeText && (
                       <Badge
                         variant="outline"
@@ -99,10 +105,10 @@ export function LinkCardComponent(props: NodeViewProps) {
                     )}
                   </div>
                   <p
-                    className="text-muted-foreground !my-0"
+                    className="!my-0 text-muted-foreground"
                     style={descriptionStyle}
                   >
-                    {description}{' '}
+                    {description}{" "}
                     {linkTitle ? (
                       <a
                         href={link}
@@ -128,107 +134,107 @@ export function LinkCardComponent(props: NodeViewProps) {
               editor={editor}
               currentFont={currentFont}
               onFontChange={(font) => {
-                props.updateAttributes(font);
+                props.updateAttributes(font)
               }}
               onFontUnset={() => {
                 props.updateAttributes(
                   Object.fromEntries(
                     FONT_ATTRIBUTE_KEYS.map((key) => [
                       key,
-                      key === 'fontHasItalic' ? false : null,
+                      key === "fontHasItalic" ? false : null,
                     ])
                   ) as Partial<LinkCardAttributes>
-                );
+                )
               }}
             />
 
             <FontSizePicker
-              value={fontSize || ''}
+              value={fontSize || ""}
               onValueChange={(value) => {
                 props.updateAttributes({
                   fontSize: value || null,
-                });
+                })
               }}
             />
           </div>
 
           <label className="w-full space-y-1">
-            <span className="text-muted-foreground text-xs font-normal">
-              {t('linkCard.image')}
+            <span className="text-xs font-normal text-muted-foreground">
+              {t("linkCard.image")}
             </span>
             <Input
               {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-              placeholder={t('linkCard.imagePlaceholder')}
+              placeholder={t("linkCard.imagePlaceholder")}
               type="url"
               value={image}
               onChange={(e) => {
                 props.updateAttributes({
                   image: e.target.value,
-                });
+                })
               }}
             />
           </label>
 
           <label className="w-full space-y-1">
-            <span className="text-muted-foreground text-xs font-normal">
-              {t('linkCard.title')}
+            <span className="text-xs font-normal text-muted-foreground">
+              {t("linkCard.title")}
             </span>
             <Input
               {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-              placeholder={t('linkCard.titlePlaceholder')}
+              placeholder={t("linkCard.titlePlaceholder")}
               value={title}
               onChange={(e) => {
                 props.updateAttributes({
                   title: e.target.value,
-                });
+                })
               }}
             />
           </label>
 
           <label className="w-full space-y-1">
-            <span className="text-muted-foreground text-xs font-normal">
-              {t('linkCard.description')}
+            <span className="text-xs font-normal text-muted-foreground">
+              {t("linkCard.description")}
             </span>
             <Textarea
-              placeholder={t('linkCard.descriptionPlaceholder')}
+              placeholder={t("linkCard.descriptionPlaceholder")}
               value={description}
               onChange={(e) => {
                 props.updateAttributes({
                   description: e.target.value,
-                });
+                })
               }}
             />
           </label>
 
           <div className="grid grid-cols-2 gap-2">
             <label className="w-full space-y-1">
-              <span className="text-muted-foreground text-xs font-normal">
-                {t('linkCard.linkTitle')}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("linkCard.linkTitle")}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder={t('linkCard.linkTitlePlaceholder')}
+                placeholder={t("linkCard.linkTitlePlaceholder")}
                 value={linkTitle}
                 onChange={(e) => {
                   props.updateAttributes({
                     linkTitle: e.target.value,
-                  });
+                  })
                 }}
               />
             </label>
 
             <label className="w-full space-y-1">
-              <span className="text-muted-foreground text-xs font-normal">
-                {t('linkCard.link')}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("linkCard.link")}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder={t('linkCard.linkPlaceholder')}
+                placeholder={t("linkCard.linkPlaceholder")}
                 value={link}
                 onChange={(e) => {
                   props.updateAttributes({
                     link: e.target.value,
-                  });
+                  })
                 }}
               />
             </label>
@@ -236,33 +242,33 @@ export function LinkCardComponent(props: NodeViewProps) {
 
           <div className="grid grid-cols-2 gap-2">
             <label className="w-full space-y-1">
-              <span className="text-muted-foreground text-xs font-normal">
-                {t('linkCard.badgeText')}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("linkCard.badgeText")}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder={t('linkCard.badgeTextPlaceholder')}
+                placeholder={t("linkCard.badgeTextPlaceholder")}
                 value={badgeText}
                 onChange={(e) => {
                   props.updateAttributes({
                     badgeText: e.target.value,
-                  });
+                  })
                 }}
               />
             </label>
 
             <label className="w-full space-y-1">
-              <span className="text-muted-foreground text-xs font-normal">
-                {t('linkCard.subTitle')}
+              <span className="text-xs font-normal text-muted-foreground">
+                {t("linkCard.subTitle")}
               </span>
               <Input
                 {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
-                placeholder={t('linkCard.subTitlePlaceholder')}
+                placeholder={t("linkCard.subTitlePlaceholder")}
                 value={subTitle}
                 onChange={(e) => {
                   props.updateAttributes({
                     subTitle: e.target.value,
-                  });
+                  })
                 }}
               />
             </label>
@@ -270,5 +276,5 @@ export function LinkCardComponent(props: NodeViewProps) {
         </PopoverContent>
       </Popover>
     </NodeViewWrapper>
-  );
+  )
 }
