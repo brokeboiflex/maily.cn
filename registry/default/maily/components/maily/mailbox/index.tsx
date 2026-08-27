@@ -275,6 +275,7 @@ export type MailyMailboxLabels = Record<MailyMailboxLabelKey, string>;
 export type MailyMailboxViewProps = {
   account?: MailyMailboxAccount;
   dataSource: MailyMailboxDataSource;
+  messageActions?: readonly MailyMailboxMessageAction[];
   labels?: MailyMailboxLabels;
   className?: string;
   initialFolder?: MailyMailboxFolder;
@@ -300,6 +301,207 @@ const FOLDERS: MailyMailboxFolder[] = ['inbox', 'sent', 'drafts', 'bounced'];
 const DEFAULT_POLL_INTERVAL_MS = 60_000;
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_CONTACT_SUGGESTION_LIMIT = 8;
+const DEFAULT_MESSAGE_ACTIONS: readonly MailyMailboxMessageAction[] = [];
+
+const TOOLBAR_LEADING_MESSAGE_ACTIONS = [
+  'archive',
+  'reportSpam',
+  'delete',
+  'markUnread',
+] as const satisfies readonly MailyMailboxMessageAction[];
+
+const TOOLBAR_TRAILING_MESSAGE_ACTIONS = [
+  'print',
+  'showOriginal',
+] as const satisfies readonly MailyMailboxMessageAction[];
+
+const HEADER_MESSAGE_ACTIONS = [
+  'favorite',
+  'react',
+] as const satisfies readonly MailyMailboxMessageAction[];
+
+type MessageActionMetadata = {
+  label: MailyMailboxLabelKey;
+  toolbarLabel?: MailyMailboxLabelKey;
+  icon: (className: string) => React.ReactNode;
+  value?: string | boolean | null;
+  variant?: 'default' | 'destructive';
+};
+
+const MESSAGE_ACTION_METADATA: Record<
+  MailyMailboxMessageAction,
+  MessageActionMetadata
+> = {
+  archive: {
+    label: 'actions.archive',
+    icon: (className) => <IconPlaceholder
+  lucide="Archive"
+  tabler="IconArchive"
+  hugeicons="ArchiveIcon"
+  phosphor="Archive"
+  remixicon="RiArchiveLine"
+  className={className}
+/>,
+  },
+  delete: {
+    label: 'actions.delete',
+    icon: (className) => <IconPlaceholder
+  lucide="Trash2"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+  className={className}
+/>,
+    variant: 'destructive',
+  },
+  favorite: {
+    label: 'actions.favorite',
+    icon: (className) => <IconPlaceholder
+  lucide="Star"
+  tabler="IconStar"
+  hugeicons="StarIcon"
+  phosphor="Star"
+  remixicon="RiStarLine"
+  className={className}
+/>,
+  },
+  markUnread: {
+    label: 'actions.markUnread',
+    icon: (className) => <IconPlaceholder
+  lucide="MailOpen"
+  tabler="IconMailOpened"
+  hugeicons="MailOpenIcon"
+  phosphor="EnvelopeOpen"
+  remixicon="RiMailOpenLine"
+  className={className}
+/>,
+    value: true,
+  },
+  blockSender: {
+    label: 'actions.blockSender',
+    icon: (className) => <IconPlaceholder
+  lucide="Ban"
+  tabler="IconBan"
+  hugeicons="Cancel01Icon"
+  phosphor="Prohibit"
+  remixicon="RiForbidLine"
+  className={className}
+/>,
+  },
+  reportSpam: {
+    label: 'actions.reportSpam',
+    icon: (className) => <IconPlaceholder
+  lucide="ShieldAlert"
+  tabler="IconShieldExclamation"
+  hugeicons="SpamIcon"
+  phosphor="ShieldWarning"
+  remixicon="RiSpam2Line"
+  className={className}
+/>,
+  },
+  reportPhishing: {
+    label: 'actions.reportPhishing',
+    icon: (className) => <IconPlaceholder
+  lucide="Flag"
+  tabler="IconFlag"
+  hugeicons="Flag01Icon"
+  phosphor="Flag"
+  remixicon="RiFlagLine"
+  className={className}
+/>,
+  },
+  reportIllegal: {
+    label: 'actions.reportIllegal',
+    icon: (className) => <IconPlaceholder
+  lucide="Flag"
+  tabler="IconFlag"
+  hugeicons="Flag01Icon"
+  phosphor="Flag"
+  remixicon="RiFlagLine"
+  className={className}
+/>,
+  },
+  filterSimilar: {
+    label: 'actions.filterSimilar',
+    icon: (className) => <IconPlaceholder
+  lucide="Filter"
+  tabler="IconFilter"
+  hugeicons="FilterIcon"
+  phosphor="Funnel"
+  remixicon="RiFilter3Line"
+  className={className}
+/>,
+  },
+  translate: {
+    label: 'actions.translate',
+    icon: (className) => <IconPlaceholder
+  lucide="Languages"
+  tabler="IconLanguage"
+  hugeicons="TranslateIcon"
+  phosphor="Translate"
+  remixicon="RiTranslate"
+  className={className}
+/>,
+  },
+  print: {
+    label: 'actions.print',
+    icon: (className) => <IconPlaceholder
+  lucide="Printer"
+  tabler="IconPrinter"
+  hugeicons="PrinterIcon"
+  phosphor="Printer"
+  remixicon="RiPrinterLine"
+  className={className}
+/>,
+  },
+  download: {
+    label: 'actions.download',
+    icon: (className) => <IconPlaceholder
+  lucide="Download"
+  tabler="IconDownload"
+  hugeicons="Download01Icon"
+  phosphor="DownloadSimple"
+  remixicon="RiDownloadLine"
+  className={className}
+/>,
+  },
+  showOriginal: {
+    label: 'actions.showOriginal',
+    toolbarLabel: 'actions.openExternal',
+    icon: (className) => <IconPlaceholder
+  lucide="Code2"
+  tabler="IconCode"
+  hugeicons="SourceCodeIcon"
+  phosphor="Code"
+  remixicon="RiCodeLine"
+  className={className}
+/>,
+  },
+  feedback: {
+    label: 'actions.feedback',
+    icon: (className) => <IconPlaceholder
+  lucide="AlertCircle"
+  tabler="IconAlertCircle"
+  hugeicons="AlertCircleIcon"
+  phosphor="WarningCircle"
+  remixicon="RiErrorWarningLine"
+  className={className}
+/>,
+  },
+  react: {
+    label: 'actions.react',
+    icon: (className) => <IconPlaceholder
+  lucide="Smile"
+  tabler="IconMoodSmile"
+  hugeicons="SmileIcon"
+  phosphor="Smiley"
+  remixicon="RiEmotionHappyLine"
+  className={className}
+/>,
+    value: 'smile',
+  },
+};
 
 function emptyCounts(): MailyMailboxCounts {
   return {
@@ -504,6 +706,7 @@ function errorLabelForAction(action: string): MailyMailboxLabelKey {
 export function MailboxView(props: MailyMailboxViewProps) {
   const {
     dataSource,
+    messageActions = DEFAULT_MESSAGE_ACTIONS,
     labels = defaultMailboxLabels,
     className,
     initialFolder = 'inbox',
@@ -525,6 +728,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
     (key: MailyMailboxLabelKey, vars?: Record<string, string | number>) =>
       interpolate(labels[key], vars),
     [labels]
+  );
+  const enabledMessageActions = React.useMemo(
+    () =>
+      dataSource.runMessageAction
+        ? Array.from(new Set(messageActions))
+        : DEFAULT_MESSAGE_ACTIONS,
+    [dataSource.runMessageAction, messageActions]
   );
 
   const [folder, setFolder] = React.useState<MailyMailboxFolder>(initialFolder);
@@ -823,6 +1033,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
   ) => {
+    if (!dataSource.runMessageAction) return;
+
     setMessageActionPending(action);
     try {
       const input: MailyMailboxMessageActionInput = {
@@ -830,7 +1042,7 @@ export function MailboxView(props: MailyMailboxViewProps) {
         action,
         value,
       };
-      const result = await dataSource.runMessageAction?.(input);
+      const result = await dataSource.runMessageAction(input);
       onMessageAction?.({ ...input, message });
 
       if (
@@ -1050,6 +1262,7 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 isLoading={detailLoading}
                 labels={labels}
                 formatDate={formatDate}
+                messageActions={enabledMessageActions}
                 actionPending={messageActionPending}
                 onReply={openReply}
                 onForward={openForward}
@@ -1200,6 +1413,7 @@ function MessageReader(props: {
   isLoading: boolean;
   labels: MailyMailboxLabels;
   formatDate: (date: string | Date, mode: 'short' | 'long') => string;
+  messageActions: readonly MailyMailboxMessageAction[];
   actionPending: MailyMailboxMessageAction | null;
   onReply: (detail: MailyMailboxMessageDetail) => void;
   onForward: (detail: MailyMailboxMessageDetail) => void;
@@ -1214,6 +1428,7 @@ function MessageReader(props: {
     isLoading,
     labels,
     formatDate,
+    messageActions,
     actionPending,
     onReply,
     onForward,
@@ -1245,91 +1460,53 @@ function MessageReader(props: {
   const hue = senderHue(detail.fromAddress);
   const labelsToShow = detail.labels ?? [];
   const isFavorite = detail.isFavorite ?? false;
-  const run = (action: MailyMailboxMessageAction, value?: string | boolean) =>
-    onRunAction(detail, action, value);
-
-  return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="border-border flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
-        <div className="flex items-center gap-1">
-          <MessageActionButton
-            label={t('actions.archive')}
-            pending={actionPending === 'archive'}
-            onClick={() => run('archive')}
-          >
-            <IconPlaceholder
-  lucide="Archive"
-  tabler="IconArchive"
-  hugeicons="ArchiveIcon"
-  phosphor="Archive"
-  remixicon="RiArchiveLine"
-  className="size-4"
-/>
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.reportSpam')}
-            pending={actionPending === 'reportSpam'}
-            onClick={() => run('reportSpam')}
-          >
-            <IconPlaceholder
-  lucide="ShieldAlert"
-  tabler="IconShieldExclamation"
-  hugeicons="SpamIcon"
-  phosphor="ShieldWarning"
-  remixicon="RiSpam2Line"
-  className="size-4"
-/>
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.delete')}
-            pending={actionPending === 'delete'}
-            onClick={() => run('delete')}
-          >
-            <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className="size-4"
-/>
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.markUnread')}
-            pending={actionPending === 'markUnread'}
-            onClick={() => run('markUnread', true)}
-          >
-            <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className="size-4"
-/>
-          </MessageActionButton>
-        </div>
-        <div className="flex items-center gap-1">
-          <MessageActionButton
-            label={t('actions.print')}
-            pending={actionPending === 'print'}
-            onClick={() => run('print')}
-          >
-            <IconPlaceholder
-  lucide="Printer"
-  tabler="IconPrinter"
-  hugeicons="PrinterIcon"
-  phosphor="Printer"
-  remixicon="RiPrinterLine"
-  className="size-4"
-/>
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.openExternal')}
-            pending={false}
-            onClick={() => run('showOriginal')}
-          >
-            <IconPlaceholder
+  const enabledActions = new Set(messageActions);
+  const toolbarLeadingActions = TOOLBAR_LEADING_MESSAGE_ACTIONS.filter(
+    (action) => enabledActions.has(action)
+  );
+  const toolbarTrailingActions = TOOLBAR_TRAILING_MESSAGE_ACTIONS.filter(
+    (action) => enabledActions.has(action)
+  );
+  const headerActions = HEADER_MESSAGE_ACTIONS.filter((action) =>
+    enabledActions.has(action)
+  );
+  const hasToolbarActions =
+    toolbarLeadingActions.length > 0 || toolbarTrailingActions.length > 0;
+  const run = (
+    action: MailyMailboxMessageAction,
+    value?: string | boolean | null
+  ) => onRunAction(detail, action, value);
+  const actionLabel = (
+    action: MailyMailboxMessageAction,
+    mode: 'button' | 'menu'
+  ) => {
+    if (action === 'favorite' && isFavorite) return t('actions.unfavorite');
+    const metadata = MESSAGE_ACTION_METADATA[action];
+    return t(
+      mode === 'button' && metadata.toolbarLabel
+        ? metadata.toolbarLabel
+        : metadata.label
+    );
+  };
+  const actionValue = (action: MailyMailboxMessageAction) => {
+    if (action === 'favorite') return !isFavorite;
+    return MESSAGE_ACTION_METADATA[action].value;
+  };
+  const actionIconClassName = (action: MailyMailboxMessageAction) =>
+    cn(
+      'size-4',
+      action === 'favorite' && isFavorite && 'fill-current text-amber-500'
+    );
+  const renderActionButton = (action: MailyMailboxMessageAction) => (
+    <MessageActionButton
+      key={action}
+      label={actionLabel(action, 'button')}
+      pending={actionPending === action}
+      pressed={action === 'favorite' ? isFavorite : undefined}
+      onClick={() => run(action, actionValue(action))}
+    >
+      {action === 'showOriginal' ? (
+        <IconPlaceholder
   lucide="ExternalLink"
   tabler="IconExternalLink"
   hugeicons="ArrowUpRight01Icon"
@@ -1337,9 +1514,24 @@ function MessageReader(props: {
   remixicon="RiExternalLinkLine"
   className="size-4"
 />
-          </MessageActionButton>
+      ) : (
+        MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
+      )}
+    </MessageActionButton>
+  );
+
+  return (
+    <article className="flex h-full min-h-0 flex-col overflow-hidden">
+      {hasToolbarActions && (
+        <div className="border-border flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
+          <div className="flex items-center gap-1">
+            {toolbarLeadingActions.map(renderActionButton)}
+          </div>
+          <div className="flex items-center gap-1">
+            {toolbarTrailingActions.map(renderActionButton)}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex shrink-0 flex-col gap-4 px-5 pt-5">
         <div className="flex items-start justify-between gap-3">
@@ -1356,40 +1548,7 @@ function MessageReader(props: {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <MessageActionButton
-              label={
-                isFavorite ? t('actions.unfavorite') : t('actions.favorite')
-              }
-              pending={actionPending === 'favorite'}
-              pressed={isFavorite}
-              onClick={() => run('favorite', !isFavorite)}
-            >
-              <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className={cn(
-                  'size-4',
-                  isFavorite && 'fill-current text-amber-500'
-                )}
-/>
-            </MessageActionButton>
-            <MessageActionButton
-              label={t('actions.react')}
-              pending={actionPending === 'react'}
-              onClick={() => run('react', 'smile')}
-            >
-              <IconPlaceholder
-  lucide="Smile"
-  tabler="IconMoodSmile"
-  hugeicons="SmileIcon"
-  phosphor="Smiley"
-  remixicon="RiEmotionHappyLine"
-  className="size-4"
-/>
-            </MessageActionButton>
+            {headerActions.map(renderActionButton)}
             <MessageActionButton
               label={t('actions.reply')}
               pending={false}
@@ -1404,14 +1563,30 @@ function MessageReader(props: {
   className="size-4"
 />
             </MessageActionButton>
-            <MessageMoreMenu
-              detail={detail}
-              labels={labels}
-              actionPending={actionPending}
-              onReply={onReply}
-              onForward={onForward}
-              onRunAction={onRunAction}
-            />
+            <MessageActionButton
+              label={t('actions.forward')}
+              pending={false}
+              onClick={() => onForward(detail)}
+            >
+              <IconPlaceholder
+  lucide="Forward"
+  tabler="IconArrowForward"
+  hugeicons="Forward01Icon"
+  phosphor="ArrowBendUpRight"
+  remixicon="RiShareForwardLine"
+  className="size-4"
+/>
+            </MessageActionButton>
+            {messageActions.length > 0 && (
+              <MessageMoreMenu
+                detail={detail}
+                labels={labels}
+                messageActions={messageActions}
+                actionPending={actionPending}
+                isFavorite={isFavorite}
+                onRunAction={onRunAction}
+              />
+            )}
           </div>
         </div>
 
@@ -1511,35 +1686,44 @@ function MessageActionButton(props: {
 function MessageMoreMenu(props: {
   detail: MailyMailboxMessageDetail;
   labels: MailyMailboxLabels;
+  messageActions: readonly MailyMailboxMessageAction[];
   actionPending: MailyMailboxMessageAction | null;
-  onReply: (detail: MailyMailboxMessageDetail) => void;
-  onForward: (detail: MailyMailboxMessageDetail) => void;
+  isFavorite: boolean;
   onRunAction: (
     detail: MailyMailboxMessageDetail,
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
   ) => Promise<void>;
 }) {
-  const { detail, labels, actionPending, onReply, onForward, onRunAction } =
-    props;
+  const {
+    detail,
+    labels,
+    messageActions,
+    actionPending,
+    isFavorite,
+    onRunAction,
+  } = props;
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
   ) => interpolate(labels[key], vars);
-  const item = (
-    action: MailyMailboxMessageAction,
-    label: MailyMailboxLabelKey,
-    icon: React.ReactNode,
-    value?: string | boolean | null,
-    variant?: 'default' | 'destructive'
-  ) => (
-    <DropdownMenuItem
-      onSelect={() => onRunAction(detail, action, value)}
-      disabled={actionPending !== null}
-      variant={variant}
-    >
-      {actionPending === action ? (
-        <IconPlaceholder
+  const item = (action: MailyMailboxMessageAction) => {
+    const metadata = MESSAGE_ACTION_METADATA[action];
+    const label =
+      action === 'favorite' && isFavorite
+        ? t('actions.unfavorite')
+        : t(metadata.label);
+    const value = action === 'favorite' ? !isFavorite : metadata.value;
+
+    return (
+      <DropdownMenuItem
+        key={action}
+        onSelect={() => onRunAction(detail, action, value)}
+        disabled={actionPending !== null}
+        variant={metadata.variant}
+      >
+        {actionPending === action ? (
+          <IconPlaceholder
   lucide="Loader2"
   tabler="IconLoader2"
   hugeicons="Loading03Icon"
@@ -1547,12 +1731,20 @@ function MessageMoreMenu(props: {
   remixicon="RiLoader2Line"
   className="size-4 animate-spin"
 />
-      ) : (
-        icon
-      )}
-      {t(label)}
-    </DropdownMenuItem>
-  );
+        ) : (
+          metadata.icon(
+            cn(
+              'size-4',
+              action === 'favorite' &&
+                isFavorite &&
+                'fill-current text-amber-500'
+            )
+          )
+        )}
+        {label}
+      </DropdownMenuItem>
+    );
+  };
 
   return (
     <DropdownMenu>
@@ -1575,163 +1767,7 @@ function MessageMoreMenu(props: {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuItem onSelect={() => onReply(detail)}>
-          <IconPlaceholder
-  lucide="Reply"
-  tabler="IconCornerUpLeft"
-  hugeicons="MailReply01Icon"
-  phosphor="ArrowBendUpLeft"
-  remixicon="RiReplyLine"
-  className="size-4"
-/>
-          {t('actions.reply')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onForward(detail)}>
-          <IconPlaceholder
-  lucide="Forward"
-  tabler="IconArrowForward"
-  hugeicons="Forward01Icon"
-  phosphor="ArrowBendUpRight"
-  remixicon="RiShareForwardLine"
-  className="size-4"
-/>
-          {t('actions.forward')}
-        </DropdownMenuItem>
-        {item(
-          'delete',
-          'actions.delete',
-          <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className="size-4"
-/>,
-          null,
-          'destructive'
-        )}
-        {item(
-          'markUnread',
-          'actions.markUnread',
-          <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className="size-4"
-/>,
-          true
-        )}
-        {item('blockSender', 'actions.blockSender', <IconPlaceholder
-  lucide="Ban"
-  tabler="IconBan"
-  hugeicons="Cancel01Icon"
-  phosphor="Prohibit"
-  remixicon="RiForbidLine"
-  className="size-4"
-/>)}
-        {item(
-          'reportSpam',
-          'actions.reportSpam',
-          <IconPlaceholder
-  lucide="ShieldAlert"
-  tabler="IconShieldExclamation"
-  hugeicons="SpamIcon"
-  phosphor="ShieldWarning"
-  remixicon="RiSpam2Line"
-  className="size-4"
-/>
-        )}
-        {item(
-          'reportPhishing',
-          'actions.reportPhishing',
-          <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className="size-4"
-/>
-        )}
-        {item(
-          'reportIllegal',
-          'actions.reportIllegal',
-          <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className="size-4"
-/>
-        )}
-        {item(
-          'filterSimilar',
-          'actions.filterSimilar',
-          <IconPlaceholder
-  lucide="Filter"
-  tabler="IconFilter"
-  hugeicons="FilterIcon"
-  phosphor="Funnel"
-  remixicon="RiFilter3Line"
-  className="size-4"
-/>
-        )}
-        {item(
-          'translate',
-          'actions.translate',
-          <IconPlaceholder
-  lucide="Languages"
-  tabler="IconLanguage"
-  hugeicons="TranslateIcon"
-  phosphor="Translate"
-  remixicon="RiTranslate"
-  className="size-4"
-/>
-        )}
-        {item('print', 'actions.print', <IconPlaceholder
-  lucide="Printer"
-  tabler="IconPrinter"
-  hugeicons="PrinterIcon"
-  phosphor="Printer"
-  remixicon="RiPrinterLine"
-  className="size-4"
-/>)}
-        {item('download', 'actions.download', <IconPlaceholder
-  lucide="Download"
-  tabler="IconDownload"
-  hugeicons="Download01Icon"
-  phosphor="DownloadSimple"
-  remixicon="RiDownloadLine"
-  className="size-4"
-/>)}
-        {item(
-          'showOriginal',
-          'actions.showOriginal',
-          <IconPlaceholder
-  lucide="Code2"
-  tabler="IconCode"
-  hugeicons="SourceCodeIcon"
-  phosphor="Code"
-  remixicon="RiCodeLine"
-  className="size-4"
-/>
-        )}
-        {item(
-          'feedback',
-          'actions.feedback',
-          <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className="size-4"
-/>
-        )}
+        {messageActions.map((action) => item(action))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -30,6 +30,7 @@ import {
   type MailyMailboxDataSource,
   type MailyMailboxDraftInput,
   type MailyMailboxFolder,
+  type MailyMailboxMessageAction,
   type MailyMailboxMessageDetail,
 } from "@/components/maily/mailbox"
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
@@ -37,6 +38,17 @@ import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 const playgroundBaseUrl = import.meta.env.BASE_URL
 const emailPreviewTheme: RendererThemeOptions = DEFAULT_RENDERER_THEME
 const emailPreviewFontClassName = "[font-family:Inter,sans-serif]"
+const playgroundMessageActions = [
+  "archive",
+  "delete",
+  "favorite",
+  "markUnread",
+  "blockSender",
+  "reportSpam",
+  "reportPhishing",
+  "reportIllegal",
+  "react",
+] as const satisfies readonly MailyMailboxMessageAction[]
 
 const initialEditorContent: JSONContent = {
   type: "doc",
@@ -122,7 +134,7 @@ function RenderedEmailPreview({ json }: { json: JSONContent }) {
 
   if (error) {
     return (
-      <div className="text-destructive flex min-h-[320px] items-center justify-center px-4 text-sm">
+      <div className="flex min-h-[320px] items-center justify-center px-4 text-sm text-destructive">
         {error}
       </div>
     )
@@ -130,7 +142,7 @@ function RenderedEmailPreview({ json }: { json: JSONContent }) {
 
   if (!html) {
     return (
-      <div className="text-muted-foreground flex min-h-[320px] items-center justify-center px-4 text-sm">
+      <div className="flex min-h-[320px] items-center justify-center px-4 text-sm text-muted-foreground">
         Rendering email...
       </div>
     )
@@ -139,7 +151,7 @@ function RenderedEmailPreview({ json }: { json: JSONContent }) {
   return (
     <iframe
       title="Rendered email preview"
-      className="bg-background h-[480px] w-full rounded-md border-0"
+      className="h-[480px] w-full rounded-md border-0 bg-background"
       sandbox=""
       srcDoc={html}
     />
@@ -741,6 +753,7 @@ export function App() {
                     displayName: "Maily Studio",
                   }}
                   dataSource={mailboxDataSource}
+                  messageActions={playgroundMessageActions}
                   pollIntervalMs={0}
                   labels={polish ? polishMailboxLabels : undefined}
                   className="max-h-none min-w-[56rem] rounded-none! border-0!"

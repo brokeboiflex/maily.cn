@@ -248,6 +248,7 @@ const dataSource: MailyMailboxDataSource = {
 <MailboxView
   account={{ address: 'hello@example.com' }}
   dataSource={dataSource}
+  messageActions={['archive', 'delete', 'markUnread']}
   labels={defaultMailboxLabels}
 />;
 ```
@@ -257,10 +258,11 @@ Recipient fields support autocomplete when the host provides contacts through
 suggestion uses `{ address, displayName }` and is matched by both email address
 and display name.
 
-Reader actions are Gmail-like but backend-agnostic. Reply and forward seed the
-existing draft flow; favorite, archive, delete, mark unread, report, print,
-download, and show-original controls call `dataSource.runMessageAction` when the
-host supplies it.
+Reader actions are backend-agnostic and capability-gated. Reply and forward seed
+the existing draft flow; favorite, archive, delete, mark unread, report, print,
+download, show-original, and similar controls render only when the host supplies
+both `dataSource.runMessageAction` and the exact supported ids through
+`messageActions`.
 
 `defaultMailboxLabels` is exhaustive, matching the editor translation contract:
 copy it, translate every value, and pass the complete object back as `labels`.

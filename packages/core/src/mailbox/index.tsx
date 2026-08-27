@@ -301,6 +301,7 @@ export type MailyMailboxLabels = Record<MailyMailboxLabelKey, string>;
 export type MailyMailboxViewProps = {
   account?: MailyMailboxAccount;
   dataSource: MailyMailboxDataSource;
+  messageActions?: readonly MailyMailboxMessageAction[];
   labels?: MailyMailboxLabels;
   className?: string;
   initialFolder?: MailyMailboxFolder;
@@ -326,6 +327,102 @@ const FOLDERS: MailyMailboxFolder[] = ['inbox', 'sent', 'drafts', 'bounced'];
 const DEFAULT_POLL_INTERVAL_MS = 60_000;
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_CONTACT_SUGGESTION_LIMIT = 8;
+const DEFAULT_MESSAGE_ACTIONS: readonly MailyMailboxMessageAction[] = [];
+
+const TOOLBAR_LEADING_MESSAGE_ACTIONS = [
+  'archive',
+  'reportSpam',
+  'delete',
+  'markUnread',
+] as const satisfies readonly MailyMailboxMessageAction[];
+
+const TOOLBAR_TRAILING_MESSAGE_ACTIONS = [
+  'print',
+  'showOriginal',
+] as const satisfies readonly MailyMailboxMessageAction[];
+
+const HEADER_MESSAGE_ACTIONS = [
+  'favorite',
+  'react',
+] as const satisfies readonly MailyMailboxMessageAction[];
+
+type MessageActionMetadata = {
+  label: MailyMailboxLabelKey;
+  toolbarLabel?: MailyMailboxLabelKey;
+  icon: (className: string) => React.ReactNode;
+  value?: string | boolean | null;
+  variant?: 'default' | 'destructive';
+};
+
+const MESSAGE_ACTION_METADATA: Record<
+  MailyMailboxMessageAction,
+  MessageActionMetadata
+> = {
+  archive: {
+    label: 'actions.archive',
+    icon: (className) => <Archive className={className} />,
+  },
+  delete: {
+    label: 'actions.delete',
+    icon: (className) => <Trash2 className={className} />,
+    variant: 'destructive',
+  },
+  favorite: {
+    label: 'actions.favorite',
+    icon: (className) => <Star className={className} />,
+  },
+  markUnread: {
+    label: 'actions.markUnread',
+    icon: (className) => <MailOpen className={className} />,
+    value: true,
+  },
+  blockSender: {
+    label: 'actions.blockSender',
+    icon: (className) => <Ban className={className} />,
+  },
+  reportSpam: {
+    label: 'actions.reportSpam',
+    icon: (className) => <ShieldAlert className={className} />,
+  },
+  reportPhishing: {
+    label: 'actions.reportPhishing',
+    icon: (className) => <Flag className={className} />,
+  },
+  reportIllegal: {
+    label: 'actions.reportIllegal',
+    icon: (className) => <Flag className={className} />,
+  },
+  filterSimilar: {
+    label: 'actions.filterSimilar',
+    icon: (className) => <Filter className={className} />,
+  },
+  translate: {
+    label: 'actions.translate',
+    icon: (className) => <Languages className={className} />,
+  },
+  print: {
+    label: 'actions.print',
+    icon: (className) => <Printer className={className} />,
+  },
+  download: {
+    label: 'actions.download',
+    icon: (className) => <Download className={className} />,
+  },
+  showOriginal: {
+    label: 'actions.showOriginal',
+    toolbarLabel: 'actions.openExternal',
+    icon: (className) => <Code2 className={className} />,
+  },
+  feedback: {
+    label: 'actions.feedback',
+    icon: (className) => <AlertCircle className={className} />,
+  },
+  react: {
+    label: 'actions.react',
+    icon: (className) => <Smile className={className} />,
+    value: 'smile',
+  },
+};
 
 function emptyCounts(): MailyMailboxCounts {
   return {
@@ -502,6 +599,7 @@ function errorLabelForAction(action: string): MailyMailboxLabelKey {
 export function MailboxView(props: MailyMailboxViewProps) {
   const {
     dataSource,
+    messageActions = DEFAULT_MESSAGE_ACTIONS,
     labels = defaultMailboxLabels,
     className,
     initialFolder = 'inbox',
@@ -523,6 +621,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
     (key: MailyMailboxLabelKey, vars?: Record<string, string | number>) =>
       interpolate(labels[key], vars),
     [labels]
+  );
+  const enabledMessageActions = React.useMemo(
+    () =>
+      dataSource.runMessageAction
+        ? Array.from(new Set(messageActions))
+        : DEFAULT_MESSAGE_ACTIONS,
+    [dataSource.runMessageAction, messageActions]
   );
 
   const [folder, setFolder] = React.useState<MailyMailboxFolder>(initialFolder);
@@ -821,6 +926,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
   ) => {
+    if (!dataSource.runMessageAction) return;
+
     setMessageActionPending(action);
     try {
       const input: MailyMailboxMessageActionInput = {
@@ -828,7 +935,7 @@ export function MailboxView(props: MailyMailboxViewProps) {
         action,
         value,
       };
-      const result = await dataSource.runMessageAction?.(input);
+      const result = await dataSource.runMessageAction(input);
       onMessageAction?.({ ...input, message });
 
       if (
@@ -1022,6 +1129,7 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 isLoading={detailLoading}
                 labels={labels}
                 formatDate={formatDate}
+                messageActions={enabledMessageActions}
                 actionPending={messageActionPending}
                 onReply={openReply}
                 onForward={openForward}
@@ -1151,6 +1259,7 @@ function MessageReader(props: {
   isLoading: boolean;
   labels: MailyMailboxLabels;
   formatDate: (date: string | Date, mode: 'short' | 'long') => string;
+  messageActions: readonly MailyMailboxMessageAction[];
   actionPending: MailyMailboxMessageAction | null;
   onReply: (detail: MailyMailboxMessageDetail) => void;
   onForward: (detail: MailyMailboxMessageDetail) => void;
@@ -1165,6 +1274,7 @@ function MessageReader(props: {
     isLoading,
     labels,
     formatDate,
+    messageActions,
     actionPending,
     onReply,
     onForward,
@@ -1189,59 +1299,71 @@ function MessageReader(props: {
   const hue = senderHue(detail.fromAddress);
   const labelsToShow = detail.labels ?? [];
   const isFavorite = detail.isFavorite ?? false;
-  const run = (action: MailyMailboxMessageAction, value?: string | boolean) =>
-    onRunAction(detail, action, value);
+  const enabledActions = new Set(messageActions);
+  const toolbarLeadingActions = TOOLBAR_LEADING_MESSAGE_ACTIONS.filter(
+    (action) => enabledActions.has(action)
+  );
+  const toolbarTrailingActions = TOOLBAR_TRAILING_MESSAGE_ACTIONS.filter(
+    (action) => enabledActions.has(action)
+  );
+  const headerActions = HEADER_MESSAGE_ACTIONS.filter((action) =>
+    enabledActions.has(action)
+  );
+  const hasToolbarActions =
+    toolbarLeadingActions.length > 0 || toolbarTrailingActions.length > 0;
+  const run = (
+    action: MailyMailboxMessageAction,
+    value?: string | boolean | null
+  ) => onRunAction(detail, action, value);
+  const actionLabel = (
+    action: MailyMailboxMessageAction,
+    mode: 'button' | 'menu'
+  ) => {
+    if (action === 'favorite' && isFavorite) return t('actions.unfavorite');
+    const metadata = MESSAGE_ACTION_METADATA[action];
+    return t(
+      mode === 'button' && metadata.toolbarLabel
+        ? metadata.toolbarLabel
+        : metadata.label
+    );
+  };
+  const actionValue = (action: MailyMailboxMessageAction) => {
+    if (action === 'favorite') return !isFavorite;
+    return MESSAGE_ACTION_METADATA[action].value;
+  };
+  const actionIconClassName = (action: MailyMailboxMessageAction) =>
+    cn(
+      'size-4',
+      action === 'favorite' && isFavorite && 'fill-current text-amber-500'
+    );
+  const renderActionButton = (action: MailyMailboxMessageAction) => (
+    <MessageActionButton
+      key={action}
+      label={actionLabel(action, 'button')}
+      pending={actionPending === action}
+      pressed={action === 'favorite' ? isFavorite : undefined}
+      onClick={() => run(action, actionValue(action))}
+    >
+      {action === 'showOriginal' ? (
+        <ExternalLink className="size-4" />
+      ) : (
+        MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
+      )}
+    </MessageActionButton>
+  );
 
   return (
     <article className="flex h-full min-h-0 flex-col overflow-hidden">
-      <div className="border-border flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
-        <div className="flex items-center gap-1">
-          <MessageActionButton
-            label={t('actions.archive')}
-            pending={actionPending === 'archive'}
-            onClick={() => run('archive')}
-          >
-            <Archive className="size-4" />
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.reportSpam')}
-            pending={actionPending === 'reportSpam'}
-            onClick={() => run('reportSpam')}
-          >
-            <ShieldAlert className="size-4" />
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.delete')}
-            pending={actionPending === 'delete'}
-            onClick={() => run('delete')}
-          >
-            <Trash2 className="size-4" />
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.markUnread')}
-            pending={actionPending === 'markUnread'}
-            onClick={() => run('markUnread', true)}
-          >
-            <MailOpen className="size-4" />
-          </MessageActionButton>
+      {hasToolbarActions && (
+        <div className="border-border flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
+          <div className="flex items-center gap-1">
+            {toolbarLeadingActions.map(renderActionButton)}
+          </div>
+          <div className="flex items-center gap-1">
+            {toolbarTrailingActions.map(renderActionButton)}
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          <MessageActionButton
-            label={t('actions.print')}
-            pending={actionPending === 'print'}
-            onClick={() => run('print')}
-          >
-            <Printer className="size-4" />
-          </MessageActionButton>
-          <MessageActionButton
-            label={t('actions.openExternal')}
-            pending={false}
-            onClick={() => run('showOriginal')}
-          >
-            <ExternalLink className="size-4" />
-          </MessageActionButton>
-        </div>
-      </div>
+      )}
 
       <div className="flex shrink-0 flex-col gap-4 px-5 pt-5">
         <div className="flex items-start justify-between gap-3">
@@ -1258,28 +1380,7 @@ function MessageReader(props: {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-1">
-            <MessageActionButton
-              label={
-                isFavorite ? t('actions.unfavorite') : t('actions.favorite')
-              }
-              pending={actionPending === 'favorite'}
-              pressed={isFavorite}
-              onClick={() => run('favorite', !isFavorite)}
-            >
-              <Star
-                className={cn(
-                  'size-4',
-                  isFavorite && 'fill-current text-amber-500'
-                )}
-              />
-            </MessageActionButton>
-            <MessageActionButton
-              label={t('actions.react')}
-              pending={actionPending === 'react'}
-              onClick={() => run('react', 'smile')}
-            >
-              <Smile className="size-4" />
-            </MessageActionButton>
+            {headerActions.map(renderActionButton)}
             <MessageActionButton
               label={t('actions.reply')}
               pending={false}
@@ -1287,14 +1388,23 @@ function MessageReader(props: {
             >
               <Reply className="size-4" />
             </MessageActionButton>
-            <MessageMoreMenu
-              detail={detail}
-              labels={labels}
-              actionPending={actionPending}
-              onReply={onReply}
-              onForward={onForward}
-              onRunAction={onRunAction}
-            />
+            <MessageActionButton
+              label={t('actions.forward')}
+              pending={false}
+              onClick={() => onForward(detail)}
+            >
+              <Forward className="size-4" />
+            </MessageActionButton>
+            {messageActions.length > 0 && (
+              <MessageMoreMenu
+                detail={detail}
+                labels={labels}
+                messageActions={messageActions}
+                actionPending={actionPending}
+                isFavorite={isFavorite}
+                onRunAction={onRunAction}
+              />
+            )}
           </div>
         </div>
 
@@ -1387,41 +1497,58 @@ function MessageActionButton(props: {
 function MessageMoreMenu(props: {
   detail: MailyMailboxMessageDetail;
   labels: MailyMailboxLabels;
+  messageActions: readonly MailyMailboxMessageAction[];
   actionPending: MailyMailboxMessageAction | null;
-  onReply: (detail: MailyMailboxMessageDetail) => void;
-  onForward: (detail: MailyMailboxMessageDetail) => void;
+  isFavorite: boolean;
   onRunAction: (
     detail: MailyMailboxMessageDetail,
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
   ) => Promise<void>;
 }) {
-  const { detail, labels, actionPending, onReply, onForward, onRunAction } =
-    props;
+  const {
+    detail,
+    labels,
+    messageActions,
+    actionPending,
+    isFavorite,
+    onRunAction,
+  } = props;
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
   ) => interpolate(labels[key], vars);
-  const item = (
-    action: MailyMailboxMessageAction,
-    label: MailyMailboxLabelKey,
-    icon: React.ReactNode,
-    value?: string | boolean | null,
-    variant?: 'default' | 'destructive'
-  ) => (
-    <DropdownMenuItem
-      onSelect={() => onRunAction(detail, action, value)}
-      disabled={actionPending !== null}
-      variant={variant}
-    >
-      {actionPending === action ? (
-        <Loader2 className="size-4 animate-spin" />
-      ) : (
-        icon
-      )}
-      {t(label)}
-    </DropdownMenuItem>
-  );
+  const item = (action: MailyMailboxMessageAction) => {
+    const metadata = MESSAGE_ACTION_METADATA[action];
+    const label =
+      action === 'favorite' && isFavorite
+        ? t('actions.unfavorite')
+        : t(metadata.label);
+    const value = action === 'favorite' ? !isFavorite : metadata.value;
+
+    return (
+      <DropdownMenuItem
+        key={action}
+        onSelect={() => onRunAction(detail, action, value)}
+        disabled={actionPending !== null}
+        variant={metadata.variant}
+      >
+        {actionPending === action ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          metadata.icon(
+            cn(
+              'size-4',
+              action === 'favorite' &&
+                isFavorite &&
+                'fill-current text-amber-500'
+            )
+          )
+        )}
+        {label}
+      </DropdownMenuItem>
+    );
+  };
 
   return (
     <DropdownMenu>
@@ -1437,65 +1564,7 @@ function MessageMoreMenu(props: {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        <DropdownMenuItem onSelect={() => onReply(detail)}>
-          <Reply className="size-4" />
-          {t('actions.reply')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onForward(detail)}>
-          <Forward className="size-4" />
-          {t('actions.forward')}
-        </DropdownMenuItem>
-        {item(
-          'delete',
-          'actions.delete',
-          <Trash2 className="size-4" />,
-          null,
-          'destructive'
-        )}
-        {item(
-          'markUnread',
-          'actions.markUnread',
-          <MailOpen className="size-4" />,
-          true
-        )}
-        {item('blockSender', 'actions.blockSender', <Ban className="size-4" />)}
-        {item(
-          'reportSpam',
-          'actions.reportSpam',
-          <ShieldAlert className="size-4" />
-        )}
-        {item(
-          'reportPhishing',
-          'actions.reportPhishing',
-          <Flag className="size-4" />
-        )}
-        {item(
-          'reportIllegal',
-          'actions.reportIllegal',
-          <Flag className="size-4" />
-        )}
-        {item(
-          'filterSimilar',
-          'actions.filterSimilar',
-          <Filter className="size-4" />
-        )}
-        {item(
-          'translate',
-          'actions.translate',
-          <Languages className="size-4" />
-        )}
-        {item('print', 'actions.print', <Printer className="size-4" />)}
-        {item('download', 'actions.download', <Download className="size-4" />)}
-        {item(
-          'showOriginal',
-          'actions.showOriginal',
-          <Code2 className="size-4" />
-        )}
-        {item(
-          'feedback',
-          'actions.feedback',
-          <AlertCircle className="size-4" />
-        )}
+        {messageActions.map((action) => item(action))}
       </DropdownMenuContent>
     </DropdownMenu>
   );

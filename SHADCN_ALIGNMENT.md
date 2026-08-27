@@ -25,21 +25,21 @@ The registry excludes the package fallbacks for these modules, rewrites their
 imports to the consumer aliases, and declares the corresponding stock items in
 `registryDependencies`:
 
-| Maily use                                                    | Host shadcn item         |
-| ------------------------------------------------------------ | ------------------------ |
-| Actions and icon triggers                                    | `button`                 |
-| Text, URL, number, and multiline fields                      | `input`, `textarea`      |
-| Link Card labels                                             | `badge`                  |
-| Independent and grouped formatting state                     | `toggle`, `toggle-group` |
-| Help and control descriptions                                | `tooltip`                |
-| Menu and form dividers                                       | `separator`              |
+| Maily use                                                    | Host shadcn item                    |
+| ------------------------------------------------------------ | ----------------------------------- |
+| Actions and icon triggers                                    | `button`                            |
+| Text, URL, number, and multiline fields                      | `input`, `textarea`                 |
+| Link Card labels                                             | `badge`                             |
+| Independent and grouped formatting state                     | `toggle`, `toggle-group`            |
+| Help and control descriptions                                | `tooltip`                           |
+| Menu and form dividers                                       | `separator`                         |
 | Compact option controls                                      | `button`, `popover`, `toggle-group` |
-| Keyboard hints                                               | `kbd`                    |
-| Node actions and “Turn into”                                 | `dropdown-menu`          |
-| Alignment, direction, color, link, and configuration flyouts | `popover`                |
-| HTML code/preview state                                      | `tabs`                   |
-| Icon-bearing compact fields                                  | `input-group`            |
-| Variable suggestions                                         | `command`                |
+| Keyboard hints                                               | `kbd`                               |
+| Node actions and “Turn into”                                 | `dropdown-menu`                     |
+| Alignment, direction, color, link, and configuration flyouts | `popover`                           |
+| HTML code/preview state                                      | `tabs`                              |
+| Icon-bearing compact fields                                  | `input-group`                       |
+| Variable suggestions                                         | `command`                           |
 
 The package copies are Radix-based standalone fallbacks only. A registry install
 always uses the consumer's actual shadcn files, including their selected Radix or
@@ -51,7 +51,9 @@ The optional `MailboxView` uses the same host-owned `button`, `input`,
 `resizable`, and `scroll-area` primitives. It is a data-adapter component:
 mailbox state and layout live in Maily source, while accounts, messages, drafts,
 delivery, polling data, recipient contact suggestions, and optional message
-actions come from the consumer's backend adapter.
+actions come from the consumer's backend adapter. Optional message action chrome
+is rendered only for ids explicitly passed through `messageActions` and backed by
+`dataSource.runMessageAction`.
 
 ## Intentional Maily composites
 
@@ -73,7 +75,7 @@ These are not replacement primitives:
 - `InputAutocomplete` positions Maily variable suggestions in a viewport-aware
   portal; the suggestions themselves use stock Command.
 - `MailboxView` combines a CRM/Veyme-style resizable folder rail, searchable
-  message list, Gmail-like reader actions, reply/forward compose seeding,
+  message list, capability-gated reader actions, reply/forward compose seeding,
   compose form, and recipient autocomplete around caller-provided
   mailbox/contact/action data. It is application chrome, not an email-rendering
   primitive. Recipient autocomplete uses the shared `PopoverTrigger` contract
