@@ -267,6 +267,22 @@ download, show-original, and similar controls render only when the host supplies
 both `dataSource.runMessageAction` and the exact supported ids through
 `messageActions`.
 
+The reader displays every entry in `getMessage().attachments` below the body,
+with its filename, optional MIME type, and size in bytes formatted for display.
+Metadata-only attachments work without any additional handler. Empty attachment
+arrays do not render a section; `hasAttachments` controls only the list paperclip.
+
+To enable individual file downloads, provide
+`dataSource.downloadAttachment({ messageId, attachment, attachmentIndex })`.
+The host fetches and saves the file using its own API and authentication; return
+a promise that resolves when that operation finishes. An optional `attachment.id`
+can carry your backend identifier. `attachmentIndex` is the zero-based position
+in the detail array, so duplicate filenames remain distinguishable. The button
+shows progress, prevents duplicate requests, and allows retry after a failure.
+Failures appear beside the file and call `onError(error, 'attachmentDownload')`.
+This handler is separate from the `download` message action, which downloads the
+whole message. Inline file previews and compose uploads are not part of this API.
+
 `defaultMailboxLabels` is exhaustive, matching the editor translation contract:
 copy it, translate every value, and pass the complete object back as `labels`.
 

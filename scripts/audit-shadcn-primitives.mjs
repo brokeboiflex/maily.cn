@@ -17,6 +17,7 @@ const primitiveImplementationFiles = new Set(
     'packages/core/src/editor/components/ui/select-primitive.tsx',
     'packages/core/src/editor/components/ui/toggle.tsx',
     'packages/core/src/editor/components/ui/toggle-group.tsx',
+    'packages/core/src/editor/components/ui/attachment.tsx',
   ].map(toPosix)
 );
 
@@ -45,6 +46,7 @@ const dependencyNameByImport = new Map([
   ['badge', 'badge'],
   ['resizable', 'resizable'],
   ['scroll-area', 'scroll-area'],
+  ['attachment', 'attachment'],
 ]);
 
 const findings = [];

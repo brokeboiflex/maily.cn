@@ -10,6 +10,15 @@ import {
 } from "@/components/ui/popover"
 import { Badge } from "@/components/ui/badge"
 import {
+  Attachment,
+  AttachmentAction,
+  AttachmentActions,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+} from "@/components/ui/attachment"
+import {
   Command,
   CommandGroup,
   CommandItem,
@@ -104,9 +113,17 @@ export type MailyMailboxMessageRow = {
 }
 
 export type MailyMailboxAttachment = {
+  id?: string
   filename: string
   contentType?: string
   size?: number
+}
+
+export type MailyMailboxAttachmentDownloadInput = {
+  messageId: string
+  attachment: MailyMailboxAttachment
+  /** Position in getMessage().attachments; filenames need not be unique. */
+  attachmentIndex: number
 }
 
 export type MailyMailboxEvent = {
@@ -197,6 +214,10 @@ export type MailyMailboxDataSource = {
     limit?: number
   }) => MaybePromise<MailyMailboxMessageList>
   getMessage: (messageId: string) => MaybePromise<MailyMailboxMessageDetail>
+  /** Fetch and save the file using host storage/authentication. */
+  downloadAttachment?: (
+    input: MailyMailboxAttachmentDownloadInput
+  ) => MaybePromise<void>
   getCounts?: () => MaybePromise<Partial<MailyMailboxCounts>>
   listContactSuggestions?: (params: {
     q?: string
@@ -280,6 +301,14 @@ export const defaultMailboxLabels = {
   "message.bounced": "Bounced",
   "message.queued": "Queued",
   "message.attachments": "Attachments ({count})",
+  "attachment.download": "Download {filename}",
+  "attachment.downloading": "Downloading {filename}",
+  "attachment.sizeBytes": "{size} B",
+  "attachment.sizeKB": "{size} KB",
+  "attachment.sizeMB": "{size} MB",
+  "attachment.sizeGB": "{size} GB",
+  "attachment.sizeTB": "{size} TB",
+  "errors.attachmentDownload": "Could not download {filename}. Try again.",
   "errors.refresh": "Could not refresh the mailbox.",
   "errors.detail": "Could not load the message.",
   "errors.saveDraft": "Could not save the draft.",
@@ -1127,6 +1156,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 onReply={openReply}
                 onForward={openForward}
                 onRunAction={runMessageAction}
+                downloadAttachment={dataSource.downloadAttachment}
+                onError={onError}
               />
             ) : (
               <EmptyState
@@ -1256,6 +1287,8 @@ function MessageReader(props: {
   actionPending: MailyMailboxMessageAction | null
   onReply: (detail: MailyMailboxMessageDetail) => void
   onForward: (detail: MailyMailboxMessageDetail) => void
+  downloadAttachment: MailyMailboxDataSource["downloadAttachment"]
+  onError: MailyMailboxViewProps["onError"]
   onRunAction: (
     detail: MailyMailboxMessageDetail,
     action: MailyMailboxMessageAction,
@@ -1452,9 +1485,154 @@ function MessageReader(props: {
               </p>
             )}
           </div>
+          {detail.attachments && detail.attachments.length > 0 && (
+            <section
+              aria-label={t("message.attachments", {
+                count: detail.attachments.length,
+              })}
+              className="mx-5 my-4 border-t border-border pt-4"
+            >
+              <h3 className="mb-3 text-sm font-medium">
+                {t("message.attachments", { count: detail.attachments.length })}
+              </h3>
+              <ul className="space-y-2">
+                {detail.attachments.map((attachment, attachmentIndex) => (
+                  <li key={`${detail.id}:${attachment.id ?? attachmentIndex}`}>
+                    <MessageAttachment
+                      messageId={detail.id}
+                      attachment={attachment}
+                      attachmentIndex={attachmentIndex}
+                      labels={labels}
+                      downloadAttachment={props.downloadAttachment}
+                      onError={props.onError}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </ScrollArea>
       </div>
     </article>
+  )
+}
+
+function MessageAttachment({
+  messageId,
+  attachment,
+  attachmentIndex,
+  labels,
+  downloadAttachment,
+  onError,
+}: MailyMailboxAttachmentDownloadInput & {
+  labels: MailyMailboxLabels
+  downloadAttachment: MailyMailboxDataSource["downloadAttachment"]
+  onError: MailyMailboxViewProps["onError"]
+}) {
+  const [pending, setPending] = React.useState(false)
+  const [failed, setFailed] = React.useState(false)
+  const inFlight = React.useRef(false)
+  const mounted = React.useRef(false)
+  React.useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
+    }
+  }, [])
+
+  const t = (
+    key: MailyMailboxLabelKey,
+    vars?: Record<string, string | number>
+  ) => interpolate(labels[key], vars)
+  const downloadLabel = t(
+    pending ? "attachment.downloading" : "attachment.download",
+    { filename: attachment.filename }
+  )
+  const sizeLabels = [
+    "attachment.sizeBytes",
+    "attachment.sizeKB",
+    "attachment.sizeMB",
+    "attachment.sizeGB",
+    "attachment.sizeTB",
+  ] as const
+  let sizeLabel: string | undefined
+  if (
+    typeof attachment.size === "number" &&
+    Number.isFinite(attachment.size) &&
+    attachment.size >= 0
+  ) {
+    let size = attachment.size
+    let unit = 0
+    while (size >= 1024 && unit < sizeLabels.length - 1) {
+      size /= 1024
+      unit++
+    }
+    sizeLabel = t(sizeLabels[unit], { size: Number(size.toFixed(1)) })
+  }
+  const metadata = [attachment.contentType, sizeLabel]
+    .filter(Boolean)
+    .join(" · ")
+
+  const download = async () => {
+    if (!downloadAttachment || inFlight.current) return
+    inFlight.current = true
+    setPending(true)
+    setFailed(false)
+    try {
+      await downloadAttachment({ messageId, attachment, attachmentIndex })
+    } catch (error) {
+      if (mounted.current) {
+        setFailed(true)
+        onError?.(error, "attachmentDownload")
+      }
+    } finally {
+      inFlight.current = false
+      if (mounted.current) setPending(false)
+    }
+  }
+
+  return (
+    <Attachment className="w-full flex-nowrap" aria-busy={pending}>
+      <AttachmentMedia>
+        <FileText className="size-4" aria-hidden="true" />
+      </AttachmentMedia>
+      <AttachmentContent>
+        <AttachmentTitle className="[overflow-wrap:anywhere] whitespace-normal">
+          {attachment.filename}
+        </AttachmentTitle>
+        {metadata && (
+          <AttachmentDescription className="[overflow-wrap:anywhere] whitespace-normal">
+            {metadata}
+          </AttachmentDescription>
+        )}
+        {failed && (
+          <p
+            role="alert"
+            className="mt-1 text-xs [overflow-wrap:anywhere] text-destructive"
+          >
+            {t("errors.attachmentDownload", { filename: attachment.filename })}
+          </p>
+        )}
+      </AttachmentContent>
+      {downloadAttachment && (
+        <AttachmentActions>
+          <AttachmentAction
+            type="button"
+            size="icon"
+            aria-label={downloadLabel}
+            title={downloadLabel}
+            disabled={pending}
+            onClick={download}
+          >
+            {pending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Download className="size-4" aria-hidden="true" />
+            )}
+          </AttachmentAction>
+        </AttachmentActions>
+      )}
+    </Attachment>
   )
 }
 

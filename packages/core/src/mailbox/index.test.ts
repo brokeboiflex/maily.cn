@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   defaultMailboxLabels,
@@ -182,6 +182,186 @@ describe('MailboxView message actions', () => {
       expect(
         rendered.container.querySelector('[aria-label="Report spam"]')
       ).toBeNull();
+    } finally {
+      rendered.unmount();
+    }
+  });
+});
+
+describe('MailboxView attachments', () => {
+  it('renders metadata without a download capability or list paperclip flag', async () => {
+    const rendered = await renderSelectedMailbox({
+      labels: {
+        ...defaultMailboxLabels,
+        'message.attachments': 'Załączniki ({count})',
+        'attachment.sizeKB': '{size} kilobajtów',
+      },
+      dataSource: createDataSource({
+        getMessage: () => ({
+          ...messageDetail,
+          hasAttachments: false,
+          attachments: [
+            {
+              filename: 'report.pdf',
+              contentType: 'application/pdf',
+              size: 1536,
+            },
+            { filename: 'empty.txt', size: 0 },
+            { filename: '<script>alert(1)</script>.txt' },
+          ],
+        }),
+      }),
+    });
+    try {
+      const section = rendered.container.querySelector(
+        'section[aria-label="Załączniki (3)"]'
+      );
+      expect(section?.textContent).toContain('report.pdf');
+      expect(section?.textContent).toContain(
+        'application/pdf · 1.5 kilobajtów'
+      );
+      expect(section?.textContent).toContain('0 B');
+      expect(section?.textContent).toContain('<script>alert(1)</script>.txt');
+      expect(section?.querySelector('script')).toBeNull();
+      expect(section?.querySelectorAll('li')).toHaveLength(3);
+      expect(section?.querySelector('button')).toBeNull();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it.each([undefined, []])(
+    'omits the attachment section for %j',
+    async (attachments) => {
+      const rendered = await renderSelectedMailbox({
+        dataSource: createDataSource({
+          getMessage: () => ({
+            ...messageDetail,
+            hasAttachments: true,
+            attachments,
+          }),
+        }),
+      });
+      try {
+        expect(
+          rendered.container.querySelector('section[aria-label^="Attachments"]')
+        ).toBeNull();
+      } finally {
+        rendered.unmount();
+      }
+    }
+  );
+
+  it('keeps attachments visible when the body and valid sizes are unavailable', async () => {
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({
+        getMessage: () => ({
+          ...messageDetail,
+          bodyText: null,
+          attachments: [
+            { filename: 'missing.pdf' },
+            { filename: 'invalid.pdf', size: -1 },
+            { filename: 'unknown.pdf', size: NaN },
+          ],
+        }),
+      }),
+    });
+    try {
+      expect(rendered.container.textContent).toContain('No message body.');
+      expect(
+        rendered.container.querySelectorAll('[data-slot="attachment-title"]')
+      ).toHaveLength(3);
+      expect(
+        rendered.container.querySelectorAll(
+          '[data-slot="attachment-description"]'
+        )
+      ).toHaveLength(0);
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('downloads the correct same-named file and prevents duplicate pending requests', async () => {
+    let complete!: () => void;
+    const downloadAttachment = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          complete = resolve;
+        })
+    );
+    const attachments = [
+      { id: 'part-1', filename: 'report.pdf' },
+      { id: 'part-2', filename: 'report.pdf' },
+    ];
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({
+        getMessage: () => ({ ...messageDetail, attachments }),
+        downloadAttachment,
+      }),
+    });
+    try {
+      const buttons = rendered.container.querySelectorAll<HTMLButtonElement>(
+        '[aria-label="Download report.pdf"]'
+      );
+      await act(async () => {
+        buttons[1].click();
+        buttons[1].click();
+      });
+      expect(downloadAttachment).toHaveBeenCalledTimes(1);
+      expect(downloadAttachment).toHaveBeenCalledWith({
+        messageId: 'msg-1',
+        attachment: attachments[1],
+        attachmentIndex: 1,
+      });
+      expect(buttons[1].disabled).toBe(true);
+      expect(buttons[1].getAttribute('aria-label')).toBe(
+        'Downloading report.pdf'
+      );
+      expect(buttons[0].disabled).toBe(false);
+      await act(async () => {
+        complete();
+      });
+      expect(buttons[1].disabled).toBe(false);
+      expect(buttons[1].getAttribute('aria-label')).toBe('Download report.pdf');
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('reports download failures beside the file and retries through the host adapter', async () => {
+    const error = new Error('Download failed');
+    const onError = vi.fn();
+    const downloadAttachment = vi
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockResolvedValue(undefined);
+    const rendered = await renderSelectedMailbox({
+      onError,
+      dataSource: createDataSource({
+        getMessage: () => ({
+          ...messageDetail,
+          attachments: [{ filename: 'report.pdf' }],
+        }),
+        downloadAttachment,
+      }),
+    });
+    try {
+      const button = rendered.container.querySelector<HTMLButtonElement>(
+        '[aria-label="Download report.pdf"]'
+      )!;
+      await act(async () => {
+        button.click();
+      });
+      expect(
+        rendered.container.querySelector('[role="alert"]')?.textContent
+      ).toBe('Could not download report.pdf. Try again.');
+      expect(onError).toHaveBeenCalledWith(error, 'attachmentDownload');
+      expect(button.disabled).toBe(false);
+      await act(async () => {
+        button.click();
+      });
+      expect(downloadAttachment).toHaveBeenCalledTimes(2);
+      expect(rendered.container.querySelector('[role="alert"]')).toBeNull();
     } finally {
       rendered.unmount();
     }

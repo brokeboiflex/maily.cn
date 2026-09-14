@@ -73,6 +73,7 @@ The build step **externalizes modules the consumer already owns** rather than sh
 - `Badge` (`editor/components/ui/badge` → `@/components/ui/badge`)
 - `ResizablePanelGroup` / `ResizablePanel` / `ResizableHandle` (`editor/components/ui/resizable` → `@/components/ui/resizable`)
 - `ScrollArea` / `ScrollBar` (`editor/components/ui/scroll-area` → `@/components/ui/scroll-area`)
+- `Attachment` and its parts (`editor/components/ui/attachment` → `@/components/ui/attachment`)
 
 For an externalized component to resolve in the consumer's project, each registry item must declare the stock items its emitted files actually import in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `toggle-group`, `tooltip`, `separator`, `kbd`, `dropdown-menu`, `popover`, `tabs`, `input-group`, `command`, `badge`, `resizable`, `scroll-area`). The build derives that per-item list from generated imports. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
 
@@ -89,6 +90,8 @@ Mailbox compose body entry is dual-mode: the plain-text `Textarea` and embedded 
 Slash-command flyouts are viewport-aware: the main menu is capped to the viewport, submenus grow up to 20rem, open on the side with usable space, fall back to an overlay on narrow viewports, and truncate item copy inside `min-w-0` text columns so translated or consumer-provided labels never escape the panel. The editor toolbar wraps its primitive groups rather than widening the document, and large configuration popovers use viewport-capped widths.
 
 Autocomplete suggestions portal to `document.body` and compute a viewport-aware fixed position so scroll containers cannot clip them. The standalone package therefore declares `react-dom` alongside `react` as a peer and keeps both external in `tsup`; registry consumers use the host application's React runtime.
+
+Mailbox attachments render below the message body through stock `Attachment` parts. Always display supplied metadata even without a download handler. Individual downloads use optional `dataSource.downloadAttachment({ messageId, attachment, attachmentIndex })`; the host owns storage/auth and saving the file. Preserve the optional backend `attachment.id` and array index because filenames can repeat. Keep pending/error/retry state local to the file, report failures through `onError(error, 'attachmentDownload')`, and do not confuse this capability with downloading the whole message. New attachment copy belongs in the exhaustive mailbox labels. The standalone Attachment fallback comes from the official shadcn CLI with only package import adaptations; the registry externalizes it to the host's `attachment` item.
 
 `SHADCN_ALIGNMENT.md` is the maintained boundary report for host-owned primitives, intentional Maily composites, and the five custom document-diagram SVGs that remain after the final audit.
 
@@ -138,7 +141,7 @@ horizontal scroller so it never widens the page.
 installs all granular items; Base UI must pass a strict editor-only build before
 the optional mailbox is added. The complete Base fixture must then run its
 Playwright primitive checks for ToggleGroup roving focus/state, Popover focus and
-Escape behavior, mailbox rich-compose switching, nested interactive DOM, and
+Escape behavior, attachment metadata and downloaded file contents, mailbox rich-compose switching, nested interactive DOM, and
 console/page errors. The Bun fixture installs the editor and mailbox through the
 shadcn CLI, runs `bun install --linker isolated`, and must pass the strict
 TypeScript/Vite production build. Current upstream Base `scroll-area.tsx` contains

@@ -688,7 +688,8 @@
         "command",
         "badge",
         "resizable",
-        "scroll-area"
+        "scroll-area",
+        "attachment"
       ],
       "dependencies": [],
       "files": [
@@ -799,7 +800,8 @@
         "command",
         "badge",
         "resizable",
-        "scroll-area"
+        "scroll-area",
+        "attachment"
       ],
       "dependencies": [
         "@antfu/utils@^9.2.0",

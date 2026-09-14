@@ -62,6 +62,7 @@ const EXTERNALIZED_MODULES = {
   'editor/components/ui/badge': '@/components/ui/badge',
   'editor/components/ui/resizable': '@/components/ui/resizable',
   'editor/components/ui/scroll-area': '@/components/ui/scroll-area',
+  'editor/components/ui/attachment': '@/components/ui/attachment',
 };
 
 // shadcn registry items the consumer must have for the externalized imports
@@ -84,6 +85,7 @@ const REGISTRY_DEPENDENCIES = [
   'badge',
   'resizable',
   'scroll-area',
+  'attachment',
 ];
 
 const REGISTRY_DEPENDENCY_BY_UI_IMPORT = new Map(

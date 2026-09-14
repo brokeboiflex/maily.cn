@@ -36,6 +36,11 @@ import {
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL
+const attachmentContents: Record<string, string> = {
+  "queue-report":
+    "All queued delivery attempts have cleared. The last accepted message was newsletter-candidate-42.\n",
+  "queue-empty": "",
+}
 const emailPreviewTheme: RendererThemeOptions = DEFAULT_RENDERER_THEME
 const emailPreviewFontClassName = "[font-family:Inter,sans-serif]"
 const playgroundMessageActions = [
@@ -318,7 +323,7 @@ const baseMessages: MailyMailboxMessageDetail[] = [
     snippet:
       "All queued delivery attempts have cleared. The last accepted message was newsletter-candidate-42.",
     status: "sent",
-    hasAttachments: false,
+    hasAttachments: true,
     isFavorite: false,
     isUnread: false,
     labels: ["Inbox"],
@@ -326,7 +331,20 @@ const baseMessages: MailyMailboxMessageDetail[] = [
     bodyText:
       "All queued delivery attempts have cleared. The last accepted message was newsletter-candidate-42.",
     bodyHtml: null,
-    attachments: [],
+    attachments: [
+      {
+        id: "queue-report",
+        filename: "delivery-report.txt",
+        contentType: "text/plain",
+        size: new Blob([attachmentContents["queue-report"]]).size,
+      },
+      {
+        id: "queue-empty",
+        filename: "delivery-errors.txt",
+        contentType: "text/plain",
+        size: 0,
+      },
+    ],
     messageId: "<queue-clear@maily.cn>",
     inReplyTo: null,
     headers: null,
@@ -507,6 +525,34 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
           },
           { inbox: 0, sent: 0, drafts: 0, bounced: 0 }
         )
+      },
+      downloadAttachment: async ({
+        messageId,
+        attachment,
+        attachmentIndex,
+      }) => {
+        const message = messagesRef.current.find(
+          (item) => item.id === messageId
+        )
+        const stored = message?.attachments?.[attachmentIndex]
+        if (
+          !stored?.id ||
+          stored.id !== attachment.id ||
+          !(stored.id in attachmentContents)
+        ) {
+          throw new Error("Attachment not found")
+        }
+        const blob = new Blob([attachmentContents[stored.id]], {
+          type: stored.contentType,
+        })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.href = url
+        link.download = stored.filename
+        document.body.append(link)
+        link.click()
+        link.remove()
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000)
       },
       listContactSuggestions: async ({ q, limit = 8 }) => {
         const query = q?.trim().toLowerCase()

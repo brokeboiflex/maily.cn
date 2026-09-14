@@ -41,12 +41,37 @@ const baseRuntimeFixture = `import { Editor } from "@/components/maily"
 import {
   MailboxView,
   type MailyMailboxDataSource,
+  type MailyMailboxMessageDetail,
 } from "@/components/maily/mailbox"
 
+const message: MailyMailboxMessageDetail = {
+  id: "attachment-message",
+  direction: "in",
+  fromAddress: "sender@example.com",
+  toAddresses: ["studio@maily.cn"],
+  subject: "Attachment compatibility",
+  status: "sent",
+  createdAt: "2026-09-14T10:00:00Z",
+  bodyText: "The attachment is available below.",
+  hasAttachments: true,
+  attachments: [{ id: "part-1", filename: "report.txt", contentType: "text/plain", size: 7 }],
+}
+
 const dataSource: MailyMailboxDataSource = {
-  listMessages: async () => ({ items: [], nextCursor: null }),
-  getMessage: async () => {
-    throw new Error("No message selected")
+  listMessages: async () => ({ items: [message], nextCursor: null }),
+  getMessage: async () => message,
+  downloadAttachment: async ({ messageId, attachment, attachmentIndex }) => {
+    if (messageId !== message.id || attachment.id !== "part-1" || attachmentIndex !== 0) {
+      throw new Error("Wrong attachment requested")
+    }
+    const url = URL.createObjectURL(new Blob(["report\\n"], { type: attachment.contentType }))
+    const link = document.createElement("a")
+    link.href = url
+    link.download = attachment.filename
+    document.body.append(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
   },
   createDraft: async () => ({ id: "draft-1" }),
   updateDraft: async (id) => ({ id }),
@@ -292,6 +317,7 @@ async function verifyBaseRuntime(project) {
   fs.writeFileSync(
     testPath,
     `import { expect, test } from "@playwright/test"
+import { readFile } from "node:fs/promises"
 
 test("inherits current Base UI primitive behavior", async ({ page }) => {
   const errors: string[] = []
@@ -322,8 +348,17 @@ test("inherits current Base UI primitive behavior", async ({ page }) => {
   await expect(linkInput).toBeHidden()
 
   const mailbox = page.getByTestId("mailbox")
+  await mailbox.getByRole("button", { name: /Attachment compatibility/ }).click()
+  await expect(mailbox.getByRole("heading", { name: "Attachments (1)" })).toBeVisible()
+  await expect(mailbox.getByText("text/plain · 7 B", { exact: true })).toBeVisible()
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    mailbox.getByRole("button", { name: "Download report.txt", exact: true }).click(),
+  ])
+  expect(download.suggestedFilename()).toBe("report.txt")
+  expect(await readFile((await download.path())!, "utf8")).toBe("report\\n")
   await mailbox.getByRole("button", { name: "New message" }).click()
-  const richMode = mailbox.getByRole("button", { name: "Maily editor" })
+  const richMode = mailbox.getByRole("button", { name: "Visual editor" })
   await expect(richMode).toHaveCount(1)
   await richMode.click()
   await expect(richMode).toHaveAttribute("aria-pressed", "true")

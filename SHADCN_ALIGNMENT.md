@@ -40,6 +40,7 @@ imports to the consumer aliases, and declares the corresponding stock items in
 | HTML code/preview state                                      | `tabs`                              |
 | Icon-bearing compact fields                                  | `input-group`                       |
 | Variable suggestions                                         | `command`                           |
+| Message attachment metadata and download controls            | `attachment`, `button`              |
 
 The package copies are Radix-based standalone fallbacks only. A registry install
 always uses the consumer's actual shadcn files, including their selected Radix or
@@ -48,12 +49,19 @@ tokens.
 
 The optional `MailboxView` uses the same host-owned `button`, `input`,
 `textarea`, `badge`, `separator`, `dropdown-menu`, `popover`, `command`,
-`resizable`, and `scroll-area` primitives. It is a data-adapter component:
+`resizable`, `scroll-area`, and `attachment` primitives. It is a data-adapter component:
 mailbox state and layout live in Maily source, while accounts, messages, drafts,
 delivery, polling data, recipient contact suggestions, and optional message
 actions come from the consumer's backend adapter. Optional message action chrome
 is rendered only for ids explicitly passed through `messageActions` and backed by
 `dataSource.runMessageAction`.
+
+Attachment rows follow the official shadcn Attachment composition: media icon,
+title, description, and independent action. The mailbox uses a vertical list
+inside the reader's ScrollArea and wraps long names to fit the resizable panel.
+Metadata is always visible; a download action exists only with
+`dataSource.downloadAttachment`. The package fallback changes only import paths
+from the CLI-installed Radix item. Registry consumers own the stock primitive.
 
 ## Intentional Maily composites
 

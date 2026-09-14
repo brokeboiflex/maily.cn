@@ -15,6 +15,12 @@ examples. The editor is seeded with editable content; on narrow screens, the
 desktop split-pane mailbox scrolls inside its own frame instead of widening the
 page.
 
+Open “SMTP queue cleared” to check attachment metadata and individual downloads.
+Its adapter saves two actual text files, including an empty error report, through
+`dataSource.downloadAttachment`. This is local fixture data; production hosts
+provide their own authenticated download implementation. Attachment translations
+are included in the English/Polish switch.
+
 It was scaffolded with the shadcn CLI:
 
 ```bash
@@ -95,7 +101,8 @@ the editor, and runs TypeScript plus production builds. The Bun fixture installs
 with `bun install --linker isolated` so duplicated ProseMirror type trees fail the
 upstream gate. The complete Base fixture is also launched in Chromium to verify
 ToggleGroup focus/state, Popover focus and Escape handling, mailbox rich compose,
-nested-interactive safety, and runtime errors. Externalized `Button`,
+attachment metadata and downloaded file contents, nested-interactive safety,
+and runtime errors. Externalized `Button`,
 `Input`, `Textarea`, `Toggle`,
 `ToggleGroup`, `Tooltip`, `Separator`, `Kbd`, `DropdownMenu`,
 `Popover`, `Tabs`, `InputGroup`, `Command`, and `Badge` resolve to each
