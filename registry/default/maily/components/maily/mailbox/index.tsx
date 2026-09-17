@@ -1,6 +1,6 @@
 'use client';
 
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -195,6 +195,8 @@ export type MailyMailboxDataSource = {
     limit?: number;
   }) => MaybePromise<MailyMailboxMessageList>;
   getMessage: (messageId: string) => MaybePromise<MailyMailboxMessageDetail>;
+  /** Return the archived RFC822 source as text; never reconstruct it from the DTO. */
+  getMessageSource?: (messageId: string) => MaybePromise<string>;
   /** Fetch and save the file using host storage/authentication. */
   downloadAttachment?: (
     input: MailyMailboxAttachmentDownloadInput
@@ -257,6 +259,10 @@ export const defaultMailboxLabels = {
   'actions.print': 'Print',
   'actions.download': 'Download message',
   'actions.showOriginal': 'Show original',
+  'source.back': 'Back to message',
+  'source.retry': 'Retry',
+  'source.error':
+    'The original message could not be loaded. It may no longer be available.',
   'actions.feedback': 'Share feedback',
   'actions.openExternal': 'Open in new window',
   searchPlaceholder: 'Search mail',
@@ -363,171 +369,201 @@ const MESSAGE_ACTION_METADATA: Record<
 > = {
   archive: {
     label: 'actions.archive',
-    icon: (className) => <IconPlaceholder
-  lucide="Archive"
-  tabler="IconArchive"
-  hugeicons="ArchiveIcon"
-  phosphor="Archive"
-  remixicon="RiArchiveLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Archive"
+        tabler="IconArchive"
+        hugeicons="ArchiveIcon"
+        phosphor="Archive"
+        remixicon="RiArchiveLine"
+        className={className}
+      />
+    ),
   },
   delete: {
     label: 'actions.delete',
-    icon: (className) => <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Trash2"
+        tabler="IconTrash"
+        hugeicons="Delete02Icon"
+        phosphor="Trash"
+        remixicon="RiDeleteBinLine"
+        className={className}
+      />
+    ),
     variant: 'destructive',
   },
   favorite: {
     label: 'actions.favorite',
-    icon: (className) => <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Star"
+        tabler="IconStar"
+        hugeicons="StarIcon"
+        phosphor="Star"
+        remixicon="RiStarLine"
+        className={className}
+      />
+    ),
   },
   markUnread: {
     label: 'actions.markUnread',
-    icon: (className) => <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="MailOpen"
+        tabler="IconMailOpened"
+        hugeicons="MailOpenIcon"
+        phosphor="EnvelopeOpen"
+        remixicon="RiMailOpenLine"
+        className={className}
+      />
+    ),
     value: true,
   },
   blockSender: {
     label: 'actions.blockSender',
-    icon: (className) => <IconPlaceholder
-  lucide="Ban"
-  tabler="IconBan"
-  hugeicons="Cancel01Icon"
-  phosphor="Prohibit"
-  remixicon="RiForbidLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Ban"
+        tabler="IconBan"
+        hugeicons="Cancel01Icon"
+        phosphor="Prohibit"
+        remixicon="RiForbidLine"
+        className={className}
+      />
+    ),
   },
   reportSpam: {
     label: 'actions.reportSpam',
-    icon: (className) => <IconPlaceholder
-  lucide="ShieldAlert"
-  tabler="IconShieldExclamation"
-  hugeicons="SpamIcon"
-  phosphor="ShieldWarning"
-  remixicon="RiSpam2Line"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="ShieldAlert"
+        tabler="IconShieldExclamation"
+        hugeicons="SpamIcon"
+        phosphor="ShieldWarning"
+        remixicon="RiSpam2Line"
+        className={className}
+      />
+    ),
   },
   reportPhishing: {
     label: 'actions.reportPhishing',
-    icon: (className) => <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Flag"
+        tabler="IconFlag"
+        hugeicons="Flag01Icon"
+        phosphor="Flag"
+        remixicon="RiFlagLine"
+        className={className}
+      />
+    ),
   },
   reportIllegal: {
     label: 'actions.reportIllegal',
-    icon: (className) => <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Flag"
+        tabler="IconFlag"
+        hugeicons="Flag01Icon"
+        phosphor="Flag"
+        remixicon="RiFlagLine"
+        className={className}
+      />
+    ),
   },
   filterSimilar: {
     label: 'actions.filterSimilar',
-    icon: (className) => <IconPlaceholder
-  lucide="Filter"
-  tabler="IconFilter"
-  hugeicons="FilterIcon"
-  phosphor="Funnel"
-  remixicon="RiFilter3Line"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Filter"
+        tabler="IconFilter"
+        hugeicons="FilterIcon"
+        phosphor="Funnel"
+        remixicon="RiFilter3Line"
+        className={className}
+      />
+    ),
   },
   translate: {
     label: 'actions.translate',
-    icon: (className) => <IconPlaceholder
-  lucide="Languages"
-  tabler="IconLanguage"
-  hugeicons="TranslateIcon"
-  phosphor="Translate"
-  remixicon="RiTranslate"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Languages"
+        tabler="IconLanguage"
+        hugeicons="TranslateIcon"
+        phosphor="Translate"
+        remixicon="RiTranslate"
+        className={className}
+      />
+    ),
   },
   print: {
     label: 'actions.print',
-    icon: (className) => <IconPlaceholder
-  lucide="Printer"
-  tabler="IconPrinter"
-  hugeicons="PrinterIcon"
-  phosphor="Printer"
-  remixicon="RiPrinterLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Printer"
+        tabler="IconPrinter"
+        hugeicons="PrinterIcon"
+        phosphor="Printer"
+        remixicon="RiPrinterLine"
+        className={className}
+      />
+    ),
   },
   download: {
     label: 'actions.download',
-    icon: (className) => <IconPlaceholder
-  lucide="Download"
-  tabler="IconDownload"
-  hugeicons="Download01Icon"
-  phosphor="DownloadSimple"
-  remixicon="RiDownloadLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Download"
+        tabler="IconDownload"
+        hugeicons="Download01Icon"
+        phosphor="DownloadSimple"
+        remixicon="RiDownloadLine"
+        className={className}
+      />
+    ),
   },
   showOriginal: {
     label: 'actions.showOriginal',
     toolbarLabel: 'actions.openExternal',
-    icon: (className) => <IconPlaceholder
-  lucide="Code2"
-  tabler="IconCode"
-  hugeicons="SourceCodeIcon"
-  phosphor="Code"
-  remixicon="RiCodeLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Code2"
+        tabler="IconCode"
+        hugeicons="SourceCodeIcon"
+        phosphor="Code"
+        remixicon="RiCodeLine"
+        className={className}
+      />
+    ),
   },
   feedback: {
     label: 'actions.feedback',
-    icon: (className) => <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="AlertCircle"
+        tabler="IconAlertCircle"
+        hugeicons="AlertCircleIcon"
+        phosphor="WarningCircle"
+        remixicon="RiErrorWarningLine"
+        className={className}
+      />
+    ),
   },
   react: {
     label: 'actions.react',
-    icon: (className) => <IconPlaceholder
-  lucide="Smile"
-  tabler="IconMoodSmile"
-  hugeicons="SmileIcon"
-  phosphor="Smiley"
-  remixicon="RiEmotionHappyLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Smile"
+        tabler="IconMoodSmile"
+        hugeicons="SmileIcon"
+        phosphor="Smiley"
+        remixicon="RiEmotionHappyLine"
+        className={className}
+      />
+    ),
     value: 'smile',
   },
 };
@@ -677,41 +713,49 @@ function interpolate(label: string, vars?: Record<string, string | number>) {
 function folderIcon(folder: MailyMailboxFolder, className: string) {
   switch (folder) {
     case 'inbox':
-      return <IconPlaceholder
-  lucide="Inbox"
-  tabler="IconInbox"
-  hugeicons="InboxIcon"
-  phosphor="Tray"
-  remixicon="RiInboxLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Inbox"
+          tabler="IconInbox"
+          hugeicons="InboxIcon"
+          phosphor="Tray"
+          remixicon="RiInboxLine"
+          className={className}
+        />
+      );
     case 'sent':
-      return <IconPlaceholder
-  lucide="Send"
-  tabler="IconSend"
-  hugeicons="MailSend02Icon"
-  phosphor="PaperPlaneTilt"
-  remixicon="RiSendPlaneLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Send"
+          tabler="IconSend"
+          hugeicons="MailSend02Icon"
+          phosphor="PaperPlaneTilt"
+          remixicon="RiSendPlaneLine"
+          className={className}
+        />
+      );
     case 'drafts':
-      return <IconPlaceholder
-  lucide="FileText"
-  tabler="IconFileText"
-  hugeicons="File02Icon"
-  phosphor="FileText"
-  remixicon="RiFileTextLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="FileText"
+          tabler="IconFileText"
+          hugeicons="File02Icon"
+          phosphor="FileText"
+          remixicon="RiFileTextLine"
+          className={className}
+        />
+      );
     case 'bounced':
-      return <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="AlertCircle"
+          tabler="IconAlertCircle"
+          hugeicons="AlertCircleIcon"
+          phosphor="WarningCircle"
+          remixicon="RiErrorWarningLine"
+          className={className}
+        />
+      );
   }
 }
 
@@ -760,10 +804,12 @@ export function MailboxView(props: MailyMailboxViewProps) {
   );
   const enabledMessageActions = React.useMemo(
     () =>
-      dataSource.runMessageAction
-        ? Array.from(new Set(messageActions))
-        : DEFAULT_MESSAGE_ACTIONS,
-    [dataSource.runMessageAction, messageActions]
+      Array.from(new Set(messageActions)).filter(
+        (action) =>
+          !!dataSource.runMessageAction ||
+          (action === 'showOriginal' && !!dataSource.getMessageSource)
+      ),
+    [dataSource.runMessageAction, dataSource.getMessageSource, messageActions]
   );
 
   const [folder, setFolder] = React.useState<MailyMailboxFolder>(initialFolder);
@@ -1145,13 +1191,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
               aria-label={t('compose.new')}
             >
               <IconPlaceholder
-  lucide="Pencil"
-  tabler="IconPencil"
-  hugeicons="PencilIcon"
-  phosphor="Pencil"
-  remixicon="RiPencilLine"
-  className="size-4"
-/>
+                lucide="Pencil"
+                tabler="IconPencil"
+                hugeicons="PencilIcon"
+                phosphor="Pencil"
+                remixicon="RiPencilLine"
+                className="size-4"
+              />
               <span className="@[4rem]/rail:inline hidden min-w-0 truncate">
                 {t('compose.new')}
               </span>
@@ -1209,13 +1255,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
               <InputGroup className="bg-muted/30 h-8">
                 <InputGroupAddon>
                   <IconPlaceholder
-  lucide="Search"
-  tabler="IconSearch"
-  hugeicons="Search01Icon"
-  phosphor="MagnifyingGlass"
-  remixicon="RiSearchLine"
-  className="size-4"
-/>
+                    lucide="Search"
+                    tabler="IconSearch"
+                    hugeicons="Search01Icon"
+                    phosphor="MagnifyingGlass"
+                    remixicon="RiSearchLine"
+                    className="size-4"
+                  />
                 </InputGroupAddon>
                 <InputGroupInput
                   value={search}
@@ -1228,14 +1274,14 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 {refreshing && (
                   <InputGroupAddon align="inline-end">
                     <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
+                      lucide="Loader2"
+                      tabler="IconLoader2"
+                      hugeicons="Loading03Icon"
+                      phosphor="CircleNotch"
+                      remixicon="RiLoader2Line"
+                      className="size-4 animate-spin"
                       aria-label={t('refresh')}
-/>
+                    />
                   </InputGroupAddon>
                 )}
               </InputGroup>
@@ -1264,13 +1310,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 className="border-destructive/30 bg-destructive/10 text-destructive flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm"
               >
                 <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className="size-4 shrink-0"
-/>
+                  lucide="AlertCircle"
+                  tabler="IconAlertCircle"
+                  hugeicons="AlertCircleIcon"
+                  phosphor="WarningCircle"
+                  remixicon="RiErrorWarningLine"
+                  className="size-4 shrink-0"
+                />
                 <span>{t(errorKey)}</span>
               </div>
             )}
@@ -1294,6 +1340,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
               </ScrollArea>
             ) : selectedId ? (
               <MessageReader
+                key={selectedId}
+                getMessageSource={dataSource.getMessageSource}
                 detail={detail}
                 isLoading={detailLoading}
                 labels={labels}
@@ -1342,13 +1390,13 @@ function MessageList(props: {
     return (
       <div className="text-muted-foreground flex h-40 items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="Loader2"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
         {t('loading')}
       </div>
     );
@@ -1395,13 +1443,13 @@ function MessageList(props: {
                 <div className="flex items-center gap-1.5">
                   {row.isFavorite && (
                     <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className="size-3.5 shrink-0 fill-current text-amber-500"
-/>
+                      lucide="Star"
+                      tabler="IconStar"
+                      hugeicons="StarIcon"
+                      phosphor="Star"
+                      remixicon="RiStarLine"
+                      className="size-3.5 shrink-0 fill-current text-amber-500"
+                    />
                   )}
                   <span
                     className={cn(
@@ -1413,13 +1461,13 @@ function MessageList(props: {
                   </span>
                   {row.hasAttachments && (
                     <IconPlaceholder
-  lucide="Paperclip"
-  tabler="IconPaperclip"
-  hugeicons="AttachmentIcon"
-  phosphor="Paperclip"
-  remixicon="RiAttachmentLine"
-  className="text-muted-foreground size-3 shrink-0"
-/>
+                      lucide="Paperclip"
+                      tabler="IconPaperclip"
+                      hugeicons="AttachmentIcon"
+                      phosphor="Paperclip"
+                      remixicon="RiAttachmentLine"
+                      className="text-muted-foreground size-3 shrink-0"
+                    />
                   )}
                 </div>
                 {row.snippet && (
@@ -1446,7 +1494,83 @@ function MessageList(props: {
   );
 }
 
+/** Source is rendered as escaped text, never as HTML or an iframe. */
+function MessageSource(props: {
+  messageId: string;
+  getSource: NonNullable<MailyMailboxDataSource['getMessageSource']>;
+  labels: MailyMailboxLabels;
+  onBack: () => void;
+  onError: MailyMailboxViewProps['onError'];
+}) {
+  const { messageId, getSource, labels, onBack, onError } = props;
+  const [source, setSource] = React.useState<string | null>(null);
+  const [failed, setFailed] = React.useState(false);
+  const [attempt, setAttempt] = React.useState(0);
+  const errorHandler = React.useRef(onError);
+  errorHandler.current = onError;
+  React.useEffect(() => {
+    let active = true;
+    setSource(null);
+    setFailed(false);
+    Promise.resolve()
+      .then(() => getSource(messageId))
+      .then(
+        (value) => {
+          if (active) setSource(value);
+        },
+        (error) => {
+          if (!active) return;
+          setFailed(true);
+          errorHandler.current?.(error, 'messageSource');
+        }
+      );
+    return () => {
+      active = false;
+    };
+  }, [getSource, messageId, attempt]);
+
+  return (
+    <section
+      className="flex h-full min-h-0 flex-col"
+      aria-label={labels['actions.showOriginal']}
+    >
+      <div className="border-border flex shrink-0 items-center gap-2 border-b p-3">
+        <Button variant="outline" onClick={onBack}>
+          {labels['source.back']}
+        </Button>
+      </div>
+      {failed ? (
+        <div className="space-y-3 p-5">
+          <p role="alert" className="text-sm">
+            {labels['source.error']}
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => setAttempt((value) => value + 1)}
+          >
+            {labels['source.retry']}
+          </Button>
+        </div>
+      ) : source === null ? (
+        <p role="status" className="text-muted-foreground p-5 text-sm">
+          {labels.loading}
+        </p>
+      ) : (
+        <ScrollArea className="min-h-0 flex-1">
+          <pre
+            className="whitespace-pre-wrap break-all p-5 font-mono text-xs"
+            tabIndex={0}
+          >
+            {source}
+          </pre>
+        </ScrollArea>
+      )}
+    </section>
+  );
+}
+
 function MessageReader(props: {
+  getMessageSource: MailyMailboxDataSource['getMessageSource'];
   detail: MailyMailboxMessageDetail | null;
   isLoading: boolean;
   labels: MailyMailboxLabels;
@@ -1479,17 +1603,42 @@ function MessageReader(props: {
     vars?: Record<string, string | number>
   ) => interpolate(labels[key], vars);
 
+  const [showSource, setShowSource] = React.useState(false);
+  const runReaderAction: typeof onRunAction = async (
+    message,
+    action,
+    value
+  ) => {
+    if (action === 'showOriginal' && props.getMessageSource) {
+      setShowSource(true);
+      return;
+    }
+    await onRunAction(message, action, value);
+  };
+
+  if (showSource && detail && props.getMessageSource) {
+    return (
+      <MessageSource
+        messageId={detail.id}
+        getSource={props.getMessageSource}
+        labels={labels}
+        onBack={() => setShowSource(false)}
+        onError={props.onError}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="Loader2"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
         {t('loading')}
       </div>
     );
@@ -1515,12 +1664,14 @@ function MessageReader(props: {
   const run = (
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
-  ) => onRunAction(detail, action, value);
+  ) => runReaderAction(detail, action, value);
   const actionLabel = (
     action: MailyMailboxMessageAction,
     mode: 'button' | 'menu'
   ) => {
     if (action === 'favorite' && isFavorite) return t('actions.unfavorite');
+    if (action === 'showOriginal' && props.getMessageSource)
+      return t('actions.showOriginal');
     const metadata = MESSAGE_ACTION_METADATA[action];
     return t(
       mode === 'button' && metadata.toolbarLabel
@@ -1545,15 +1696,15 @@ function MessageReader(props: {
       pressed={action === 'favorite' ? isFavorite : undefined}
       onClick={() => run(action, actionValue(action))}
     >
-      {action === 'showOriginal' ? (
+      {action === 'showOriginal' && !props.getMessageSource ? (
         <IconPlaceholder
-  lucide="ExternalLink"
-  tabler="IconExternalLink"
-  hugeicons="ArrowUpRight01Icon"
-  phosphor="ArrowSquareOut"
-  remixicon="RiExternalLinkLine"
-  className="size-4"
-/>
+          lucide="ExternalLink"
+          tabler="IconExternalLink"
+          hugeicons="ArrowUpRight01Icon"
+          phosphor="ArrowSquareOut"
+          remixicon="RiExternalLinkLine"
+          className="size-4"
+        />
       ) : (
         MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
       )}
@@ -1595,13 +1746,13 @@ function MessageReader(props: {
               onClick={() => onReply(detail)}
             >
               <IconPlaceholder
-  lucide="Reply"
-  tabler="IconCornerUpLeft"
-  hugeicons="MailReply01Icon"
-  phosphor="ArrowBendUpLeft"
-  remixicon="RiReplyLine"
-  className="size-4"
-/>
+                lucide="Reply"
+                tabler="IconCornerUpLeft"
+                hugeicons="MailReply01Icon"
+                phosphor="ArrowBendUpLeft"
+                remixicon="RiReplyLine"
+                className="size-4"
+              />
             </MessageActionButton>
             <MessageActionButton
               label={t('actions.forward')}
@@ -1609,13 +1760,13 @@ function MessageReader(props: {
               onClick={() => onForward(detail)}
             >
               <IconPlaceholder
-  lucide="Forward"
-  tabler="IconArrowForward"
-  hugeicons="Forward01Icon"
-  phosphor="ArrowBendUpRight"
-  remixicon="RiShareForwardLine"
-  className="size-4"
-/>
+                lucide="Forward"
+                tabler="IconArrowForward"
+                hugeicons="Forward01Icon"
+                phosphor="ArrowBendUpRight"
+                remixicon="RiShareForwardLine"
+                className="size-4"
+              />
             </MessageActionButton>
             {messageActions.length > 0 && (
               <MessageMoreMenu
@@ -1624,7 +1775,7 @@ function MessageReader(props: {
                 messageActions={messageActions}
                 actionPending={actionPending}
                 isFavorite={isFavorite}
-                onRunAction={onRunAction}
+                onRunAction={runReaderAction}
               />
             )}
           </div>
@@ -1791,13 +1942,14 @@ function MessageAttachment({
     <Attachment className="w-full flex-nowrap" aria-busy={pending}>
       <AttachmentMedia>
         <IconPlaceholder
-  lucide="FileText"
-  tabler="IconFileText"
-  hugeicons="File02Icon"
-  phosphor="FileText"
-  remixicon="RiFileTextLine"
-  className="size-4" aria-hidden="true"
-/>
+          lucide="FileText"
+          tabler="IconFileText"
+          hugeicons="File02Icon"
+          phosphor="FileText"
+          remixicon="RiFileTextLine"
+          className="size-4"
+          aria-hidden="true"
+        />
       </AttachmentMedia>
       <AttachmentContent>
         <AttachmentTitle className="whitespace-normal [overflow-wrap:anywhere]">
@@ -1829,22 +1981,24 @@ function MessageAttachment({
           >
             {pending ? (
               <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin" aria-hidden="true"
-/>
+                lucide="Loader2"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
             ) : (
               <IconPlaceholder
-  lucide="Download"
-  tabler="IconDownload"
-  hugeicons="Download01Icon"
-  phosphor="DownloadSimple"
-  remixicon="RiDownloadLine"
-  className="size-4" aria-hidden="true"
-/>
+                lucide="Download"
+                tabler="IconDownload"
+                hugeicons="Download01Icon"
+                phosphor="DownloadSimple"
+                remixicon="RiDownloadLine"
+                className="size-4"
+                aria-hidden="true"
+              />
             )}
           </AttachmentAction>
         </AttachmentActions>
@@ -1875,13 +2029,13 @@ function MessageActionButton(props: {
     >
       {props.pending ? (
         <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="Loader2"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
       ) : (
         props.children
       )}
@@ -1930,13 +2084,13 @@ function MessageMoreMenu(props: {
       >
         {actionPending === action ? (
           <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+            lucide="Loader2"
+            tabler="IconLoader2"
+            hugeicons="Loading03Icon"
+            phosphor="CircleNotch"
+            remixicon="RiLoader2Line"
+            className="size-4 animate-spin"
+          />
         ) : (
           metadata.icon(
             cn(
@@ -1963,13 +2117,13 @@ function MessageMoreMenu(props: {
           aria-label={t('actions.more')}
         >
           <IconPlaceholder
-  lucide="MoreVertical"
-  tabler="IconDotsVertical"
-  hugeicons="MoreVerticalIcon"
-  phosphor="DotsThreeVertical"
-  remixicon="RiMore2Line"
-  className="size-4"
-/>
+            lucide="MoreVertical"
+            tabler="IconDotsVertical"
+            hugeicons="MoreVerticalIcon"
+            phosphor="DotsThreeVertical"
+            remixicon="RiMore2Line"
+            className="size-4"
+          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
@@ -2201,13 +2355,13 @@ function Compose(props: {
             disabled={isDiscarding}
           >
             <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className="size-4"
-/>
+              lucide="Trash2"
+              tabler="IconTrash"
+              hugeicons="Delete02Icon"
+              phosphor="Trash"
+              remixicon="RiDeleteBinLine"
+              className="size-4"
+            />
             {t('compose.discard')}
           </Button>
           <Button
@@ -2217,35 +2371,37 @@ function Compose(props: {
             onClick={() => onSave(values)}
             disabled={isSaving}
           >
-            {isSaving && <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>}
+            {isSaving && (
+              <IconPlaceholder
+                lucide="Loader2"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
+            )}
             {t('compose.saveDraft')}
           </Button>
           <Button type="submit" size="sm" disabled={isSending}>
             {isSending ? (
               <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                lucide="Loader2"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
             ) : (
               <IconPlaceholder
-  lucide="Send"
-  tabler="IconSend"
-  hugeicons="MailSend02Icon"
-  phosphor="PaperPlaneTilt"
-  remixicon="RiSendPlaneLine"
-  className="size-4"
-/>
+                lucide="Send"
+                tabler="IconSend"
+                hugeicons="MailSend02Icon"
+                phosphor="PaperPlaneTilt"
+                remixicon="RiSendPlaneLine"
+                className="size-4"
+              />
             )}
             {t('compose.send')}
           </Button>
@@ -2615,13 +2771,13 @@ function RecipientAutocompleteInput(props: {
             {loading ? (
               <div className="text-muted-foreground flex items-center justify-center gap-2 px-3 py-4 text-sm">
                 <IconPlaceholder
-  lucide="Loader2"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                  lucide="Loader2"
+                  tabler="IconLoader2"
+                  hugeicons="Loading03Icon"
+                  phosphor="CircleNotch"
+                  remixicon="RiLoader2Line"
+                  className="size-4 animate-spin"
+                />
                 {loadingLabel}
               </div>
             ) : suggestions.length > 0 ? (

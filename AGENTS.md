@@ -184,3 +184,12 @@ must compile without consumer-side TypeScript workarounds.
 - **A few colors stay literal on purpose** because they are email _content_ values (serialized into the email the recipient sees), not chrome: the default button colors (`#000000`/`#ffffff`) and section background/border (`#f7f7f7`/`#e2e2e2`) in the node definitions, the rose brand accent for variables, and the selection/selected-node highlight blue. Don't tokenize these.
 - **Consumer requirement: the typography plugin.** The content area depends on `prose`, so consumers need `@plugin "@tailwindcss/typography";`. The registry item wires this automatically via its `css` key on `shadcn add`; the build script (`scripts/build-shadcn-registry.mjs`) emits that key.
 - **Default block media uses the fork's public branding.** Logo presets use `assets/branding/maily-cn-avatar.png` and the cover preset uses `assets/branding/maily-cn-hero.png`, referenced through this repository's public `raw.githubusercontent.com` URLs so rendered emails and shadcn-installed source can load them without bundler-specific asset handling.
+
+## Mailbox original source
+
+`getMessageSource(messageId)` is an optional host data-source capability, enabled
+with `messageActions: ['showOriginal']`. Maily fetches lazily and displays escaped
+RFC822 text in the reader, with loading/error/retry/back controls. Do not put host
+API/auth/storage code here or manufacture source from parsed message fields.
+Without the capability, the existing runMessageAction callback remains supported.
+See [source view](docs/mailbox-source-2026-09-17.md).

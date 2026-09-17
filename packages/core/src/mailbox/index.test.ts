@@ -436,3 +436,102 @@ describe('MailboxView attachments', () => {
     }
   });
 });
+
+describe('original message source', () => {
+  const click = async (container: HTMLElement, label: string) => {
+    const button = Array.from(container.querySelectorAll('button')).find(
+      (node) =>
+        node.textContent === label || node.getAttribute('aria-label') === label
+    );
+    expect(button).toBeTruthy();
+    await act(async () => {
+      button!.click();
+    });
+  };
+
+  it('fetches only on demand and displays literal MIME safely with a way back', async () => {
+    const raw =
+      'From: sender@example.com\r\nContent-Type: text/html\r\n\r\n<script>alert(1)</script><img src="https://tracker.invalid/pixel">';
+    const getMessageSource = vi.fn(() => raw);
+    const view = await renderSelectedMailbox({
+      dataSource: createDataSource({ getMessageSource }),
+      messageActions: ['showOriginal'],
+    });
+    try {
+      expect(getMessageSource).not.toHaveBeenCalled();
+      await click(view.container, 'Show original');
+      expect(getMessageSource).toHaveBeenCalledWith('msg-1');
+      expect(view.container.querySelector('pre')?.textContent).toBe(raw);
+      expect(
+        view.container.querySelector('pre script, pre img, iframe')
+      ).toBeNull();
+      await click(view.container, 'Back to message');
+      expect(
+        view.container.querySelector('section[aria-label="Show original"]')
+      ).toBeNull();
+      expect(view.container.textContent).toContain('Body');
+    } finally {
+      view.unmount();
+    }
+  });
+
+  it('hides unsupported original action and retries a failed source request', async () => {
+    const hidden = await renderSelectedMailbox({
+      messageActions: ['showOriginal'],
+    });
+    expect(
+      hidden.container.querySelector('[aria-label="Show original"]')
+    ).toBeNull();
+    hidden.unmount();
+    const onError = vi.fn();
+    const getMessageSource = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Gone'))
+      .mockResolvedValueOnce('Recovered source');
+    const view = await renderSelectedMailbox({
+      dataSource: createDataSource({ getMessageSource }),
+      messageActions: ['showOriginal'],
+      onError,
+    });
+    try {
+      await click(view.container, 'Show original');
+      expect(view.container.querySelector('[role="alert"]')?.textContent).toBe(
+        defaultMailboxLabels['source.error']
+      );
+      expect(onError).toHaveBeenCalledOnce();
+      await click(view.container, 'Retry');
+      expect(view.container.querySelector('pre')?.textContent).toBe(
+        'Recovered source'
+      );
+    } finally {
+      view.unmount();
+    }
+  });
+
+  it('lets the reader leave a pending request without exposing its late result', async () => {
+    let resolve!: (source: string) => void;
+    const getMessageSource = vi.fn(
+      () =>
+        new Promise<string>((done) => {
+          resolve = done;
+        })
+    );
+    const view = await renderSelectedMailbox({
+      dataSource: createDataSource({ getMessageSource }),
+      messageActions: ['showOriginal'],
+    });
+    try {
+      await click(view.container, 'Show original');
+      expect(view.container.querySelector('[role="status"]')?.textContent).toBe(
+        defaultMailboxLabels.loading
+      );
+      await click(view.container, 'Back to message');
+      await act(async () => {
+        resolve('Late source');
+      });
+      expect(view.container.textContent).not.toContain('Late source');
+    } finally {
+      view.unmount();
+    }
+  });
+});

@@ -221,6 +221,8 @@ export type MailyMailboxDataSource = {
     limit?: number;
   }) => MaybePromise<MailyMailboxMessageList>;
   getMessage: (messageId: string) => MaybePromise<MailyMailboxMessageDetail>;
+  /** Return the archived RFC822 source as text; never reconstruct it from the DTO. */
+  getMessageSource?: (messageId: string) => MaybePromise<string>;
   /** Fetch and save the file using host storage/authentication. */
   downloadAttachment?: (
     input: MailyMailboxAttachmentDownloadInput
@@ -283,6 +285,10 @@ export const defaultMailboxLabels = {
   'actions.print': 'Print',
   'actions.download': 'Download message',
   'actions.showOriginal': 'Show original',
+  'source.back': 'Back to message',
+  'source.retry': 'Retry',
+  'source.error':
+    'The original message could not be loaded. It may no longer be available.',
   'actions.feedback': 'Share feedback',
   'actions.openExternal': 'Open in new window',
   searchPlaceholder: 'Search mail',
@@ -653,10 +659,12 @@ export function MailboxView(props: MailyMailboxViewProps) {
   );
   const enabledMessageActions = React.useMemo(
     () =>
-      dataSource.runMessageAction
-        ? Array.from(new Set(messageActions))
-        : DEFAULT_MESSAGE_ACTIONS,
-    [dataSource.runMessageAction, messageActions]
+      Array.from(new Set(messageActions)).filter(
+        (action) =>
+          !!dataSource.runMessageAction ||
+          (action === 'showOriginal' && !!dataSource.getMessageSource)
+      ),
+    [dataSource.runMessageAction, dataSource.getMessageSource, messageActions]
   );
 
   const [folder, setFolder] = React.useState<MailyMailboxFolder>(initialFolder);
@@ -1161,6 +1169,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
               </ScrollArea>
             ) : selectedId ? (
               <MessageReader
+                key={selectedId}
+                getMessageSource={dataSource.getMessageSource}
                 detail={detail}
                 isLoading={detailLoading}
                 labels={labels}
@@ -1292,7 +1302,83 @@ function MessageList(props: {
   );
 }
 
+/** Source is rendered as escaped text, never as HTML or an iframe. */
+function MessageSource(props: {
+  messageId: string;
+  getSource: NonNullable<MailyMailboxDataSource['getMessageSource']>;
+  labels: MailyMailboxLabels;
+  onBack: () => void;
+  onError: MailyMailboxViewProps['onError'];
+}) {
+  const { messageId, getSource, labels, onBack, onError } = props;
+  const [source, setSource] = React.useState<string | null>(null);
+  const [failed, setFailed] = React.useState(false);
+  const [attempt, setAttempt] = React.useState(0);
+  const errorHandler = React.useRef(onError);
+  errorHandler.current = onError;
+  React.useEffect(() => {
+    let active = true;
+    setSource(null);
+    setFailed(false);
+    Promise.resolve()
+      .then(() => getSource(messageId))
+      .then(
+        (value) => {
+          if (active) setSource(value);
+        },
+        (error) => {
+          if (!active) return;
+          setFailed(true);
+          errorHandler.current?.(error, 'messageSource');
+        }
+      );
+    return () => {
+      active = false;
+    };
+  }, [getSource, messageId, attempt]);
+
+  return (
+    <section
+      className="flex h-full min-h-0 flex-col"
+      aria-label={labels['actions.showOriginal']}
+    >
+      <div className="border-border flex shrink-0 items-center gap-2 border-b p-3">
+        <Button variant="outline" onClick={onBack}>
+          {labels['source.back']}
+        </Button>
+      </div>
+      {failed ? (
+        <div className="space-y-3 p-5">
+          <p role="alert" className="text-sm">
+            {labels['source.error']}
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => setAttempt((value) => value + 1)}
+          >
+            {labels['source.retry']}
+          </Button>
+        </div>
+      ) : source === null ? (
+        <p role="status" className="text-muted-foreground p-5 text-sm">
+          {labels.loading}
+        </p>
+      ) : (
+        <ScrollArea className="min-h-0 flex-1">
+          <pre
+            className="whitespace-pre-wrap break-all p-5 font-mono text-xs"
+            tabIndex={0}
+          >
+            {source}
+          </pre>
+        </ScrollArea>
+      )}
+    </section>
+  );
+}
+
 function MessageReader(props: {
+  getMessageSource: MailyMailboxDataSource['getMessageSource'];
   detail: MailyMailboxMessageDetail | null;
   isLoading: boolean;
   labels: MailyMailboxLabels;
@@ -1325,6 +1411,31 @@ function MessageReader(props: {
     vars?: Record<string, string | number>
   ) => interpolate(labels[key], vars);
 
+  const [showSource, setShowSource] = React.useState(false);
+  const runReaderAction: typeof onRunAction = async (
+    message,
+    action,
+    value
+  ) => {
+    if (action === 'showOriginal' && props.getMessageSource) {
+      setShowSource(true);
+      return;
+    }
+    await onRunAction(message, action, value);
+  };
+
+  if (showSource && detail && props.getMessageSource) {
+    return (
+      <MessageSource
+        messageId={detail.id}
+        getSource={props.getMessageSource}
+        labels={labels}
+        onBack={() => setShowSource(false)}
+        onError={props.onError}
+      />
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center gap-2 text-sm">
@@ -1354,12 +1465,14 @@ function MessageReader(props: {
   const run = (
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
-  ) => onRunAction(detail, action, value);
+  ) => runReaderAction(detail, action, value);
   const actionLabel = (
     action: MailyMailboxMessageAction,
     mode: 'button' | 'menu'
   ) => {
     if (action === 'favorite' && isFavorite) return t('actions.unfavorite');
+    if (action === 'showOriginal' && props.getMessageSource)
+      return t('actions.showOriginal');
     const metadata = MESSAGE_ACTION_METADATA[action];
     return t(
       mode === 'button' && metadata.toolbarLabel
@@ -1384,7 +1497,7 @@ function MessageReader(props: {
       pressed={action === 'favorite' ? isFavorite : undefined}
       onClick={() => run(action, actionValue(action))}
     >
-      {action === 'showOriginal' ? (
+      {action === 'showOriginal' && !props.getMessageSource ? (
         <ExternalLink className="size-4" />
       ) : (
         MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
@@ -1442,7 +1555,7 @@ function MessageReader(props: {
                 messageActions={messageActions}
                 actionPending={actionPending}
                 isFavorite={isFavorite}
-                onRunAction={onRunAction}
+                onRunAction={runReaderAction}
               />
             )}
           </div>
