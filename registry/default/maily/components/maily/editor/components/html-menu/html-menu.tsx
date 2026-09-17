@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { BubbleMenu } from '@tiptap/react/menus';
 import { useCallback } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
@@ -87,13 +87,13 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
                     aria-label={t('htmlMenu.htmlCode')}
                   >
                     <IconPlaceholder
-                      lucide="CodeXmlIcon"
-                      tabler="IconCode"
-                      hugeicons="SourceCodeIcon"
-                      phosphor="Code"
-                      remixicon="RiCodeLine"
-                      className="size-3 shrink-0 stroke-[2.5]"
-                    />
+  lucide="CodeXmlIcon"
+  tabler="IconCode"
+  hugeicons="SourceCodeIcon"
+  phosphor="Code"
+  remixicon="RiCodeLine"
+  className="size-3 shrink-0 stroke-[2.5]"
+/>
                   </TabsTrigger>
                 </span>
               </TooltipTrigger>
@@ -111,13 +111,13 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
                     aria-label={t('htmlMenu.preview')}
                   >
                     <IconPlaceholder
-                      lucide="ViewIcon"
-                      tabler="IconEye"
-                      hugeicons="ViewIcon"
-                      phosphor="Eye"
-                      remixicon="RiEyeLine"
-                      className="size-3 shrink-0 stroke-[2.5]"
-                    />
+  lucide="ViewIcon"
+  tabler="IconEye"
+  hugeicons="ViewIcon"
+  phosphor="Eye"
+  remixicon="RiEyeLine"
+  className="size-3 shrink-0 stroke-[2.5]"
+/>
                   </TabsTrigger>
                 </span>
               </TooltipTrigger>

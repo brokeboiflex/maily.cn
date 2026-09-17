@@ -305,13 +305,15 @@ function transformLucideIconsToPlaceholders(content, filePath) {
 
         // After replacement, does the bare identifier still appear OUTSIDE
         // IconPlaceholder attribute values AND string literals? (mixed usage)
-        // We strip generated <IconPlaceholder .../> blocks and quoted strings so
+        // We strip generated <IconPlaceholder .../> blocks, strings and comments so
         // that attribute values like lucide="Text" and titles like 'Text' don't
         // cause false positives.
         const withoutPlaceholders = transformed
           .replace(/<IconPlaceholder\b[\s\S]*?\/>/g, '')
           .replace(/"[^"]*"/g, '""')
-          .replace(/'[^']*'/g, "''");
+          .replace(/'[^']*'/g, "''")
+          .replace(/\/\*[\s\S]*?\*\//g, '')
+          .replace(/\/\/[^\r\n]*/g, '');
         const bareRegex = new RegExp(`\\b${escapeRegex(iconName)}\\b`);
         if (bareRegex.test(withoutPlaceholders)) {
           specifiersToKeep.push(iconName);

@@ -49,7 +49,9 @@
         "tippy.js@^6.3.7",
         "uuid@^11.1.0"
       ],
-      "devDependencies": ["@tailwindcss/typography@^0.5.16"],
+      "devDependencies": [
+        "@tailwindcss/typography@^0.5.16"
+      ],
       "files": [
         {
           "path": "registry/default/maily/components/maily/blocks/button.tsx",
@@ -834,7 +836,9 @@
         "tippy.js@^6.3.7",
         "uuid@^11.1.0"
       ],
-      "devDependencies": ["@tailwindcss/typography@^0.5.16"],
+      "devDependencies": [
+        "@tailwindcss/typography@^0.5.16"
+      ],
       "files": [
         {
           "path": "registry/default/maily/components/maily/blocks/button.tsx",

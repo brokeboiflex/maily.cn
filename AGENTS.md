@@ -87,6 +87,11 @@ Registry call sites must stay inside the prop/export intersection of current sto
 
 Mailbox compose body entry is dual-mode: the plain-text `Textarea` and embedded Maily `Editor` are switched through real shadcn `ToggleGroup` primitives. Keep textarea as a supported fallback, persist rich editor output through `MailyMailboxDraftInput.html`, and continue sending `text` so data sources that only need plain text remain compatible.
 
+Reply threading uses RFC `messageId`, never the storage row `id`. Messages
+without that header remain replyable without `inReplyTo`. Preserve an existing
+draft's `inReplyTo` after reopening, both on save and on send. Regression and
+registry validation: [docs/mailbox-reply-2026-09-17.md](docs/mailbox-reply-2026-09-17.md).
+
 Slash-command flyouts are viewport-aware: the main menu is capped to the viewport, submenus grow up to 20rem, open on the side with usable space, fall back to an overlay on narrow viewports, and truncate item copy inside `min-w-0` text columns so translated or consumer-provided labels never escape the panel. The editor toolbar wraps its primitive groups rather than widening the document, and large configuration popovers use viewport-capped widths.
 
 Autocomplete suggestions portal to `document.body` and compute a viewport-aware fixed position so scroll containers cannot clip them. The standalone package therefore declares `react-dom` alongside `react` as a peer and keeps both external in `tsup`; registry consumers use the host application's React runtime.

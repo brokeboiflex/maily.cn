@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { deleteNode } from '../../utils/delete-node';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
@@ -11,11 +11,7 @@ import { BubbleMenuButton } from '../bubble-menu-button';
 import { ColumnsBubbleMenuContent } from '../column-menu/columns-bubble-menu-content';
 import { MarginIcon } from '../icons/margin-icon';
 import { PaddingIcon } from '../icons/padding-icon';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { ColorPicker } from '../ui/color-picker';
@@ -232,15 +228,13 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={
-            <IconPlaceholder
-              lucide="Trash"
-              tabler="IconTrash"
-              hugeicons="Delete02Icon"
-              phosphor="Trash"
-              remixicon="RiDeleteBinLine"
-            />
-          }
+          icon={<IconPlaceholder
+  lucide="Trash"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+/>}
           tooltip={t('sectionMenu.delete')}
           command={() => {
             deleteNode(editor, 'section');
@@ -267,13 +261,13 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
                 <Button type="button" variant="ghost" size="sm">
                   {t('sectionMenu.column')}
                   <IconPlaceholder
-                    lucide="ChevronUp"
-                    tabler="IconChevronUp"
-                    hugeicons="ChevronUpIcon"
-                    phosphor="CaretUp"
-                    remixicon="RiArrowUpSLine"
-                    className="size-3"
-                  />
+  lucide="ChevronUp"
+  tabler="IconChevronUp"
+  hugeicons="ChevronUpIcon"
+  phosphor="CaretUp"
+  remixicon="RiArrowUpSLine"
+  className="size-3"
+/>
                 </Button>
               </PopoverTrigger>
               <PopoverContent

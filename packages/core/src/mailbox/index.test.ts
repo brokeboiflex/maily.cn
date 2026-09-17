@@ -131,6 +131,75 @@ describe('defaultMailboxLabels', () => {
 });
 
 describe('MailboxView message actions', () => {
+  it.each([null, '<original@example.com>'])(
+    'uses only the RFC message ID when replying (%s)',
+    async (messageId) => {
+      const createDraft = vi.fn(() => ({ id: 'draft-1' }));
+      const rendered = await renderSelectedMailbox({
+        dataSource: createDataSource({
+          getMessage: () => ({ ...messageDetail, messageId }),
+          createDraft,
+        }),
+      });
+      try {
+        await act(async () => {
+          rendered.container
+            .querySelector<HTMLButtonElement>('[aria-label="Reply"]')!
+            .click();
+        });
+        await act(async () => {
+          Array.from(rendered.container.querySelectorAll('button'))
+            .find((button) => button.textContent === 'Save draft')!
+            .click();
+        });
+        expect(createDraft).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: ['sender@example.com'],
+            subject: 'Re: Capability check',
+            inReplyTo: messageId,
+          })
+        );
+      } finally {
+        rendered.unmount();
+      }
+    }
+  );
+
+  it.each(['Save draft', 'Send'])(
+    'preserves reply threading when a reopened draft uses %s',
+    async (action) => {
+      const draft = {
+        ...messageDetail,
+        direction: 'out' as const,
+        status: 'draft' as const,
+        inReplyTo: '<original@example.com>',
+      };
+      const updateDraft = vi.fn(() => ({ id: draft.id }));
+      const rendered = await renderSelectedMailbox({
+        dataSource: createDataSource({
+          listMessages: () => ({ items: [draft], nextCursor: null }),
+          getMessage: () => draft,
+          updateDraft,
+        }),
+      });
+      try {
+        await act(async () => {
+          Array.from(rendered.container.querySelectorAll('button'))
+            .find((button) => button.textContent === action)!
+            .click();
+        });
+        expect(updateDraft).toHaveBeenCalledWith(
+          draft.id,
+          expect.objectContaining({
+            inReplyTo: '<original@example.com>',
+          })
+        );
+      } finally {
+        rendered.unmount();
+      }
+    }
+  );
+
   it('does not render backend action controls without a message action runner', async () => {
     const rendered = await renderSelectedMailbox({
       dataSource: createDataSource(),

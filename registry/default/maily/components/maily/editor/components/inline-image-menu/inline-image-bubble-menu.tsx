@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { BubbleMenu } from '@tiptap/react/menus';
 import { ImageSize } from '../image-menu/image-size';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
@@ -64,15 +64,13 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
                 .run();
             }}
             tooltip={t('inlineImageMenu.sourceUrl')}
-            icon={
-              <IconPlaceholder
-                lucide="ImageDownIcon"
-                tabler="IconPhotoDown"
-                hugeicons="ImageDownloadIcon"
-                phosphor="Image"
-                remixicon="RiImageDownloadLine"
-              />
-            }
+            icon={<IconPlaceholder
+  lucide="ImageDownIcon"
+  tabler="IconPhotoDown"
+  hugeicons="ImageDownloadIcon"
+  phosphor="Image"
+  remixicon="RiImageDownloadLine"
+/>}
             editor={editor}
             isVariable={state.isSrcVariable}
           />

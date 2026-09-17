@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { cn } from '@/lib/utils';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
@@ -114,13 +114,13 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
               aria-label={t('repeatMenu.iterableHint')}
             >
               <IconPlaceholder
-                lucide="InfoIcon"
-                tabler="IconInfoCircle"
-                hugeicons="InformationCircleIcon"
-                phosphor="Info"
-                remixicon="RiInformationLine"
-                className={cn('text-muted-foreground size-3 stroke-[2.5]')}
-              />
+  lucide="InfoIcon"
+  tabler="IconInfoCircle"
+  hugeicons="InformationCircleIcon"
+  phosphor="Info"
+  remixicon="RiInformationLine"
+  className={cn('text-muted-foreground size-3 stroke-[2.5]')}
+/>
             </TooltipTrigger>
             <TooltipContent
               sideOffset={14}

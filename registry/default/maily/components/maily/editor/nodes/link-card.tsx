@@ -1,10 +1,6 @@
 import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
 import { Input } from '@/components/ui/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { useMailyContext } from '../provider';
 import { cn } from '@/lib/utils';

@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import {
   type NodeViewProps,
   NodeViewWrapper,
@@ -35,13 +35,13 @@ export function RepeatView(props: NodeViewProps) {
         }}
       >
         <IconPlaceholder
-          lucide="Repeat2"
-          tabler="IconRepeat"
-          hugeicons="RepeatIcon"
-          phosphor="Repeat"
-          remixicon="RiRepeatLine"
-          className="text-foreground size-3 stroke-[2.5]"
-        />
+  lucide="Repeat2"
+  tabler="IconRepeat"
+  hugeicons="RepeatIcon"
+  phosphor="Repeat"
+  remixicon="RiRepeatLine"
+  className="text-foreground size-3 stroke-[2.5]"
+/>
         <div className="bg-primary/50 w-[1.5px] grow rounded-full" />
       </Button>
     </NodeViewWrapper>

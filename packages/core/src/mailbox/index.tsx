@@ -853,8 +853,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
     setComposeOpen(true);
   };
 
+  const draftInReplyTo =
+    composeDraftId && detail?.id === composeDraftId
+      ? (detail.inReplyTo ?? null)
+      : composeInReplyTo;
+
   const saveDraft = async (values: MailyMailboxComposeValues) => {
-    const draft = composeValuesToMailboxDraft(values, composeInReplyTo);
+    const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
     setSaving(true);
     try {
       if (composeDraftId) {
@@ -878,7 +883,7 @@ export function MailboxView(props: MailyMailboxViewProps) {
   };
 
   const sendDraft = async (values: MailyMailboxComposeValues) => {
-    const draft = composeValuesToMailboxDraft(values, composeInReplyTo);
+    const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
     let draftId = composeDraftId;
     setSending(true);
     try {
@@ -930,7 +935,9 @@ export function MailboxView(props: MailyMailboxViewProps) {
     const date = formatDate(message.createdAt, 'long');
     setSelectedId(message.id);
     setComposeDraftId(null);
-    setComposeInReplyTo(message.messageId ?? message.id);
+    // A storage row ID is not an RFC Message-ID. Mail without that header
+    // remains replyable, but cannot supply an In-Reply-To header.
+    setComposeInReplyTo(message.messageId || null);
     setComposeSeed(
       createReplyComposeValues(
         message,

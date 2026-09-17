@@ -1,5 +1,8 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
-import { type AllowedLogoSize, allowedLogoSize } from '../../nodes/logo/logo';
+import { IconPlaceholder } from "@/components/icon-placeholder"
+import {
+  type AllowedLogoSize,
+  allowedLogoSize,
+} from '../../nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '../../utils/aspect-ratio';
 import { borderRadius } from '../../utils/border-radius';
 import { BubbleMenu } from '@tiptap/react/menus';
@@ -129,15 +132,13 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
               }
             }}
             tooltip={t('imageMenu.sourceUrl')}
-            icon={
-              <IconPlaceholder
-                lucide="ImageDown"
-                tabler="IconPhotoDown"
-                hugeicons="ImageDownloadIcon"
-                phosphor="Image"
-                remixicon="RiImageDownloadLine"
-              />
-            }
+            icon={<IconPlaceholder
+  lucide="ImageDown"
+  tabler="IconPhotoDown"
+  hugeicons="ImageDownloadIcon"
+  phosphor="Image"
+  remixicon="RiImageDownloadLine"
+/>}
             editor={editor}
             isVariable={state.isSrcVariable}
           />
@@ -275,25 +276,19 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                     })
                     .run();
                 }}
-                icon={
-                  lockAspectRatio ? (
-                    <IconPlaceholder
-                      lucide="LockIcon"
-                      tabler="IconLock"
-                      hugeicons="LockIcon"
-                      phosphor="Lock"
-                      remixicon="RiLockLine"
-                    />
-                  ) : (
-                    <IconPlaceholder
-                      lucide="LockOpenIcon"
-                      tabler="IconLockOpen"
-                      hugeicons="SquareUnlock01Icon"
-                      phosphor="LockOpen"
-                      remixicon="RiLockUnlockLine"
-                    />
-                  )
-                }
+                icon={lockAspectRatio ? <IconPlaceholder
+  lucide="LockIcon"
+  tabler="IconLock"
+  hugeicons="LockIcon"
+  phosphor="Lock"
+  remixicon="RiLockLine"
+/> : <IconPlaceholder
+  lucide="LockOpenIcon"
+  tabler="IconLockOpen"
+  hugeicons="SquareUnlock01Icon"
+  phosphor="LockOpen"
+  remixicon="RiLockUnlockLine"
+/>}
                 tooltip={t('imageMenu.lockAspectRatio')}
               />
             </div>

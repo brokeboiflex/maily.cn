@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { Editor } from '@tiptap/core';
 import { type BubbleMenuItem } from './text-bubble-menu';
 
@@ -9,11 +9,7 @@ import { useTextMenuState } from './use-text-menu-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { Separator } from '@/components/ui/separator';
 import { ColorPicker } from '../ui/color-picker';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useMailyContext } from '../../provider';
 import {
   ToggleGroupCompat,
@@ -40,75 +36,65 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       name: 'bold',
       isActive: () => editor?.isActive('bold')!,
       command: () => editor?.chain().focus().toggleBold().run()!,
-      icon: (
-        <IconPlaceholder
-          lucide="BoldIcon"
-          tabler="IconBold"
-          hugeicons="TextBoldIcon"
-          phosphor="TextB"
-          remixicon="RiBold"
-        />
-      ),
+      icon: <IconPlaceholder
+  lucide="BoldIcon"
+  tabler="IconBold"
+  hugeicons="TextBoldIcon"
+  phosphor="TextB"
+  remixicon="RiBold"
+/>,
       tooltip: t('toolbar.bold'),
     },
     {
       name: 'italic',
       isActive: () => editor?.isActive('italic')!,
       command: () => editor?.chain().focus().toggleItalic().run()!,
-      icon: (
-        <IconPlaceholder
-          lucide="ItalicIcon"
-          tabler="IconItalic"
-          hugeicons="TextItalicIcon"
-          phosphor="TextItalic"
-          remixicon="RiItalic"
-        />
-      ),
+      icon: <IconPlaceholder
+  lucide="ItalicIcon"
+  tabler="IconItalic"
+  hugeicons="TextItalicIcon"
+  phosphor="TextItalic"
+  remixicon="RiItalic"
+/>,
       tooltip: t('toolbar.italic'),
     },
     {
       name: 'underline',
       isActive: () => editor?.isActive('underline')!,
       command: () => editor?.chain().focus().toggleUnderline().run()!,
-      icon: (
-        <IconPlaceholder
-          lucide="UnderlineIcon"
-          tabler="IconUnderline"
-          hugeicons="TextUnderlineIcon"
-          phosphor="TextUnderline"
-          remixicon="RiUnderline"
-        />
-      ),
+      icon: <IconPlaceholder
+  lucide="UnderlineIcon"
+  tabler="IconUnderline"
+  hugeicons="TextUnderlineIcon"
+  phosphor="TextUnderline"
+  remixicon="RiUnderline"
+/>,
       tooltip: t('toolbar.underline'),
     },
     {
       name: 'strike',
       isActive: () => editor?.isActive('strike')!,
       command: () => editor?.chain().focus().toggleStrike().run()!,
-      icon: (
-        <IconPlaceholder
-          lucide="StrikethroughIcon"
-          tabler="IconStrikethrough"
-          hugeicons="TextStrikethroughIcon"
-          phosphor="TextStrikethrough"
-          remixicon="RiStrikethrough"
-        />
-      ),
+      icon: <IconPlaceholder
+  lucide="StrikethroughIcon"
+  tabler="IconStrikethrough"
+  hugeicons="TextStrikethroughIcon"
+  phosphor="TextStrikethrough"
+  remixicon="RiStrikethrough"
+/>,
       tooltip: t('toolbar.strikethrough'),
     },
     {
       name: 'code',
       isActive: () => editor?.isActive('code')!,
       command: () => editor?.chain().focus().toggleCode().run()!,
-      icon: (
-        <IconPlaceholder
-          lucide="CodeIcon"
-          tabler="IconCode"
-          hugeicons="SourceCodeIcon"
-          phosphor="Code"
-          remixicon="RiCodeLine"
-        />
-      ),
+      icon: <IconPlaceholder
+  lucide="CodeIcon"
+  tabler="IconCode"
+  hugeicons="SourceCodeIcon"
+  phosphor="Code"
+  remixicon="RiCodeLine"
+/>,
       tooltip: t('toolbar.code'),
     },
   ];
@@ -196,30 +182,26 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       {!state.isListActive && showListMenu && (
         <>
           <BubbleMenuButton
-            icon={
-              <IconPlaceholder
-                lucide="List"
-                tabler="IconList"
-                hugeicons="LeftToRightListBulletIcon"
-                phosphor="ListBullets"
-                remixicon="RiListUnordered"
-              />
-            }
+            icon={<IconPlaceholder
+  lucide="List"
+  tabler="IconList"
+  hugeicons="LeftToRightListBulletIcon"
+  phosphor="ListBullets"
+  remixicon="RiListUnordered"
+/>}
             command={() => {
               editor.chain().focus().toggleBulletList().run();
             }}
             tooltip={t('toolbar.bulletList')}
           />
           <BubbleMenuButton
-            icon={
-              <IconPlaceholder
-                lucide="ListOrdered"
-                tabler="IconListNumbers"
-                hugeicons="LeftToRightListNumberIcon"
-                phosphor="ListNumbers"
-                remixicon="RiListOrdered"
-              />
-            }
+            icon={<IconPlaceholder
+  lucide="ListOrdered"
+  tabler="IconListNumbers"
+  hugeicons="LeftToRightListNumberIcon"
+  phosphor="ListNumbers"
+  remixicon="RiListOrdered"
+/>}
             command={() => {
               editor.chain().focus().toggleOrderedList().run();
             }}
