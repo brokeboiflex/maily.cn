@@ -1,3 +1,4 @@
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { type BlockGroupItem, type BlockItem } from '../../../blocks/types';
 import { Editor, type Range } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
@@ -54,6 +55,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
     enterLabel = englishTranslator('slashCommand.enter'),
   } = props;
 
+  const { schedule: scheduleTimeout } = useOwnedTimeout();
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [submenu, setSubmenu] = useState<SubmenuState | null>(null);
@@ -218,7 +220,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             .focus()
             .insertContentAt(range, `/${prevQuery.current}`)
             .run();
-          setTimeout(() => {
+          scheduleTimeout(() => {
             setSelectedGroupIndex(prevSelectedGroupIndex.current);
             setSelectedCommandIndex(prevSelectedCommandIndex.current);
           }, 0);

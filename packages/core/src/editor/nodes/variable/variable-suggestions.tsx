@@ -1,8 +1,8 @@
 import {
   getVariableOptions,
   useVariableOptions,
-} from '@/editor/utils/node-options';
-import { processVariables } from '@/editor/utils/variable';
+} from '../../utils/node-options';
+import { processVariables } from '../../utils/variable';
 import { ReactRenderer } from '@tiptap/react';
 import { type SuggestionOptions } from '@tiptap/suggestion';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
@@ -139,12 +139,9 @@ export function getVariableSuggestions(
         },
 
         onExit() {
-          if (!popup || !popup?.[0] || !component) {
-            return;
-          }
-
-          popup?.[0].destroy();
-          component.destroy();
+          popup?.[0]?.destroy();
+          popup = null;
+          component?.destroy();
         },
       };
     },

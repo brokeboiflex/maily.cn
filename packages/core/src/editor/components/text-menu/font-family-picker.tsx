@@ -9,7 +9,14 @@ import {
   RotateCwIcon,
   TypeIcon,
 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { Button } from '../base-button';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
@@ -153,7 +160,7 @@ export function FontFamilyPicker({
   onFontChange,
   onFontUnset,
 }: FontFamilyPickerProps) {
-  const { t } = useMailyContext();
+  const { t, editorActions } = useMailyContext();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeValue, setActiveValue] = useState(
@@ -222,29 +229,46 @@ export function FontFamilyPicker({
     [t]
   );
 
+  useLayoutEffect(() => () => editorActions?.cancel('font'), [editorActions]);
+
   const selectDefault = useCallback(() => {
+    editorActions?.cancel('font');
+    setLoadingFontId(null);
     if (onFontUnset) {
       onFontUnset();
     } else {
       editor.chain().focus().unsetMailyFont().run();
     }
     setOpen(false);
-  }, [editor, onFontUnset]);
+  }, [editor, onFontUnset, editorActions]);
 
   const selectFont = useCallback(
     async (font: FontsourceFont) => {
+      const action = editorActions?.capture('font');
       setLoadingFontId(font.id);
-      const selection = await resolveFontSelection(font);
-      loadEditorFont(selection);
-      if (onFontChange) {
-        onFontChange(selection);
-      } else {
-        editor.chain().focus().setMailyFont(selection).run();
+      let selection;
+      try {
+        selection = await resolveFontSelection(font);
+      } catch {
+        if (action?.isOwned()) setLoadingFontId(null);
+        return;
       }
+      if (!action?.isCurrent()) {
+        if (action?.isOwned()) setLoadingFontId(null);
+        return;
+      }
+      action.run(() => {
+        loadEditorFont(selection);
+        if (onFontChange) {
+          onFontChange(selection);
+        } else {
+          editor.chain().focus().setMailyFont(selection).run();
+        }
+      });
       setLoadingFontId(null);
       setOpen(false);
     },
-    [editor, onFontChange]
+    [editor, onFontChange, editorActions]
   );
 
   const retry = useCallback(() => {

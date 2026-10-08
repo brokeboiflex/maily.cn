@@ -17,13 +17,19 @@ export type ImageUploadPluginOptions = {
    * @returns Returns the image URL as a string.
    */
   onImageUpload?: (file: Blob) => Promise<string>;
+  /** Compensate an owned upload whose node no longer exists. */
+  onImageUploadDiscard?: (src: string) => Promise<void>;
 };
 
 export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
-  const { editor, onImageUpload, allowedMimeTypes } = options;
+  const { editor, onImageUpload, onImageUploadDiscard, allowedMimeTypes } =
+    options;
+  const placeholders = new Set<string>();
+  let destroyed = false;
 
   function handleImageUpload(view: EditorView, file: File, pos?: number) {
     const placeholderSrc = URL.createObjectURL(file);
+    placeholders.add(placeholderSrc);
 
     const { tr, schema } = view.state;
     const imageNode = schema.nodes.image.create({
@@ -46,7 +52,11 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
     view.dispatch(transaction);
 
     onImageUpload?.(file)
-      .then((uploadedSrc) => {
+      .then(async (uploadedSrc) => {
+        if (destroyed || editor.isDestroyed) {
+          await onImageUploadDiscard?.(uploadedSrc);
+          return;
+        }
         const updateTr = view.state.tr;
 
         // Find the placeholder image node
@@ -63,7 +73,8 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
           }
         });
 
-        view.dispatch(updateTr);
+        if (updateTr.docChanged) view.dispatch(updateTr);
+        else await onImageUploadDiscard?.(uploadedSrc);
       })
       .catch((error) => {
         console.error('Image upload failed', error);
@@ -72,12 +83,20 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
         editor.extensionStorage.imageUpload.placeholderImages.delete(
           placeholderSrc
         );
+        placeholders.delete(placeholderSrc);
         URL.revokeObjectURL(placeholderSrc);
       });
   }
 
   return new Plugin({
     key: new PluginKey('imageUpload'),
+    view: () => ({
+      destroy() {
+        destroyed = true;
+        for (const src of placeholders) URL.revokeObjectURL(src);
+        placeholders.clear();
+      },
+    }),
     props: {
       handleDrop: (view, event) => {
         if (

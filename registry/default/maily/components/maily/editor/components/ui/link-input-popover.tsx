@@ -1,8 +1,17 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { useRef, useState, type ReactNode } from 'react';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/components/ui/tooltip';
 import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
 import { InputAutocomplete } from './input-autocomplete';
 import { processVariables } from '../../utils/variable';
@@ -38,6 +47,8 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(!isVariable);
 
+  const { schedule: scheduleTimeout, cancel: cancelTimeout } =
+    useOwnedTimeout();
   const linkInputRef = useRef<HTMLInputElement>(null);
 
   const { placeholderUrl = DEFAULT_PLACEHOLDER_URL, t } = useMailyContext();
@@ -66,8 +77,9 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
+        if (!open) cancelTimeout();
         if (open) {
-          setTimeout(() => {
+          scheduleTimeout(() => {
             linkInputRef.current?.focus();
           }, 0);
         }
@@ -149,7 +161,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                   className="h-auto p-0"
                   onClick={() => {
                     setIsEditing(true);
-                    setTimeout(() => {
+                    scheduleTimeout(() => {
                       linkInputRef.current?.focus();
                     }, 0);
                   }}
@@ -171,7 +183,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
               <div className="relative">
                 <div className="absolute inset-y-0 left-1.5 z-10 flex items-center">
                   <IconPlaceholder
-  lucide="LinkIcon"
+  lucide="Link"
   tabler="IconLink"
   hugeicons="Link01Icon"
   phosphor="Link"

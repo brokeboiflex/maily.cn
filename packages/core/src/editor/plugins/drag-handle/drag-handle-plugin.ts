@@ -1,13 +1,3 @@
-/**
- * This plugin is a modified version of the package
- * LINK: https://www.npmjs.com/package/echo-drag-handle-plugin.
- * The original package was not working as expected while migrating.
- *
- * I will be building a new version from scratch for the drag handle plugin
- * for better usability and compatibility for me.
- * Until then, I will be using this modified version.
- */
-
 import { SelectionRange, Selection, PluginKey, Plugin } from '@tiptap/pm/state';
 import tippy, { type Instance } from 'tippy.js';
 import { NodeRange } from '@tiptap/pm/model';
@@ -278,7 +268,7 @@ const getAncestorNodeAtDepth = (e: TNode, t: number) => {
     i = n;
   for (; r > 0; ) {
     const e = o.node(r);
-    (r -= 1), 0 === r && (i = e);
+    ((r -= 1), 0 === r && (i = e));
   }
   return i;
 };
@@ -329,7 +319,18 @@ export function DragHandlePlugin(
     }
   }
 
-  element.addEventListener('dragstart', (e) => {
+  let dragImage: HTMLElement | null = null;
+  let dragTimer: ReturnType<typeof setTimeout> | null = null;
+  const cleanupDrag = () => {
+    if (dragTimer) clearTimeout(dragTimer);
+    dragTimer = null;
+    dragImage?.remove();
+    dragImage = null;
+    document.removeEventListener('drop', cleanupDrag);
+    element.style.pointerEvents = 'auto';
+  };
+  const onDragStart = (e: DragEvent) => {
+    cleanupDrag();
     const { view } = editor;
     if (!e.dataTransfer) return;
     const { empty, $from, $to } = view.state.selection;
@@ -353,19 +354,19 @@ export function DragHandlePlugin(
     h.style.position = 'absolute';
     h.style.top = '-10000px';
     document.body.append(h);
+    dragImage = h;
     e.dataTransfer.clearData();
     e.dataTransfer.setDragImage(h, 0, 0);
     view.dragging = { slice: E, move: true };
     g.setSelection(C as unknown as Selection);
     view.dispatch(g);
-    document.addEventListener('drop', () => removeNode(h), { once: true });
-    setTimeout(() => {
+    document.addEventListener('drop', cleanupDrag, { once: true });
+    dragTimer = setTimeout(() => {
       element && (element.style.pointerEvents = 'none');
     }, 0);
-  });
-  element.addEventListener('dragend', () => {
-    element && (element.style.pointerEvents = 'auto');
-  });
+  };
+  element.addEventListener('dragstart', onDragStart);
+  element.addEventListener('dragend', cleanupDrag);
 
   return new Plugin({
     key: typeof e === 'string' ? new PluginKey(e) : e,
@@ -443,7 +444,7 @@ export function DragHandlePlugin(
               s = getAncestorNodeAtDepth(editor.state.doc, r);
             if (s !== currentNode) {
               const t = getPreviousNodeStartPosition(editor.state.doc, r);
-              (currentNode = s),
+              ((currentNode = s),
                 (lastNodePos = t),
                 null == onNodeChange ||
                   onNodeChange({
@@ -454,12 +455,15 @@ export function DragHandlePlugin(
                 tippyInstance.setProps({
                   getReferenceClientRect: () => o?.getBoundingClientRect(),
                 }),
-                tippyInstance.show();
+                tippyInstance.show());
             }
           },
           destroy() {
-            null == tippyInstance || tippyInstance.destroy(),
-              element && removeNode(container);
+            cleanupDrag();
+            element.removeEventListener('dragstart', onDragStart);
+            element.removeEventListener('dragend', cleanupDrag);
+            (null == tippyInstance || tippyInstance.destroy(),
+              element && removeNode(container));
           },
         }
       );
@@ -494,7 +498,7 @@ export function DragHandlePlugin(
             s = getAncestorNodeAtDepth(editor.state.doc, r);
           if (s !== currentNode) {
             const t = getPreviousNodeStartPosition(editor.state.doc, r);
-            (currentNode = s),
+            ((currentNode = s),
               (lastNodePos = t),
               null == onNodeChange ||
                 onNodeChange({
@@ -505,7 +509,7 @@ export function DragHandlePlugin(
               tippyInstance.setProps({
                 getReferenceClientRect: () => o.getBoundingClientRect(),
               }),
-              tippyInstance.show();
+              tippyInstance.show());
           }
           return false;
         },

@@ -1,15 +1,24 @@
+import { useOwnedTimeout } from '../utils/use-owned-timeout';
 import { Editor } from '@tiptap/core';
-import { Eye, InfoIcon } from 'lucide-react';
 import { memo, useMemo, useRef, useState } from 'react';
-import { cn } from '../utils/classname';
+import { cn } from '@/editor/utils/classname';
 import { useVariableOptions } from '../utils/node-options';
 import { processVariables } from '../utils/variable';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/editor/components/popover';
 import { InputAutocomplete } from './ui/input-autocomplete';
-import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/editor/components/ui/tooltip';
 import { useMailyContext } from '../provider';
-import { Button } from './base-button';
+import { Button } from '@/editor/components/base-button';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
+import { Eye, InfoIcon } from 'lucide-react';
 
 type ShowPopoverProps = {
   showIfKey?: string;
@@ -26,6 +35,8 @@ function _ShowPopover(props: ShowPopoverProps) {
   const variables = opts?.variables;
   const renderVariable = opts?.renderVariable;
   const [isUpdatingKey, setIsUpdatingKey] = useState(false);
+  const { schedule: scheduleTimeout, cancel: cancelTimeout } =
+    useOwnedTimeout();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const autoCompleteOptions = useMemo(() => {
@@ -41,6 +52,7 @@ function _ShowPopover(props: ShowPopoverProps) {
   return (
     <Popover
       onOpenChange={(open) => {
+        if (!open) cancelTimeout();
         if (open) {
           return;
         }
@@ -106,7 +118,7 @@ function _ShowPopover(props: ShowPopoverProps) {
             className="h-auto p-0"
             onClick={() => {
               setIsUpdatingKey(true);
-              setTimeout(() => {
+              scheduleTimeout(() => {
                 inputRef.current?.focus();
               }, 0);
             }}

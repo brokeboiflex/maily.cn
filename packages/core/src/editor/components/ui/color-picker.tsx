@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../popover';
 import { Button } from '../base-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 import { cn } from '@/editor/utils/classname';
-import { type ReactNode } from 'react';
+import { type ReactNode, useId, useLayoutEffect } from 'react';
 import { useMailyContext } from '../../provider';
 import { Separator } from './divider';
 import { InputGroup } from './input-group';
@@ -39,7 +39,14 @@ export function ColorPicker(props: ColorPickerProps) {
 
     suggestedColors = [],
   } = props;
-  const { t } = useMailyContext();
+  const { t, editorActions } = useMailyContext();
+
+  const pickerId = useId();
+  const channel = `color:${pickerId}`;
+  useLayoutEffect(
+    () => () => editorActions?.cancel(channel),
+    [editorActions, channel]
+  );
 
   const handleColorChange = (color: string) => {
     // HACK: This is a workaround for a bug in tiptap
@@ -49,8 +56,9 @@ export function ColorPicker(props: ColorPickerProps) {
     //
     // To fix this, we need to make sure that the onChange
     // callback is run after the current execution context.
+    const action = editorActions?.capture(channel);
     queueMicrotask(() => {
-      onColorChange(color);
+      action?.run(() => onColorChange(color));
     });
   };
 

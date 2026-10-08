@@ -1,8 +1,9 @@
-import { InputAutocomplete } from '@/editor/components/ui/input-autocomplete';
-import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '@/editor/nodes/variable/variable';
-import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '@/editor/provider';
-import { useVariableOptions } from '@/editor/utils/node-options';
-import { processVariables } from '@/editor/utils/variable';
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
+import { InputAutocomplete } from '../../components/ui/input-autocomplete';
+import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../variable/variable';
+import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
+import { useVariableOptions } from '../../utils/node-options';
+import { processVariables } from '../../utils/variable';
 import { Editor } from '@tiptap/core';
 import { useMemo, useRef, useState } from 'react';
 import { Button } from '@/editor/components/base-button';
@@ -18,6 +19,7 @@ type ButtonLabelInputProps = {
 export function ButtonLabelInput(props: ButtonLabelInputProps) {
   const { value, onValueChange, isVariable, editor } = props;
 
+  const { schedule: scheduleTimeout } = useOwnedTimeout();
   const linkInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(!isVariable);
 
@@ -50,7 +52,7 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           className="h-auto p-0"
           onClick={() => {
             setIsEditing(true);
-            setTimeout(() => {
+            scheduleTimeout(() => {
               linkInputRef.current?.focus();
             }, 0);
           }}

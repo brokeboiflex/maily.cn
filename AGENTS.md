@@ -193,3 +193,25 @@ RFC822 text in the reader, with loading/error/retry/back controls. Do not put ho
 API/auth/storage code here or manufacture source from parsed message fields.
 Without the capability, the existing runMessageAction callback remains supported.
 See [source view](docs/mailbox-source-2026-09-17.md).
+
+## Idempotency and resource ownership, 2026-10-08
+
+Canonical editor/menu mailbox repair evidence is in docs/idempotency-repairs-2026-10-08.md. Repeated desired column count must compare the live document before mutation. Native drag/resize listeners, clone URLs/DOM, suggestion renderers and delayed focus timers require ownership and teardown. Mailbox mutations/navigation share synchronous exclusion, and unknown sends retain the actual draft ID before dispatch; hosts must provide an immutable account ID. DraftInput.revision is the revision observed with editable content; hosts forward it unchanged and return \_revision after acknowledged writes. Do not replace unknown send recovery with new draft creation or a fresh revision lookup at save. Generate registry/default/maily, registry.json and playground/public/r from packages/core source; do not patch generated output independently. Local consumer type/build evidence excludes browser/provider delivery, publication and deployment.
+
+Deferred editor actions now use provider-owned document/selection/lifecycle
+snapshots. Use stable per-picker `useId` color channels: unrelated pickers must
+not supersede/cancel each other. Provider and picker teardown invalidate in
+layout cleanup; retain one-shot stale-target rejection. See
+`docs/idempotency-editor-owned-actions-2026-10-08.md` and the real TipTap
+`deferred-editor-action.test.ts` channel regression.
+
+## Async mailbox and node ownership (2026-10-08)
+
+Mailbox async work belongs to its mounted data-source lifetime. Hosts with
+multiple authenticated actors must supply an actor/account `recoveryScope`;
+unscoped historic pending-send receipts remain retained and blocked for explicit
+reconciliation. Store the prepared draft receipt before rejecting stale send
+continuation. Image/logo uploads must match the captured immutable ProseMirror
+Node identity, not only equal type/attributes at the old position; stale results
+invoke the host's discard handler. See
+[ownership validation](docs/idempotence-ownership-2026-10-08.md).

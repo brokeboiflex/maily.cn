@@ -21,13 +21,26 @@ export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
 export function ImageView(props: NodeViewProps) {
   const { t } = useMailyContext();
-  const { node, updateAttributes, selected, editor } = props;
+  const { node, updateAttributes, selected, editor, getPos } = props;
 
+  const resizeCleanup = useRef<(() => void) | null>(null);
+  useEffect(() => () => resizeCleanup.current?.(), []);
+  const uploadLock = useRef(false);
+  const uploadGeneration = useRef(0);
+  useEffect(
+    () => () => {
+      uploadGeneration.current += 1;
+    },
+    []
+  );
   const [status, setStatus] = useState<ImageStatus>('idle');
   const [isPlaceholderImage, setIsPlaceholderImage] = useState(false);
 
-  const { onImageUpload, allowedMimeTypes = [] } =
-    useImageUploadOptions(editor);
+  const {
+    onImageUpload,
+    onImageUploadDiscard,
+    allowedMimeTypes = [],
+  } = useImageUploadOptions(editor);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -53,6 +66,7 @@ export function ImageView(props: NodeViewProps) {
         IMAGE_MAX_WIDTH
       );
 
+      resizeCleanup.current?.();
       event.preventDefault();
       const direction = event.currentTarget.dataset.direction || '--';
       const initialXPosition = event.clientX;
@@ -64,7 +78,13 @@ export function ImageView(props: NodeViewProps) {
       const transformX = direction[1] === 'w' ? -1 : 1;
       const transformY = direction[0] === 'n' ? -1 : 1;
 
+      const cleanup = () => {
+        window.removeEventListener('mousemove', mouseMoveHandler);
+        window.removeEventListener('mouseup', removeListeners);
+        resizeCleanup.current = null;
+      };
       const removeListeners = () => {
+        cleanup();
         window.removeEventListener('mousemove', mouseMoveHandler);
         window.removeEventListener('mouseup', removeListeners);
         const aspectRatio = getAspectRatio(newWidth, newHeight);
@@ -107,6 +127,7 @@ export function ImageView(props: NodeViewProps) {
         }
       };
 
+      resizeCleanup.current = cleanup;
       window.addEventListener('mousemove', mouseMoveHandler);
       window.addEventListener('mouseup', removeListeners);
     }
@@ -176,22 +197,57 @@ export function ImageView(props: NodeViewProps) {
 
   const handleImageUpload = useCallback(
     async (file: File) => {
-      if (!isDroppable) {
-        return;
-      }
-
+      if (!isDroppable || uploadLock.current) return;
+      uploadLock.current = true;
+      const generation = ++uploadGeneration.current;
       try {
         setStatus('loading');
         const imageUrl = await onImageUpload(file);
+        let currentNode;
+        if (!editor.isDestroyed) {
+          try {
+            const position = getPos();
+            currentNode =
+              typeof position === 'number'
+                ? editor.state.doc.nodeAt(position)
+                : null;
+          } catch {
+            /* Deleted node views can no longer resolve a position. */
+          }
+        }
+        if (
+          generation !== uploadGeneration.current ||
+          editor.isDestroyed ||
+          !currentNode ||
+          currentNode !== node ||
+          currentNode.type.name !== node.type.name ||
+          currentNode.attrs.src !== node.attrs.src ||
+          currentNode.attrs.isSrcVariable !== node.attrs.isSrcVariable
+        ) {
+          if (generation === uploadGeneration.current && !editor.isDestroyed)
+            setStatus('idle');
+          await onImageUploadDiscard?.(imageUrl);
+          return;
+        }
         updateAttributes({ src: imageUrl });
         setIsPlaceholderImage(false);
         setStatus('loaded');
       } catch (error) {
         console.error('Error uploading image:', error);
-        setStatus('error');
+        if (generation === uploadGeneration.current) setStatus('error');
+      } finally {
+        uploadLock.current = false;
       }
     },
-    [onImageUpload, updateAttributes]
+    [
+      onImageUpload,
+      onImageUploadDiscard,
+      updateAttributes,
+      isDroppable,
+      editor,
+      getPos,
+      node,
+    ]
   );
 
   // load the image using new Image() to avoid layout shift

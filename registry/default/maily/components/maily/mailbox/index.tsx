@@ -1,6 +1,5 @@
 'use client';
-
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -77,6 +76,7 @@ export type MailyMailboxAccount = {
 };
 
 export type MailyMailboxMessageRow = {
+  _revision?: string;
   id: string;
   direction: 'in' | 'out';
   fromAddress: string;
@@ -133,6 +133,8 @@ export type MailyMailboxMessageList = {
 export type MailyMailboxCounts = Record<MailyMailboxFolder, number>;
 
 export type MailyMailboxDraftInput = {
+  /** Revision observed with the editable draft, forwarded by the host as If-Match. */
+  revision?: string;
   to: string[];
   cc: string[];
   bcc: string[];
@@ -208,11 +210,15 @@ export type MailyMailboxDataSource = {
   }) => MaybePromise<MailyMailboxContactSuggestion[]>;
   createDraft: (
     draft: MailyMailboxDraftInput
-  ) => MaybePromise<{ id: string } | MailyMailboxMessageDetail>;
+  ) => MaybePromise<
+    { id: string; _revision?: string } | MailyMailboxMessageDetail
+  >;
   updateDraft: (
     messageId: string,
     draft: MailyMailboxDraftInput
-  ) => MaybePromise<{ id: string } | MailyMailboxMessageDetail>;
+  ) => MaybePromise<
+    { id: string; _revision?: string } | MailyMailboxMessageDetail
+  >;
   discardDraft: (messageId: string) => MaybePromise<void | { id: string }>;
   sendDraft: (messageId: string) => MaybePromise<void | {
     id?: string;
@@ -309,6 +315,8 @@ export type MailyMailboxLabels = Record<MailyMailboxLabelKey, string>;
 
 export type MailyMailboxViewProps = {
   account?: MailyMailboxAccount;
+  /** Opaque actor/account identity for pending-send recovery and UI lifetime. */
+  recoveryScope?: string;
   dataSource: MailyMailboxDataSource;
   messageActions?: readonly MailyMailboxMessageAction[];
   labels?: MailyMailboxLabels;
@@ -369,201 +377,171 @@ const MESSAGE_ACTION_METADATA: Record<
 > = {
   archive: {
     label: 'actions.archive',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Archive"
-        tabler="IconArchive"
-        hugeicons="ArchiveIcon"
-        phosphor="Archive"
-        remixicon="RiArchiveLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Archive"
+  tabler="IconArchive"
+  hugeicons="ArchiveIcon"
+  phosphor="Archive"
+  remixicon="RiArchiveLine"
+  className={className}
+/>,
   },
   delete: {
     label: 'actions.delete',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Trash2"
-        tabler="IconTrash"
-        hugeicons="Delete02Icon"
-        phosphor="Trash"
-        remixicon="RiDeleteBinLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Trash2"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+  className={className}
+/>,
     variant: 'destructive',
   },
   favorite: {
     label: 'actions.favorite',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Star"
-        tabler="IconStar"
-        hugeicons="StarIcon"
-        phosphor="Star"
-        remixicon="RiStarLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Star"
+  tabler="IconStar"
+  hugeicons="StarIcon"
+  phosphor="Star"
+  remixicon="RiStarLine"
+  className={className}
+/>,
   },
   markUnread: {
     label: 'actions.markUnread',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="MailOpen"
-        tabler="IconMailOpened"
-        hugeicons="MailOpenIcon"
-        phosphor="EnvelopeOpen"
-        remixicon="RiMailOpenLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="MailOpen"
+  tabler="IconMailOpened"
+  hugeicons="MailOpenIcon"
+  phosphor="EnvelopeOpen"
+  remixicon="RiMailOpenLine"
+  className={className}
+/>,
     value: true,
   },
   blockSender: {
     label: 'actions.blockSender',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Ban"
-        tabler="IconBan"
-        hugeicons="Cancel01Icon"
-        phosphor="Prohibit"
-        remixicon="RiForbidLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Ban"
+  tabler="IconBan"
+  hugeicons="Cancel01Icon"
+  phosphor="Prohibit"
+  remixicon="RiForbidLine"
+  className={className}
+/>,
   },
   reportSpam: {
     label: 'actions.reportSpam',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="ShieldAlert"
-        tabler="IconShieldExclamation"
-        hugeicons="SpamIcon"
-        phosphor="ShieldWarning"
-        remixicon="RiSpam2Line"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="ShieldAlert"
+  tabler="IconShieldExclamation"
+  hugeicons="SpamIcon"
+  phosphor="ShieldWarning"
+  remixicon="RiSpam2Line"
+  className={className}
+/>,
   },
   reportPhishing: {
     label: 'actions.reportPhishing',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Flag"
-        tabler="IconFlag"
-        hugeicons="Flag01Icon"
-        phosphor="Flag"
-        remixicon="RiFlagLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Flag"
+  tabler="IconFlag"
+  hugeicons="Flag01Icon"
+  phosphor="Flag"
+  remixicon="RiFlagLine"
+  className={className}
+/>,
   },
   reportIllegal: {
     label: 'actions.reportIllegal',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Flag"
-        tabler="IconFlag"
-        hugeicons="Flag01Icon"
-        phosphor="Flag"
-        remixicon="RiFlagLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Flag"
+  tabler="IconFlag"
+  hugeicons="Flag01Icon"
+  phosphor="Flag"
+  remixicon="RiFlagLine"
+  className={className}
+/>,
   },
   filterSimilar: {
     label: 'actions.filterSimilar',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Filter"
-        tabler="IconFilter"
-        hugeicons="FilterIcon"
-        phosphor="Funnel"
-        remixicon="RiFilter3Line"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Filter"
+  tabler="IconFilter"
+  hugeicons="FilterIcon"
+  phosphor="Funnel"
+  remixicon="RiFilter3Line"
+  className={className}
+/>,
   },
   translate: {
     label: 'actions.translate',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Languages"
-        tabler="IconLanguage"
-        hugeicons="TranslateIcon"
-        phosphor="Translate"
-        remixicon="RiTranslate"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Languages"
+  tabler="IconLanguage"
+  hugeicons="TranslateIcon"
+  phosphor="Translate"
+  remixicon="RiTranslate"
+  className={className}
+/>,
   },
   print: {
     label: 'actions.print',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Printer"
-        tabler="IconPrinter"
-        hugeicons="PrinterIcon"
-        phosphor="Printer"
-        remixicon="RiPrinterLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Printer"
+  tabler="IconPrinter"
+  hugeicons="PrinterIcon"
+  phosphor="Printer"
+  remixicon="RiPrinterLine"
+  className={className}
+/>,
   },
   download: {
     label: 'actions.download',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Download"
-        tabler="IconDownload"
-        hugeicons="Download01Icon"
-        phosphor="DownloadSimple"
-        remixicon="RiDownloadLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Download"
+  tabler="IconDownload"
+  hugeicons="Download01Icon"
+  phosphor="DownloadSimple"
+  remixicon="RiDownloadLine"
+  className={className}
+/>,
   },
   showOriginal: {
     label: 'actions.showOriginal',
     toolbarLabel: 'actions.openExternal',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Code2"
-        tabler="IconCode"
-        hugeicons="SourceCodeIcon"
-        phosphor="Code"
-        remixicon="RiCodeLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="CodeIcon"
+  tabler="IconCode"
+  hugeicons="SourceCodeIcon"
+  phosphor="Code"
+  remixicon="RiCodeLine"
+  className={className}
+/>,
   },
   feedback: {
     label: 'actions.feedback',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="AlertCircle"
-        tabler="IconAlertCircle"
-        hugeicons="AlertCircleIcon"
-        phosphor="WarningCircle"
-        remixicon="RiErrorWarningLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="AlertCircle"
+  tabler="IconAlertCircle"
+  hugeicons="AlertCircleIcon"
+  phosphor="WarningCircle"
+  remixicon="RiErrorWarningLine"
+  className={className}
+/>,
   },
   react: {
     label: 'actions.react',
-    icon: (className) => (
-      <IconPlaceholder
-        lucide="Smile"
-        tabler="IconMoodSmile"
-        hugeicons="SmileIcon"
-        phosphor="Smiley"
-        remixicon="RiEmotionHappyLine"
-        className={className}
-      />
-    ),
+    icon: (className) => <IconPlaceholder
+  lucide="Smile"
+  tabler="IconMoodSmile"
+  hugeicons="SmileIcon"
+  phosphor="Smiley"
+  remixicon="RiEmotionHappyLine"
+  className={className}
+/>,
     value: 'smile',
   },
 };
@@ -713,49 +691,41 @@ function interpolate(label: string, vars?: Record<string, string | number>) {
 function folderIcon(folder: MailyMailboxFolder, className: string) {
   switch (folder) {
     case 'inbox':
-      return (
-        <IconPlaceholder
-          lucide="Inbox"
-          tabler="IconInbox"
-          hugeicons="InboxIcon"
-          phosphor="Tray"
-          remixicon="RiInboxLine"
-          className={className}
-        />
-      );
+      return <IconPlaceholder
+  lucide="Inbox"
+  tabler="IconInbox"
+  hugeicons="InboxIcon"
+  phosphor="Tray"
+  remixicon="RiInboxLine"
+  className={className}
+/>;
     case 'sent':
-      return (
-        <IconPlaceholder
-          lucide="Send"
-          tabler="IconSend"
-          hugeicons="MailSend02Icon"
-          phosphor="PaperPlaneTilt"
-          remixicon="RiSendPlaneLine"
-          className={className}
-        />
-      );
+      return <IconPlaceholder
+  lucide="Send"
+  tabler="IconSend"
+  hugeicons="MailSend02Icon"
+  phosphor="PaperPlaneTilt"
+  remixicon="RiSendPlaneLine"
+  className={className}
+/>;
     case 'drafts':
-      return (
-        <IconPlaceholder
-          lucide="FileText"
-          tabler="IconFileText"
-          hugeicons="File02Icon"
-          phosphor="FileText"
-          remixicon="RiFileTextLine"
-          className={className}
-        />
-      );
+      return <IconPlaceholder
+  lucide="FileText"
+  tabler="IconFileText"
+  hugeicons="File02Icon"
+  phosphor="FileText"
+  remixicon="RiFileTextLine"
+  className={className}
+/>;
     case 'bounced':
-      return (
-        <IconPlaceholder
-          lucide="AlertCircle"
-          tabler="IconAlertCircle"
-          hugeicons="AlertCircleIcon"
-          phosphor="WarningCircle"
-          remixicon="RiErrorWarningLine"
-          className={className}
-        />
-      );
+      return <IconPlaceholder
+  lucide="AlertCircle"
+  tabler="IconAlertCircle"
+  hugeicons="AlertCircleIcon"
+  phosphor="WarningCircle"
+  remixicon="RiErrorWarningLine"
+  className={className}
+/>;
   }
 }
 
@@ -777,6 +747,15 @@ function errorLabelForAction(action: string): MailyMailboxLabelKey {
 }
 
 export function MailboxView(props: MailyMailboxViewProps) {
+  return (
+    <MailboxSession
+      key={props.recoveryScope ?? props.account?.id ?? 'mailbox'}
+      {...props}
+    />
+  );
+}
+
+function MailboxSession(props: MailyMailboxViewProps) {
   const {
     dataSource,
     messageActions = DEFAULT_MESSAGE_ACTIONS,
@@ -796,6 +775,22 @@ export function MailboxView(props: MailyMailboxViewProps) {
     onMessageAction,
     formatDate = defaultFormatDate,
   } = props;
+
+  const lifetime = React.useMemo(
+    () => ({ active: true, epoch: 0 }),
+    [dataSource]
+  );
+  React.useLayoutEffect(() => {
+    lifetime.active = true;
+    return () => {
+      lifetime.active = false;
+      lifetime.epoch += 1;
+    };
+  }, [lifetime]);
+  const captureLifetime = React.useCallback(() => {
+    const epoch = lifetime.epoch;
+    return () => lifetime.active && lifetime.epoch === epoch;
+  }, [lifetime]);
 
   const t = React.useCallback(
     (key: MailyMailboxLabelKey, vars?: Record<string, string | number>) =>
@@ -837,6 +832,58 @@ export function MailboxView(props: MailyMailboxViewProps) {
   const [messagesLoading, setMessagesLoading] = React.useState(true);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
+  const composeLock = React.useRef(false);
+  const composeRevision = React.useRef<string | undefined>(undefined);
+  const pendingSendRef = React.useRef<string | null>(null);
+  const recoveryUnavailableRef = React.useRef(false);
+  const [sendUnresolved, setSendUnresolved] = React.useState(false);
+  const recoveryKey = props.account?.id
+    ? `maily:pending-send:${props.recoveryScope ?? props.account.id}`
+    : null;
+  React.useEffect(() => {
+    if (!recoveryKey) return;
+    let draftId: string | null = null;
+    try {
+      const legacyKey = props.account?.id
+        ? `maily:pending-send:${props.account.id}`
+        : null;
+      if (
+        legacyKey &&
+        legacyKey !== recoveryKey &&
+        window.sessionStorage.getItem(legacyKey)
+      ) {
+        // An older receipt has no actor identity. Keep the flow blocked until
+        // its original operation is reconciled; never resend as a new actor.
+        recoveryUnavailableRef.current = true;
+        setSendUnresolved(true);
+        setErrorKey(errorLabelForAction('sendDraft'));
+        return;
+      }
+      draftId = window.sessionStorage.getItem(recoveryKey);
+    } catch {
+      recoveryUnavailableRef.current = true;
+      setSendUnresolved(true);
+      setErrorKey(errorLabelForAction('sendDraft'));
+    }
+    if (draftId) {
+      pendingSendRef.current = draftId;
+      composeDraftRef.current = draftId;
+      setComposeDraftId(draftId);
+      setSelectedId(draftId);
+      setComposeOpen(true);
+      setSendUnresolved(true);
+    }
+  }, [recoveryKey, props.account?.id]);
+  const composeDraftRef = React.useRef<string | null>(null);
+  const messagesGeneration = React.useRef(0);
+  const countsGeneration = React.useRef(0);
+  React.useEffect(
+    () => () => {
+      messagesGeneration.current += 1;
+      countsGeneration.current += 1;
+    },
+    []
+  );
   const [saving, setSaving] = React.useState(false);
   const [sending, setSending] = React.useState(false);
   const [discarding, setDiscarding] = React.useState(false);
@@ -873,16 +920,24 @@ export function MailboxView(props: MailyMailboxViewProps) {
   );
 
   const refreshCounts = React.useCallback(async () => {
+    const isCurrent = captureLifetime();
+    if (!isCurrent()) return;
     if (!dataSource.getCounts) {
       setCounts(emptyCounts());
       return;
     }
+    const generation = ++countsGeneration.current;
     const next = await dataSource.getCounts();
+    if (!isCurrent()) return;
+    if (generation !== countsGeneration.current) return;
     setCounts({ ...emptyCounts(), ...next });
-  }, [dataSource]);
+  }, [captureLifetime, dataSource]);
 
   const refreshMessages = React.useCallback(
     async (folderOverride?: MailyMailboxFolder) => {
+      const isCurrent = captureLifetime();
+      if (!isCurrent()) return;
+      const generation = ++messagesGeneration.current;
       const nextFolder = folderOverride ?? folder;
       const q = search.trim();
       const next = await dataSource.listMessages({
@@ -890,25 +945,30 @@ export function MailboxView(props: MailyMailboxViewProps) {
         q: q.length > 0 ? q : undefined,
         limit: pageSize,
       });
-      setMessages(next);
+      if (!isCurrent()) return;
+      if (generation === messagesGeneration.current) setMessages(next);
     },
-    [dataSource, folder, pageSize, search]
+    [captureLifetime, dataSource, folder, pageSize, search]
   );
 
   const refreshMailbox = React.useCallback(
     async (folderOverride?: MailyMailboxFolder) => {
+      const isCurrent = captureLifetime();
+      if (!isCurrent()) return;
       setRefreshing(true);
       try {
         await Promise.all([refreshCounts(), refreshMessages(folderOverride)]);
+        if (!isCurrent()) return;
         setErrorKey(null);
       } catch (error) {
+        if (!isCurrent()) return;
         reportError(error, 'refresh');
       } finally {
-        setRefreshing(false);
-        setMessagesLoading(false);
+        if (isCurrent()) setRefreshing(false);
+        if (isCurrent()) setMessagesLoading(false);
       }
     },
-    [refreshCounts, refreshMessages, reportError]
+    [captureLifetime, refreshCounts, refreshMessages, reportError]
   );
 
   React.useEffect(() => {
@@ -954,6 +1014,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
       try {
         const next = await dataSource.getMessage(selectedId);
         if (!cancelled) {
+          if (composeDraftRef.current === next.id)
+            composeRevision.current = next._revision;
           setDetail(next);
           setErrorKey(null);
         }
@@ -974,6 +1036,14 @@ export function MailboxView(props: MailyMailboxViewProps) {
   }, [dataSource, reportError, selectedId]);
 
   const selectFolder = (next: MailyMailboxFolder) => {
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    messagesGeneration.current += 1;
+    composeDraftRef.current = null;
     setFolder(next);
     setSelectedId(null);
     setComposeOpen(false);
@@ -982,7 +1052,20 @@ export function MailboxView(props: MailyMailboxViewProps) {
     setComposeInReplyTo(null);
   };
 
+  const [composeSession, setComposeSession] = React.useState(0);
+
   const selectMessage = (row: MailyMailboxMessageRow) => {
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    if (composeOpen && composeDraftId === row.id) return;
+    setComposeSession((session) => session + 1);
+    composeDraftRef.current = row.status === 'draft' ? row.id : null;
+    composeRevision.current =
+      row.status === 'draft' ? row._revision : undefined;
     setSelectedId(row.id);
     if (row.status === 'draft') {
       setComposeDraftId(row.id);
@@ -998,6 +1081,14 @@ export function MailboxView(props: MailyMailboxViewProps) {
   };
 
   const openNewDraft = () => {
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    setComposeSession((session) => session + 1);
+    composeDraftRef.current = null;
     setSelectedId(null);
     setDetail(null);
     setComposeDraftId(null);
@@ -1011,43 +1102,109 @@ export function MailboxView(props: MailyMailboxViewProps) {
       ? (detail.inReplyTo ?? null)
       : composeInReplyTo;
 
+  const composeHydrated = !composeDraftId || detail?.id === composeDraftId;
+
   const saveDraft = async (values: MailyMailboxComposeValues) => {
+    const isCurrent = captureLifetime();
+    if (!isCurrent()) return;
+    if (!composeHydrated) return;
     const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
+    draft.revision = composeRevision.current;
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    composeLock.current = true;
     setSaving(true);
     try {
       if (composeDraftId) {
-        await dataSource.updateDraft(composeDraftId, draft);
+        const saved = await dataSource.updateDraft(composeDraftId, draft);
+        if (!isCurrent()) return;
+        composeRevision.current = saved._revision;
         onDraftSaved?.(composeDraftId);
       } else {
         const created = await dataSource.createDraft(draft);
+        if (!isCurrent()) return;
         const createdId = created.id;
+        composeRevision.current = created._revision;
+        composeDraftRef.current = createdId;
         setComposeDraftId(createdId);
         setSelectedId(createdId);
         setFolder('drafts');
         onDraftSaved?.(createdId);
       }
       await refreshMailbox(composeDraftId ? undefined : 'drafts');
+      if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
+      if (!isCurrent()) return;
       reportError(error, 'saveDraft');
     } finally {
-      setSaving(false);
+      composeLock.current = false;
+      if (isCurrent()) setSaving(false);
     }
   };
 
   const sendDraft = async (values: MailyMailboxComposeValues) => {
+    const isCurrent = captureLifetime();
+    if (!isCurrent()) return;
+    if (!composeHydrated && !pendingSendRef.current) return;
     const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
-    let draftId = composeDraftId;
+    draft.revision = composeRevision.current;
+    if (composeLock.current) return;
+    composeLock.current = true;
+    let draftId = composeDraftRef.current ?? composeDraftId;
     setSending(true);
     try {
-      if (draftId) {
-        await dataSource.updateDraft(draftId, draft);
+      if (recoveryUnavailableRef.current)
+        throw new Error('errors.idempotency.storage-unavailable');
+      if (!recoveryKey)
+        throw new Error('errors.idempotency.storage-unavailable');
+      const storageProbe = `${recoveryKey}:probe`;
+      window.sessionStorage.setItem(storageProbe, '1');
+      if (window.sessionStorage.getItem(storageProbe) !== '1')
+        throw new Error('errors.idempotency.storage-unavailable');
+      window.sessionStorage.removeItem(storageProbe);
+      if (pendingSendRef.current) {
+        draftId = pendingSendRef.current;
+      } else if (draftId) {
+        const saved = await dataSource.updateDraft(draftId, draft);
+        composeRevision.current = saved._revision;
       } else {
         const created = await dataSource.createDraft(draft);
         draftId = created.id;
+        composeRevision.current = created._revision;
+        composeDraftRef.current = draftId;
+        if (isCurrent()) {
+          setComposeDraftId(draftId);
+          setSelectedId(draftId);
+        }
       }
 
+      // Persist the actual draft before send: its create receipt is already complete.
+      // A reload must recover this draft rather than create another message.
+      if (!recoveryKey)
+        throw new Error('errors.idempotency.storage-unavailable');
+      window.sessionStorage.setItem(recoveryKey, draftId);
+      if (window.sessionStorage.getItem(recoveryKey) !== draftId)
+        throw new Error('errors.idempotency.storage-unavailable');
+      pendingSendRef.current = draftId;
+      if (!isCurrent()) return;
+      setSendUnresolved(true);
       const result = await dataSource.sendDraft(draftId);
+      if (!isCurrent()) return;
+      pendingSendRef.current = null;
+      if (recoveryKey) {
+        try {
+          window.sessionStorage.removeItem(recoveryKey);
+        } catch {
+          if (!isCurrent()) return;
+          /* In-page recovery remains available. */
+        }
+      }
+      setSendUnresolved(false);
       onSent?.(result);
       setComposeOpen(false);
       setComposeDraftId(null);
@@ -1056,19 +1213,32 @@ export function MailboxView(props: MailyMailboxViewProps) {
       setSelectedId(null);
       setFolder('sent');
       await refreshMailbox('sent');
+      if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
+      if (!isCurrent()) return;
       reportError(error, 'sendDraft');
     } finally {
-      setSending(false);
+      composeLock.current = false;
+      if (isCurrent()) setSending(false);
     }
   };
 
   const discardDraft = async () => {
+    const isCurrent = captureLifetime();
+    if (!isCurrent()) return;
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    composeLock.current = true;
     setDiscarding(true);
     try {
       if (composeDraftId) {
         await dataSource.discardDraft(composeDraftId);
+        if (!isCurrent()) return;
       }
       setComposeOpen(false);
       setComposeDraftId(null);
@@ -1076,15 +1246,26 @@ export function MailboxView(props: MailyMailboxViewProps) {
       setComposeInReplyTo(null);
       setSelectedId(null);
       await refreshMailbox();
+      if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
+      if (!isCurrent()) return;
       reportError(error, 'discardDraft');
     } finally {
-      setDiscarding(false);
+      composeLock.current = false;
+      if (isCurrent()) setDiscarding(false);
     }
   };
 
   const openReply = (message: MailyMailboxMessageDetail) => {
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    setComposeSession((session) => session + 1);
+    composeDraftRef.current = null;
     const date = formatDate(message.createdAt, 'long');
     setSelectedId(message.id);
     setComposeDraftId(null);
@@ -1101,6 +1282,14 @@ export function MailboxView(props: MailyMailboxViewProps) {
   };
 
   const openForward = (message: MailyMailboxMessageDetail) => {
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    setComposeSession((session) => session + 1);
+    composeDraftRef.current = null;
     setSelectedId(message.id);
     setComposeDraftId(null);
     setComposeInReplyTo(null);
@@ -1115,8 +1304,16 @@ export function MailboxView(props: MailyMailboxViewProps) {
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
   ) => {
-    if (!dataSource.runMessageAction) return;
-
+    const isCurrent = captureLifetime();
+    if (!isCurrent()) return;
+    if (
+      !dataSource.runMessageAction ||
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return;
+    composeLock.current = true;
     setMessageActionPending(action);
     try {
       const input: MailyMailboxMessageActionInput = {
@@ -1125,6 +1322,7 @@ export function MailboxView(props: MailyMailboxViewProps) {
         value,
       };
       const result = await dataSource.runMessageAction(input);
+      if (!isCurrent()) return;
       onMessageAction?.({ ...input, message });
 
       if (
@@ -1140,19 +1338,26 @@ export function MailboxView(props: MailyMailboxViewProps) {
         setDetail(result);
       } else {
         try {
-          setDetail(await dataSource.getMessage(message.id));
+          const nextDetail = await dataSource.getMessage(message.id);
+          if (!isCurrent()) return;
+          setDetail(nextDetail);
+          if (!isCurrent()) return;
         } catch {
+          if (!isCurrent()) return;
           setSelectedId(null);
           setDetail(null);
         }
       }
 
       await refreshMailbox();
+      if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
+      if (!isCurrent()) return;
       reportError(error, 'messageAction');
     } finally {
-      setMessageActionPending(null);
+      composeLock.current = false;
+      if (isCurrent()) setMessageActionPending(null);
     }
   };
 
@@ -1191,13 +1396,13 @@ export function MailboxView(props: MailyMailboxViewProps) {
               aria-label={t('compose.new')}
             >
               <IconPlaceholder
-                lucide="Pencil"
-                tabler="IconPencil"
-                hugeicons="PencilIcon"
-                phosphor="Pencil"
-                remixicon="RiPencilLine"
-                className="size-4"
-              />
+  lucide="Pencil"
+  tabler="IconPencil"
+  hugeicons="PencilIcon"
+  phosphor="Pencil"
+  remixicon="RiPencilLine"
+  className="size-4"
+/>
               <span className="@[4rem]/rail:inline hidden min-w-0 truncate">
                 {t('compose.new')}
               </span>
@@ -1255,33 +1460,34 @@ export function MailboxView(props: MailyMailboxViewProps) {
               <InputGroup className="bg-muted/30 h-8">
                 <InputGroupAddon>
                   <IconPlaceholder
-                    lucide="Search"
-                    tabler="IconSearch"
-                    hugeicons="Search01Icon"
-                    phosphor="MagnifyingGlass"
-                    remixicon="RiSearchLine"
-                    className="size-4"
-                  />
+  lucide="Search"
+  tabler="IconSearch"
+  hugeicons="Search01Icon"
+  phosphor="MagnifyingGlass"
+  remixicon="RiSearchLine"
+  className="size-4"
+/>
                 </InputGroupAddon>
                 <InputGroupInput
                   value={search}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setSearch(event.target.value)
-                  }
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    messagesGeneration.current += 1;
+                    setSearch(event.target.value);
+                  }}
                   placeholder={t('searchPlaceholder')}
                   className="h-7 px-1.5 py-0"
                 />
                 {refreshing && (
                   <InputGroupAddon align="inline-end">
                     <IconPlaceholder
-                      lucide="Loader2"
-                      tabler="IconLoader2"
-                      hugeicons="Loading03Icon"
-                      phosphor="CircleNotch"
-                      remixicon="RiLoader2Line"
-                      className="size-4 animate-spin"
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
                       aria-label={t('refresh')}
-                    />
+/>
                   </InputGroupAddon>
                 )}
               </InputGroup>
@@ -1310,33 +1516,41 @@ export function MailboxView(props: MailyMailboxViewProps) {
                 className="border-destructive/30 bg-destructive/10 text-destructive flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm"
               >
                 <IconPlaceholder
-                  lucide="AlertCircle"
-                  tabler="IconAlertCircle"
-                  hugeicons="AlertCircleIcon"
-                  phosphor="WarningCircle"
-                  remixicon="RiErrorWarningLine"
-                  className="size-4 shrink-0"
-                />
+  lucide="AlertCircle"
+  tabler="IconAlertCircle"
+  hugeicons="AlertCircleIcon"
+  phosphor="WarningCircle"
+  remixicon="RiErrorWarningLine"
+  className="size-4 shrink-0"
+/>
                 <span>{t(errorKey)}</span>
               </div>
             )}
             {composeOpen ? (
               <ScrollArea className="min-h-0 flex-1">
-                <Compose
-                  initialValues={initialComposeValues}
-                  labels={labels}
-                  loadContactSuggestions={loadContactSuggestions}
-                  defaultBodyMode={defaultComposeBodyMode}
-                  allowBodyModeSwitch={allowComposeBodyModeSwitch}
-                  editorProps={composeEditorProps}
-                  isExistingDraft={!!composeDraftId}
-                  isSaving={saving}
-                  isSending={sending}
-                  isDiscarding={discarding}
-                  onSave={saveDraft}
-                  onSend={sendDraft}
-                  onDiscard={discardDraft}
-                />
+                {!composeHydrated ? (
+                  <div role="status" className="p-5">
+                    {t('loading')}
+                  </div>
+                ) : (
+                  <Compose
+                    key={`${composeSession}:${composeDraftId ?? 'new'}`}
+                    initialValues={initialComposeValues}
+                    labels={labels}
+                    loadContactSuggestions={loadContactSuggestions}
+                    defaultBodyMode={defaultComposeBodyMode}
+                    allowBodyModeSwitch={allowComposeBodyModeSwitch}
+                    editorProps={composeEditorProps}
+                    isExistingDraft={!!composeDraftId}
+                    isSaving={saving}
+                    isSendUnresolved={sendUnresolved}
+                    isSending={sending}
+                    isDiscarding={discarding}
+                    onSave={saveDraft}
+                    onSend={sendDraft}
+                    onDiscard={discardDraft}
+                  />
+                )}
               </ScrollArea>
             ) : selectedId ? (
               <MessageReader
@@ -1390,13 +1604,13 @@ function MessageList(props: {
     return (
       <div className="text-muted-foreground flex h-40 items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-          lucide="Loader2"
-          tabler="IconLoader2"
-          hugeicons="Loading03Icon"
-          phosphor="CircleNotch"
-          remixicon="RiLoader2Line"
-          className="size-4 animate-spin"
-        />
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>
         {t('loading')}
       </div>
     );
@@ -1443,13 +1657,13 @@ function MessageList(props: {
                 <div className="flex items-center gap-1.5">
                   {row.isFavorite && (
                     <IconPlaceholder
-                      lucide="Star"
-                      tabler="IconStar"
-                      hugeicons="StarIcon"
-                      phosphor="Star"
-                      remixicon="RiStarLine"
-                      className="size-3.5 shrink-0 fill-current text-amber-500"
-                    />
+  lucide="Star"
+  tabler="IconStar"
+  hugeicons="StarIcon"
+  phosphor="Star"
+  remixicon="RiStarLine"
+  className="size-3.5 shrink-0 fill-current text-amber-500"
+/>
                   )}
                   <span
                     className={cn(
@@ -1461,13 +1675,13 @@ function MessageList(props: {
                   </span>
                   {row.hasAttachments && (
                     <IconPlaceholder
-                      lucide="Paperclip"
-                      tabler="IconPaperclip"
-                      hugeicons="AttachmentIcon"
-                      phosphor="Paperclip"
-                      remixicon="RiAttachmentLine"
-                      className="text-muted-foreground size-3 shrink-0"
-                    />
+  lucide="Paperclip"
+  tabler="IconPaperclip"
+  hugeicons="AttachmentIcon"
+  phosphor="Paperclip"
+  remixicon="RiAttachmentLine"
+  className="text-muted-foreground size-3 shrink-0"
+/>
                   )}
                 </div>
                 {row.snippet && (
@@ -1632,13 +1846,13 @@ function MessageReader(props: {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-          lucide="Loader2"
-          tabler="IconLoader2"
-          hugeicons="Loading03Icon"
-          phosphor="CircleNotch"
-          remixicon="RiLoader2Line"
-          className="size-4 animate-spin"
-        />
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>
         {t('loading')}
       </div>
     );
@@ -1698,13 +1912,13 @@ function MessageReader(props: {
     >
       {action === 'showOriginal' && !props.getMessageSource ? (
         <IconPlaceholder
-          lucide="ExternalLink"
-          tabler="IconExternalLink"
-          hugeicons="ArrowUpRight01Icon"
-          phosphor="ArrowSquareOut"
-          remixicon="RiExternalLinkLine"
-          className="size-4"
-        />
+  lucide="ExternalLink"
+  tabler="IconExternalLink"
+  hugeicons="ArrowUpRight01Icon"
+  phosphor="ArrowSquareOut"
+  remixicon="RiExternalLinkLine"
+  className="size-4"
+/>
       ) : (
         MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
       )}
@@ -1746,13 +1960,13 @@ function MessageReader(props: {
               onClick={() => onReply(detail)}
             >
               <IconPlaceholder
-                lucide="Reply"
-                tabler="IconCornerUpLeft"
-                hugeicons="MailReply01Icon"
-                phosphor="ArrowBendUpLeft"
-                remixicon="RiReplyLine"
-                className="size-4"
-              />
+  lucide="Reply"
+  tabler="IconCornerUpLeft"
+  hugeicons="MailReply01Icon"
+  phosphor="ArrowBendUpLeft"
+  remixicon="RiReplyLine"
+  className="size-4"
+/>
             </MessageActionButton>
             <MessageActionButton
               label={t('actions.forward')}
@@ -1760,13 +1974,13 @@ function MessageReader(props: {
               onClick={() => onForward(detail)}
             >
               <IconPlaceholder
-                lucide="Forward"
-                tabler="IconArrowForward"
-                hugeicons="Forward01Icon"
-                phosphor="ArrowBendUpRight"
-                remixicon="RiShareForwardLine"
-                className="size-4"
-              />
+  lucide="Forward"
+  tabler="IconArrowForward"
+  hugeicons="Forward01Icon"
+  phosphor="ArrowBendUpRight"
+  remixicon="RiShareForwardLine"
+  className="size-4"
+/>
             </MessageActionButton>
             {messageActions.length > 0 && (
               <MessageMoreMenu
@@ -1942,14 +2156,13 @@ function MessageAttachment({
     <Attachment className="w-full flex-nowrap" aria-busy={pending}>
       <AttachmentMedia>
         <IconPlaceholder
-          lucide="FileText"
-          tabler="IconFileText"
-          hugeicons="File02Icon"
-          phosphor="FileText"
-          remixicon="RiFileTextLine"
-          className="size-4"
-          aria-hidden="true"
-        />
+  lucide="FileText"
+  tabler="IconFileText"
+  hugeicons="File02Icon"
+  phosphor="FileText"
+  remixicon="RiFileTextLine"
+  className="size-4" aria-hidden="true"
+/>
       </AttachmentMedia>
       <AttachmentContent>
         <AttachmentTitle className="whitespace-normal [overflow-wrap:anywhere]">
@@ -1981,24 +2194,23 @@ function MessageAttachment({
           >
             {pending ? (
               <IconPlaceholder
-                lucide="Loader2"
-                tabler="IconLoader2"
-                hugeicons="Loading03Icon"
-                phosphor="CircleNotch"
-                remixicon="RiLoader2Line"
-                className="size-4 animate-spin"
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
                 aria-hidden="true"
-              />
+/>
             ) : (
               <IconPlaceholder
-                lucide="Download"
-                tabler="IconDownload"
-                hugeicons="Download01Icon"
-                phosphor="DownloadSimple"
-                remixicon="RiDownloadLine"
-                className="size-4"
-                aria-hidden="true"
-              />
+  lucide="Download"
+  tabler="IconDownload"
+  hugeicons="Download01Icon"
+  phosphor="DownloadSimple"
+  remixicon="RiDownloadLine"
+  className="size-4" aria-hidden="true"
+/>
             )}
           </AttachmentAction>
         </AttachmentActions>
@@ -2029,13 +2241,13 @@ function MessageActionButton(props: {
     >
       {props.pending ? (
         <IconPlaceholder
-          lucide="Loader2"
-          tabler="IconLoader2"
-          hugeicons="Loading03Icon"
-          phosphor="CircleNotch"
-          remixicon="RiLoader2Line"
-          className="size-4 animate-spin"
-        />
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>
       ) : (
         props.children
       )}
@@ -2084,13 +2296,13 @@ function MessageMoreMenu(props: {
       >
         {actionPending === action ? (
           <IconPlaceholder
-            lucide="Loader2"
-            tabler="IconLoader2"
-            hugeicons="Loading03Icon"
-            phosphor="CircleNotch"
-            remixicon="RiLoader2Line"
-            className="size-4 animate-spin"
-          />
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>
         ) : (
           metadata.icon(
             cn(
@@ -2117,13 +2329,13 @@ function MessageMoreMenu(props: {
           aria-label={t('actions.more')}
         >
           <IconPlaceholder
-            lucide="MoreVertical"
-            tabler="IconDotsVertical"
-            hugeicons="MoreVerticalIcon"
-            phosphor="DotsThreeVertical"
-            remixicon="RiMore2Line"
-            className="size-4"
-          />
+  lucide="MoreVertical"
+  tabler="IconDotsVertical"
+  hugeicons="MoreVerticalIcon"
+  phosphor="DotsThreeVertical"
+  remixicon="RiMore2Line"
+  className="size-4"
+/>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
@@ -2249,6 +2461,7 @@ function Compose(props: {
     'contentHtml' | 'contentJson' | 'onCreate' | 'onUpdate'
   >;
   isExistingDraft: boolean;
+  isSendUnresolved?: boolean;
   isSaving: boolean;
   isSending: boolean;
   isDiscarding: boolean;
@@ -2265,6 +2478,7 @@ function Compose(props: {
     editorProps,
     isExistingDraft,
     isSaving,
+    isSendUnresolved = false,
     isSending,
     isDiscarding,
     onSave,
@@ -2293,14 +2507,8 @@ function Compose(props: {
     vars?: Record<string, string | number>
   ) => interpolate(labels[key], vars);
 
-  React.useEffect(() => {
-    setValues(initialValues);
-    setBodyMode(defaultBodyMode);
-    setEditorRevision((revision) => revision + 1);
-    setShowCc(initialValues.cc.trim().length > 0);
-    setShowBcc(initialValues.bcc.trim().length > 0);
-    setFocusRecipient(null);
-  }, [defaultBodyMode, initialValues]);
+  // Compose is mounted only with hydrated content and keyed by draft identity.
+  // Later reads must not replace edits owned by this mounted compose session.
 
   const set = (key: keyof MailyMailboxComposeValues, value: string) =>
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -2314,11 +2522,9 @@ function Compose(props: {
 
   const updateFromEditor = React.useCallback(
     (editor: Parameters<NonNullable<EditorProps['onUpdate']>>[0]) => {
-      setValues((prev) => ({
-        ...prev,
-        text: editor.getText({ blockSeparator: '\n' }),
-        html: editor.getHTML(),
-      }));
+      const text = editor.getText({ blockSeparator: '\n' });
+      const html = editor.getHTML();
+      setValues((prev) => ({ ...prev, text, html }));
     },
     []
   );
@@ -2352,16 +2558,16 @@ function Compose(props: {
             size="sm"
             variant="ghost"
             onClick={() => onDiscard()}
-            disabled={isDiscarding}
+            disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
           >
             <IconPlaceholder
-              lucide="Trash2"
-              tabler="IconTrash"
-              hugeicons="Delete02Icon"
-              phosphor="Trash"
-              remixicon="RiDeleteBinLine"
-              className="size-4"
-            />
+  lucide="Trash2"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+  className="size-4"
+/>
             {t('compose.discard')}
           </Button>
           <Button
@@ -2369,46 +2575,51 @@ function Compose(props: {
             size="sm"
             variant="outline"
             onClick={() => onSave(values)}
-            disabled={isSaving}
+            disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
           >
-            {isSaving && (
-              <IconPlaceholder
-                lucide="Loader2"
-                tabler="IconLoader2"
-                hugeicons="Loading03Icon"
-                phosphor="CircleNotch"
-                remixicon="RiLoader2Line"
-                className="size-4 animate-spin"
-              />
-            )}
+            {isSaving && <IconPlaceholder
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>}
             {t('compose.saveDraft')}
           </Button>
-          <Button type="submit" size="sm" disabled={isSending}>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isSaving || isSending || isDiscarding}
+          >
             {isSending ? (
               <IconPlaceholder
-                lucide="Loader2"
-                tabler="IconLoader2"
-                hugeicons="Loading03Icon"
-                phosphor="CircleNotch"
-                remixicon="RiLoader2Line"
-                className="size-4 animate-spin"
-              />
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>
             ) : (
               <IconPlaceholder
-                lucide="Send"
-                tabler="IconSend"
-                hugeicons="MailSend02Icon"
-                phosphor="PaperPlaneTilt"
-                remixicon="RiSendPlaneLine"
-                className="size-4"
-              />
+  lucide="Send"
+  tabler="IconSend"
+  hugeicons="MailSend02Icon"
+  phosphor="PaperPlaneTilt"
+  remixicon="RiSendPlaneLine"
+  className="size-4"
+/>
             )}
             {t('compose.send')}
           </Button>
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <fieldset
+        disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
+        className="flex min-h-0 flex-1 flex-col gap-3"
+      >
         <RecipientField
           id={toInputId}
           label={t('message.to')}
@@ -2529,6 +2740,9 @@ function Compose(props: {
           {bodyMode === 'mailyEditor' ? (
             <Editor
               {...editorProps}
+              editable={
+                !isSaving && !isSending && !isDiscarding && !isSendUnresolved
+              }
               key={editorRevision}
               contentHtml={composeHtmlContent(values)}
               onCreate={updateFromEditor}
@@ -2552,7 +2766,7 @@ function Compose(props: {
             />
           )}
         </div>
-      </div>
+      </fieldset>
     </form>
   );
 }
@@ -2655,6 +2869,7 @@ function RecipientAutocompleteInput(props: {
   }, []);
 
   React.useEffect(() => {
+    const requestId = ++requestRef.current;
     const q = query.trim();
     if (!open || !q) {
       setSuggestions([]);
@@ -2662,8 +2877,6 @@ function RecipientAutocompleteInput(props: {
       return;
     }
 
-    const requestId = requestRef.current + 1;
-    requestRef.current = requestId;
     setLoading(true);
 
     const timer = window.setTimeout(() => {
@@ -2673,6 +2886,9 @@ function RecipientAutocompleteInput(props: {
             setSuggestions(next);
           }
         })
+        .catch(() => {
+          if (requestRef.current === requestId) setSuggestions([]);
+        })
         .finally(() => {
           if (requestRef.current === requestId) {
             setLoading(false);
@@ -2680,7 +2896,10 @@ function RecipientAutocompleteInput(props: {
         });
     }, 150);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      requestRef.current += 1;
+    };
   }, [loadSuggestions, open, query]);
 
   React.useEffect(() => {
@@ -2771,13 +2990,13 @@ function RecipientAutocompleteInput(props: {
             {loading ? (
               <div className="text-muted-foreground flex items-center justify-center gap-2 px-3 py-4 text-sm">
                 <IconPlaceholder
-                  lucide="Loader2"
-                  tabler="IconLoader2"
-                  hugeicons="Loading03Icon"
-                  phosphor="CircleNotch"
-                  remixicon="RiLoader2Line"
-                  className="size-4 animate-spin"
-                />
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+/>
                 {loadingLabel}
               </div>
             ) : suggestions.length > 0 ? (

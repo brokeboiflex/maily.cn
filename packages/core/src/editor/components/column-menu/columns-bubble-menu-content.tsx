@@ -1,23 +1,24 @@
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { useColumnsState } from './use-columns-state';
-import { Separator } from '../ui/divider';
-import { TooltipProvider } from '../ui/tooltip';
+import { Separator } from '@/editor/components/ui/divider';
+import { TooltipProvider } from '@/editor/components/ui/tooltip';
 import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
 import {
+  getColumnCount,
   addColumnByIndex,
   removeColumnByIndex,
   updateColumnWidth,
-} from '@/editor/utils/columns';
+} from '../../utils/columns';
 import { ShowPopover } from '../show-popover';
 import { ColumnsWidthConfig } from './columns-width-config';
 import { Select } from '../ui/select';
-import { Space, Trash } from 'lucide-react';
 import { BubbleMenuButton } from '../bubble-menu-button';
-import { deleteNode } from '@/editor/utils/delete-node';
-import { spacing } from '@/editor/utils/spacing';
+import { deleteNode } from '../../utils/delete-node';
+import { spacing } from '../../utils/spacing';
 import { useMailyContext } from '../../provider';
-import type { LabelKey } from '@/editor/i18n';
+import type { LabelKey } from '../../i18n';
 import { BUBBLE_MENU_CONTENT_CLASS } from '../ui/floating-menu';
+import { Space, Trash2 } from 'lucide-react';
 
 type ColumnsBubbleMenuProps = {
   editor: EditorBubbleMenuProps['editor'];
@@ -43,9 +44,10 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               columnsCount={currentColumnCount}
               columnWidths={state.columnWidths}
               onColumnsCountChange={(count) => {
+                const currentColumnCount = getColumnCount(editor);
                 if (count > currentColumnCount) {
                   addColumnByIndex(editor);
-                } else {
+                } else if (count < currentColumnCount) {
                   removeColumnByIndex(editor);
                 }
               }}
@@ -91,7 +93,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={<Trash />}
+          icon={<Trash2 />}
           tooltip={t('columnMenu.delete')}
           command={() => {
             deleteNode(editor, 'columns');

@@ -1,4 +1,5 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { cn } from '@/lib/utils';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
@@ -32,6 +33,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
     return null;
   }
 
+  const { schedule: scheduleTimeout } = useOwnedTimeout();
   const state = useRepeatState(editor);
   const { t } = useMailyContext();
 
@@ -138,7 +140,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
             className="h-auto p-0"
             onClick={() => {
               setIsUpdatingKey(true);
-              setTimeout(() => {
+              scheduleTimeout(() => {
                 inputRef.current?.focus();
               }, 0);
             }}

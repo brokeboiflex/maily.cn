@@ -222,6 +222,7 @@ export function Editor(props: EditorProps) {
 
   return (
     <MailyProvider
+      editor={editor}
       placeholderUrl={placeholderUrl}
       blocks={resolvedBlocks}
       labels={resolvedLabels}

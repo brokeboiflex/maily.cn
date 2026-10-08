@@ -139,12 +139,9 @@ export function getVariableSuggestions(
         },
 
         onExit() {
-          if (!popup || !popup?.[0] || !component) {
-            return;
-          }
-
-          popup?.[0].destroy();
-          component.destroy();
+          popup?.[0]?.destroy();
+          popup = null;
+          component?.destroy();
         },
       };
     },

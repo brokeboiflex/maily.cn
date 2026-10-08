@@ -1,7 +1,7 @@
 import {
   ImageUploadPlugin,
   type ImageUploadPluginOptions,
-} from '@/editor/plugins/image-upload/image-upload-plugin';
+} from '../../plugins/image-upload/image-upload-plugin';
 import { Editor, Extension } from '@tiptap/core';
 import { useMemo } from 'react';
 
@@ -32,6 +32,7 @@ export const ImageUploadExtension = Extension.create<
         'image/svg+xml',
       ],
       onImageUpload: undefined,
+      onImageUploadDiscard: undefined,
     };
   },
 
@@ -53,6 +54,7 @@ export const ImageUploadExtension = Extension.create<
         editor: this.editor,
         allowedMimeTypes: this.options.allowedMimeTypes,
         onImageUpload: this.options.onImageUpload,
+        onImageUploadDiscard: this.options.onImageUploadDiscard,
       }),
     ];
   },

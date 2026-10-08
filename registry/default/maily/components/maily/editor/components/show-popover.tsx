@@ -1,12 +1,21 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
+import { useOwnedTimeout } from '../utils/use-owned-timeout';
 import { Editor } from '@tiptap/core';
 import { memo, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useVariableOptions } from '../utils/node-options';
 import { processVariables } from '../utils/variable';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { InputAutocomplete } from './ui/input-autocomplete';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useMailyContext } from '../provider';
 import { Button } from '@/components/ui/button';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
@@ -26,6 +35,8 @@ function _ShowPopover(props: ShowPopoverProps) {
   const variables = opts?.variables;
   const renderVariable = opts?.renderVariable;
   const [isUpdatingKey, setIsUpdatingKey] = useState(false);
+  const { schedule: scheduleTimeout, cancel: cancelTimeout } =
+    useOwnedTimeout();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const autoCompleteOptions = useMemo(() => {
@@ -41,6 +52,7 @@ function _ShowPopover(props: ShowPopoverProps) {
   return (
     <Popover
       onOpenChange={(open) => {
+        if (!open) cancelTimeout();
         if (open) {
           return;
         }
@@ -118,7 +130,7 @@ function _ShowPopover(props: ShowPopoverProps) {
             className="h-auto p-0"
             onClick={() => {
               setIsUpdatingKey(true);
-              setTimeout(() => {
+              scheduleTimeout(() => {
                 inputRef.current?.focus();
               }, 0);
             }}

@@ -1,3 +1,4 @@
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { InputAutocomplete } from '../../components/ui/input-autocomplete';
 import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../variable/variable';
 import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
@@ -18,6 +19,7 @@ type ButtonLabelInputProps = {
 export function ButtonLabelInput(props: ButtonLabelInputProps) {
   const { value, onValueChange, isVariable, editor } = props;
 
+  const { schedule: scheduleTimeout } = useOwnedTimeout();
   const linkInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(!isVariable);
 
@@ -50,7 +52,7 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           className="h-auto p-0"
           onClick={() => {
             setIsEditing(true);
-            setTimeout(() => {
+            scheduleTimeout(() => {
               linkInputRef.current?.focus();
             }, 0);
           }}

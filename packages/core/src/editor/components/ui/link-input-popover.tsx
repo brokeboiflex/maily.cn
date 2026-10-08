@@ -1,17 +1,26 @@
-import { Link, LinkIcon } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { Button } from '../base-button';
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/editor/components/popover';
+import { Button } from '@/editor/components/base-button';
 import { useRef, useState, type ReactNode } from 'react';
-import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
-import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '@/editor/provider';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from '@/editor/components/ui/tooltip';
+import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
 import { InputAutocomplete } from './input-autocomplete';
-import { processVariables } from '@/editor/utils/variable';
+import { processVariables } from '../../utils/variable';
 import { useMemo } from 'react';
 import { Editor } from '@tiptap/core';
-import { useVariableOptions } from '@/editor/utils/node-options';
-import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '@/editor/nodes/variable/variable';
-import { Toggle } from './toggle';
+import { useVariableOptions } from '../../utils/node-options';
+import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../../nodes/variable/variable';
+import { Toggle } from '@/editor/components/ui/toggle';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
+import { Link, LinkIcon } from 'lucide-react';
 
 type LinkInputPopoverProps = {
   defaultValue?: string;
@@ -38,6 +47,8 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(!isVariable);
 
+  const { schedule: scheduleTimeout, cancel: cancelTimeout } =
+    useOwnedTimeout();
   const linkInputRef = useRef<HTMLInputElement>(null);
 
   const { placeholderUrl = DEFAULT_PLACEHOLDER_URL, t } = useMailyContext();
@@ -66,8 +77,9 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
+        if (!open) cancelTimeout();
         if (open) {
-          setTimeout(() => {
+          scheduleTimeout(() => {
             linkInputRef.current?.focus();
           }, 0);
         }
@@ -137,7 +149,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                   className="h-auto p-0"
                   onClick={() => {
                     setIsEditing(true);
-                    setTimeout(() => {
+                    scheduleTimeout(() => {
                       linkInputRef.current?.focus();
                     }, 0);
                   }}
@@ -158,7 +170,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
             {isEditing && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-1.5 z-10 flex items-center">
-                  <LinkIcon className="text-foreground h-3 w-3 stroke-[2.5]" />
+                  <Link className="text-foreground h-3 w-3 stroke-[2.5]" />
                 </div>
 
                 <InputAutocomplete

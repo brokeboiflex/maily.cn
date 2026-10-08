@@ -599,6 +599,11 @@
           "target": "@components/maily/editor/utils/constants.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/utils/deferred-editor-action.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/deferred-editor-action.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/utils/delete-node.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/delete-node.ts"
@@ -652,6 +657,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/use-outside-click.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/use-outside-click.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/use-owned-timeout.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/use-owned-timeout.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/variable.ts",
@@ -1386,6 +1396,11 @@
           "target": "@components/maily/editor/utils/constants.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/utils/deferred-editor-action.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/deferred-editor-action.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/utils/delete-node.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/delete-node.ts"
@@ -1439,6 +1454,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/use-outside-click.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/use-outside-click.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/use-owned-timeout.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/use-owned-timeout.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/variable.ts",

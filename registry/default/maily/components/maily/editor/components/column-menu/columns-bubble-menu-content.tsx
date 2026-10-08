@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
 import {
+  getColumnCount,
   addColumnByIndex,
   removeColumnByIndex,
   updateColumnWidth,
@@ -43,9 +44,10 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               columnsCount={currentColumnCount}
               columnWidths={state.columnWidths}
               onColumnsCountChange={(count) => {
+                const currentColumnCount = getColumnCount(editor);
                 if (count > currentColumnCount) {
                   addColumnByIndex(editor);
-                } else {
+                } else if (count < currentColumnCount) {
                   removeColumnByIndex(editor);
                 }
               }}
@@ -98,7 +100,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
 
         <BubbleMenuButton
           icon={<IconPlaceholder
-  lucide="Trash"
+  lucide="Trash2"
   tabler="IconTrash"
   hugeicons="Delete02Icon"
   phosphor="Trash"

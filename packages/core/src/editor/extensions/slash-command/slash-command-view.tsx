@@ -1,4 +1,5 @@
-import { type BlockGroupItem, type BlockItem } from '@/blocks/types';
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
+import { type BlockGroupItem, type BlockItem } from '../../../blocks/types';
 import { Editor, type Range } from '@tiptap/core';
 import { ReactRenderer } from '@tiptap/react';
 import { type SuggestionOptions } from '@tiptap/suggestion';
@@ -15,7 +16,7 @@ import {
 } from 'react';
 import tippy, { type GetReferenceClientRect, type Instance } from 'tippy.js';
 import { getDefaultBlocks } from './default-slash-commands';
-import { englishTranslator, type TranslateFn } from '@/editor/i18n';
+import { englishTranslator, type TranslateFn } from '../../i18n';
 import { SlashCommandItem } from './slash-command-item';
 import { SlashCommandSubmenu } from './slash-command-submenu';
 import { filterSlashCommands } from './slash-command-search';
@@ -54,6 +55,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
     enterLabel = englishTranslator('slashCommand.enter'),
   } = props;
 
+  const { schedule: scheduleTimeout } = useOwnedTimeout();
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
   const [submenu, setSubmenu] = useState<SubmenuState | null>(null);
@@ -218,7 +220,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
             .focus()
             .insertContentAt(range, `/${prevQuery.current}`)
             .run();
-          setTimeout(() => {
+          scheduleTimeout(() => {
             setSelectedGroupIndex(prevSelectedGroupIndex.current);
             setSelectedCommandIndex(prevSelectedCommandIndex.current);
           }, 0);

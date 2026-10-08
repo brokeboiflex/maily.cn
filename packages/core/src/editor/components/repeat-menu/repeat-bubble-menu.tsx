@@ -1,30 +1,31 @@
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { cn } from '@/editor/utils/classname';
-import { isTextSelected } from '@/editor/utils/is-text-selected';
+import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
 import { BubbleMenu } from '@tiptap/react/menus';
-import { InfoIcon } from 'lucide-react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Separator } from '../ui/divider';
+import { Separator } from '@/editor/components/ui/divider';
 import { InputAutocomplete } from '../ui/input-autocomplete';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '../ui/tooltip';
+} from '@/editor/components/ui/tooltip';
 import { useRepeatState } from './use-repeat-state';
-import { getClosestNodeByName } from '@/editor/utils/columns';
-import { processVariables } from '@/editor/utils/variable';
-import { useVariableOptions } from '@/editor/utils/node-options';
+import { getClosestNodeByName } from '../../utils/columns';
+import { processVariables } from '../../utils/variable';
+import { useVariableOptions } from '../../utils/node-options';
 import { useMailyContext } from '../../provider';
-import { Button } from '../base-button';
+import { Button } from '@/editor/components/base-button';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
   useStableBubbleMenuProps,
 } from '../ui/floating-menu';
+import { InfoIcon } from 'lucide-react';
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor, ...menuProps } = props;
@@ -32,6 +33,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
     return null;
   }
 
+  const { schedule: scheduleTimeout } = useOwnedTimeout();
   const state = useRepeatState(editor);
   const { t } = useMailyContext();
 
@@ -133,7 +135,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
             className="h-auto p-0"
             onClick={() => {
               setIsUpdatingKey(true);
-              setTimeout(() => {
+              scheduleTimeout(() => {
                 inputRef.current?.focus();
               }, 0);
             }}

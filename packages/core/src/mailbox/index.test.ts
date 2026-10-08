@@ -55,6 +55,7 @@ async function renderSelectedMailbox(
       React.createElement(MailboxView, {
         dataSource: createDataSource(),
         pollIntervalMs: 0,
+        account: { id: crypto.randomUUID() },
         ...props,
       })
     );
@@ -532,6 +533,200 @@ describe('original message source', () => {
       expect(view.container.textContent).not.toContain('Late source');
     } finally {
       view.unmount();
+    }
+  });
+});
+
+describe('MailboxView mutation recovery', () => {
+  it('retains draft revision observed with editable content and advances after success', async () => {
+    const draft = {
+      ...messageDetail,
+      direction: 'out' as const,
+      status: 'draft' as const,
+      _revision: 'observed-v1',
+    };
+    const updateDraft = vi.fn(
+      (..._args: Parameters<MailyMailboxDataSource['updateDraft']>) => ({
+        id: draft.id,
+        _revision: 'saved-v2',
+      })
+    );
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({
+        listMessages: () => ({ items: [draft] }),
+        getMessage: () => draft,
+        updateDraft,
+      }),
+    });
+    try {
+      for (let i = 0; i < 2; i++) {
+        await act(async () => {
+          Array.from(rendered.container.querySelectorAll('button'))
+            .find((button) => button.textContent === 'Save draft')!
+            .click();
+        });
+      }
+      expect(updateDraft.mock.calls[0][1].revision).toBe('observed-v1');
+      expect(updateDraft.mock.calls[1][1].revision).toBe('saved-v2');
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('recovers an unknown send after remount without creating or rewriting its draft', async () => {
+    const draft = {
+      ...messageDetail,
+      direction: 'out' as const,
+      status: 'draft' as const,
+      _revision: 'v1',
+    };
+    const account = { id: crypto.randomUUID() };
+    const createDraft = vi.fn(() => ({ id: 'unexpected' }));
+    const updateDraft = vi.fn(() => ({ id: draft.id, _revision: 'v2' }));
+    const sendDraft = vi
+      .fn()
+      .mockRejectedValueOnce(Error('response lost'))
+      .mockResolvedValue({ id: draft.id });
+    const dataSource = createDataSource({
+      listMessages: () => ({ items: [draft] }),
+      getMessage: () => draft,
+      createDraft,
+      updateDraft,
+      sendDraft,
+    });
+    const first = await renderSelectedMailbox({ dataSource, account });
+    await act(async () => {
+      Array.from(first.container.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Send')!
+        .click();
+    });
+    first.unmount();
+    const resumed = await renderSelectedMailbox({ dataSource, account });
+    try {
+      await act(async () => {
+        Array.from(resumed.container.querySelectorAll('button'))
+          .find((button) => button.textContent === 'Send')!
+          .click();
+      });
+      expect(createDraft).not.toHaveBeenCalled();
+      expect(updateDraft).toHaveBeenCalledTimes(1);
+      expect(sendDraft.mock.calls).toEqual([[draft.id], [draft.id]]);
+    } finally {
+      resumed.unmount();
+    }
+  });
+});
+
+describe('compose hydration ownership', () => {
+  it('does not mount editable compose before matching draft content arrives', async () => {
+    let resolve!: (value: MailyMailboxMessageDetail) => void;
+    const pending = new Promise<MailyMailboxMessageDetail>((done) => {
+      resolve = done;
+    });
+    const draft = {
+      ...messageDetail,
+      id: 'draft-hydration',
+      status: 'draft' as const,
+      direction: 'out' as const,
+      subject: 'Capability check',
+      bodyText: 'saved draft body',
+      _revision: 'captured-revision',
+    };
+    const updateDraft = vi.fn(() => ({ id: draft.id }));
+    const view = await renderSelectedMailbox({
+      dataSource: createDataSource({
+        listMessages: () => ({ items: [draft], nextCursor: null }),
+        getMessage: () => pending,
+        updateDraft,
+      }),
+    });
+    expect(view.container.querySelector('textarea')).toBeNull();
+    expect(view.container.querySelector('form')).toBeNull();
+    expect(updateDraft).not.toHaveBeenCalled();
+    await act(async () => {
+      resolve(draft);
+      await pending;
+    });
+    expect(view.container.querySelector('textarea')?.value).toBe(
+      'saved draft body'
+    );
+    view.unmount();
+  });
+});
+
+describe('mailbox lifetime and actor recovery scope', () => {
+  it('retains the prepared draft but never sends after the owning mailbox leaves', async () => {
+    let resolve!: (value: { id: string; _revision: string }) => void;
+    const prepared = new Promise<{ id: string; _revision: string }>((done) => {
+      resolve = done;
+    });
+    const draft = {
+      ...messageDetail,
+      direction: 'out' as const,
+      status: 'draft' as const,
+      _revision: 'v1',
+    };
+    const account = { id: crypto.randomUUID() };
+    const recoveryScope = `${account.id}:actor-A`;
+    const sendDraft = vi.fn();
+    const onSent = vi.fn();
+    const view = await renderSelectedMailbox({
+      account,
+      recoveryScope,
+      onSent,
+      dataSource: createDataSource({
+        listMessages: () => ({ items: [draft] }),
+        getMessage: () => draft,
+        updateDraft: () => prepared,
+        sendDraft,
+      }),
+    });
+    await act(async () => {
+      Array.from(view.container.querySelectorAll('button'))
+        .find((button) => button.textContent === 'Send')!
+        .click();
+    });
+    view.unmount();
+    await act(async () => {
+      resolve({ id: draft.id, _revision: 'v2' });
+      await prepared;
+    });
+    expect(sendDraft).not.toHaveBeenCalled();
+    expect(onSent).not.toHaveBeenCalled();
+    expect(
+      window.sessionStorage.getItem(`maily:pending-send:${recoveryScope}`)
+    ).toBe(draft.id);
+    window.sessionStorage.removeItem(`maily:pending-send:${recoveryScope}`);
+  });
+
+  it('keeps an unscoped legacy send blocked instead of adopting another actor intent', async () => {
+    const account = { id: crypto.randomUUID() };
+    const legacyKey = `maily:pending-send:${account.id}`;
+    window.sessionStorage.setItem(legacyKey, 'legacy-draft');
+    const createDraft = vi.fn();
+    const sendDraft = vi.fn();
+    const view = await renderSelectedMailbox({
+      account,
+      recoveryScope: `${account.id}:actor-B`,
+      dataSource: createDataSource({ createDraft, sendDraft }),
+    });
+    try {
+      await act(async () => {
+        view.container
+          .querySelector<HTMLButtonElement>(
+            `button[aria-label="${defaultMailboxLabels['compose.new']}"]`
+          )!
+          .click();
+      });
+      expect(createDraft).not.toHaveBeenCalled();
+      expect(sendDraft).not.toHaveBeenCalled();
+      expect(window.sessionStorage.getItem(legacyKey)).toBe('legacy-draft');
+      expect(view.container.textContent).toContain(
+        defaultMailboxLabels['errors.send']
+      );
+    } finally {
+      view.unmount();
+      window.sessionStorage.removeItem(legacyKey);
     }
   });
 });

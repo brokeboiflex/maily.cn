@@ -6,6 +6,7 @@ import {
   type PropsWithChildren,
   useContext,
   useMemo,
+  useLayoutEffect,
 } from 'react';
 import { getDefaultBlocks } from './extensions/slash-command/default-slash-commands';
 import {
@@ -15,9 +16,14 @@ import {
   type TranslateFn,
 } from './i18n';
 
+import type { Editor } from '@tiptap/core';
+import { createDeferredEditorActions } from './utils/deferred-editor-action';
+
 export const DEFAULT_PLACEHOLDER_URL = 'https://maily.to/';
 
 export type MailyContextType = {
+  editor?: Editor;
+  editorActions?: ReturnType<typeof createDeferredEditorActions>;
   placeholderUrl?: string;
   blocks?: BlockGroupItem[];
   labels: MailyLabels;
@@ -35,9 +41,22 @@ type MailyProviderProps = PropsWithChildren<MailyContextType>;
 
 export function MailyProvider(props: MailyProviderProps) {
   const { children, ...values } = props;
+  const editorActions = useMemo(
+    () =>
+      values.editor ? createDeferredEditorActions(values.editor) : undefined,
+    [values.editor]
+  );
+  useLayoutEffect(() => () => editorActions?.invalidate(), [editorActions]);
   const value = useMemo(
-    () => values,
-    [values.placeholderUrl, values.blocks, values.labels, values.t]
+    () => ({ ...values, editorActions }),
+    [
+      values.placeholderUrl,
+      values.blocks,
+      values.labels,
+      values.t,
+      values.editor,
+      editorActions,
+    ]
   );
 
   return (

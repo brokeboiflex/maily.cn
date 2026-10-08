@@ -32,6 +32,7 @@ export const ImageUploadExtension = Extension.create<
         'image/svg+xml',
       ],
       onImageUpload: undefined,
+      onImageUploadDiscard: undefined,
     };
   },
 
@@ -53,6 +54,7 @@ export const ImageUploadExtension = Extension.create<
         editor: this.editor,
         allowedMimeTypes: this.options.allowedMimeTypes,
         onImageUpload: this.options.onImageUpload,
+        onImageUploadDiscard: this.options.onImageUploadDiscard,
       }),
     ];
   },

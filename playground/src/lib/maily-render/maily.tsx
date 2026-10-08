@@ -256,7 +256,7 @@ export class Maily {
   private openTrackingPixel: string | undefined;
   private payloadValues: PayloadValues = new Map();
   private marksOrder = ['underline', 'bold', 'italic', 'textStyle', 'link'];
-  private meta: MetaDescriptors = DEFAULT_META_TAGS;
+  private meta: MetaDescriptors = DEFAULT_META_TAGS.map((tag) => ({ ...tag }));
   private htmlProps: HtmlProps = DEFAULT_HTML_PROPS;
 
   constructor(content: JSONContent = { type: 'doc', content: [] }) {
@@ -367,7 +367,24 @@ export class Maily {
    * @param meta - The meta tags
    */
   setMetaTags(meta: MetaDescriptors) {
-    this.meta.push(...meta);
+    for (const tag of meta) {
+      const fingerprint = JSON.stringify(
+        Object.keys(tag)
+          .sort()
+          .map((key) => [key, tag[key as keyof typeof tag]])
+      );
+      if (
+        !this.meta.some(
+          (existing) =>
+            JSON.stringify(
+              Object.keys(existing)
+                .sort()
+                .map((key) => [key, existing[key as keyof typeof existing]])
+            ) === fingerprint
+        )
+      )
+        this.meta.push({ ...tag });
+    }
   }
 
   /**
