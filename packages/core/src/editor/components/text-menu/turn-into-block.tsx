@@ -74,7 +74,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
         {options.map((option, index) => {
           if (isOption(option)) {
             return (
-              <DropdownMenuItem key={option.id} onSelect={option.onClick}>
+              <DropdownMenuItem key={option.id} onClick={option.onClick}>
                 {option.icon}
                 {option.label}
               </DropdownMenuItem>

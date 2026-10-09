@@ -201,7 +201,7 @@ export function ContentMenu(props: ContentMenuProps) {
               sideOffset={8}
               className="w-max min-w-36"
             >
-              <DropdownMenuItem onSelect={duplicateNode}>
+              <DropdownMenuItem onClick={duplicateNode}>
                 <IconPlaceholder
   lucide="Copy"
   tabler="IconCopy"
@@ -213,7 +213,7 @@ export function ContentMenu(props: ContentMenuProps) {
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={deleteCurrentNode}
+                onClick={deleteCurrentNode}
               >
                 <IconPlaceholder
   lucide="Trash2"

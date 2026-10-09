@@ -130,3 +130,13 @@ roving focus, toolbar link composition, and invalid nested interactive DOM.
 workflow after playground changes land on `main`. The Pages build uses
 `/maily.cn/` as Vite's base path; local development and `bun run build` keep `/`
 so the local shadcn registry URL remains unchanged.
+
+## Mailbox workflows
+
+The mailbox showcase uses two-message pages and an explicit handoff reply thread.
+Try All Mail, Starred, select-all/bulk actions, advanced/global search, labels,
+attachment upload, autosave and Undo. Empty Trash and Delete all spam require
+confirmation and call folder-wide adapter operations. Uploaded file bytes are
+retained for sent/received downloads until their persisted references disappear.
+The adapter is in memory; reloading resets its mail, labels and uploaded files.
+See [mailbox adapter contracts](../docs/mailbox-workflows.md).

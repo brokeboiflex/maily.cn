@@ -1,14 +1,24 @@
-'use client';
-import * as React from 'react';
+"use client"
+import * as React from "react"
+import { useControllableState } from "./use-controllable-state"
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/popover"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Field, FieldLabel, FieldSet } from "@/components/ui/field"
+import { Label } from "@/components/ui/label"
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty"
 import {
   Attachment,
   AttachmentAction,
@@ -17,466 +27,702 @@ import {
   AttachmentDescription,
   AttachmentMedia,
   AttachmentTitle,
-} from '@/components/ui/attachment';
+} from "@/components/ui/attachment"
 import {
   Command,
   CommandGroup,
   CommandItem,
   CommandList,
-} from '@/components/ui/command';
+} from "@/components/ui/command"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from '@/components/ui/input-group';
+} from "@/components/ui/input-group"
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from '@/components/ui/resizable';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
-import { Editor, type EditorProps } from '../editor';
+} from "@/components/ui/resizable"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Editor, type EditorProps } from "../editor"
 import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
-} from '../editor/components/ui/toggle-group-compat';
-import { cn } from '@/lib/utils';
+} from "../editor/components/ui/toggle-group-compat"
+import { cn } from "@/lib/utils"
 
 import {
   filterMailboxContactSuggestions,
   type MailyMailboxContactSuggestion,
-} from './contacts';
-import { Archive, Trash2, Star, MailOpen, Ban, ShieldAlert, Flag, Filter, Languages, Printer, Download, CodeIcon, AlertCircle, Smile, Inbox, Send, FileText, Pencil, Search, LoaderCircleIcon, Paperclip, ExternalLink, Reply, Forward, MoreVertical } from "lucide-react";
+} from "./contacts"
+import { getMailboxReplyAllRecipients } from "./reply-all"
+import { buildMailboxSearchQuery, type MailyMailboxSearchQuery } from "./search"
+export type { MailyMailboxSearchQuery } from "./search"
+import { groupMailboxMessagesByThread } from "./conversations"
+import {
+  Archive,
+  Inbox,
+  MailOpen,
+  Trash2,
+  Star,
+  Ban,
+  ShieldAlert,
+  Flag,
+  Filter,
+  Languages,
+  Printer,
+  Download,
+  CodeIcon,
+  AlertCircle,
+  Smile,
+  Send,
+  FileText,
+  Pencil,
+  Plus,
+  Tag,
+  MoreVertical,
+  Search,
+  X,
+  LoaderCircleIcon,
+  RotateCwIcon,
+  ChevronRight,
+  Paperclip,
+  ExternalLink,
+  Reply,
+  ReplyAll,
+  Forward,
+} from "lucide-react"
 
 export {
   filterMailboxContactSuggestions,
   type MailyMailboxContactSuggestion,
-} from './contacts';
+} from "./contacts"
 
-export type MailyMailboxFolder = 'inbox' | 'sent' | 'drafts' | 'bounced';
+export type MailyMailboxFolder =
+  | "inbox"
+  | "sent"
+  | "drafts"
+  | "bounced"
+  | "spam"
+  | "trash"
+  | "allMail"
+  | "starred"
+
+export type MailyMailboxLabel = { id: string; name: string }
 
 export type MailyMailboxMessageStatus =
-  | 'draft'
-  | 'queued'
-  | 'sent'
-  | 'failed'
-  | 'dsn';
+  | "draft"
+  | "queued"
+  | "sent"
+  | "failed"
+  | "dsn"
 
 export type MailyMailboxAccount = {
-  id?: string;
-  address?: string;
-  displayName?: string | null;
-};
+  id?: string
+  address?: string
+  displayName?: string | null
+}
 
 export type MailyMailboxMessageRow = {
-  _revision?: string;
-  id: string;
-  direction: 'in' | 'out';
-  fromAddress: string;
-  toAddresses: string[];
-  subject: string | null;
-  snippet?: string | null;
-  status: MailyMailboxMessageStatus;
-  hasAttachments?: boolean;
-  isFavorite?: boolean;
-  isUnread?: boolean;
-  labels?: string[];
-  createdAt: string | Date;
-};
+  _revision?: string
+  id: string
+  direction: "in" | "out"
+  fromAddress: string
+  toAddresses: string[]
+  subject: string | null
+  snippet?: string | null
+  status: MailyMailboxMessageStatus
+  hasAttachments?: boolean
+  isFavorite?: boolean
+  isUnread?: boolean
+  labels?: string[]
+  threadId?: string
+  createdAt: string | Date
+}
 
 export type MailyMailboxAttachment = {
-  id?: string;
-  filename: string;
-  contentType?: string;
-  size?: number;
-};
+  id?: string
+  filename: string
+  contentType?: string
+  size?: number
+}
 
 export type MailyMailboxAttachmentDownloadInput = {
-  messageId: string;
-  attachment: MailyMailboxAttachment;
+  messageId: string
+  attachment: MailyMailboxAttachment
   /** Position in getMessage().attachments; filenames need not be unique. */
-  attachmentIndex: number;
-};
+  attachmentIndex: number
+}
 
 export type MailyMailboxEvent = {
-  id: string;
-  type: string;
-  detail?: unknown;
-  createdAt: string | Date;
-};
+  id: string
+  type: string
+  detail?: unknown
+  createdAt: string | Date
+}
 
 export type MailyMailboxMessageDetail = MailyMailboxMessageRow & {
-  ccAddresses?: string[] | null;
-  bccAddresses?: string[] | null;
-  messageId?: string | null;
-  inReplyTo?: string | null;
-  headers?: Record<string, string> | null;
-  bodyText?: string | null;
-  bodyHtml?: string | null;
-  attachments?: MailyMailboxAttachment[];
-  lastError?: string | null;
-  events?: MailyMailboxEvent[];
-};
+  ccAddresses?: string[] | null
+  bccAddresses?: string[] | null
+  messageId?: string | null
+  inReplyTo?: string | null
+  headers?: Record<string, string> | null
+  bodyText?: string | null
+  bodyHtml?: string | null
+  attachments?: MailyMailboxAttachment[]
+  lastError?: string | null
+  events?: MailyMailboxEvent[]
+}
 
 export type MailyMailboxMessageList = {
-  items: MailyMailboxMessageRow[];
-  nextCursor?: string | null;
-};
+  items: MailyMailboxMessageRow[]
+  nextCursor?: string | null
+  /** Total rows matching the current folder and search, when the host knows it. */
+  total?: number
+}
 
-export type MailyMailboxCounts = Record<MailyMailboxFolder, number>;
+export type MailyMailboxCounts = Record<MailyMailboxFolder, number>
 
 export type MailyMailboxDraftInput = {
   /** Revision observed with the editable draft, forwarded by the host as If-Match. */
-  revision?: string;
-  to: string[];
-  cc: string[];
-  bcc: string[];
-  subject: string | null;
-  text: string | null;
-  html?: string | null;
-  inReplyTo?: string | null;
-};
+  revision?: string
+  to: string[]
+  cc: string[]
+  bcc: string[]
+  subject: string | null
+  text: string | null
+  html?: string | null
+  inReplyTo?: string | null
+  attachments?: MailyMailboxUploadedAttachment[]
+}
+
+export type MailyMailboxUploadedAttachment = {
+  id: string
+  filename: string
+  contentType?: string
+  size?: number
+}
+
+export type MailyMailboxThread = {
+  threadId: string
+  messages: MailyMailboxMessageDetail[]
+}
 
 export type MailyMailboxComposeValues = {
-  to: string;
-  cc: string;
-  bcc: string;
-  subject: string;
-  text: string;
-  html?: string | null;
-};
+  to: string
+  cc: string
+  bcc: string
+  subject: string
+  text: string
+  html?: string | null
+  attachments?: MailyMailboxUploadedAttachment[]
+}
 
-export type MailyMailboxComposeBodyMode = 'plainText' | 'mailyEditor';
+export type MailyMailboxComposeBodyMode = "plainText" | "mailyEditor"
 
-type MaybePromise<T> = T | Promise<T>;
+type MaybePromise<T> = T | Promise<T>
 
 export type MailyMailboxMessageAction =
-  | 'archive'
-  | 'delete'
-  | 'favorite'
-  | 'markUnread'
-  | 'blockSender'
-  | 'reportSpam'
-  | 'reportPhishing'
-  | 'reportIllegal'
-  | 'filterSimilar'
-  | 'translate'
-  | 'print'
-  | 'download'
-  | 'showOriginal'
-  | 'feedback'
-  | 'react';
+  | "archive"
+  | "delete"
+  | "restore"
+  | "notSpam"
+  | "deleteForever"
+  | "favorite"
+  | "markUnread"
+  | "markRead"
+  | "blockSender"
+  | "reportSpam"
+  | "reportPhishing"
+  | "reportIllegal"
+  | "filterSimilar"
+  | "translate"
+  | "print"
+  | "download"
+  | "showOriginal"
+  | "feedback"
+  | "react"
 
 export type MailyMailboxMessageActionInput = {
-  messageId: string;
-  action: MailyMailboxMessageAction;
-  value?: string | boolean | null;
-};
+  messageId: string
+  action: MailyMailboxMessageAction
+  value?: string | boolean | null
+}
 
 export type MailyMailboxMessageActionResult =
   | void
   | { id?: string }
-  | MailyMailboxMessageDetail;
+  | { undo?: { token: string; expiresAt?: string | number | Date } }
+  | MailyMailboxMessageDetail
 
 export type MailyMailboxMessageActionEvent = MailyMailboxMessageActionInput & {
-  message: MailyMailboxMessageDetail;
-};
+  message: MailyMailboxMessageDetail
+}
 
 export type MailyMailboxDataSource = {
   listMessages: (params: {
-    folder: MailyMailboxFolder;
-    q?: string;
-    cursor?: string;
-    limit?: number;
-  }) => MaybePromise<MailyMailboxMessageList>;
-  getMessage: (messageId: string) => MaybePromise<MailyMailboxMessageDetail>;
+    folder: MailyMailboxFolder
+    q?: string
+    search?: MailyMailboxSearchQuery
+    cursor?: string
+    limit?: number
+    labelId?: string
+  }) => MaybePromise<MailyMailboxMessageList>
+  getMessage: (messageId: string) => MaybePromise<MailyMailboxMessageDetail>
+  getThread?: (threadId: string) => MaybePromise<MailyMailboxThread>
   /** Return the archived RFC822 source as text; never reconstruct it from the DTO. */
-  getMessageSource?: (messageId: string) => MaybePromise<string>;
+  getMessageSource?: (messageId: string) => MaybePromise<string>
   /** Fetch and save the file using host storage/authentication. */
   downloadAttachment?: (
     input: MailyMailboxAttachmentDownloadInput
-  ) => MaybePromise<void>;
-  getCounts?: () => MaybePromise<Partial<MailyMailboxCounts>>;
+  ) => MaybePromise<void>
+  getCounts?: () => MaybePromise<Partial<MailyMailboxCounts>>
+  listLabels?: () => MaybePromise<MailyMailboxLabel[]>
+  createLabel?: (name: string) => MaybePromise<MailyMailboxLabel>
+  renameLabel?: (
+    labelId: string,
+    name: string
+  ) => MaybePromise<MailyMailboxLabel>
+  deleteLabel?: (labelId: string) => MaybePromise<void>
+  applyLabel?: (messageIds: string[], labelId: string) => MaybePromise<void>
+  removeLabel?: (messageIds: string[], labelId: string) => MaybePromise<void>
+  runBulkMessageAction?: (input: {
+    messageIds: string[]
+    action: MailyMailboxMessageAction
+    value?: string | boolean | null
+  }) => MaybePromise<MailyMailboxMessageActionResult>
+  emptyFolder?: (folder: "spam" | "trash") => MaybePromise<void>
+  undoMessageAction?: (token: string) => MaybePromise<void>
+  uploadAttachment?: (
+    file: File
+  ) => MaybePromise<MailyMailboxUploadedAttachment>
+  discardUploadedAttachment?: (
+    attachment: MailyMailboxUploadedAttachment
+  ) => MaybePromise<void>
   listContactSuggestions?: (params: {
-    q?: string;
-    limit?: number;
-  }) => MaybePromise<MailyMailboxContactSuggestion[]>;
+    q?: string
+    limit?: number
+  }) => MaybePromise<MailyMailboxContactSuggestion[]>
   createDraft: (
     draft: MailyMailboxDraftInput
   ) => MaybePromise<
     { id: string; _revision?: string } | MailyMailboxMessageDetail
-  >;
+  >
   updateDraft: (
     messageId: string,
     draft: MailyMailboxDraftInput
   ) => MaybePromise<
     { id: string; _revision?: string } | MailyMailboxMessageDetail
-  >;
-  discardDraft: (messageId: string) => MaybePromise<void | { id: string }>;
+  >
+  discardDraft: (messageId: string) => MaybePromise<void | { id: string }>
   sendDraft: (messageId: string) => MaybePromise<void | {
-    id?: string;
-    messageId?: string;
-    status?: string;
-  }>;
+    id?: string
+    messageId?: string
+    status?: string
+  }>
   runMessageAction?: (
     input: MailyMailboxMessageActionInput
-  ) => MaybePromise<MailyMailboxMessageActionResult>;
-};
+  ) => MaybePromise<MailyMailboxMessageActionResult>
+}
 
 export const defaultMailboxLabels = {
-  'compose.new': 'New message',
-  'compose.editDraft': 'Edit draft',
-  'compose.discard': 'Discard',
-  'compose.saveDraft': 'Save draft',
-  'compose.send': 'Send',
-  'compose.saved': 'Draft saved.',
-  'compose.sent': 'Message sent.',
-  'compose.discarded': 'Draft discarded.',
-  'compose.wrote': 'On {date}, {sender} wrote:',
-  'compose.forwardedHeader': 'Forwarded message',
-  'compose.mode.plainText': 'Plain text',
-  'compose.mode.mailyEditor': 'Visual editor',
-  'folders.inbox': 'Inbox',
-  'folders.sent': 'Sent',
-  'folders.drafts': 'Drafts',
-  'folders.bounced': 'Bounced',
-  'actions.reply': 'Reply',
-  'actions.forward': 'Forward',
-  'actions.more': 'More',
-  'actions.favorite': 'Add star',
-  'actions.unfavorite': 'Remove star',
-  'actions.react': 'Add reaction',
-  'actions.archive': 'Archive',
-  'actions.reportSpam': 'Report spam',
-  'actions.delete': 'Delete',
-  'actions.markUnread': 'Mark as unread',
-  'actions.blockSender': 'Block sender',
-  'actions.reportPhishing': 'Report phishing',
-  'actions.reportIllegal': 'Report illegal content',
-  'actions.filterSimilar': 'Filter messages like this',
-  'actions.translate': 'Translate',
-  'actions.print': 'Print',
-  'actions.download': 'Download message',
-  'actions.showOriginal': 'Show original',
-  'source.back': 'Back to message',
-  'source.retry': 'Retry',
-  'source.error':
-    'The original message could not be loaded. It may no longer be available.',
-  'actions.feedback': 'Share feedback',
-  'actions.openExternal': 'Open in new window',
-  searchPlaceholder: 'Search mail',
-  refresh: 'Refresh',
-  loading: 'Loading',
-  'empty.noSelection': 'Select a message',
-  'empty.noSelectionDesc': 'Choose a message or start a new draft.',
-  'empty.inbox': 'No messages in the inbox.',
-  'empty.sent': 'No sent messages yet.',
-  'empty.drafts': 'No drafts yet.',
-  'empty.bounced': 'No bounced messages.',
-  'message.unknownSender': 'Unknown sender',
-  'message.noSubject': '(no subject)',
-  'message.noBody': 'No message body.',
-  'message.toPrefix': 'to',
-  'message.cc': 'cc',
-  'message.bcc': 'bcc',
-  'message.to': 'To',
-  'contacts.recipientPlaceholder': 'name@example.com, other@example.com',
-  'contacts.noSuggestions': 'No contacts found.',
-  'message.subject': 'Subject',
-  'message.body': 'Body',
-  'message.bounced': 'Bounced',
-  'message.queued': 'Queued',
-  'message.attachments': 'Attachments ({count})',
-  'attachment.download': 'Download {filename}',
-  'attachment.downloading': 'Downloading {filename}',
-  'attachment.sizeBytes': '{size} B',
-  'attachment.sizeKB': '{size} KB',
-  'attachment.sizeMB': '{size} MB',
-  'attachment.sizeGB': '{size} GB',
-  'attachment.sizeTB': '{size} TB',
-  'errors.attachmentDownload': 'Could not download {filename}. Try again.',
-  'errors.refresh': 'Could not refresh the mailbox.',
-  'errors.detail': 'Could not load the message.',
-  'errors.saveDraft': 'Could not save the draft.',
-  'errors.send': 'Could not send the message.',
-  'errors.discard': 'Could not discard the draft.',
-  'errors.messageAction': 'Could not update the message.',
-} as const;
+  "compose.new": "Compose",
+  "compose.editDraft": "Edit draft",
+  "compose.discard": "Discard",
+  "compose.saveDraft": "Save draft",
+  "compose.send": "Send",
+  "compose.saved": "Draft saved.",
+  "compose.sent": "Message sent.",
+  "compose.discarded": "Draft discarded.",
+  "compose.wrote": "On {date}, {sender} wrote:",
+  "compose.forwardedHeader": "Forwarded message",
+  "compose.mode.plainText": "Plain text",
+  "compose.mode.mailyEditor": "Visual editor",
+  "folders.inbox": "Inbox",
+  "folders.allMail": "All Mail",
+  "folders.starred": "Starred",
+  "folders.sent": "Sent",
+  "folders.drafts": "Drafts",
+  "folders.bounced": "Failed delivery",
+  "folders.spam": "Spam",
+  "folders.trash": "Trash",
+  "actions.reply": "Reply",
+  "actions.replyAll": "Reply all",
+  "actions.forward": "Forward",
+  "actions.more": "More",
+  "actions.favorite": "Add star",
+  "actions.unfavorite": "Remove star",
+  "actions.react": "Add reaction",
+  "actions.archive": "Archive",
+  "actions.reportSpam": "Report spam",
+  "actions.delete": "Delete",
+  "actions.restore": "Move to Inbox",
+  "actions.notSpam": "Not spam",
+  "actions.deleteForever": "Delete forever",
+  "actions.markUnread": "Mark as unread",
+  "actions.markRead": "Mark as read",
+  "actions.selectAll": "Select all on this page",
+  "actions.clearSelection": "Clear selection",
+  "actions.cancel": "Cancel",
+  "actions.selectConversation": "Select conversation: {subject}",
+  "actions.deselectConversation": "Deselect conversation: {subject}",
+  "actions.moveToInbox": "Move to Inbox",
+  "actions.applyLabel": "Apply label",
+  "actions.createLabel": "Create label",
+  "labels.heading": "Labels",
+  "labels.name": "Label name",
+  "labels.description": "Organize your messages with a label.",
+  "search.clear": "Clear search",
+  "search.submit": "Search",
+  "selection.count": "{count} selected",
+  "actions.renameLabel": "Rename label",
+  "actions.deleteLabel": "Delete label",
+  "actions.removeLabel": "Remove label",
+  "actions.emptyTrash": "Empty Trash",
+  "actions.deleteAllSpam": "Delete all spam",
+  "actions.loadMore": "Load more",
+  "pagination.previous": "Newer",
+  "pagination.next": "Older",
+  "pagination.range": "{start}–{end}",
+  "pagination.rangeWithTotal": "{start}–{end} of {total}",
+  "actions.undo": "Undo",
+  "actions.completed": "Action completed",
+  "search.from": "From",
+  "search.to": "To",
+  "search.subject": "Subject",
+  "search.after": "After (YYYY/MM/DD)",
+  "search.before": "Before (YYYY/MM/DD)",
+  "search.hasAttachments": "Has attachments",
+  "search.unread": "Unread",
+  "search.global": "Search all mail",
+  "search.advanced": "Advanced search",
+  "confirm.emptyTrash": "Permanently delete every message in Trash?",
+  "confirm.deleteAllSpam": "Permanently delete every message in Spam?",
+  "actions.confirm": "Confirm",
+  "compose.attach": "Attach files",
+  "compose.removeAttachment": "Remove {filename}",
+  "compose.stay": "Keep editing",
+  "compose.autosaved": "Saved automatically",
+  "compose.saving": "Saving…",
+  "compose.saveError": "Could not save changes. Your edits are still here.",
+  "compose.unsavedConfirm": "Discard unsaved changes?",
+  "compose.attachmentUploadError": "Could not upload {filename}. Try again.",
+  "thread.messages": "{count} messages in this conversation",
+  "actions.blockSender": "Block sender",
+  "actions.reportPhishing": "Report phishing",
+  "actions.reportIllegal": "Report illegal content",
+  "actions.filterSimilar": "Filter messages like this",
+  "actions.translate": "Translate",
+  "actions.print": "Print",
+  "actions.download": "Download message",
+  "actions.showOriginal": "Show original",
+  "source.back": "Back to message",
+  "source.retry": "Retry",
+  "source.error":
+    "The original message could not be loaded. It may no longer be available.",
+  "actions.feedback": "Share feedback",
+  "actions.openExternal": "Open in new window",
+  searchPlaceholder: "Search mail",
+  refresh: "Refresh",
+  loading: "Loading",
+  "empty.noSelection": "Select a message",
+  "empty.noSelectionDesc": "Choose a message or start a new draft.",
+  "empty.inbox": "No messages in the inbox.",
+  "empty.allMail": "No messages in All Mail.",
+  "empty.starred": "No starred messages.",
+  "empty.sent": "No sent messages yet.",
+  "empty.drafts": "No drafts yet.",
+  "empty.bounced": "No bounced messages.",
+  "empty.spam": "No spam messages.",
+  "empty.trash": "No messages in Trash.",
+  "message.unknownSender": "Unknown sender",
+  "message.noSubject": "(no subject)",
+  "message.noBody": "No message body.",
+  "message.toPrefix": "to",
+  "message.cc": "cc",
+  "message.bcc": "bcc",
+  "message.to": "To",
+  "contacts.recipientPlaceholder": "name@example.com, other@example.com",
+  "contacts.noSuggestions": "No contacts found.",
+  "message.subject": "Subject",
+  "message.body": "Body",
+  "message.bounced": "Bounced",
+  "message.queued": "Queued",
+  "message.attachments": "Attachments ({count})",
+  "attachment.download": "Download {filename}",
+  "attachment.downloading": "Downloading {filename}",
+  "attachment.sizeBytes": "{size} B",
+  "attachment.sizeKB": "{size} KB",
+  "attachment.sizeMB": "{size} MB",
+  "attachment.sizeGB": "{size} GB",
+  "attachment.sizeTB": "{size} TB",
+  "errors.attachmentDownload": "Could not download {filename}. Try again.",
+  "errors.refresh": "Could not refresh the mailbox.",
+  "errors.detail": "Could not load the message.",
+  "errors.saveDraft": "Could not save the draft.",
+  "errors.send": "Could not send the message.",
+  "errors.discard": "Could not discard the draft.",
+  "errors.messageAction": "Could not update the message.",
+} as const
 
-export type MailyMailboxLabelKey = keyof typeof defaultMailboxLabels;
-export type MailyMailboxLabels = Record<MailyMailboxLabelKey, string>;
+export type MailyMailboxLabelKey = keyof typeof defaultMailboxLabels
+export type MailyMailboxLabels = Record<MailyMailboxLabelKey, string>
 
 export type MailyMailboxViewProps = {
-  account?: MailyMailboxAccount;
-  dataSource: MailyMailboxDataSource;
-  messageActions?: readonly MailyMailboxMessageAction[];
-  labels?: MailyMailboxLabels;
-  className?: string;
-  initialFolder?: MailyMailboxFolder;
-  pollIntervalMs?: number;
-  pageSize?: number;
-  contactSuggestions?: MailyMailboxContactSuggestion[];
-  contactSuggestionLimit?: number;
-  defaultComposeBodyMode?: MailyMailboxComposeBodyMode;
-  allowComposeBodyModeSwitch?: boolean;
+  account?: MailyMailboxAccount
+  /** Opaque actor/account identity for pending-send recovery and UI lifetime. */
+  recoveryScope?: string
+  dataSource: MailyMailboxDataSource
+  messageActions?: readonly MailyMailboxMessageAction[]
+  labels?: MailyMailboxLabels
+  className?: string
+  initialFolder?: MailyMailboxFolder
+  /** Controlled navigation values are authoritative; callbacks request changes. */
+  folder?: MailyMailboxFolder
+  onFolderChange?: (folder: MailyMailboxFolder) => void
+  search?: string
+  defaultSearch?: string
+  onSearchChange?: (search: string) => void
+  searchFilters?: Omit<MailyMailboxSearchQuery, "text">
+  defaultSearchFilters?: Omit<MailyMailboxSearchQuery, "text">
+  onSearchFiltersChange?: (
+    filters: Omit<MailyMailboxSearchQuery, "text">
+  ) => void
+  searchScope?: "folder" | "allMail"
+  defaultSearchScope?: "folder" | "allMail"
+  onSearchScopeChange?: (scope: "folder" | "allMail") => void
+  selectedLabelId?: string | null
+  defaultSelectedLabelId?: string | null
+  onSelectedLabelIdChange?: (id: string | null) => void
+  selectedMessageId?: string | null
+  defaultSelectedMessageId?: string | null
+  onSelectedMessageIdChange?: (id: string | null) => void
+  selectedMessageIds?: string[]
+  defaultSelectedMessageIds?: string[]
+  onSelectedMessageIdsChange?: (ids: string[]) => void
+
+  markReadOnOpen?: boolean
+  pollIntervalMs?: number
+  pageSize?: number
+  contactSuggestions?: MailyMailboxContactSuggestion[]
+  contactSuggestionLimit?: number
+  defaultComposeBodyMode?: MailyMailboxComposeBodyMode
+  allowComposeBodyModeSwitch?: boolean
   composeEditorProps?: Omit<
     EditorProps,
-    'contentHtml' | 'contentJson' | 'onCreate' | 'onUpdate'
-  >;
-  onError?: (error: unknown, action: string) => void;
-  onSent?: (result: unknown) => void;
-  onDraftSaved?: (messageId: string) => void;
-  onMessageAction?: (event: MailyMailboxMessageActionEvent) => void;
-  formatDate?: (date: string | Date, mode: 'short' | 'long') => string;
-};
+    "contentHtml" | "contentJson" | "onCreate" | "onUpdate"
+  >
+  onError?: (error: unknown, action: string) => void
+  onSent?: (result: unknown) => void
+  onDraftSaved?: (messageId: string) => void
+  onMessageAction?: (event: MailyMailboxMessageActionEvent) => void
+  formatDate?: (date: string | Date, mode: "short" | "long") => string
+}
 
-const FOLDERS: MailyMailboxFolder[] = ['inbox', 'sent', 'drafts', 'bounced'];
+const FOLDERS: MailyMailboxFolder[] = [
+  "inbox",
+  "starred",
+  "sent",
+  "drafts",
+  "allMail",
+  "spam",
+  "trash",
+]
 
-const DEFAULT_POLL_INTERVAL_MS = 60_000;
-const DEFAULT_PAGE_SIZE = 50;
-const DEFAULT_CONTACT_SUGGESTION_LIMIT = 8;
-const DEFAULT_MESSAGE_ACTIONS: readonly MailyMailboxMessageAction[] = [];
+const DEFAULT_POLL_INTERVAL_MS = 60_000
+const DEFAULT_PAGE_SIZE = 50
+const DEFAULT_CONTACT_SUGGESTION_LIMIT = 8
+const DEFAULT_MESSAGE_ACTIONS: readonly MailyMailboxMessageAction[] = []
 
 const TOOLBAR_LEADING_MESSAGE_ACTIONS = [
-  'archive',
-  'reportSpam',
-  'delete',
-  'markUnread',
-] as const satisfies readonly MailyMailboxMessageAction[];
+  "restore",
+  "notSpam",
+  "deleteForever",
+  "archive",
+  "reportSpam",
+  "delete",
+  "markUnread",
+  "markRead",
+] as const satisfies readonly MailyMailboxMessageAction[]
 
 const TOOLBAR_TRAILING_MESSAGE_ACTIONS = [
-  'print',
-  'showOriginal',
-] as const satisfies readonly MailyMailboxMessageAction[];
+  "print",
+  "showOriginal",
+] as const satisfies readonly MailyMailboxMessageAction[]
 
 const HEADER_MESSAGE_ACTIONS = [
-  'favorite',
-  'react',
-] as const satisfies readonly MailyMailboxMessageAction[];
+  "favorite",
+  "react",
+] as const satisfies readonly MailyMailboxMessageAction[]
 
 type MessageActionMetadata = {
-  label: MailyMailboxLabelKey;
-  toolbarLabel?: MailyMailboxLabelKey;
-  icon: (className: string) => React.ReactNode;
-  value?: string | boolean | null;
-  variant?: 'default' | 'destructive';
-};
+  label: MailyMailboxLabelKey
+  toolbarLabel?: MailyMailboxLabelKey
+  icon: (className: string) => React.ReactNode
+  value?: string | boolean | null
+  variant?: "default" | "destructive"
+}
 
 const MESSAGE_ACTION_METADATA: Record<
   MailyMailboxMessageAction,
   MessageActionMetadata
 > = {
   archive: {
-    label: 'actions.archive',
+    label: "actions.archive",
     icon: (className) => <Archive className={className} />,
   },
-  delete: {
-    label: 'actions.delete',
+  restore: {
+    label: "actions.restore",
+    icon: (className) => <Inbox className={className} />,
+  },
+  notSpam: {
+    label: "actions.notSpam",
+    icon: (className) => <MailOpen className={className} />,
+  },
+  deleteForever: {
+    label: "actions.deleteForever",
     icon: (className) => <Trash2 className={className} />,
-    variant: 'destructive',
+    variant: "destructive",
+  },
+  delete: {
+    label: "actions.delete",
+    icon: (className) => <Trash2 className={className} />,
+    variant: "destructive",
   },
   favorite: {
-    label: 'actions.favorite',
+    label: "actions.favorite",
     icon: (className) => <Star className={className} />,
   },
   markUnread: {
-    label: 'actions.markUnread',
+    label: "actions.markUnread",
+    icon: (className) => <MailOpen className={className} />,
+    value: true,
+  },
+  markRead: {
+    label: "actions.markRead",
     icon: (className) => <MailOpen className={className} />,
     value: true,
   },
   blockSender: {
-    label: 'actions.blockSender',
+    label: "actions.blockSender",
     icon: (className) => <Ban className={className} />,
   },
   reportSpam: {
-    label: 'actions.reportSpam',
+    label: "actions.reportSpam",
     icon: (className) => <ShieldAlert className={className} />,
   },
   reportPhishing: {
-    label: 'actions.reportPhishing',
+    label: "actions.reportPhishing",
     icon: (className) => <Flag className={className} />,
   },
   reportIllegal: {
-    label: 'actions.reportIllegal',
+    label: "actions.reportIllegal",
     icon: (className) => <Flag className={className} />,
   },
   filterSimilar: {
-    label: 'actions.filterSimilar',
+    label: "actions.filterSimilar",
     icon: (className) => <Filter className={className} />,
   },
   translate: {
-    label: 'actions.translate',
+    label: "actions.translate",
     icon: (className) => <Languages className={className} />,
   },
   print: {
-    label: 'actions.print',
+    label: "actions.print",
     icon: (className) => <Printer className={className} />,
   },
   download: {
-    label: 'actions.download',
+    label: "actions.download",
     icon: (className) => <Download className={className} />,
   },
   showOriginal: {
-    label: 'actions.showOriginal',
-    toolbarLabel: 'actions.openExternal',
+    label: "actions.showOriginal",
+    toolbarLabel: "actions.openExternal",
     icon: (className) => <CodeIcon className={className} />,
   },
   feedback: {
-    label: 'actions.feedback',
+    label: "actions.feedback",
     icon: (className) => <AlertCircle className={className} />,
   },
   react: {
-    label: 'actions.react',
+    label: "actions.react",
     icon: (className) => <Smile className={className} />,
-    value: 'smile',
+    value: "smile",
   },
-};
+}
 
 function emptyCounts(): MailyMailboxCounts {
   return {
     inbox: 0,
+    allMail: 0,
+    starred: 0,
     sent: 0,
     drafts: 0,
     bounced: 0,
-  };
+    spam: 0,
+    trash: 0,
+  }
 }
 
 function emptyComposeValues(): MailyMailboxComposeValues {
   return {
-    to: '',
-    cc: '',
-    bcc: '',
-    subject: '',
-    text: '',
+    to: "",
+    cc: "",
+    bcc: "",
+    subject: "",
+    text: "",
     html: null,
-  };
+  }
 }
 
 function detailToComposeValues(
   detail: MailyMailboxMessageDetail
 ): MailyMailboxComposeValues {
   return {
-    to: (detail.toAddresses ?? []).join(', '),
-    cc: (detail.ccAddresses ?? []).join(', '),
-    bcc: (detail.bccAddresses ?? []).join(', '),
-    subject: detail.subject ?? '',
-    text: detail.bodyText ?? '',
+    to: (detail.toAddresses ?? []).join(", "),
+    cc: (detail.ccAddresses ?? []).join(", "),
+    bcc: (detail.bccAddresses ?? []).join(", "),
+    subject: detail.subject ?? "",
+    text: detail.bodyText ?? "",
     html: detail.bodyHtml ?? null,
-  };
+    attachments:
+      detail.attachments?.flatMap((attachment) =>
+        attachment.id
+          ? [
+              {
+                id: attachment.id,
+                filename: attachment.filename,
+                contentType: attachment.contentType,
+                size: attachment.size,
+              },
+            ]
+          : []
+      ) ?? [],
+  }
 }
 
 function parseAddresses(value: string): string[] {
   return value
     .split(/[,;\n]+/)
     .map((item) => item.trim())
-    .filter((item) => item.length > 0);
+    .filter((item) => item.length > 0)
 }
 
 export function composeValuesToMailboxDraft(
@@ -491,46 +737,47 @@ export function composeValuesToMailboxDraft(
     text: values.text.length > 0 ? values.text : null,
     html: values.html?.trim() ? values.html : null,
     inReplyTo: inReplyTo ?? null,
-  };
+    attachments: values.attachments?.map((attachment) => ({ ...attachment })),
+  }
 }
 
 function formatRecipients(addrs: string[] | null | undefined): string {
-  return (addrs ?? []).join(', ');
+  return (addrs ?? []).join(", ")
 }
 
 function defaultFormatDate(
   date: string | Date,
-  mode: 'short' | 'long'
+  mode: "short" | "long"
 ): string {
-  const value = typeof date === 'string' ? new Date(date) : date;
-  if (Number.isNaN(value.getTime())) return '';
+  const value = typeof date === "string" ? new Date(date) : date
+  if (Number.isNaN(value.getTime())) return ""
 
-  if (mode === 'short') {
+  if (mode === "short") {
     return new Intl.DateTimeFormat(undefined, {
-      month: 'short',
-      day: 'numeric',
-    }).format(value);
+      month: "short",
+      day: "numeric",
+    }).format(value)
   }
 
   return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(value);
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value)
 }
 
-function subjectWithPrefix(prefix: 'Re:' | 'Fwd:', subject: string | null) {
-  const clean = subject?.trim() || '';
-  if (!clean) return prefix;
+function subjectWithPrefix(prefix: "Re:" | "Fwd:", subject: string | null) {
+  const clean = subject?.trim() || ""
+  if (!clean) return prefix
   return clean.toLowerCase().startsWith(prefix.toLowerCase())
     ? clean
-    : `${prefix} ${clean}`;
+    : `${prefix} ${clean}`
 }
 
 function quotedBody(text: string | null | undefined) {
-  return (text ?? '')
-    .split('\n')
+  return (text ?? "")
+    .split("\n")
     .map((line) => `> ${line}`)
-    .join('\n');
+    .join("\n")
 }
 
 function createReplyComposeValues(
@@ -539,90 +786,113 @@ function createReplyComposeValues(
 ): MailyMailboxComposeValues {
   return {
     to: detail.fromAddress,
-    cc: '',
-    bcc: '',
-    subject: subjectWithPrefix('Re:', detail.subject),
+    cc: "",
+    bcc: "",
+    subject: subjectWithPrefix("Re:", detail.subject),
     text: `\n\n${intro}\n${quotedBody(detail.bodyText)}`,
     html: null,
-  };
+  }
+}
+
+function createReplyAllComposeValues(
+  detail: MailyMailboxMessageDetail,
+  intro: string,
+  ownAddresses: readonly (string | null | undefined)[]
+): MailyMailboxComposeValues {
+  const recipients = getMailboxReplyAllRecipients(detail, ownAddresses)
+  return {
+    ...createReplyComposeValues(detail, intro),
+    to: recipients.to.join(", "),
+    cc: recipients.cc.join(", "),
+  }
 }
 
 function createForwardComposeValues(
   detail: MailyMailboxMessageDetail,
   header: string
 ): MailyMailboxComposeValues {
-  const recipients = formatRecipients(detail.toAddresses);
+  const recipients = formatRecipients(detail.toAddresses)
   return {
-    to: '',
-    cc: '',
-    bcc: '',
-    subject: subjectWithPrefix('Fwd:', detail.subject),
-    text: `\n\n---------- ${header} ----------\nFrom: ${detail.fromAddress}\nTo: ${recipients}\nSubject: ${detail.subject ?? ''}\n\n${detail.bodyText ?? ''}`,
+    to: "",
+    cc: "",
+    bcc: "",
+    subject: subjectWithPrefix("Fwd:", detail.subject),
+    text: `\n\n---------- ${header} ----------\nFrom: ${detail.fromAddress}\nTo: ${recipients}\nSubject: ${detail.subject ?? ""}\n\n${detail.bodyText ?? ""}`,
     html: null,
-  };
+  }
 }
 
 function senderInitial(addr: string): string {
-  return (addr.trim()[0] ?? '?').toUpperCase();
-}
-
-function senderHue(addr: string): number {
-  let h = 0;
-  for (let i = 0; i < addr.length; i += 1) {
-    h = (h * 31 + addr.charCodeAt(i)) >>> 0;
-  }
-  return h % 360;
+  return (addr.trim()[0] ?? "?").toUpperCase()
 }
 
 function interpolate(label: string, vars?: Record<string, string | number>) {
-  if (!vars) return label;
+  if (!vars) return label
   return label.replace(/\{(\w+)\}/g, (_, key: string) =>
     vars[key] === undefined ? `{${key}}` : String(vars[key])
-  );
+  )
 }
 
 function folderIcon(folder: MailyMailboxFolder, className: string) {
   switch (folder) {
-    case 'inbox':
-      return <Inbox className={className} />;
-    case 'sent':
-      return <Send className={className} />;
-    case 'drafts':
-      return <FileText className={className} />;
-    case 'bounced':
-      return <AlertCircle className={className} />;
+    case "inbox":
+      return <Inbox className={className} />
+    case "allMail":
+      return <Archive className={className} />
+    case "starred":
+      return <Star className={className} />
+    case "sent":
+      return <Send className={className} />
+    case "drafts":
+      return <FileText className={className} />
+    case "spam":
+      return <ShieldAlert className={className} />
+    case "trash":
+      return <Trash2 className={className} />
+    case "bounced":
+      return <AlertCircle className={className} />
   }
 }
 
 function errorLabelForAction(action: string): MailyMailboxLabelKey {
   switch (action) {
-    case 'detail':
-      return 'errors.detail';
-    case 'saveDraft':
-      return 'errors.saveDraft';
-    case 'sendDraft':
-      return 'errors.send';
-    case 'discardDraft':
-      return 'errors.discard';
-    case 'messageAction':
-      return 'errors.messageAction';
+    case "detail":
+      return "errors.detail"
+    case "saveDraft":
+      return "errors.saveDraft"
+    case "sendDraft":
+      return "errors.send"
+    case "discardDraft":
+      return "errors.discard"
+    case "messageAction":
+      return "errors.messageAction"
     default:
-      return 'errors.refresh';
+      return "errors.refresh"
   }
 }
 
 export function MailboxView(props: MailyMailboxViewProps) {
+  return (
+    <MailboxSession
+      key={props.recoveryScope ?? props.account?.id ?? "mailbox"}
+      {...props}
+    />
+  )
+}
+
+function MailboxSession(props: MailyMailboxViewProps) {
   const {
     dataSource,
     messageActions = DEFAULT_MESSAGE_ACTIONS,
     labels = defaultMailboxLabels,
     className,
-    initialFolder = 'inbox',
+    initialFolder = "inbox",
+    markReadOnOpen = false,
     pollIntervalMs = DEFAULT_POLL_INTERVAL_MS,
     pageSize = DEFAULT_PAGE_SIZE,
     contactSuggestions = [],
     contactSuggestionLimit = DEFAULT_CONTACT_SUGGESTION_LIMIT,
-    defaultComposeBodyMode = 'plainText',
+    defaultComposeBodyMode = "plainText",
     allowComposeBodyModeSwitch = true,
     composeEditorProps,
     onError,
@@ -630,101 +900,240 @@ export function MailboxView(props: MailyMailboxViewProps) {
     onDraftSaved,
     onMessageAction,
     formatDate = defaultFormatDate,
-  } = props;
+  } = props
+
+  const lifetime = React.useMemo(
+    () => ({ active: true, epoch: 0 }),
+    [dataSource]
+  )
+  React.useLayoutEffect(() => {
+    lifetime.active = true
+    return () => {
+      lifetime.active = false
+      lifetime.epoch += 1
+    }
+  }, [lifetime])
+  const previousDataSource = React.useRef(dataSource)
+  React.useEffect(() => {
+    if (previousDataSource.current !== dataSource) {
+      previousDataSource.current = dataSource
+      if (props.selectedMessageId === undefined) setSelectedId(null)
+      if (props.selectedMessageIds === undefined) setSelectedIds([])
+      composeDraftRef.current = null
+    }
+    setComposeOpen(false)
+    composeDirty.current = false
+    composeOwned.current = false
+    setUndoReceipt(null)
+    setMailboxLabels([])
+    setThread(null)
+    pendingFolderRequest.current = null
+    pendingReaderRequest.current = null
+  }, [dataSource])
+  const captureLifetime = React.useCallback(() => {
+    const epoch = lifetime.epoch
+    return () => lifetime.active && lifetime.epoch === epoch
+  }, [lifetime])
 
   const t = React.useCallback(
     (key: MailyMailboxLabelKey, vars?: Record<string, string | number>) =>
       interpolate(labels[key], vars),
     [labels]
-  );
+  )
   const enabledMessageActions = React.useMemo(
     () =>
       Array.from(new Set(messageActions)).filter(
         (action) =>
           !!dataSource.runMessageAction ||
-          (action === 'showOriginal' && !!dataSource.getMessageSource)
+          (action === "showOriginal" && !!dataSource.getMessageSource)
       ),
     [dataSource.runMessageAction, dataSource.getMessageSource, messageActions]
-  );
+  )
 
-  const [folder, setFolder] = React.useState<MailyMailboxFolder>(initialFolder);
-  const [search, setSearch] = React.useState('');
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const [composeOpen, setComposeOpen] = React.useState(false);
+  const [folder, setFolder] = useControllableState(
+    props.folder,
+    initialFolder,
+    props.onFolderChange
+  )
+  const [search, setSearch] = useControllableState(
+    props.search,
+    props.defaultSearch ?? "",
+    props.onSearchChange
+  )
+  const filtersKey = JSON.stringify(props.searchFilters)
+  const controlledSearchFilters = React.useMemo(
+    () => props.searchFilters,
+    [filtersKey]
+  )
+  const [searchFields, setSearchFields] = useControllableState(
+    controlledSearchFilters,
+    props.defaultSearchFilters ?? {},
+    props.onSearchFiltersChange
+  )
+  const [advancedSearchOpen, setAdvancedSearchOpen] = React.useState(false)
+  const [searchDraft, setSearchDraft] = React.useState<MailyMailboxSearchQuery>(
+    {}
+  )
+  const [searchScope, setSearchScope] = useControllableState(
+    props.searchScope,
+    props.defaultSearchScope ?? "folder",
+    props.onSearchScopeChange
+  )
+  const globalSearch = searchScope === "allMail"
+  const setGlobalSearch = React.useCallback(
+    (value: boolean) => setSearchScope(value ? "allMail" : "folder"),
+    [setSearchScope]
+  )
+  const [selectedLabelId, setSelectedLabelId] = useControllableState(
+    props.selectedLabelId,
+    props.defaultSelectedLabelId ?? null,
+    props.onSelectedLabelIdChange
+  )
+  const [mailboxLabels, setMailboxLabels] = React.useState<MailyMailboxLabel[]>(
+    []
+  )
+  const [labelForm, setLabelForm] = React.useState<{
+    mode: "create" | "rename" | "delete"
+    label?: MailyMailboxLabel
+  } | null>(null)
+  const [labelName, setLabelName] = React.useState("")
+  const [emptyConfirmOpen, setEmptyConfirmOpen] = React.useState(false)
+  const [selectedIds, setSelectedIds] = useControllableState(
+    props.selectedMessageIds,
+    props.defaultSelectedMessageIds ?? [],
+    props.onSelectedMessageIdsChange
+  )
+  const [undoReceipt, setUndoReceipt] = React.useState<{
+    token: string
+    expiresAt?: string | number | Date
+  } | null>(null)
+  const [selectedId, setSelectedId] = useControllableState(
+    props.selectedMessageId,
+    props.defaultSelectedMessageId ?? null,
+    props.onSelectedMessageIdChange
+  )
+  const [composeOpen, setComposeOpen] = React.useState(false)
   const [composeDraftId, setComposeDraftId] = React.useState<string | null>(
     null
-  );
+  )
   const [composeSeed, setComposeSeed] =
-    React.useState<MailyMailboxComposeValues | null>(null);
+    React.useState<MailyMailboxComposeValues | null>(null)
   const [composeInReplyTo, setComposeInReplyTo] = React.useState<string | null>(
     null
-  );
+  )
 
-  const [counts, setCounts] = React.useState<MailyMailboxCounts>(emptyCounts);
+  const [counts, setCounts] = React.useState<MailyMailboxCounts>(emptyCounts)
   const [messages, setMessages] = React.useState<MailyMailboxMessageList>({
     items: [],
     nextCursor: null,
-  });
+  })
+  const [thread, setThread] = React.useState<MailyMailboxThread | null>(null)
   const [detail, setDetail] = React.useState<MailyMailboxMessageDetail | null>(
     null
-  );
+  )
 
-  const [messagesLoading, setMessagesLoading] = React.useState(true);
-  const [detailLoading, setDetailLoading] = React.useState(false);
-  const [refreshing, setRefreshing] = React.useState(false);
-  const composeLock = React.useRef(false);
-  const composeRevision = React.useRef<string | undefined>(undefined);
-  const pendingSendRef = React.useRef<string | null>(null);
-  const recoveryUnavailableRef = React.useRef(false);
-  const [sendUnresolved, setSendUnresolved] = React.useState(false);
+  const [messagesLoading, setMessagesLoading] = React.useState(true)
+  const [detailLoading, setDetailLoading] = React.useState(false)
+  const [refreshing, setRefreshing] = React.useState(false)
+  const composeLock = React.useRef(false)
+  const composeDirty = React.useRef(false)
+  const composeOwned = React.useRef(false)
+  const pendingFolderRequest = React.useRef<{
+    folder: MailyMailboxFolder
+    labelId: string | null
+  } | null>(null)
+  const pendingReaderRequest = React.useRef<MailyMailboxMessageRow | null>(null)
+  const [pendingNavigation, setPendingNavigation] = React.useState<
+    (() => void) | null
+  >(null)
+  const allowComposeNavigation = (navigate: () => void) => {
+    if (!composeDirty.current) return true
+    setPendingNavigation(() => navigate)
+    return false
+  }
+  const composeRevision = React.useRef<string | undefined>(undefined)
+  const pendingSendRef = React.useRef<string | null>(null)
+  const recoveryUnavailableRef = React.useRef(false)
+  const [sendUnresolved, setSendUnresolved] = React.useState(false)
   const recoveryKey = props.account?.id
-    ? `maily:pending-send:${props.account.id}`
-    : null;
+    ? `maily:pending-send:${props.recoveryScope ?? props.account.id}`
+    : null
   React.useEffect(() => {
-    if (!recoveryKey) return;
-    let draftId: string | null = null;
+    if (!recoveryKey) return
+    let draftId: string | null = null
     try {
-      draftId = window.sessionStorage.getItem(recoveryKey);
+      const legacyKey = props.account?.id
+        ? `maily:pending-send:${props.account.id}`
+        : null
+      if (
+        legacyKey &&
+        legacyKey !== recoveryKey &&
+        window.sessionStorage.getItem(legacyKey)
+      ) {
+        // An older receipt has no actor identity. Keep the flow blocked until
+        // its original operation is reconciled; never resend as a new actor.
+        recoveryUnavailableRef.current = true
+        setSendUnresolved(true)
+        setErrorKey(errorLabelForAction("sendDraft"))
+        return
+      }
+      draftId = window.sessionStorage.getItem(recoveryKey)
     } catch {
-      recoveryUnavailableRef.current = true;
-      setSendUnresolved(true);
-      setErrorKey(errorLabelForAction('sendDraft'));
+      recoveryUnavailableRef.current = true
+      setSendUnresolved(true)
+      setErrorKey(errorLabelForAction("sendDraft"))
     }
     if (draftId) {
-      pendingSendRef.current = draftId;
-      composeDraftRef.current = draftId;
-      setComposeDraftId(draftId);
-      setSelectedId(draftId);
-      setComposeOpen(true);
-      setSendUnresolved(true);
+      pendingSendRef.current = draftId
+      composeDraftRef.current = draftId
+      setComposeDraftId(draftId)
+      setSelectedId(draftId)
+      setComposeOpen(true)
+      setSendUnresolved(true)
     }
-  }, [recoveryKey]);
-  const composeDraftRef = React.useRef<string | null>(null);
-  const messagesGeneration = React.useRef(0);
-  const countsGeneration = React.useRef(0);
+  }, [recoveryKey, props.account?.id])
+  const composeDraftRef = React.useRef<string | null>(null)
+  const messagesGeneration = React.useRef(0)
+  const pageCursorsRef = React.useRef<
+    Array<{ cursor?: string; start: number }>
+  >([{ start: 1 }])
+  const pageIndexRef = React.useRef(0)
+  const [pageIndex, setPageIndex] = React.useState(0)
+  const pageChangeLock = React.useRef(false)
+  const hasPreviousPage = pageIndex > 0
+  const pageStart = messages.items.length
+    ? (pageCursorsRef.current[pageIndex]?.start ?? 1)
+    : 0
+  const pageEnd = messages.items.length
+    ? pageStart + messages.items.length - 1
+    : 0
+  const pageTotal = messages.total
+  const countsGeneration = React.useRef(0)
   React.useEffect(
     () => () => {
-      messagesGeneration.current += 1;
-      countsGeneration.current += 1;
+      messagesGeneration.current += 1
+      countsGeneration.current += 1
     },
     []
-  );
-  const [saving, setSaving] = React.useState(false);
-  const [sending, setSending] = React.useState(false);
-  const [discarding, setDiscarding] = React.useState(false);
+  )
+  const [saving, setSaving] = React.useState(false)
+  const [sending, setSending] = React.useState(false)
+  const [discarding, setDiscarding] = React.useState(false)
+  const [loadingMore, setLoadingMore] = React.useState(false)
+  const [emptyingFolder, setEmptyingFolder] = React.useState(false)
   const [messageActionPending, setMessageActionPending] =
-    React.useState<MailyMailboxMessageAction | null>(null);
+    React.useState<MailyMailboxMessageAction | null>(null)
   const [errorKey, setErrorKey] = React.useState<MailyMailboxLabelKey | null>(
     null
-  );
+  )
 
   const reportError = React.useCallback(
     (error: unknown, action: string) => {
-      setErrorKey(errorLabelForAction(action));
-      onError?.(error, action);
+      setErrorKey(errorLabelForAction(action))
+      onError?.(error, action)
     },
     [onError]
-  );
+  )
 
   const loadContactSuggestions = React.useCallback(
     async (q: string) => {
@@ -732,142 +1141,471 @@ export function MailboxView(props: MailyMailboxViewProps) {
         return dataSource.listContactSuggestions({
           q,
           limit: contactSuggestionLimit,
-        });
+        })
       }
 
       return filterMailboxContactSuggestions(
         contactSuggestions,
         q,
         contactSuggestionLimit
-      );
+      )
     },
     [contactSuggestionLimit, contactSuggestions, dataSource]
-  );
+  )
 
   const refreshCounts = React.useCallback(async () => {
+    const isCurrent = captureLifetime()
+    if (!isCurrent()) return
     if (!dataSource.getCounts) {
-      setCounts(emptyCounts());
-      return;
+      setCounts(emptyCounts())
+      return
     }
-    const generation = ++countsGeneration.current;
-    const next = await dataSource.getCounts();
-    if (generation !== countsGeneration.current) return;
-    setCounts({ ...emptyCounts(), ...next });
-  }, [dataSource]);
+    const generation = ++countsGeneration.current
+    const next = await dataSource.getCounts()
+    if (!isCurrent()) return
+    if (generation !== countsGeneration.current) return
+    setCounts({ ...emptyCounts(), ...next })
+  }, [captureLifetime, dataSource])
 
   const refreshMessages = React.useCallback(
-    async (folderOverride?: MailyMailboxFolder) => {
-      const generation = ++messagesGeneration.current;
-      const nextFolder = folderOverride ?? folder;
-      const q = search.trim();
-      const next = await dataSource.listMessages({
-        folder: nextFolder,
-        q: q.length > 0 ? q : undefined,
-        limit: pageSize,
-      });
-      if (generation === messagesGeneration.current) setMessages(next);
+    async (preservePages = false, folderOverride?: MailyMailboxFolder) => {
+      const isCurrent = captureLifetime()
+      if (!isCurrent()) return
+      const generation = ++messagesGeneration.current
+      const nextFolder =
+        (props.folder === undefined ? folderOverride : undefined) ??
+        (globalSearch ? "allMail" : folder)
+      const keepPages =
+        preservePages && nextFolder === (globalSearch ? "allMail" : folder)
+      if (!keepPages) {
+        pageCursorsRef.current = [{ start: 1 }]
+        pageIndexRef.current = 0
+        setPageIndex(0)
+        // An active draft owns its detail hydration independently of list
+        // pagination, including a recovered send before the first list loads.
+      }
+      let currentIndex = pageIndexRef.current
+      const structuredSearch: MailyMailboxSearchQuery = {
+        ...searchFields,
+        text: search.trim() || undefined,
+        labelId: selectedLabelId ?? searchFields.labelId,
+      }
+      const q = buildMailboxSearchQuery({
+        text: structuredSearch.text,
+        from: structuredSearch.from,
+        to: structuredSearch.to,
+        subject: structuredSearch.subject,
+        after: structuredSearch.after,
+        before: structuredSearch.before,
+        unread: structuredSearch.unread,
+        hasAttachments: structuredSearch.hasAttachments,
+      })
+      // Rebuild the cursor chain after mutations/polling: a host cursor can
+      // depend on the preceding page. Keep only the requested page visible.
+      const refreshedPages: Array<{ cursor?: string; start: number }> = [
+        { start: 1 },
+      ]
+      let cursor: string | undefined
+      let start = 1
+      let total: number | undefined
+      for (let index = 0; index <= currentIndex; index += 1) {
+        const page = await dataSource.listMessages({
+          folder: nextFolder,
+          q: q || undefined,
+          search: structuredSearch,
+          labelId: selectedLabelId ?? undefined,
+          cursor,
+          limit: pageSize,
+        })
+        if (!isCurrent() || generation !== messagesGeneration.current) return
+        total = page.total ?? total
+        const atTarget = index === currentIndex
+        if (atTarget || !page.nextCursor) {
+          if (!page.items.length && index > 0) {
+            currentIndex = index - 1
+            index = -1
+            cursor = undefined
+            start = 1
+            refreshedPages.splice(1)
+            continue
+          }
+          if (index !== pageIndexRef.current) {
+            if (props.selectedMessageIds === undefined) setSelectedIds([])
+            if (
+              props.selectedMessageId === undefined &&
+              !composeDraftRef.current
+            )
+              setSelectedId(null)
+          }
+          pageIndexRef.current = index
+          pageCursorsRef.current = refreshedPages
+          setPageIndex(index)
+          setMessages({ ...page, total })
+          return
+        }
+        cursor = page.nextCursor ?? undefined
+        start += page.items.length
+        refreshedPages.push({ cursor, start })
+      }
     },
-    [dataSource, folder, pageSize, search]
-  );
+    [
+      captureLifetime,
+      dataSource,
+      folder,
+      globalSearch,
+      pageSize,
+      search,
+      searchFields,
+      selectedLabelId,
+    ]
+  )
 
   const refreshMailbox = React.useCallback(
     async (folderOverride?: MailyMailboxFolder) => {
-      setRefreshing(true);
+      const isCurrent = captureLifetime()
+      if (!isCurrent()) return
+      setRefreshing(true)
       try {
-        await Promise.all([refreshCounts(), refreshMessages(folderOverride)]);
-        setErrorKey(null);
+        await Promise.all([
+          refreshCounts(),
+          refreshMessages(true, folderOverride),
+        ])
+        if (!isCurrent()) return
+        setErrorKey(null)
       } catch (error) {
-        reportError(error, 'refresh');
+        if (!isCurrent()) return
+        reportError(error, "refresh")
       } finally {
-        setRefreshing(false);
-        setMessagesLoading(false);
+        if (isCurrent()) setRefreshing(false)
+        if (isCurrent()) setMessagesLoading(false)
       }
     },
-    [refreshCounts, refreshMessages, reportError]
-  );
+    [captureLifetime, refreshCounts, refreshMessages, reportError]
+  )
+
+  const changePage = React.useCallback(
+    async (direction: "previous" | "next") => {
+      if (pageChangeLock.current || messagesLoading) return
+      const currentIndex = pageIndexRef.current
+      const nextIndex =
+        direction === "next" ? currentIndex + 1 : currentIndex - 1
+      if (nextIndex < 0 || (direction === "next" && !messages.nextCursor))
+        return
+      const isCurrent = captureLifetime()
+      if (!isCurrent()) return
+      const generation = ++messagesGeneration.current
+      const query: MailyMailboxSearchQuery = {
+        ...searchFields,
+        text: search.trim() || undefined,
+        labelId: selectedLabelId ?? searchFields.labelId,
+      }
+      const q = buildMailboxSearchQuery(query)
+      const target =
+        direction === "next"
+          ? { cursor: messages.nextCursor ?? undefined, start: pageEnd + 1 }
+          : pageCursorsRef.current[nextIndex]
+      pageChangeLock.current = true
+      setLoadingMore(true)
+      try {
+        const page = await dataSource.listMessages({
+          folder: globalSearch ? "allMail" : folder,
+          q: q || undefined,
+          search: query,
+          labelId: selectedLabelId ?? undefined,
+          cursor: target?.cursor,
+          limit: pageSize,
+        })
+        if (!isCurrent() || generation !== messagesGeneration.current) return
+        if (!page.items.length && direction === "next") {
+          setMessages((current) => ({
+            ...current,
+            nextCursor: null,
+            total: page.total ?? current.total,
+          }))
+          return
+        }
+        pageCursorsRef.current = [
+          ...pageCursorsRef.current.slice(0, nextIndex),
+          target,
+        ]
+        pageIndexRef.current = nextIndex
+        setPageIndex(nextIndex)
+        if (props.selectedMessageIds === undefined) setSelectedIds([])
+        if (props.selectedMessageId === undefined && !composeDraftRef.current)
+          setSelectedId(null)
+        setMessages({ ...page, total: page.total ?? messages.total })
+      } catch (error) {
+        if (isCurrent() && generation === messagesGeneration.current)
+          reportError(error, "refresh")
+      } finally {
+        pageChangeLock.current = false
+        if (isCurrent()) setLoadingMore(false)
+      }
+    },
+    [
+      captureLifetime,
+      dataSource,
+      folder,
+      globalSearch,
+      messagesLoading,
+      messages.nextCursor,
+      messages.total,
+      pageEnd,
+      pageSize,
+      reportError,
+      search,
+      searchFields,
+      selectedLabelId,
+    ]
+  )
 
   React.useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
+    if (!dataSource.listLabels) {
+      setMailboxLabels([])
+      return
+    }
+    Promise.resolve(dataSource.listLabels())
+      .then((next) => {
+        if (!cancelled) setMailboxLabels(next)
+      })
+      .catch((error) => {
+        if (!cancelled) reportError(error, "messageAction")
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [dataSource, reportError])
+
+  React.useEffect(() => {
+    let cancelled = false
 
     async function run() {
-      setMessagesLoading(true);
+      setMessagesLoading(true)
       try {
-        await Promise.all([refreshCounts(), refreshMessages()]);
+        await Promise.all([refreshCounts(), refreshMessages()])
       } catch (error) {
         if (!cancelled) {
-          reportError(error, 'refresh');
-          setMessages({ items: [], nextCursor: null });
+          reportError(error, "refresh")
+          setMessages({ items: [], nextCursor: null })
         }
       } finally {
-        if (!cancelled) setMessagesLoading(false);
+        if (!cancelled) setMessagesLoading(false)
       }
     }
 
-    run();
+    run()
     if (pollIntervalMs <= 0)
       return () => {
-        cancelled = true;
-      };
+        cancelled = true
+      }
 
-    const id = window.setInterval(run, pollIntervalMs);
+    const id = window.setInterval(() => {
+      Promise.all([refreshCounts(), refreshMessages(true)]).catch((error) => {
+        if (!cancelled) reportError(error, "refresh")
+      })
+    }, pollIntervalMs)
     return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [pollIntervalMs, refreshCounts, refreshMessages, reportError]);
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [pollIntervalMs, refreshCounts, refreshMessages, reportError])
+
+  const [detailRevision, invalidateDetail] = React.useReducer(
+    (n: number) => n + 1,
+    0
+  )
+  const clearReaderAfterMutation = () => {
+    setSelectedId(null)
+    setDetail(null)
+    // A host may keep the same selected ID after a mutation. Re-read its
+    // actual backend state rather than overriding that controlled selection.
+    if (props.selectedMessageId != null) invalidateDetail()
+  }
 
   React.useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     async function run() {
       if (!selectedId) {
-        setDetail(null);
-        return;
+        setDetail(null)
+        setThread(null)
+        return
       }
 
-      setDetailLoading(true);
+      setDetailLoading(true)
+      setDetail(null)
       try {
-        const next = await dataSource.getMessage(selectedId);
+        const next = await dataSource.getMessage(selectedId)
         if (!cancelled) {
-          if (composeDraftRef.current === next.id)
-            composeRevision.current = next._revision;
-          setDetail(next);
-          setErrorKey(null);
+          // Parent-accepted selection may point outside the loaded page. Hydrate
+          // an unopened draft, but never replace an owned dirty/send session.
+          if (
+            !composeOpen &&
+            !composeDirty.current &&
+            !composeLock.current &&
+            !pendingSendRef.current &&
+            !recoveryUnavailableRef.current &&
+            composeDraftRef.current !== next.id
+          ) {
+            const isDraft = next.status === "draft"
+            composeDraftRef.current = isDraft ? next.id : null
+            composeOwned.current = false
+            setComposeSession((session) => session + 1)
+            setComposeDraftId(isDraft ? next.id : null)
+            setComposeSeed(null)
+            setComposeInReplyTo(isDraft ? (next.inReplyTo ?? null) : null)
+            setComposeOpen(isDraft)
+          }
+          if (composeDraftRef.current === next.id && !composeOwned.current) {
+            composeRevision.current = next._revision
+            setComposeInReplyTo(next.inReplyTo ?? null)
+            composeOwned.current = true
+          }
+          setDetail(next)
+          setErrorKey(null)
         }
       } catch (error) {
         if (!cancelled) {
-          setDetail(null);
-          reportError(error, 'detail');
+          setDetail(null)
+          reportError(error, "detail")
         }
       } finally {
-        if (!cancelled) setDetailLoading(false);
+        if (!cancelled) setDetailLoading(false)
       }
     }
 
-    run();
+    run()
     return () => {
-      cancelled = true;
-    };
-  }, [dataSource, reportError, selectedId]);
+      cancelled = true
+    }
+  }, [dataSource, reportError, selectedId, detailRevision])
 
-  const selectFolder = (next: MailyMailboxFolder) => {
+  const selectedRow = messages.items.find((row) => row.id === selectedId)
+  const selectedThreadId =
+    selectedRow?.threadId ??
+    (detail?.id === selectedId ? detail.threadId : undefined)
+  React.useEffect(() => {
+    let cancelled = false
+    const threadId = selectedThreadId
+    setThread(null)
+    if (!threadId || !dataSource.getThread) {
+      return
+    }
+    Promise.resolve(dataSource.getThread(threadId))
+      .then((value) => {
+        if (!cancelled && value.threadId === threadId) setThread(value)
+      })
+      .catch((error) => {
+        if (!cancelled) reportError(error, "detail")
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [dataSource, reportError, selectedId, selectedThreadId])
+
+  const selectFolder = (
+    next: MailyMailboxFolder,
+    labelId: string | null = null,
+    acceptedByHost = false
+  ) => {
     if (
       composeLock.current ||
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    messagesGeneration.current += 1;
-    composeDraftRef.current = null;
-    setFolder(next);
-    setSelectedId(null);
-    setComposeOpen(false);
-    setComposeDraftId(null);
-    setComposeSeed(null);
-    setComposeInReplyTo(null);
-  };
+      return
+    if (!allowComposeNavigation(() => selectFolder(next, labelId))) return
+    if (props.folder !== undefined && next !== folder) {
+      pendingFolderRequest.current = { folder: next, labelId }
+      setFolder(next)
+      return
+    }
+    composeDirty.current = false
+    composeOwned.current = false
+    messagesGeneration.current += 1
+    composeDraftRef.current = null
+    setFolder(next)
+    if (!acceptedByHost || props.searchScope === undefined)
+      setGlobalSearch(false)
+    if (!acceptedByHost || props.search === undefined) setSearch("")
+    if (!acceptedByHost || props.searchFilters === undefined)
+      setSearchFields({})
+    setAdvancedSearchOpen(false)
+    setEmptyConfirmOpen(false)
+    if (
+      !acceptedByHost ||
+      props.selectedLabelId === undefined ||
+      labelId !== null
+    )
+      setSelectedLabelId(labelId)
+    if (!acceptedByHost || props.selectedMessageIds === undefined)
+      setSelectedIds([])
+    if (!acceptedByHost || props.selectedMessageId === undefined)
+      setSelectedId(null)
+    setComposeOpen(false)
+    setComposeDraftId(null)
+    setComposeSeed(null)
+    setComposeInReplyTo(null)
+  }
 
-  const [composeSession, setComposeSession] = React.useState(0);
+  const previousControlledFolder = React.useRef(folder)
+  React.useEffect(() => {
+    if (previousControlledFolder.current === folder) return
+    previousControlledFolder.current = folder
+    if (props.folder === undefined) return
+    const request = pendingFolderRequest.current
+    pendingFolderRequest.current = null
+    if (request?.folder === folder) {
+      selectFolder(folder, request.labelId, true)
+      return
+    }
+    // External navigation updates the list without discarding a live composer.
+    if (props.search === undefined) setSearch("")
+    if (props.searchFilters === undefined) setSearchFields({})
+    if (props.searchScope === undefined) setGlobalSearch(false)
+    if (props.selectedLabelId === undefined) setSelectedLabelId(null)
+  }, [folder])
+
+  const committedSearchKey = JSON.stringify([search, searchFields])
+  const previousControlledSearch = React.useRef(committedSearchKey)
+  React.useEffect(() => {
+    if (previousControlledSearch.current === committedSearchKey) return
+    previousControlledSearch.current = committedSearchKey
+    if (props.search === undefined && props.searchFilters === undefined) return
+    if (props.searchScope === undefined) {
+      setGlobalSearch(
+        !!search.trim() || Object.values(searchFields).some(Boolean)
+      )
+    }
+    if (props.selectedLabelId === undefined) setSelectedLabelId(null)
+  }, [committedSearchKey])
+
+  const queryKey = JSON.stringify([
+    folder,
+    globalSearch,
+    search,
+    searchFields,
+    selectedLabelId,
+  ])
+  const previousQuery = React.useRef(queryKey)
+  React.useEffect(() => {
+    if (previousQuery.current !== queryKey) {
+      previousQuery.current = queryKey
+      if (props.selectedMessageIds === undefined) setSelectedIds([])
+      if (props.selectedMessageId === undefined && !composeDraftRef.current)
+        setSelectedId(null)
+    }
+    setEmptyConfirmOpen(false)
+  }, [
+    queryKey,
+    props.selectedMessageIds,
+    props.selectedMessageId,
+    setSelectedIds,
+    setSelectedId,
+  ])
+
+  const [composeSession, setComposeSession] = React.useState(0)
 
   const selectMessage = (row: MailyMailboxMessageRow) => {
     if (
@@ -875,25 +1613,39 @@ export function MailboxView(props: MailyMailboxViewProps) {
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    if (composeOpen && composeDraftId === row.id) return;
-    setComposeSession((session) => session + 1);
-    composeDraftRef.current = row.status === 'draft' ? row.id : null;
-    composeRevision.current =
-      row.status === 'draft' ? row._revision : undefined;
-    setSelectedId(row.id);
-    if (row.status === 'draft') {
-      setComposeDraftId(row.id);
-      setComposeSeed(null);
-      setComposeInReplyTo(null);
-      setComposeOpen(true);
-      return;
+      return
+    if (composeOpen && composeDraftId === row.id) return
+    if (!allowComposeNavigation(() => selectMessage(row))) return
+    if (props.selectedMessageId !== undefined && row.id !== selectedId) {
+      pendingReaderRequest.current = row
+      setSelectedId(row.id)
+      return
     }
-    setComposeOpen(false);
-    setComposeDraftId(null);
-    setComposeSeed(null);
-    setComposeInReplyTo(null);
-  };
+    composeDirty.current = false
+    composeOwned.current = false
+    setComposeSession((session) => session + 1)
+    composeDraftRef.current = row.status === "draft" ? row.id : null
+    composeRevision.current = row.status === "draft" ? row._revision : undefined
+    setSelectedId(row.id)
+    if (row.status === "draft") {
+      setComposeDraftId(row.id)
+      setComposeSeed(null)
+      setComposeInReplyTo(null)
+      setComposeOpen(true)
+      return
+    }
+    setComposeOpen(false)
+    setComposeDraftId(null)
+    setComposeSeed(null)
+    setComposeInReplyTo(null)
+  }
+
+  React.useEffect(() => {
+    const requested = pendingReaderRequest.current
+    if (!requested || requested.id !== selectedId) return
+    pendingReaderRequest.current = null
+    selectMessage(requested)
+  }, [selectedId])
 
   const openNewDraft = () => {
     if (
@@ -901,180 +1653,215 @@ export function MailboxView(props: MailyMailboxViewProps) {
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    setComposeSession((session) => session + 1);
-    composeDraftRef.current = null;
-    setSelectedId(null);
-    setDetail(null);
-    setComposeDraftId(null);
-    setComposeSeed(null);
-    setComposeInReplyTo(null);
-    setComposeOpen(true);
-  };
+      return
+    if (!allowComposeNavigation(openNewDraft)) return
+    composeDirty.current = false
+    composeOwned.current = false
+    setComposeSession((session) => session + 1)
+    composeDraftRef.current = null
+    setSelectedId(null)
+    setDetail(null)
+    setComposeDraftId(null)
+    setComposeSeed(null)
+    setComposeInReplyTo(null)
+    setComposeOpen(true)
+  }
 
-  const draftInReplyTo =
-    composeDraftId && detail?.id === composeDraftId
-      ? (detail.inReplyTo ?? null)
-      : composeInReplyTo;
+  const draftInReplyTo = composeInReplyTo
 
-  const composeHydrated = !composeDraftId || detail?.id === composeDraftId;
+  const composeHydrated =
+    !composeDraftId || detail?.id === composeDraftId || composeOwned.current
 
-  const saveDraft = async (values: MailyMailboxComposeValues) => {
-    if (!composeHydrated) return;
-    const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
-    draft.revision = composeRevision.current;
+  const saveDraft = async (
+    values: MailyMailboxComposeValues
+  ): Promise<boolean> => {
+    const isCurrent = captureLifetime()
+    if (!isCurrent()) return false
+    if (!composeHydrated) return false
+    const draft = composeValuesToMailboxDraft(values, draftInReplyTo)
+    draft.revision = composeRevision.current
     if (
       composeLock.current ||
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    composeLock.current = true;
-    setSaving(true);
+      return false
+    composeLock.current = true
+    setSaving(true)
     try {
-      if (composeDraftId) {
-        const saved = await dataSource.updateDraft(composeDraftId, draft);
-        composeRevision.current = saved._revision;
-        onDraftSaved?.(composeDraftId);
+      const currentDraftId = composeDraftRef.current ?? composeDraftId
+      if (currentDraftId) {
+        const saved = await dataSource.updateDraft(currentDraftId, draft)
+        if (!isCurrent()) return true
+        composeRevision.current = saved._revision
+        onDraftSaved?.(currentDraftId)
       } else {
-        const created = await dataSource.createDraft(draft);
-        const createdId = created.id;
-        composeRevision.current = created._revision;
-        composeDraftRef.current = createdId;
-        setComposeDraftId(createdId);
-        setSelectedId(createdId);
-        setFolder('drafts');
-        onDraftSaved?.(createdId);
+        const created = await dataSource.createDraft(draft)
+        if (!isCurrent()) return true
+        const createdId = created.id
+        composeOwned.current = true
+        composeRevision.current = created._revision
+        composeDraftRef.current = createdId
+        setComposeDraftId(createdId)
+        setSelectedId(createdId)
+        setFolder("drafts")
+        onDraftSaved?.(createdId)
       }
-      await refreshMailbox(composeDraftId ? undefined : 'drafts');
-      setErrorKey(null);
+      await refreshMailbox(composeDraftId ? undefined : "drafts")
+      if (!isCurrent()) return false
+      setErrorKey(null)
+      return true
     } catch (error) {
-      reportError(error, 'saveDraft');
+      if (!isCurrent()) return false
+      reportError(error, "saveDraft")
+      return false
     } finally {
-      composeLock.current = false;
-      setSaving(false);
+      composeLock.current = false
+      if (isCurrent()) setSaving(false)
     }
-  };
+  }
 
-  const sendDraft = async (values: MailyMailboxComposeValues) => {
-    if (!composeHydrated && !pendingSendRef.current) return;
-    const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
-    draft.revision = composeRevision.current;
-    if (composeLock.current) return;
-    composeLock.current = true;
-    let draftId = composeDraftRef.current ?? composeDraftId;
-    setSending(true);
+  const sendDraft = async (
+    values: MailyMailboxComposeValues,
+    onPrepared?: () => void
+  ) => {
+    const isCurrent = captureLifetime()
+    if (!isCurrent()) return
+    if (!composeHydrated && !pendingSendRef.current) return
+    const draft = composeValuesToMailboxDraft(values, draftInReplyTo)
+    draft.revision = composeRevision.current
+    if (composeLock.current) return
+    composeLock.current = true
+    let draftId = composeDraftRef.current ?? composeDraftId
+    setSending(true)
     try {
       if (recoveryUnavailableRef.current)
-        throw new Error('errors.idempotency.storage-unavailable');
+        throw new Error("errors.idempotency.storage-unavailable")
       if (!recoveryKey)
-        throw new Error('errors.idempotency.storage-unavailable');
-      const storageProbe = `${recoveryKey}:probe`;
-      window.sessionStorage.setItem(storageProbe, '1');
-      if (window.sessionStorage.getItem(storageProbe) !== '1')
-        throw new Error('errors.idempotency.storage-unavailable');
-      window.sessionStorage.removeItem(storageProbe);
+        throw new Error("errors.idempotency.storage-unavailable")
+      const storageProbe = `${recoveryKey}:probe`
+      window.sessionStorage.setItem(storageProbe, "1")
+      if (window.sessionStorage.getItem(storageProbe) !== "1")
+        throw new Error("errors.idempotency.storage-unavailable")
+      window.sessionStorage.removeItem(storageProbe)
       if (pendingSendRef.current) {
-        draftId = pendingSendRef.current;
+        draftId = pendingSendRef.current
       } else if (draftId) {
-        const saved = await dataSource.updateDraft(draftId, draft);
-        composeRevision.current = saved._revision;
+        const saved = await dataSource.updateDraft(draftId, draft)
+        composeRevision.current = saved._revision
       } else {
-        const created = await dataSource.createDraft(draft);
-        draftId = created.id;
-        composeRevision.current = created._revision;
-        composeDraftRef.current = draftId;
-        setComposeDraftId(draftId);
-        setSelectedId(draftId);
+        const created = await dataSource.createDraft(draft)
+        draftId = created.id
+        composeRevision.current = created._revision
+        composeDraftRef.current = draftId
+        if (isCurrent()) {
+          setComposeDraftId(draftId)
+          setSelectedId(draftId)
+        }
       }
+
+      onPrepared?.()
 
       // Persist the actual draft before send: its create receipt is already complete.
       // A reload must recover this draft rather than create another message.
       if (!recoveryKey)
-        throw new Error('errors.idempotency.storage-unavailable');
-      window.sessionStorage.setItem(recoveryKey, draftId);
+        throw new Error("errors.idempotency.storage-unavailable")
+      window.sessionStorage.setItem(recoveryKey, draftId)
       if (window.sessionStorage.getItem(recoveryKey) !== draftId)
-        throw new Error('errors.idempotency.storage-unavailable');
-      pendingSendRef.current = draftId;
-      setSendUnresolved(true);
-      const result = await dataSource.sendDraft(draftId);
-      pendingSendRef.current = null;
+        throw new Error("errors.idempotency.storage-unavailable")
+      pendingSendRef.current = draftId
+      if (!isCurrent()) return
+      setSendUnresolved(true)
+      const result = await dataSource.sendDraft(draftId)
+      if (!isCurrent()) return
+      pendingSendRef.current = null
       if (recoveryKey) {
         try {
-          window.sessionStorage.removeItem(recoveryKey);
+          window.sessionStorage.removeItem(recoveryKey)
         } catch {
+          if (!isCurrent()) return
           /* In-page recovery remains available. */
         }
       }
-      setSendUnresolved(false);
-      onSent?.(result);
-      setComposeOpen(false);
-      setComposeDraftId(null);
-      setComposeSeed(null);
-      setComposeInReplyTo(null);
-      setSelectedId(null);
-      setFolder('sent');
-      await refreshMailbox('sent');
-      setErrorKey(null);
+      setSendUnresolved(false)
+      onSent?.(result)
+      setComposeOpen(false)
+      setComposeDraftId(null)
+      setComposeSeed(null)
+      setComposeInReplyTo(null)
+      clearReaderAfterMutation()
+      setFolder("sent")
+      await refreshMailbox("sent")
+      if (!isCurrent()) return
+      setErrorKey(null)
     } catch (error) {
-      reportError(error, 'sendDraft');
+      if (!isCurrent()) return
+      reportError(error, "sendDraft")
     } finally {
-      composeLock.current = false;
-      setSending(false);
+      composeLock.current = false
+      if (isCurrent()) setSending(false)
     }
-  };
+  }
 
   const discardDraft = async () => {
+    const isCurrent = captureLifetime()
+    if (!isCurrent()) return
     if (
       composeLock.current ||
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    composeLock.current = true;
-    setDiscarding(true);
+      return
+    composeLock.current = true
+    setDiscarding(true)
     try {
       if (composeDraftId) {
-        await dataSource.discardDraft(composeDraftId);
+        await dataSource.discardDraft(composeDraftId)
+        if (!isCurrent()) return
       }
-      setComposeOpen(false);
-      setComposeDraftId(null);
-      setComposeSeed(null);
-      setComposeInReplyTo(null);
-      setSelectedId(null);
-      await refreshMailbox();
-      setErrorKey(null);
+      setComposeOpen(false)
+      setComposeDraftId(null)
+      setComposeSeed(null)
+      setComposeInReplyTo(null)
+      clearReaderAfterMutation()
+      await refreshMailbox()
+      if (!isCurrent()) return
+      setErrorKey(null)
     } catch (error) {
-      reportError(error, 'discardDraft');
+      if (!isCurrent()) return
+      reportError(error, "discardDraft")
     } finally {
-      composeLock.current = false;
-      setDiscarding(false);
+      composeLock.current = false
+      if (isCurrent()) setDiscarding(false)
     }
-  };
+  }
 
-  const openReply = (message: MailyMailboxMessageDetail) => {
+  const openReply = (message: MailyMailboxMessageDetail, replyAll = false) => {
     if (
       composeLock.current ||
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    setComposeSession((session) => session + 1);
-    composeDraftRef.current = null;
-    const date = formatDate(message.createdAt, 'long');
-    setSelectedId(message.id);
-    setComposeDraftId(null);
+      return
+    if (!allowComposeNavigation(() => openReply(message, replyAll))) return
+    composeDirty.current = false
+    composeOwned.current = false
+    setComposeSession((session) => session + 1)
+    composeDraftRef.current = null
+    const date = formatDate(message.createdAt, "long")
+    setSelectedId(message.id)
+    setComposeDraftId(null)
     // A storage row ID is not an RFC Message-ID. Mail without that header
     // remains replyable, but cannot supply an In-Reply-To header.
-    setComposeInReplyTo(message.messageId || null);
+    setComposeInReplyTo(message.messageId || null)
+    const intro = t("compose.wrote", { date, sender: message.fromAddress })
     setComposeSeed(
-      createReplyComposeValues(
-        message,
-        t('compose.wrote', { date, sender: message.fromAddress })
-      )
-    );
-    setComposeOpen(true);
-  };
+      replyAll
+        ? createReplyAllComposeValues(message, intro, [props.account?.address])
+        : createReplyComposeValues(message, intro)
+    )
+    setComposeOpen(true)
+  }
 
   const openForward = (message: MailyMailboxMessageDetail) => {
     if (
@@ -1082,82 +1869,394 @@ export function MailboxView(props: MailyMailboxViewProps) {
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    setComposeSession((session) => session + 1);
-    composeDraftRef.current = null;
-    setSelectedId(message.id);
-    setComposeDraftId(null);
-    setComposeInReplyTo(null);
+      return
+    if (!allowComposeNavigation(() => openForward(message))) return
+    composeDirty.current = false
+    composeOwned.current = false
+    setComposeSession((session) => session + 1)
+    composeDraftRef.current = null
+    setSelectedId(message.id)
+    setComposeDraftId(null)
+    setComposeInReplyTo(null)
     setComposeSeed(
-      createForwardComposeValues(message, t('compose.forwardedHeader'))
-    );
-    setComposeOpen(true);
-  };
+      createForwardComposeValues(message, t("compose.forwardedHeader"))
+    )
+    setComposeOpen(true)
+  }
 
   const runMessageAction = async (
     message: MailyMailboxMessageDetail,
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
   ) => {
+    const isCurrent = captureLifetime()
+    if (!isCurrent()) return
     if (
       !dataSource.runMessageAction ||
       composeLock.current ||
       pendingSendRef.current ||
       recoveryUnavailableRef.current
     )
-      return;
-    composeLock.current = true;
-    setMessageActionPending(action);
+      return
+    composeLock.current = true
+    setMessageActionPending(action)
     try {
       const input: MailyMailboxMessageActionInput = {
         messageId: message.id,
         action,
         value,
-      };
-      const result = await dataSource.runMessageAction(input);
-      onMessageAction?.({ ...input, message });
+      }
+      const result = await dataSource.runMessageAction(input)
+      if (!isCurrent()) return
+      onMessageAction?.({ ...input, message })
 
       if (
-        action === 'archive' ||
-        action === 'delete' ||
-        action === 'reportSpam' ||
-        action === 'reportPhishing' ||
-        action === 'reportIllegal'
+        result &&
+        "undo" in result &&
+        result.undo &&
+        action !== "deleteForever"
       ) {
-        setSelectedId(null);
-        setDetail(null);
-      } else if (result && 'fromAddress' in result) {
-        setDetail(result);
+        setUndoReceipt(result.undo)
+      }
+
+      if (
+        action === "archive" ||
+        action === "delete" ||
+        action === "restore" ||
+        action === "notSpam" ||
+        action === "deleteForever" ||
+        action === "reportSpam" ||
+        action === "reportPhishing" ||
+        action === "reportIllegal"
+      ) {
+        clearReaderAfterMutation()
+      } else if (result && "fromAddress" in result) {
+        setDetail(result)
       } else {
         try {
-          setDetail(await dataSource.getMessage(message.id));
+          const nextDetail = await dataSource.getMessage(message.id)
+          if (!isCurrent()) return
+          setDetail(nextDetail)
+          if (!isCurrent()) return
         } catch {
-          setSelectedId(null);
-          setDetail(null);
+          if (!isCurrent()) return
+          setSelectedId(null)
+          setDetail(null)
         }
       }
 
-      await refreshMailbox();
-      setErrorKey(null);
+      await refreshMailbox()
+      if (!isCurrent()) return
+      setErrorKey(null)
     } catch (error) {
-      reportError(error, 'messageAction');
+      if (!isCurrent()) return
+      if (action === "markRead") autoReadMessageIds.delete(message.id)
+      reportError(error, "messageAction")
     } finally {
-      composeLock.current = false;
-      setMessageActionPending(null);
+      composeLock.current = false
+      if (isCurrent()) setMessageActionPending(null)
     }
-  };
+  }
+
+  const autoReadMessageIds = React.useMemo(
+    () => new Set<string>(),
+    [dataSource]
+  )
+  React.useEffect(() => {
+    if (
+      !markReadOnOpen ||
+      !detail?.isUnread ||
+      !enabledMessageActions.includes("markRead") ||
+      autoReadMessageIds.has(detail.id)
+    )
+      return
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    autoReadMessageIds.add(detail.id)
+    void runMessageAction(detail, "markRead", true)
+  }, [detail, enabledMessageActions, markReadOnOpen, autoReadMessageIds])
+
+  const runBulkAction = async (
+    action: MailyMailboxMessageAction,
+    value?: string | boolean | null
+  ) => {
+    if (
+      action === "deleteForever" &&
+      (globalSearch || (folder !== "trash" && folder !== "spam"))
+    )
+      return
+    if (action === "notSpam" && (globalSearch || folder !== "spam")) return
+    if (action === "archive" && (globalSearch || folder !== "inbox")) return
+    const ids = [...selectedIds]
+    const isCurrent = captureLifetime()
+    if (!ids.length || !dataSource.runBulkMessageAction || !isCurrent()) return
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    composeLock.current = true
+    setMessageActionPending(action)
+    try {
+      const result = await dataSource.runBulkMessageAction({
+        messageIds: ids,
+        action,
+        value,
+      })
+      if (!isCurrent()) return
+      if (
+        result &&
+        "undo" in result &&
+        result.undo &&
+        action !== "deleteForever"
+      )
+        setUndoReceipt(result.undo)
+      setSelectedIds([])
+      clearReaderAfterMutation()
+      await refreshMailbox()
+    } catch (error) {
+      if (isCurrent()) reportError(error, "messageAction")
+    } finally {
+      composeLock.current = false
+      if (isCurrent()) setMessageActionPending(null)
+    }
+  }
+
+  const emptyFolder = async () => {
+    if (
+      globalSearch ||
+      (folder !== "trash" && folder !== "spam") ||
+      !dataSource.emptyFolder
+    )
+      return
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    const isCurrent = captureLifetime()
+    composeLock.current = true
+    setEmptyingFolder(true)
+    try {
+      await dataSource.emptyFolder(folder)
+      if (!isCurrent()) return
+      setSelectedIds([])
+      clearReaderAfterMutation()
+      await refreshMailbox()
+    } catch (error) {
+      if (isCurrent()) reportError(error, "messageAction")
+    } finally {
+      composeLock.current = false
+      if (isCurrent()) setEmptyingFolder(false)
+    }
+  }
+
+  const runUndo = async () => {
+    if (
+      !undoReceipt ||
+      !dataSource.undoMessageAction ||
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    if (
+      undoReceipt.expiresAt &&
+      new Date(undoReceipt.expiresAt).getTime() <= Date.now()
+    ) {
+      setUndoReceipt(null)
+      return
+    }
+    const isCurrent = captureLifetime()
+    composeLock.current = true
+    try {
+      await dataSource.undoMessageAction(undoReceipt.token)
+      if (!isCurrent()) return
+      setUndoReceipt(null)
+      await refreshMailbox()
+    } catch (error) {
+      if (isCurrent()) reportError(error, "messageAction")
+    } finally {
+      composeLock.current = false
+    }
+  }
+
+  React.useEffect(() => {
+    if (!undoReceipt?.expiresAt) return
+    const expiresAt = new Date(undoReceipt.expiresAt).getTime()
+    if (!Number.isFinite(expiresAt)) return
+    const timeout = window.setTimeout(
+      () => setUndoReceipt(null),
+      Math.max(0, expiresAt - Date.now())
+    )
+    return () => window.clearTimeout(timeout)
+  }, [undoReceipt])
+
+  const mutateLabel = async (
+    operation: "create" | "rename" | "delete",
+    label?: MailyMailboxLabel,
+    requestedName?: string
+  ) => {
+    if (
+      !dataSource.listLabels ||
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    const name = requestedName?.trim()
+    if (operation !== "delete" && (!name || name.length > 128)) return
+    const isCurrent = captureLifetime()
+    composeLock.current = true
+    try {
+      if (operation === "create" && dataSource.createLabel)
+        await dataSource.createLabel(name!)
+      if (operation === "rename" && label && name && dataSource.renameLabel)
+        await dataSource.renameLabel(label.id, name)
+      if (operation === "delete" && label && dataSource.deleteLabel) {
+        await dataSource.deleteLabel(label.id)
+        if (!isCurrent()) return
+        if (selectedLabelId === label.id) setSelectedLabelId(null)
+      }
+      if (!isCurrent()) return
+      const nextLabels = await dataSource.listLabels()
+      if (!isCurrent()) return
+      setMailboxLabels(nextLabels)
+      setLabelForm(null)
+      setLabelName("")
+      await refreshMailbox()
+    } catch (error) {
+      if (isCurrent()) reportError(error, "messageAction")
+    } finally {
+      composeLock.current = false
+    }
+  }
+
+  const applyLabelToSelection = async (labelId: string, remove = false) => {
+    if (
+      !selectedIds.length ||
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    const action = remove ? dataSource.removeLabel : dataSource.applyLabel
+    if (!action) return
+    const isCurrent = captureLifetime()
+    composeLock.current = true
+    try {
+      await action(selectedIds, labelId)
+      if (!isCurrent()) return
+      await refreshMailbox()
+    } catch (error) {
+      if (isCurrent()) reportError(error, "messageAction")
+    } finally {
+      composeLock.current = false
+    }
+  }
+
+  const labelInputId = React.useId()
 
   const initialComposeValues = React.useMemo(() => {
     if (composeDraftId && detail?.id === composeDraftId) {
-      return detailToComposeValues(detail);
+      return detailToComposeValues(detail)
     }
-    return composeSeed ?? emptyComposeValues();
-  }, [composeDraftId, composeSeed, detail]);
+    return composeSeed ?? emptyComposeValues()
+  }, [composeDraftId, composeSeed, detail])
+
+  const labelDialogContent = (
+    <DialogContent
+      showCloseButton={false}
+      className="sm:max-w-sm"
+      onKeyDown={(event) => {
+        // Radix focuses before its passive Escape listener registers. Preserve
+        // immediate dismissal in this leaf dialog even if an older layer consumed
+        // the key during registration; host modality/focus behavior stays intact.
+        if (event.key === "Escape") {
+          event.preventDefault()
+          setLabelForm(null)
+        }
+      }}
+    >
+      <DialogHeader>
+        <DialogTitle>
+          {t(
+            labelForm?.mode === "delete"
+              ? "actions.deleteLabel"
+              : labelForm?.mode === "rename"
+                ? "actions.renameLabel"
+                : "actions.createLabel"
+          )}
+        </DialogTitle>
+        <DialogDescription>
+          {labelForm?.mode === "delete"
+            ? labelForm.label?.name
+            : t("labels.description")}
+        </DialogDescription>
+      </DialogHeader>
+      {labelForm?.mode === "delete" ? (
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setLabelForm(null)}>
+            {t("actions.cancel")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => void mutateLabel("delete", labelForm.label)}
+          >
+            {t("actions.deleteLabel")}
+          </Button>
+        </div>
+      ) : (
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault()
+            if (labelForm)
+              void mutateLabel(labelForm.mode, labelForm.label, labelName)
+          }}
+        >
+          <Field>
+            <FieldLabel htmlFor={labelInputId}>{t("labels.name")}</FieldLabel>
+            <Input
+              id={labelInputId}
+              value={labelName}
+              maxLength={128}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setLabelName(event.target.value)
+              }
+            />
+          </Field>
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setLabelForm(null)}
+            >
+              {t("actions.cancel")}
+            </Button>
+            <Button type="submit" disabled={!labelName.trim()}>
+              {t(
+                labelForm?.mode === "rename"
+                  ? "actions.renameLabel"
+                  : "actions.createLabel"
+              )}
+            </Button>
+          </div>
+        </form>
+      )}
+    </DialogContent>
+  )
 
   return (
     <div
       className={cn(
-        'maily-mailbox border-border bg-muted/30 text-foreground h-[42rem] max-h-[calc(100vh-2rem)] min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border',
+        "maily-mailbox h-[42rem] max-h-[calc(100vh-2rem)] min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/30 text-foreground",
         className
       )}
     >
@@ -1166,30 +2265,31 @@ export function MailboxView(props: MailyMailboxViewProps) {
         className="h-full min-h-0 min-w-0"
       >
         <ResizablePanel
-          defaultSize="48px"
+          defaultSize="12rem"
           minSize="48px"
           maxSize="16rem"
           groupResizeBehavior="preserve-pixel-size"
           className="min-w-12"
         >
-          <div className="@container/rail @[4rem]/rail:items-stretch @[4rem]/rail:p-3 flex h-full flex-col items-center gap-2 p-2">
+          <div className="@container/rail flex h-full flex-col items-center gap-2 p-2 @[4rem]/rail:items-stretch @[4rem]/rail:p-3">
             <Button
               type="button"
               size="icon"
               onClick={openNewDraft}
-              className="@[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5 justify-center gap-0"
-              title={t('compose.new')}
-              aria-label={t('compose.new')}
+              className="justify-center gap-0 @[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5"
+              title={t("compose.new")}
+              aria-label={t("compose.new")}
             >
               <Pencil className="size-4" />
-              <span className="@[4rem]/rail:inline hidden min-w-0 truncate">
-                {t('compose.new')}
+              <span className="hidden min-w-0 truncate @[4rem]/rail:inline">
+                {t("compose.new")}
               </span>
             </Button>
-            <nav className="@[4rem]/rail:items-stretch flex w-full flex-col items-center gap-0.5">
+            <nav className="flex w-full flex-col items-center gap-0.5 @[4rem]/rail:items-stretch">
               {FOLDERS.map((item) => {
-                const active = folder === item;
-                const count = counts[item] ?? 0;
+                const active =
+                  folder === item && !selectedLabelId && !globalSearch
+                const count = counts[item] ?? 0
                 return (
                   <Button
                     key={item}
@@ -1198,36 +2298,152 @@ export function MailboxView(props: MailyMailboxViewProps) {
                     size="icon"
                     title={t(`folders.${item}`)}
                     aria-label={t(`folders.${item}`)}
-                    aria-current={active ? 'page' : undefined}
+                    aria-current={active ? "page" : undefined}
                     onClick={() => selectFolder(item)}
                     className={cn(
-                      'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground @[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5 relative justify-center gap-0',
+                      "relative justify-center gap-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground @[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5",
                       active &&
-                        'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium'
+                        "bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     )}
                   >
-                    {folderIcon(item, 'size-4')}
-                    <span className="@[4rem]/rail:inline hidden min-w-0 flex-1 truncate text-left">
+                    {folderIcon(item, "size-4")}
+                    <span className="hidden min-w-0 flex-1 truncate text-left @[4rem]/rail:inline">
                       {t(`folders.${item}`)}
                     </span>
                     {count > 0 && (
                       <>
                         <Badge
-                          variant={active ? 'default' : 'outline'}
-                          className="@[4rem]/rail:inline-flex hidden"
+                          variant={active ? "default" : "outline"}
+                          className="hidden @[4rem]/rail:inline-flex"
                         >
                           {count}
                         </Badge>
                         <span
                           aria-hidden
-                          className="bg-primary @[4rem]/rail:hidden absolute right-1 top-1 size-1.5 rounded-full"
+                          className="absolute top-1 right-1 size-1.5 rounded-full bg-primary @[4rem]/rail:hidden"
                         />
                       </>
                     )}
                   </Button>
-                );
+                )
               })}
             </nav>
+            {dataSource.listLabels && (
+              <>
+                <div className="mt-4 flex w-full items-center justify-center @[4rem]/rail:justify-between">
+                  <span className="hidden px-2.5 text-sm font-medium @[4rem]/rail:inline">
+                    {t("labels.heading")}
+                  </span>
+                  {dataSource.createLabel && (
+                    <Dialog
+                      open={labelForm?.mode === "create"}
+                      onOpenChange={(open) => {
+                        if (!open) setLabelForm(null)
+                      }}
+                    >
+                      <DialogTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          title={t("actions.createLabel")}
+                          aria-label={t("actions.createLabel")}
+                          onClick={() => {
+                            setLabelForm({ mode: "create" })
+                            setLabelName("")
+                          }}
+                        >
+                          <Plus className="size-4" />
+                        </Button>
+                      </DialogTrigger>
+                      {labelDialogContent}
+                    </Dialog>
+                  )}
+                </div>
+                <ul className="min-h-0 w-full flex-1 space-y-0.5 overflow-y-auto">
+                  {mailboxLabels.map((label) => (
+                    <li key={label.id} className="group flex items-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                          "min-w-0 flex-1 justify-center gap-0 @[4rem]/rail:justify-start @[4rem]/rail:gap-2",
+                          selectedLabelId === label.id &&
+                            "bg-accent font-medium"
+                        )}
+                        aria-label={label.name}
+                        title={label.name}
+                        aria-current={
+                          selectedLabelId === label.id ? "page" : undefined
+                        }
+                        onClick={() => {
+                          const navigate = () => {
+                            selectFolder("allMail", label.id)
+                          }
+                          if (
+                            !composeLock.current &&
+                            allowComposeNavigation(navigate)
+                          )
+                            navigate()
+                        }}
+                      >
+                        <Tag className="size-4 shrink-0" />
+                        <span className="hidden min-w-0 truncate @[4rem]/rail:inline">
+                          {label.name}
+                        </span>
+                      </Button>
+                      {(dataSource.renameLabel || dataSource.deleteLabel) && (
+                        <Dialog
+                          open={labelForm?.label?.id === label.id}
+                          onOpenChange={(open) => {
+                            if (!open) setLabelForm(null)
+                          }}
+                        >
+                          <DropdownMenu>
+                            <DialogTrigger asChild>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="hidden size-7 shrink-0 @[4rem]/rail:inline-flex"
+                                  aria-label={`${t("actions.more")}: ${label.name}`}
+                                >
+                                  <MoreVertical className="size-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                            </DialogTrigger>
+                            <DropdownMenuContent align="start">
+                              {dataSource.renameLabel && (
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setLabelForm({ mode: "rename", label })
+                                    setLabelName(label.name)
+                                  }}
+                                >
+                                  {t("actions.renameLabel")}
+                                </DropdownMenuItem>
+                              )}
+                              {dataSource.deleteLabel && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    setLabelForm({ mode: "delete", label })
+                                  }
+                                >
+                                  {t("actions.deleteLabel")}
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {labelDialogContent}
+                        </Dialog>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         </ResizablePanel>
 
@@ -1235,35 +2451,467 @@ export function MailboxView(props: MailyMailboxViewProps) {
 
         <ResizablePanel defaultSize="28%" minSize="18rem" className="min-h-0">
           <div className="flex h-full min-h-0 flex-col">
-            <div className="border-border border-b p-2">
-              <InputGroup className="bg-muted/30 h-8">
+            <div className="border-b border-border p-2">
+              <InputGroup className="h-8 bg-muted/30">
                 <InputGroupAddon>
                   <Search className="size-4" />
                 </InputGroupAddon>
                 <InputGroupInput
                   value={search}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    messagesGeneration.current += 1;
-                    setSearch(event.target.value);
+                    setSearch(event.target.value)
+                    if (props.search !== undefined) return
+                    setGlobalSearch(!!event.target.value.trim())
+                    setSelectedLabelId(null)
                   }}
-                  placeholder={t('searchPlaceholder')}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchPlaceholder")}
                   className="h-7 px-1.5 py-0"
                 />
+                <InputGroupAddon align="inline-end">
+                  {(search || Object.keys(searchFields).length > 0) && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="size-7"
+                      aria-label={t("search.clear")}
+                      onClick={() => {
+                        setSearch("")
+                        if (props.search !== undefined) return
+                        setSearchFields({})
+                        setGlobalSearch(false)
+                      }}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  )}
+                  <Popover
+                    open={advancedSearchOpen}
+                    onOpenChange={(open) => {
+                      if (open) setSearchDraft(searchFields)
+                      setAdvancedSearchOpen(open)
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="size-7"
+                        aria-label={t("search.advanced")}
+                        title={t("search.advanced")}
+                      >
+                        <Filter className="size-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      align="start"
+                      className="w-80 max-w-[calc(100vw-2rem)] p-4"
+                    >
+                      <form
+                        className="space-y-3"
+                        onSubmit={(event) => {
+                          event.preventDefault()
+                          setSearchFields(searchDraft)
+                          if (props.searchFilters === undefined) {
+                            setGlobalSearch(true)
+                            setSelectedLabelId(null)
+                          }
+                          setAdvancedSearchOpen(false)
+                        }}
+                      >
+                        {(
+                          ["from", "to", "subject", "after", "before"] as const
+                        ).map((key) => (
+                          <Field
+                            key={key}
+                            orientation="horizontal"
+                            className="grid grid-cols-[6rem_1fr] items-center gap-2"
+                          >
+                            <FieldLabel
+                              htmlFor={`${labelInputId}-search-${key}`}
+                            >
+                              {t(`search.${key}`)}
+                            </FieldLabel>
+                            <Input
+                              id={`${labelInputId}-search-${key}`}
+                              value={searchDraft[key] ?? ""}
+                              onChange={(
+                                event: React.ChangeEvent<HTMLInputElement>
+                              ) => {
+                                setSearchDraft((current) => ({
+                                  ...current,
+                                  [key]: event.target.value || undefined,
+                                }))
+                              }}
+                            />
+                          </Field>
+                        ))}
+                        {(["hasAttachments", "unread"] as const).map((key) => (
+                          <Field key={key} orientation="horizontal">
+                            <Checkbox
+                              id={`${labelInputId}-search-${key}`}
+                              checked={!!searchDraft[key]}
+                              onCheckedChange={(checked) => {
+                                setSearchDraft((current) => ({
+                                  ...current,
+                                  [key]: checked === true || undefined,
+                                }))
+                              }}
+                            />
+                            <FieldLabel
+                              htmlFor={`${labelInputId}-search-${key}`}
+                            >
+                              {t(`search.${key}`)}
+                            </FieldLabel>
+                          </Field>
+                        ))}
+                        <div className="flex justify-end">
+                          <Button type="submit" size="sm">
+                            {t("search.submit")}
+                          </Button>
+                        </div>
+                      </form>
+                    </PopoverContent>
+                  </Popover>
+                </InputGroupAddon>
                 {refreshing && (
                   <InputGroupAddon align="inline-end">
-                    <LoaderCircleIcon className="size-4 animate-spin" aria-label={t('refresh')} />
+                    <LoaderCircleIcon
+                      className="size-4 animate-spin"
+                      aria-label={t("refresh")}
+                    />
                   </InputGroupAddon>
                 )}
               </InputGroup>
+              {!globalSearch &&
+                dataSource.emptyFolder &&
+                (folder === "trash" || folder === "spam") && (
+                  <Popover
+                    open={emptyConfirmOpen}
+                    onOpenChange={setEmptyConfirmOpen}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="mt-2"
+                        disabled={emptyingFolder}
+                      >
+                        {t(
+                          folder === "trash"
+                            ? "actions.emptyTrash"
+                            : "actions.deleteAllSpam"
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-72 space-y-3">
+                      <p className="text-sm">
+                        {t(
+                          folder === "trash"
+                            ? "confirm.emptyTrash"
+                            : "confirm.deleteAllSpam"
+                        )}
+                      </p>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEmptyConfirmOpen(false)}
+                        >
+                          {t("actions.cancel")}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => {
+                            setEmptyConfirmOpen(false)
+                            void emptyFolder()
+                          }}
+                        >
+                          {t("actions.confirm")}
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
+            </div>
+            {undoReceipt && dataSource.undoMessageAction && (
+              <div
+                role="status"
+                className="flex items-center justify-between gap-3 bg-foreground px-3 py-2 text-sm text-background"
+              >
+                <span>{t("actions.completed")}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={
+                    !!messageActionPending || saving || sending || discarding
+                  }
+                  onClick={() => void runUndo()}
+                >
+                  {t("actions.undo")}
+                </Button>
+              </div>
+            )}
+            <div className="flex min-h-11 items-center gap-2 border-b border-border px-3">
+              {(dataSource.runBulkMessageAction ||
+                dataSource.applyLabel ||
+                dataSource.removeLabel) && (
+                <Checkbox
+                  aria-label={t("actions.selectAll")}
+                  checked={
+                    messages.items.length > 0 &&
+                    messages.items.every((message) =>
+                      selectedIds.includes(message.id)
+                    )
+                  }
+                  disabled={
+                    !messages.items.length || messagesLoading || loadingMore
+                  }
+                  onCheckedChange={(checked) =>
+                    setSelectedIds(
+                      checked === true
+                        ? messages.items.map((message) => message.id)
+                        : []
+                    )
+                  }
+                />
+              )}
+              {selectedIds.length > 0 && (
+                <div className="flex shrink-0 items-center gap-1">
+                  <span className="sr-only">
+                    {t("selection.count", { count: selectedIds.length })}
+                  </span>
+                  {dataSource.runBulkMessageAction &&
+                    Array.from(new Set(messageActions))
+                      .filter((action) =>
+                        [
+                          "archive",
+                          "delete",
+                          "reportSpam",
+                          "markRead",
+                          "markUnread",
+                          "restore",
+                          "notSpam",
+                          "deleteForever",
+                        ].includes(action)
+                      )
+                      .filter((action) => {
+                        if (action === "markRead")
+                          return messages.items.some(
+                            (row) =>
+                              selectedIds.includes(row.id) && row.isUnread
+                          )
+                        if (action === "markUnread")
+                          return messages.items.some(
+                            (row) =>
+                              selectedIds.includes(row.id) && !row.isUnread
+                          )
+                        if (action === "archive")
+                          return !globalSearch && folder === "inbox"
+                        if (action === "restore")
+                          return (
+                            folder === "trash" ||
+                            folder === "allMail" ||
+                            folder === "starred"
+                          )
+                        if (action === "notSpam")
+                          return !globalSearch && folder === "spam"
+                        if (action === "deleteForever")
+                          return (
+                            !globalSearch &&
+                            (folder === "trash" || folder === "spam")
+                          )
+                        if (action === "delete" || action === "reportSpam")
+                          return (
+                            globalSearch ||
+                            (folder !== "trash" && folder !== "spam")
+                          )
+                        return true
+                      })
+                      .map((action) => (
+                        <Button
+                          key={action}
+                          type="button"
+                          size="icon"
+                          className="size-8"
+                          variant="ghost"
+                          aria-label={t(MESSAGE_ACTION_METADATA[action].label)}
+                          title={t(MESSAGE_ACTION_METADATA[action].label)}
+                          disabled={!!messageActionPending}
+                          onClick={() =>
+                            void runBulkAction(
+                              action,
+                              MESSAGE_ACTION_METADATA[action].value
+                            )
+                          }
+                        >
+                          {MESSAGE_ACTION_METADATA[action].icon("size-4")}
+                        </Button>
+                      ))}
+                  {mailboxLabels.length > 0 &&
+                    (dataSource.applyLabel || dataSource.removeLabel) && (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="ghost"
+                            className="size-8"
+                            aria-label={t(
+                              dataSource.applyLabel
+                                ? "actions.applyLabel"
+                                : "actions.removeLabel"
+                            )}
+                            title={t("labels.heading")}
+                          >
+                            <Tag className="size-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          align="start"
+                          className="w-56 space-y-1"
+                        >
+                          {mailboxLabels.map((label, labelIndex) => {
+                            const checked = messages.items
+                              .filter((row) => selectedIds.includes(row.id))
+                              .every(
+                                (row) =>
+                                  row.labels?.includes(label.id) ||
+                                  row.labels?.includes(label.name)
+                              )
+                            return (
+                              <Field
+                                key={label.id}
+                                orientation="horizontal"
+                                className="gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
+                              >
+                                <Checkbox
+                                  id={`${labelInputId}-apply-${labelIndex}`}
+                                  checked={checked}
+                                  disabled={
+                                    checked
+                                      ? !dataSource.removeLabel
+                                      : !dataSource.applyLabel
+                                  }
+                                  onCheckedChange={(value) =>
+                                    void applyLabelToSelection(
+                                      label.id,
+                                      value !== true
+                                    )
+                                  }
+                                />
+                                <FieldLabel
+                                  htmlFor={`${labelInputId}-apply-${labelIndex}`}
+                                  className="min-w-0 truncate"
+                                >
+                                  {label.name}
+                                </FieldLabel>
+                              </Field>
+                            )
+                          })}
+                        </PopoverContent>
+                      </Popover>
+                    )}
+                </div>
+              )}
+              {selectedIds.length === 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  title={t("refresh")}
+                  aria-label={t("refresh")}
+                  disabled={refreshing || loadingMore}
+                  onClick={() => void refreshMailbox()}
+                >
+                  <RotateCwIcon
+                    className={cn("size-4", refreshing && "animate-spin")}
+                  />
+                </Button>
+              )}
+              <div className="ml-auto flex items-center gap-1">
+                <span
+                  className="px-1 text-xs whitespace-nowrap text-muted-foreground tabular-nums"
+                  aria-live="polite"
+                >
+                  {t(
+                    pageTotal === undefined
+                      ? "pagination.range"
+                      : "pagination.rangeWithTotal",
+                    { start: pageStart, end: pageEnd, total: pageTotal ?? 0 }
+                  )}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t("pagination.previous")}
+                  title={t("pagination.previous")}
+                  disabled={
+                    !hasPreviousPage ||
+                    messagesLoading ||
+                    loadingMore ||
+                    refreshing
+                  }
+                  onClick={() => void changePage("previous")}
+                >
+                  <ChevronRight className="size-4 rotate-180" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8"
+                  aria-label={t("pagination.next")}
+                  title={t("pagination.next")}
+                  disabled={
+                    !messages.nextCursor ||
+                    messagesLoading ||
+                    loadingMore ||
+                    refreshing
+                  }
+                  onClick={() => void changePage("next")}
+                >
+                  <ChevronRight className="size-4" />
+                </Button>
+              </div>
             </div>
             <ScrollArea className="min-h-0 flex-1">
               <MessageList
-                folder={folder}
+                folder={globalSearch ? "allMail" : folder}
                 labels={labels}
                 rows={messages.items}
                 isLoading={messagesLoading}
                 selectedId={selectedId}
+                selectedIds={selectedIds}
                 onSelect={selectMessage}
+                onToggleSelection={
+                  dataSource.runBulkMessageAction ||
+                  dataSource.applyLabel ||
+                  dataSource.removeLabel
+                    ? (ids) =>
+                        setSelectedIds((current) =>
+                          ids.every((id) => current.includes(id))
+                            ? current.filter((id) => !ids.includes(id))
+                            : [...new Set([...current, ...ids])]
+                        )
+                    : undefined
+                }
+                onToggleFavorite={
+                  enabledMessageActions.includes("favorite")
+                    ? (row) =>
+                        void runMessageAction(row, "favorite", !row.isFavorite)
+                    : undefined
+                }
                 formatDate={formatDate}
               />
             </ScrollArea>
@@ -1272,12 +2920,57 @@ export function MailboxView(props: MailyMailboxViewProps) {
 
         <ResizableHandle />
 
-        <ResizablePanel defaultSize="65%" minSize="22rem" className="min-h-0">
+        <ResizablePanel minSize="22rem" className="min-h-0">
           <div className="flex h-full min-h-0 flex-col">
+            {pendingNavigation && (
+              <Dialog
+                open
+                onOpenChange={(open) => {
+                  if (!open) setPendingNavigation(null)
+                }}
+              >
+                <DialogContent
+                  showCloseButton={false}
+                  className="sm:max-w-sm"
+                  aria-describedby={undefined}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault()
+                      setPendingNavigation(null)
+                    }
+                  }}
+                >
+                  <DialogHeader>
+                    <DialogTitle>{t("compose.unsavedConfirm")}</DialogTitle>
+                  </DialogHeader>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setPendingNavigation(null)}
+                    >
+                      {t("compose.stay")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        const navigate = pendingNavigation
+                        composeDirty.current = false
+                        setPendingNavigation(null)
+                        navigate()
+                      }}
+                    >
+                      {t("compose.discard")}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
             {errorKey && (
               <div
                 role="status"
-                className="border-destructive/30 bg-destructive/10 text-destructive flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                className="flex shrink-0 items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
               >
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{t(errorKey)}</span>
@@ -1287,11 +2980,11 @@ export function MailboxView(props: MailyMailboxViewProps) {
               <ScrollArea className="min-h-0 flex-1">
                 {!composeHydrated ? (
                   <div role="status" className="p-5">
-                    {t('loading')}
+                    {t("loading")}
                   </div>
                 ) : (
                   <Compose
-                    key={`${composeSession}:${composeDraftId ?? 'new'}`}
+                    key={composeSession}
                     initialValues={initialComposeValues}
                     labels={labels}
                     loadContactSuggestions={loadContactSuggestions}
@@ -1303,6 +2996,15 @@ export function MailboxView(props: MailyMailboxViewProps) {
                     isSendUnresolved={sendUnresolved}
                     isSending={sending}
                     isDiscarding={discarding}
+                    ownershipToken={lifetime}
+                    uploadAttachment={dataSource.uploadAttachment}
+                    discardUploadedAttachment={
+                      dataSource.discardUploadedAttachment
+                    }
+                    onError={onError}
+                    onDirtyChange={(dirty) => {
+                      composeDirty.current = dirty
+                    }}
                     onSave={saveDraft}
                     onSend={sendDraft}
                     onDiscard={discardDraft}
@@ -1313,13 +3015,40 @@ export function MailboxView(props: MailyMailboxViewProps) {
               <MessageReader
                 key={selectedId}
                 getMessageSource={dataSource.getMessageSource}
+                thread={thread}
                 detail={detail}
                 isLoading={detailLoading}
                 labels={labels}
                 formatDate={formatDate}
-                messageActions={enabledMessageActions}
+                messageActions={enabledMessageActions.filter((action) => {
+                  if (action === "restore")
+                    return (
+                      folder === "trash" ||
+                      folder === "allMail" ||
+                      folder === "starred"
+                    )
+                  if (action === "notSpam")
+                    return !globalSearch && folder === "spam"
+                  if (action === "deleteForever")
+                    return (
+                      !globalSearch && (folder === "trash" || folder === "spam")
+                    )
+                  if (
+                    action === "delete" ||
+                    action === "archive" ||
+                    action === "reportSpam"
+                  ) {
+                    if (action === "archive")
+                      return !globalSearch && folder === "inbox"
+                    return (
+                      globalSearch || (folder !== "trash" && folder !== "spam")
+                    )
+                  }
+                  return true
+                })}
                 actionPending={messageActionPending}
                 onReply={openReply}
+                onReplyAll={(message) => openReply(message, true)}
                 onForward={openForward}
                 onRunAction={runMessageAction}
                 downloadAttachment={dataSource.downloadAttachment}
@@ -1327,8 +3056,8 @@ export function MailboxView(props: MailyMailboxViewProps) {
               />
             ) : (
               <EmptyState
-                title={t('empty.noSelection')}
-                description={t('empty.noSelectionDesc')}
+                title={t("empty.noSelection")}
+                description={t("empty.noSelectionDesc")}
                 className="h-full"
               />
             )}
@@ -1336,179 +3065,244 @@ export function MailboxView(props: MailyMailboxViewProps) {
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
-  );
+  )
 }
 
-export const InboxOutboxView = MailboxView;
+export const InboxOutboxView = MailboxView
 
 function MessageList(props: {
-  folder: MailyMailboxFolder;
-  labels: MailyMailboxLabels;
-  rows: MailyMailboxMessageRow[];
-  isLoading: boolean;
-  selectedId: string | null;
-  onSelect: (row: MailyMailboxMessageRow) => void;
-  formatDate: (date: string | Date, mode: 'short' | 'long') => string;
+  folder: MailyMailboxFolder
+  labels: MailyMailboxLabels
+  rows: MailyMailboxMessageRow[]
+  isLoading: boolean
+  selectedId: string | null
+  selectedIds: string[]
+  onSelect: (row: MailyMailboxMessageRow) => void
+  onToggleSelection?: (ids: string[]) => void
+  onToggleFavorite?: (row: MailyMailboxMessageRow) => void
+  formatDate: (date: string | Date, mode: "short" | "long") => string
 }) {
-  const { folder, labels, rows, isLoading, selectedId, onSelect, formatDate } =
-    props;
+  const {
+    folder,
+    labels,
+    rows,
+    isLoading,
+    selectedId,
+    selectedIds,
+    onSelect,
+    onToggleSelection,
+    onToggleFavorite,
+    formatDate,
+  } = props
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
-  ) => interpolate(labels[key], vars);
+  ) => interpolate(labels[key], vars)
 
   if (isLoading) {
     return (
-      <div className="text-muted-foreground flex h-40 items-center justify-center gap-2 text-sm">
+      <div className="flex h-40 items-center justify-center gap-2 text-sm text-muted-foreground">
         <LoaderCircleIcon className="size-4 animate-spin" />
-        {t('loading')}
+        {t("loading")}
       </div>
-    );
+    )
   }
 
   if (rows.length === 0) {
-    return <EmptyState className="h-full" title={t(`empty.${folder}`)} />;
+    return <EmptyState className="h-full" title={t(`empty.${folder}`)} />
   }
 
   return (
-    <div className="min-w-0">
-      <ul className="divide-border divide-y">
-        {rows.map((row) => {
-          const active = row.id === selectedId;
+    <div className="min-w-0 [contain:inline-size]">
+      <ul className="divide-y divide-border">
+        {groupMailboxMessagesByThread(rows).map((conversation) => {
+          const groupRows = conversation.messages
+          const row = groupRows[groupRows.length - 1]
+          const conversationIds = groupRows.map((item) => item.id)
+          const active = groupRows.some((item) => item.id === selectedId)
+          const allSelected = conversationIds.every((id) =>
+            selectedIds.includes(id)
+          )
           const display =
-            row.direction === 'in'
+            row.direction === "in"
               ? row.fromAddress
-              : formatRecipients(row.toAddresses);
+              : formatRecipients(row.toAddresses)
 
           return (
-            <li key={row.id}>
+            <li
+              key={conversation.threadId ?? row.id}
+              className={cn(
+                "flex min-w-0 items-stretch",
+                (active || allSelected) && "bg-accent",
+                !row.isUnread && "bg-muted/20"
+              )}
+            >
+              {onToggleSelection && (
+                <div className="flex shrink-0 items-start pt-3.5 pl-3">
+                  <Checkbox
+                    aria-label={t(
+                      allSelected
+                        ? "actions.deselectConversation"
+                        : "actions.selectConversation",
+                      { subject: row.subject || t("message.noSubject") }
+                    )}
+                    checked={allSelected}
+                    onCheckedChange={() => onToggleSelection?.(conversationIds)}
+                  />
+                </div>
+              )}
+              {onToggleFavorite && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="mt-1.5 size-8 shrink-0"
+                  aria-label={t(
+                    row.isFavorite ? "actions.unfavorite" : "actions.favorite"
+                  )}
+                  title={t(
+                    row.isFavorite ? "actions.unfavorite" : "actions.favorite"
+                  )}
+                  onClick={() => onToggleFavorite(row)}
+                >
+                  <Star
+                    className={cn(
+                      "size-4 text-muted-foreground",
+                      row.isFavorite && "fill-current text-amber-500"
+                    )}
+                  />
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => onSelect(row)}
                 className={cn(
-                  'hover:bg-accent h-auto w-full flex-col items-stretch justify-start gap-1.5 whitespace-normal rounded-none px-3 py-2.5 text-left font-normal',
-                  active && 'bg-accent'
+                  "h-auto min-w-0 flex-1 flex-col items-stretch justify-start gap-1.5 rounded-none px-3 py-2.5 text-left font-normal whitespace-normal hover:bg-accent",
+                  active && "bg-accent"
                 )}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className={cn(
-                      'truncate text-sm',
-                      row.isUnread ? 'font-semibold' : 'font-medium'
+                      "truncate text-sm",
+                      row.isUnread ? "font-semibold" : "font-medium"
                     )}
                   >
-                    {display || t('message.unknownSender')}
+                    {display || t("message.unknownSender")}
                   </span>
-                  <span className="text-muted-foreground shrink-0 text-xs">
-                    {formatDate(row.createdAt, 'short')}
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {formatDate(row.createdAt, "short")}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {row.isFavorite && (
+                  {row.isFavorite && !onToggleFavorite && (
                     <Star className="size-3.5 shrink-0 fill-current text-amber-500" />
                   )}
                   <span
                     className={cn(
-                      'truncate text-sm',
-                      row.isUnread && 'font-semibold'
+                      "truncate text-sm",
+                      row.isUnread && "font-semibold"
                     )}
                   >
-                    {row.subject || t('message.noSubject')}
+                    {row.subject || t("message.noSubject")}
+                    {groupRows.length > 1 && (
+                      <Badge variant="outline">{groupRows.length}</Badge>
+                    )}
                   </span>
                   {row.hasAttachments && (
-                    <Paperclip className="text-muted-foreground size-3 shrink-0" />
+                    <Paperclip className="size-3 shrink-0 text-muted-foreground" />
                   )}
                 </div>
                 {row.snippet && (
-                  <p className="text-muted-foreground line-clamp-2 text-xs">
+                  <p className="truncate text-xs text-muted-foreground">
                     {row.snippet}
                   </p>
                 )}
-                {(row.status === 'failed' || row.status === 'dsn') && (
+                {(row.status === "failed" || row.status === "dsn") && (
                   <Badge variant="destructive" className="self-start">
-                    {t('message.bounced')}
+                    {t("message.bounced")}
                   </Badge>
                 )}
-                {row.status === 'queued' && (
+                {row.status === "queued" && (
                   <Badge variant="outline" className="self-start">
-                    {t('message.queued')}
+                    {t("message.queued")}
                   </Badge>
                 )}
               </Button>
             </li>
-          );
+          )
         })}
       </ul>
     </div>
-  );
+  )
 }
 
 /** Source is rendered as escaped text, never as HTML or an iframe. */
 function MessageSource(props: {
-  messageId: string;
-  getSource: NonNullable<MailyMailboxDataSource['getMessageSource']>;
-  labels: MailyMailboxLabels;
-  onBack: () => void;
-  onError: MailyMailboxViewProps['onError'];
+  messageId: string
+  getSource: NonNullable<MailyMailboxDataSource["getMessageSource"]>
+  labels: MailyMailboxLabels
+  onBack: () => void
+  onError: MailyMailboxViewProps["onError"]
 }) {
-  const { messageId, getSource, labels, onBack, onError } = props;
-  const [source, setSource] = React.useState<string | null>(null);
-  const [failed, setFailed] = React.useState(false);
-  const [attempt, setAttempt] = React.useState(0);
-  const errorHandler = React.useRef(onError);
-  errorHandler.current = onError;
+  const { messageId, getSource, labels, onBack, onError } = props
+  const [source, setSource] = React.useState<string | null>(null)
+  const [failed, setFailed] = React.useState(false)
+  const [attempt, setAttempt] = React.useState(0)
+  const errorHandler = React.useRef(onError)
+  errorHandler.current = onError
   React.useEffect(() => {
-    let active = true;
-    setSource(null);
-    setFailed(false);
+    let active = true
+    setSource(null)
+    setFailed(false)
     Promise.resolve()
       .then(() => getSource(messageId))
       .then(
         (value) => {
-          if (active) setSource(value);
+          if (active) setSource(value)
         },
         (error) => {
-          if (!active) return;
-          setFailed(true);
-          errorHandler.current?.(error, 'messageSource');
+          if (!active) return
+          setFailed(true)
+          errorHandler.current?.(error, "messageSource")
         }
-      );
+      )
     return () => {
-      active = false;
-    };
-  }, [getSource, messageId, attempt]);
+      active = false
+    }
+  }, [getSource, messageId, attempt])
 
   return (
     <section
       className="flex h-full min-h-0 flex-col"
-      aria-label={labels['actions.showOriginal']}
+      aria-label={labels["actions.showOriginal"]}
     >
-      <div className="border-border flex shrink-0 items-center gap-2 border-b p-3">
+      <div className="flex shrink-0 items-center gap-2 border-b border-border p-3">
         <Button variant="outline" onClick={onBack}>
-          {labels['source.back']}
+          {labels["source.back"]}
         </Button>
       </div>
       {failed ? (
         <div className="space-y-3 p-5">
           <p role="alert" className="text-sm">
-            {labels['source.error']}
+            {labels["source.error"]}
           </p>
           <Button
             variant="outline"
             onClick={() => setAttempt((value) => value + 1)}
           >
-            {labels['source.retry']}
+            {labels["source.retry"]}
           </Button>
         </div>
       ) : source === null ? (
-        <p role="status" className="text-muted-foreground p-5 text-sm">
+        <p role="status" className="p-5 text-sm text-muted-foreground">
           {labels.loading}
         </p>
       ) : (
         <ScrollArea className="min-h-0 flex-1">
           <pre
-            className="whitespace-pre-wrap break-all p-5 font-mono text-xs"
+            className="p-5 font-mono text-xs break-all whitespace-pre-wrap"
             tabIndex={0}
           >
             {source}
@@ -1516,26 +3310,28 @@ function MessageSource(props: {
         </ScrollArea>
       )}
     </section>
-  );
+  )
 }
 
 function MessageReader(props: {
-  getMessageSource: MailyMailboxDataSource['getMessageSource'];
-  detail: MailyMailboxMessageDetail | null;
-  isLoading: boolean;
-  labels: MailyMailboxLabels;
-  formatDate: (date: string | Date, mode: 'short' | 'long') => string;
-  messageActions: readonly MailyMailboxMessageAction[];
-  actionPending: MailyMailboxMessageAction | null;
-  onReply: (detail: MailyMailboxMessageDetail) => void;
-  onForward: (detail: MailyMailboxMessageDetail) => void;
-  downloadAttachment: MailyMailboxDataSource['downloadAttachment'];
-  onError: MailyMailboxViewProps['onError'];
+  getMessageSource: MailyMailboxDataSource["getMessageSource"]
+  thread?: MailyMailboxThread | null
+  detail: MailyMailboxMessageDetail | null
+  isLoading: boolean
+  labels: MailyMailboxLabels
+  formatDate: (date: string | Date, mode: "short" | "long") => string
+  messageActions: readonly MailyMailboxMessageAction[]
+  actionPending: MailyMailboxMessageAction | null
+  onReply: (detail: MailyMailboxMessageDetail) => void
+  onReplyAll: (detail: MailyMailboxMessageDetail) => void
+  onForward: (detail: MailyMailboxMessageDetail) => void
+  downloadAttachment: MailyMailboxDataSource["downloadAttachment"]
+  onError: MailyMailboxViewProps["onError"]
   onRunAction: (
     detail: MailyMailboxMessageDetail,
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
-  ) => Promise<void>;
+  ) => Promise<void>
 }) {
   const {
     detail,
@@ -1545,26 +3341,27 @@ function MessageReader(props: {
     messageActions,
     actionPending,
     onReply,
+    onReplyAll,
     onForward,
     onRunAction,
-  } = props;
+  } = props
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
-  ) => interpolate(labels[key], vars);
+  ) => interpolate(labels[key], vars)
 
-  const [showSource, setShowSource] = React.useState(false);
+  const [showSource, setShowSource] = React.useState(false)
   const runReaderAction: typeof onRunAction = async (
     message,
     action,
     value
   ) => {
-    if (action === 'showOriginal' && props.getMessageSource) {
-      setShowSource(true);
-      return;
+    if (action === "showOriginal" && props.getMessageSource) {
+      setShowSource(true)
+      return
     }
-    await onRunAction(message, action, value);
-  };
+    await onRunAction(message, action, value)
+  }
 
   if (showSource && detail && props.getMessageSource) {
     return (
@@ -1575,82 +3372,85 @@ function MessageReader(props: {
         onBack={() => setShowSource(false)}
         onError={props.onError}
       />
-    );
+    )
   }
 
   if (isLoading) {
     return (
-      <div className="text-muted-foreground flex h-full items-center justify-center gap-2 text-sm">
+      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
         <LoaderCircleIcon className="size-4 animate-spin" />
-        {t('loading')}
+        {t("loading")}
       </div>
-    );
+    )
   }
 
-  if (!detail) return null;
+  if (!detail) return null
 
-  const hue = senderHue(detail.fromAddress);
-  const labelsToShow = detail.labels ?? [];
-  const isFavorite = detail.isFavorite ?? false;
-  const enabledActions = new Set(messageActions);
+  const threadMessages =
+    props.thread?.threadId && props.thread.threadId === detail.threadId
+      ? props.thread.messages
+      : [detail]
+  const labelsToShow = detail.labels ?? []
+  const isFavorite = detail.isFavorite ?? false
+  const enabledActions = new Set(messageActions)
   const toolbarLeadingActions = TOOLBAR_LEADING_MESSAGE_ACTIONS.filter(
     (action) => enabledActions.has(action)
-  );
+  )
   const toolbarTrailingActions = TOOLBAR_TRAILING_MESSAGE_ACTIONS.filter(
     (action) => enabledActions.has(action)
-  );
+  )
   const headerActions = HEADER_MESSAGE_ACTIONS.filter((action) =>
     enabledActions.has(action)
-  );
+  )
   const hasToolbarActions =
-    toolbarLeadingActions.length > 0 || toolbarTrailingActions.length > 0;
+    toolbarLeadingActions.length > 0 || toolbarTrailingActions.length > 0
   const run = (
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
-  ) => runReaderAction(detail, action, value);
+  ) => runReaderAction(detail, action, value)
   const actionLabel = (
     action: MailyMailboxMessageAction,
-    mode: 'button' | 'menu'
+    mode: "button" | "menu"
   ) => {
-    if (action === 'favorite' && isFavorite) return t('actions.unfavorite');
-    if (action === 'showOriginal' && props.getMessageSource)
-      return t('actions.showOriginal');
-    const metadata = MESSAGE_ACTION_METADATA[action];
+    if (action === "favorite" && isFavorite) return t("actions.unfavorite")
+    if (action === "showOriginal" && props.getMessageSource)
+      return t("actions.showOriginal")
+    const metadata = MESSAGE_ACTION_METADATA[action]
     return t(
-      mode === 'button' && metadata.toolbarLabel
+      mode === "button" && metadata.toolbarLabel
         ? metadata.toolbarLabel
         : metadata.label
-    );
-  };
+    )
+  }
   const actionValue = (action: MailyMailboxMessageAction) => {
-    if (action === 'favorite') return !isFavorite;
-    return MESSAGE_ACTION_METADATA[action].value;
-  };
+    if (action === "favorite") return !isFavorite
+    return MESSAGE_ACTION_METADATA[action].value
+  }
   const actionIconClassName = (action: MailyMailboxMessageAction) =>
     cn(
-      'size-4',
-      action === 'favorite' && isFavorite && 'fill-current text-amber-500'
-    );
+      "size-4",
+      action === "favorite" && isFavorite && "fill-current text-amber-500"
+    )
   const renderActionButton = (action: MailyMailboxMessageAction) => (
     <MessageActionButton
       key={action}
-      label={actionLabel(action, 'button')}
+      label={actionLabel(action, "button")}
       pending={actionPending === action}
-      pressed={action === 'favorite' ? isFavorite : undefined}
+      pressed={action === "favorite" ? isFavorite : undefined}
       onClick={() => run(action, actionValue(action))}
     >
-      {action === 'showOriginal' && !props.getMessageSource ? (
+      {action === "showOriginal" && !props.getMessageSource ? (
         <ExternalLink className="size-4" />
       ) : (
         MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
       )}
     </MessageActionButton>
-  );
+  )
 
   return (
     <article className="flex h-full min-h-0 flex-col overflow-hidden">
       {hasToolbarActions && (
-        <div className="border-border flex shrink-0 items-center justify-between gap-2 border-b px-3 py-2">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
           <div className="flex items-center gap-1">
             {toolbarLeadingActions.map(renderActionButton)}
           </div>
@@ -1664,8 +3464,8 @@ function MessageReader(props: {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="min-w-0 text-xl font-semibold leading-tight">
-                {detail.subject || t('message.noSubject')}
+              <h2 className="min-w-0 text-xl leading-tight font-semibold">
+                {detail.subject || t("message.noSubject")}
               </h2>
               {labelsToShow.map((label) => (
                 <Badge key={label} variant="secondary">
@@ -1677,14 +3477,21 @@ function MessageReader(props: {
           <div className="flex shrink-0 items-center gap-1">
             {headerActions.map(renderActionButton)}
             <MessageActionButton
-              label={t('actions.reply')}
+              label={t("actions.reply")}
               pending={false}
               onClick={() => onReply(detail)}
             >
               <Reply className="size-4" />
             </MessageActionButton>
             <MessageActionButton
-              label={t('actions.forward')}
+              label={t("actions.replyAll")}
+              pending={false}
+              onClick={() => onReplyAll(detail)}
+            >
+              <ReplyAll className="size-4" />
+            </MessageActionButton>
+            <MessageActionButton
+              label={t("actions.forward")}
               pending={false}
               onClick={() => onForward(detail)}
             >
@@ -1704,34 +3511,31 @@ function MessageReader(props: {
         </div>
 
         <div className="flex items-start gap-3">
-          <div
-            className="flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white"
-            style={{ backgroundColor: `hsl(${hue} 55% 45%)` }}
-          >
-            {senderInitial(detail.fromAddress)}
-          </div>
+          <Avatar className="size-10 shrink-0">
+            <AvatarFallback>{senderInitial(detail.fromAddress)}</AvatarFallback>
+          </Avatar>
           <div className="min-w-0 flex-1">
             <div className="flex items-baseline justify-between gap-3">
               <span className="truncate text-sm font-medium">
                 {detail.fromAddress}
               </span>
-              <time className="text-muted-foreground shrink-0 text-xs">
-                {formatDate(detail.createdAt, 'long')}
+              <time className="shrink-0 text-xs text-muted-foreground">
+                {formatDate(detail.createdAt, "long")}
               </time>
             </div>
-            <div className="text-muted-foreground text-xs">
-              {t('message.toPrefix')}{' '}
+            <div className="text-xs text-muted-foreground">
+              {t("message.toPrefix")}{" "}
               <span>{formatRecipients(detail.toAddresses)}</span>
               {detail.ccAddresses && detail.ccAddresses.length > 0 && (
                 <>
-                  {' - '}
-                  {t('message.cc')}{' '}
+                  {" - "}
+                  {t("message.cc")}{" "}
                   <span>{formatRecipients(detail.ccAddresses)}</span>
                 </>
               )}
             </div>
             {detail.lastError && (
-              <div className="text-destructive mt-1 text-xs">
+              <div className="mt-1 text-xs text-destructive">
                 {detail.lastError}
               </div>
             )}
@@ -1741,49 +3545,66 @@ function MessageReader(props: {
 
       <div className="min-h-0 flex-1 pt-4">
         <ScrollArea className="h-full">
-          <div className="px-2">
-            {detail.bodyHtml ? (
-              <HtmlBody html={detail.bodyHtml} />
-            ) : detail.bodyText ? (
-              <pre className="whitespace-pre-wrap px-4 py-2 font-sans text-sm leading-relaxed">
-                {detail.bodyText}
-              </pre>
-            ) : (
-              <p className="text-muted-foreground px-4 py-2 text-sm">
-                {t('message.noBody')}
-              </p>
-            )}
-          </div>
-          {detail.attachments && detail.attachments.length > 0 && (
+          {threadMessages.map((message) => (
             <section
-              aria-label={t('message.attachments', {
-                count: detail.attachments.length,
-              })}
-              className="border-border mx-5 my-4 border-t pt-4"
+              key={message.id}
+              className="mx-5 my-3 border-b border-border pb-4 last:border-b-0"
             >
-              <h3 className="mb-3 text-sm font-medium">
-                {t('message.attachments', { count: detail.attachments.length })}
-              </h3>
-              <ul className="space-y-2">
-                {detail.attachments.map((attachment, attachmentIndex) => (
-                  <li key={`${detail.id}:${attachment.id ?? attachmentIndex}`}>
-                    <MessageAttachment
-                      messageId={detail.id}
-                      attachment={attachment}
-                      attachmentIndex={attachmentIndex}
-                      labels={labels}
-                      downloadAttachment={props.downloadAttachment}
-                      onError={props.onError}
-                    />
-                  </li>
-                ))}
-              </ul>
+              {threadMessages.length > 1 && (
+                <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{message.fromAddress}</span>
+                  <time>{formatDate(message.createdAt, "long")}</time>
+                </div>
+              )}
+              <div className="px-2">
+                {message.bodyHtml ? (
+                  <HtmlBody html={message.bodyHtml} />
+                ) : message.bodyText ? (
+                  <pre className="px-4 py-2 font-sans text-sm leading-relaxed whitespace-pre-wrap">
+                    {message.bodyText}
+                  </pre>
+                ) : (
+                  <p className="px-4 py-2 text-sm text-muted-foreground">
+                    {t("message.noBody")}
+                  </p>
+                )}
+              </div>
+              {message.attachments && message.attachments.length > 0 && (
+                <section
+                  aria-label={t("message.attachments", {
+                    count: message.attachments.length,
+                  })}
+                  className="mx-3 my-4 border-t border-border pt-4"
+                >
+                  <h3 className="mb-3 text-sm font-medium">
+                    {t("message.attachments", {
+                      count: message.attachments.length,
+                    })}
+                  </h3>
+                  <ul className="space-y-2">
+                    {message.attachments.map((attachment, attachmentIndex) => (
+                      <li
+                        key={`${message.id}:${attachment.id ?? attachmentIndex}`}
+                      >
+                        <MessageAttachment
+                          messageId={message.id}
+                          attachment={attachment}
+                          attachmentIndex={attachmentIndex}
+                          labels={labels}
+                          downloadAttachment={props.downloadAttachment}
+                          onError={props.onError}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
             </section>
-          )}
+          ))}
         </ScrollArea>
       </div>
     </article>
-  );
+  )
 }
 
 function MessageAttachment({
@@ -1794,71 +3615,71 @@ function MessageAttachment({
   downloadAttachment,
   onError,
 }: MailyMailboxAttachmentDownloadInput & {
-  labels: MailyMailboxLabels;
-  downloadAttachment: MailyMailboxDataSource['downloadAttachment'];
-  onError: MailyMailboxViewProps['onError'];
+  labels: MailyMailboxLabels
+  downloadAttachment: MailyMailboxDataSource["downloadAttachment"]
+  onError: MailyMailboxViewProps["onError"]
 }) {
-  const [pending, setPending] = React.useState(false);
-  const [failed, setFailed] = React.useState(false);
-  const inFlight = React.useRef(false);
-  const mounted = React.useRef(false);
+  const [pending, setPending] = React.useState(false)
+  const [failed, setFailed] = React.useState(false)
+  const inFlight = React.useRef(false)
+  const mounted = React.useRef(false)
   React.useEffect(() => {
-    mounted.current = true;
+    mounted.current = true
     return () => {
-      mounted.current = false;
-    };
-  }, []);
+      mounted.current = false
+    }
+  }, [])
 
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
-  ) => interpolate(labels[key], vars);
+  ) => interpolate(labels[key], vars)
   const downloadLabel = t(
-    pending ? 'attachment.downloading' : 'attachment.download',
+    pending ? "attachment.downloading" : "attachment.download",
     { filename: attachment.filename }
-  );
+  )
   const sizeLabels = [
-    'attachment.sizeBytes',
-    'attachment.sizeKB',
-    'attachment.sizeMB',
-    'attachment.sizeGB',
-    'attachment.sizeTB',
-  ] as const;
-  let sizeLabel: string | undefined;
+    "attachment.sizeBytes",
+    "attachment.sizeKB",
+    "attachment.sizeMB",
+    "attachment.sizeGB",
+    "attachment.sizeTB",
+  ] as const
+  let sizeLabel: string | undefined
   if (
-    typeof attachment.size === 'number' &&
+    typeof attachment.size === "number" &&
     Number.isFinite(attachment.size) &&
     attachment.size >= 0
   ) {
-    let size = attachment.size;
-    let unit = 0;
+    let size = attachment.size
+    let unit = 0
     while (size >= 1024 && unit < sizeLabels.length - 1) {
-      size /= 1024;
-      unit++;
+      size /= 1024
+      unit++
     }
-    sizeLabel = t(sizeLabels[unit], { size: Number(size.toFixed(1)) });
+    sizeLabel = t(sizeLabels[unit], { size: Number(size.toFixed(1)) })
   }
   const metadata = [attachment.contentType, sizeLabel]
     .filter(Boolean)
-    .join(' · ');
+    .join(" · ")
 
   const download = async () => {
-    if (!downloadAttachment || inFlight.current) return;
-    inFlight.current = true;
-    setPending(true);
-    setFailed(false);
+    if (!downloadAttachment || inFlight.current) return
+    inFlight.current = true
+    setPending(true)
+    setFailed(false)
     try {
-      await downloadAttachment({ messageId, attachment, attachmentIndex });
+      await downloadAttachment({ messageId, attachment, attachmentIndex })
     } catch (error) {
       if (mounted.current) {
-        setFailed(true);
-        onError?.(error, 'attachmentDownload');
+        setFailed(true)
+        onError?.(error, "attachmentDownload")
       }
     } finally {
-      inFlight.current = false;
-      if (mounted.current) setPending(false);
+      inFlight.current = false
+      if (mounted.current) setPending(false)
     }
-  };
+  }
 
   return (
     <Attachment className="w-full flex-nowrap" aria-busy={pending}>
@@ -1866,20 +3687,20 @@ function MessageAttachment({
         <FileText className="size-4" aria-hidden="true" />
       </AttachmentMedia>
       <AttachmentContent>
-        <AttachmentTitle className="whitespace-normal [overflow-wrap:anywhere]">
+        <AttachmentTitle className="[overflow-wrap:anywhere] whitespace-normal">
           {attachment.filename}
         </AttachmentTitle>
         {metadata && (
-          <AttachmentDescription className="whitespace-normal [overflow-wrap:anywhere]">
+          <AttachmentDescription className="[overflow-wrap:anywhere] whitespace-normal">
             {metadata}
           </AttachmentDescription>
         )}
         {failed && (
           <p
             role="alert"
-            className="text-destructive mt-1 text-xs [overflow-wrap:anywhere]"
+            className="mt-1 text-xs [overflow-wrap:anywhere] text-destructive"
           >
-            {t('errors.attachmentDownload', { filename: attachment.filename })}
+            {t("errors.attachmentDownload", { filename: attachment.filename })}
           </p>
         )}
       </AttachmentContent>
@@ -1894,7 +3715,10 @@ function MessageAttachment({
             onClick={download}
           >
             {pending ? (
-              <LoaderCircleIcon className="size-4 animate-spin" aria-hidden="true" />
+              <LoaderCircleIcon
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
             ) : (
               <Download className="size-4" aria-hidden="true" />
             )}
@@ -1902,16 +3726,16 @@ function MessageAttachment({
         </AttachmentActions>
       )}
     </Attachment>
-  );
+  )
 }
 
 function MessageActionButton(props: {
-  label: string;
-  pending: boolean;
-  pressed?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-  className?: string;
+  label: string
+  pending: boolean
+  pressed?: boolean
+  onClick: () => void
+  children: React.ReactNode
+  className?: string
 }) {
   return (
     <Button
@@ -1931,20 +3755,20 @@ function MessageActionButton(props: {
         props.children
       )}
     </Button>
-  );
+  )
 }
 
 function MessageMoreMenu(props: {
-  detail: MailyMailboxMessageDetail;
-  labels: MailyMailboxLabels;
-  messageActions: readonly MailyMailboxMessageAction[];
-  actionPending: MailyMailboxMessageAction | null;
-  isFavorite: boolean;
+  detail: MailyMailboxMessageDetail
+  labels: MailyMailboxLabels
+  messageActions: readonly MailyMailboxMessageAction[]
+  actionPending: MailyMailboxMessageAction | null
+  isFavorite: boolean
   onRunAction: (
     detail: MailyMailboxMessageDetail,
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
-  ) => Promise<void>;
+  ) => Promise<void>
 }) {
   const {
     detail,
@@ -1953,23 +3777,23 @@ function MessageMoreMenu(props: {
     actionPending,
     isFavorite,
     onRunAction,
-  } = props;
+  } = props
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
-  ) => interpolate(labels[key], vars);
+  ) => interpolate(labels[key], vars)
   const item = (action: MailyMailboxMessageAction) => {
-    const metadata = MESSAGE_ACTION_METADATA[action];
+    const metadata = MESSAGE_ACTION_METADATA[action]
     const label =
-      action === 'favorite' && isFavorite
-        ? t('actions.unfavorite')
-        : t(metadata.label);
-    const value = action === 'favorite' ? !isFavorite : metadata.value;
+      action === "favorite" && isFavorite
+        ? t("actions.unfavorite")
+        : t(metadata.label)
+    const value = action === "favorite" ? !isFavorite : metadata.value
 
     return (
       <DropdownMenuItem
         key={action}
-        onSelect={() => onRunAction(detail, action, value)}
+        onClick={() => onRunAction(detail, action, value)}
         disabled={actionPending !== null}
         variant={metadata.variant}
       >
@@ -1978,17 +3802,17 @@ function MessageMoreMenu(props: {
         ) : (
           metadata.icon(
             cn(
-              'size-4',
-              action === 'favorite' &&
+              "size-4",
+              action === "favorite" &&
                 isFavorite &&
-                'fill-current text-amber-500'
+                "fill-current text-amber-500"
             )
           )
         )}
         {label}
       </DropdownMenuItem>
-    );
-  };
+    )
+  }
 
   return (
     <DropdownMenu>
@@ -1997,8 +3821,8 @@ function MessageMoreMenu(props: {
           type="button"
           variant="ghost"
           size="icon"
-          title={t('actions.more')}
-          aria-label={t('actions.more')}
+          title={t("actions.more")}
+          aria-label={t("actions.more")}
         >
           <MoreVertical className="size-4" />
         </Button>
@@ -2007,52 +3831,52 @@ function MessageMoreMenu(props: {
         {messageActions.map((action) => item(action))}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
 
 function HtmlBody({ html }: { html: string }) {
-  const ref = React.useRef<HTMLIFrameElement>(null);
+  const ref = React.useRef<HTMLIFrameElement>(null)
 
   const handleLoad = () => {
-    const frame = ref.current;
-    if (!frame) return;
+    const frame = ref.current
+    if (!frame) return
     try {
-      const doc = frame.contentDocument;
-      if (!doc) return;
+      const doc = frame.contentDocument
+      if (!doc) return
       const h = Math.max(
         doc.body.scrollHeight,
         doc.documentElement.scrollHeight
-      );
-      frame.style.height = `${h + 8}px`;
+      )
+      frame.style.height = `${h + 8}px`
       doc.addEventListener(
-        'wheel',
+        "wheel",
         (event) => {
           const viewport = frame.closest(
             '[data-slot="scroll-area-viewport"]'
-          ) as HTMLElement | null;
-          if (!viewport) return;
-          const maxTop = viewport.scrollHeight - viewport.clientHeight;
-          if (maxTop <= 0) return;
+          ) as HTMLElement | null
+          if (!viewport) return
+          const maxTop = viewport.scrollHeight - viewport.clientHeight
+          if (maxTop <= 0) return
           const unit =
             event.deltaMode === 1
               ? 16
               : event.deltaMode === 2
                 ? viewport.clientHeight
-                : 1;
+                : 1
           const nextTop = Math.max(
             0,
             Math.min(maxTop, viewport.scrollTop + event.deltaY * unit)
-          );
-          viewport.scrollTop = nextTop;
-          event.preventDefault();
-          event.stopPropagation();
+          )
+          viewport.scrollTop = nextTop
+          event.preventDefault()
+          event.stopPropagation()
         },
         { passive: false }
-      );
+      )
     } catch {
-      frame.style.height = '50vh';
+      frame.style.height = "50vh"
     }
-  };
+  }
 
   const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><style>
 :root { color-scheme: light; }
@@ -2069,7 +3893,7 @@ img { max-width: 100%; height: auto; }
 table { max-width: 100%; }
 a { color: #1a73e8; }
 blockquote { margin: 0; padding: 4px 0 4px 12px; border-left: 2px solid #dadce0; color: #5f6368; }
-</style></head><body>${html}</body></html>`;
+</style></head><body>${html}</body></html>`
 
   return (
     <iframe
@@ -2079,60 +3903,68 @@ blockquote { margin: 0; padding: 4px 0 4px 12px; border-left: 2px solid #dadce0;
       srcDoc={srcDoc}
       onLoad={handleLoad}
       className="block w-full bg-white"
-      style={{ height: '240px' }}
+      style={{ height: "240px" }}
     />
-  );
+  )
 }
 
 function escapeHtml(value: string) {
   return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;")
 }
 
 function plainTextToHtml(value: string) {
-  const text = value.trim();
-  if (!text) return undefined;
+  const text = value.trim()
+  if (!text) return undefined
 
   return text
     .split(/\n{2,}/)
     .map((paragraph) => {
       const html = paragraph
-        .split('\n')
+        .split("\n")
         .map((line) => escapeHtml(line))
-        .join('<br>');
-      return `<p>${html}</p>`;
+        .join("<br>")
+      return `<p>${html}</p>`
     })
-    .join('');
+    .join("")
 }
 
 function composeHtmlContent(values: MailyMailboxComposeValues) {
-  return values.html?.trim() || plainTextToHtml(values.text);
+  return values.html?.trim() || plainTextToHtml(values.text)
 }
 
 function Compose(props: {
-  initialValues: MailyMailboxComposeValues;
-  labels: MailyMailboxLabels;
+  initialValues: MailyMailboxComposeValues
+  labels: MailyMailboxLabels
   loadContactSuggestions: (
     q: string
-  ) => MaybePromise<MailyMailboxContactSuggestion[]>;
-  defaultBodyMode: MailyMailboxComposeBodyMode;
-  allowBodyModeSwitch: boolean;
+  ) => MaybePromise<MailyMailboxContactSuggestion[]>
+  defaultBodyMode: MailyMailboxComposeBodyMode
+  allowBodyModeSwitch: boolean
   editorProps?: Omit<
     EditorProps,
-    'contentHtml' | 'contentJson' | 'onCreate' | 'onUpdate'
-  >;
-  isExistingDraft: boolean;
-  isSendUnresolved?: boolean;
-  isSaving: boolean;
-  isSending: boolean;
-  isDiscarding: boolean;
-  onSave: (values: MailyMailboxComposeValues) => Promise<void>;
-  onSend: (values: MailyMailboxComposeValues) => Promise<void>;
-  onDiscard: () => Promise<void>;
+    "contentHtml" | "contentJson" | "onCreate" | "onUpdate"
+  >
+  isExistingDraft: boolean
+  isSendUnresolved?: boolean
+  isSaving: boolean
+  isSending: boolean
+  isDiscarding: boolean
+  ownershipToken: object
+  uploadAttachment?: MailyMailboxDataSource["uploadAttachment"]
+  discardUploadedAttachment?: MailyMailboxDataSource["discardUploadedAttachment"]
+  onError?: MailyMailboxViewProps["onError"]
+  onDirtyChange: (dirty: boolean) => void
+  onSave: (values: MailyMailboxComposeValues) => Promise<boolean>
+  onSend: (
+    values: MailyMailboxComposeValues,
+    onPrepared?: () => void
+  ) => Promise<void>
+  onDiscard: () => Promise<void>
 }) {
   const {
     initialValues,
@@ -2146,76 +3978,247 @@ function Compose(props: {
     isSendUnresolved = false,
     isSending,
     isDiscarding,
+    ownershipToken,
+    uploadAttachment,
+    discardUploadedAttachment,
+    onError,
+    onDirtyChange,
     onSave,
     onSend,
     onDiscard,
-  } = props;
+  } = props
+  const subjectInputId = React.useId()
+  const bodyInputId = React.useId()
+  const bodyLabelId = React.useId()
   const [values, setValues] =
-    React.useState<MailyMailboxComposeValues>(initialValues);
+    React.useState<MailyMailboxComposeValues>(initialValues)
+  const [acknowledged, setAcknowledged] = React.useState(() =>
+    JSON.stringify(initialValues)
+  )
+  const [hasAcknowledgedWrite, setHasAcknowledgedWrite] =
+    React.useState(isExistingDraft)
+  const [saveError, setSaveError] = React.useState(false)
+  const [uploading, setUploading] = React.useState(false)
+  const [uploadError, setUploadError] = React.useState<string | null>(null)
+  const uploadInput = React.useRef<HTMLInputElement>(null)
+  const uploadLock = React.useRef(false)
+  const alive = React.useRef(false)
+  const uploadOwner = React.useMemo(
+    () => ({ active: true }),
+    [ownershipToken, uploadAttachment]
+  )
+  const ownedUploads = React.useRef(
+    new Map<string, MailyMailboxUploadedAttachment>()
+  )
+  const saveLock = React.useRef(false)
+  const valuesRef = React.useRef(values)
+  valuesRef.current = values
+  React.useLayoutEffect(() => {
+    alive.current = true
+    uploadOwner.active = true
+    return () => {
+      alive.current = false
+      uploadOwner.active = false
+      for (const attachment of ownedUploads.current.values())
+        void Promise.resolve(discardUploadedAttachment?.(attachment)).catch(
+          (error) => onError?.(error, "attachmentDiscard")
+        )
+      ownedUploads.current.clear()
+    }
+  }, [uploadOwner])
+  const serialized = JSON.stringify(values)
+  const dirty = serialized !== acknowledged
+  React.useLayoutEffect(() => {
+    onDirtyChange(dirty || uploading)
+  }, [dirty, uploading, onDirtyChange])
+  React.useEffect(() => {
+    if (!dirty && !uploading) return
+    const protect = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", protect)
+    return () => window.removeEventListener("beforeunload", protect)
+  }, [dirty, uploading])
+  const save = async (snapshot: MailyMailboxComposeValues) => {
+    if (saveLock.current || uploadLock.current) return
+    const owner = uploadOwner
+    saveLock.current = true
+    const pendingAttachments = (snapshot.attachments ?? []).filter(
+      (attachment) => ownedUploads.current.delete(attachment.id)
+    )
+    try {
+      const accepted = await onSave(snapshot)
+      if (!accepted) {
+        for (const attachment of pendingAttachments) {
+          if (owner.active) ownedUploads.current.set(attachment.id, attachment)
+          else
+            void Promise.resolve(discardUploadedAttachment?.(attachment)).catch(
+              (error) => onError?.(error, "attachmentDiscard")
+            )
+        }
+      }
+      if (!owner.active) return false
+      if (accepted) {
+        for (const attachment of snapshot.attachments ?? [])
+          ownedUploads.current.delete(attachment.id)
+        setHasAcknowledgedWrite(true)
+        setAcknowledged(JSON.stringify(snapshot))
+      }
+      setSaveError(!accepted)
+      return accepted
+    } finally {
+      saveLock.current = false
+    }
+  }
+  React.useEffect(() => {
+    if (
+      !dirty ||
+      isSaving ||
+      isSending ||
+      isDiscarding ||
+      isSendUnresolved ||
+      uploading ||
+      saveError
+    )
+      return
+    const timer = window.setTimeout(() => {
+      void save(valuesRef.current)
+    }, 1000)
+    return () => window.clearTimeout(timer)
+  }, [
+    serialized,
+    acknowledged,
+    isSaving,
+    isSending,
+    isDiscarding,
+    isSendUnresolved,
+    uploading,
+    saveError,
+  ])
+  const uploadFiles = async (files: File[]) => {
+    if (!uploadAttachment || uploadLock.current) return
+    uploadLock.current = true
+    setUploading(true)
+    setUploadError(null)
+    try {
+      for (const file of files) {
+        if (!uploadOwner.active) break
+        try {
+          const attachment = await uploadAttachment(file)
+          if (!uploadOwner.active) {
+            await discardUploadedAttachment?.(attachment)
+            continue
+          }
+          ownedUploads.current.set(attachment.id, attachment)
+          setValues((previous) => ({
+            ...previous,
+            attachments: [...(previous.attachments ?? []), attachment],
+          }))
+        } catch (error) {
+          if (alive.current) {
+            setUploadError(file.name)
+            onError?.(error, "attachmentUpload")
+          }
+        }
+      }
+    } finally {
+      uploadLock.current = false
+      if (alive.current) setUploading(false)
+    }
+  }
   const [bodyMode, setBodyMode] =
-    React.useState<MailyMailboxComposeBodyMode>(defaultBodyMode);
-  const [editorRevision, setEditorRevision] = React.useState(0);
+    React.useState<MailyMailboxComposeBodyMode>(defaultBodyMode)
+  const [editorRevision, setEditorRevision] = React.useState(0)
   const [showCc, setShowCc] = React.useState(
     () => initialValues.cc.trim().length > 0
-  );
+  )
   const [showBcc, setShowBcc] = React.useState(
     () => initialValues.bcc.trim().length > 0
-  );
+  )
   const [focusRecipient, setFocusRecipient] = React.useState<
-    'cc' | 'bcc' | null
-  >(null);
-  const toInputId = React.useId();
-  const ccInputId = React.useId();
-  const bccInputId = React.useId();
+    "cc" | "bcc" | null
+  >(null)
+  const toInputId = React.useId()
+  const ccInputId = React.useId()
+  const bccInputId = React.useId()
   const t = (
     key: MailyMailboxLabelKey,
     vars?: Record<string, string | number>
-  ) => interpolate(labels[key], vars);
+  ) => interpolate(labels[key], vars)
 
   // Compose is mounted only with hydrated content and keyed by draft identity.
   // Later reads must not replace edits owned by this mounted compose session.
 
   const set = (key: keyof MailyMailboxComposeValues, value: string) =>
-    setValues((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => ({ ...prev, [key]: value }))
 
   const setBodyText = (value: string) =>
     setValues((prev) => ({
       ...prev,
       text: value,
-      html: bodyMode === 'plainText' ? null : prev.html,
-    }));
+      html: bodyMode === "plainText" ? null : prev.html,
+    }))
 
   const updateFromEditor = React.useCallback(
-    (editor: Parameters<NonNullable<EditorProps['onUpdate']>>[0]) => {
-      const text = editor.getText({ blockSeparator: '\n' });
-      const html = editor.getHTML();
-      setValues((prev) => ({ ...prev, text, html }));
+    (editor: Parameters<NonNullable<EditorProps["onUpdate"]>>[0]) => {
+      const text = editor.getText({ blockSeparator: "\n" })
+      const html = editor.getHTML()
+      setValues((prev) => ({ ...prev, text, html }))
     },
     []
-  );
+  )
+
+  const submit = async () => {
+    if (uploadLock.current) return
+    const snapshot = valuesRef.current
+    const pendingAttachments = (snapshot.attachments ?? []).filter(
+      (attachment) => ownedUploads.current.delete(attachment.id)
+    )
+    let prepared = false
+    try {
+      await onSend(snapshot, () => {
+        prepared = true
+        if (uploadOwner.active) {
+          setHasAcknowledgedWrite(true)
+          setAcknowledged(JSON.stringify(snapshot))
+        }
+      })
+    } finally {
+      if (!prepared)
+        for (const attachment of pendingAttachments) {
+          if (uploadOwner.active)
+            ownedUploads.current.set(attachment.id, attachment)
+          else
+            void Promise.resolve(discardUploadedAttachment?.(attachment)).catch(
+              (error) => onError?.(error, "attachmentDiscard")
+            )
+        }
+    }
+  }
 
   const switchBodyMode = (nextMode: MailyMailboxComposeBodyMode) => {
-    setBodyMode(nextMode);
-    if (nextMode === 'mailyEditor') {
-      setEditorRevision((revision) => revision + 1);
+    setBodyMode(nextMode)
+    if (nextMode === "mailyEditor") {
+      setEditorRevision((revision) => revision + 1)
     }
-  };
+  }
 
-  const editorConfig = editorProps?.config;
-  const editorBodyClassName = cn('mt-2 min-h-56', editorConfig?.bodyClassName);
-  const editorContentClassName = cn('min-h-48', editorConfig?.contentClassName);
+  const editorConfig = editorProps?.config
+  const editorBodyClassName = cn("mt-2 min-h-56", editorConfig?.bodyClassName)
+  const editorContentClassName = cn("min-h-48", editorConfig?.contentClassName)
 
   return (
     <form
       className="flex h-full min-h-0 flex-col gap-4 p-5"
       onSubmit={(event) => {
-        event.preventDefault();
-        onSend(values);
+        event.preventDefault()
+        void submit()
       }}
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-semibold">
-          {isExistingDraft ? t('compose.editDraft') : t('compose.new')}
+          {isExistingDraft ? t("compose.editDraft") : t("compose.new")}
         </h2>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -2226,40 +4229,129 @@ function Compose(props: {
             disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
           >
             <Trash2 className="size-4" />
-            {t('compose.discard')}
+            {t("compose.discard")}
           </Button>
           <Button
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => onSave(values)}
+            onClick={() => {
+              setSaveError(false)
+              void save(values)
+            }}
             disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
           >
             {isSaving && <LoaderCircleIcon className="size-4 animate-spin" />}
-            {t('compose.saveDraft')}
+            {t("compose.saveDraft")}
           </Button>
           <Button
             type="submit"
             size="sm"
-            disabled={isSaving || isSending || isDiscarding}
+            disabled={isSaving || isSending || isDiscarding || uploading}
           >
             {isSending ? (
               <LoaderCircleIcon className="size-4 animate-spin" />
             ) : (
               <Send className="size-4" />
             )}
-            {t('compose.send')}
+            {t("compose.send")}
           </Button>
         </div>
       </div>
 
-      <fieldset
+      <div role="status" className="text-sm text-muted-foreground">
+        {saveError
+          ? t("compose.saveError")
+          : isSaving
+            ? t("compose.saving")
+            : !dirty && hasAcknowledgedWrite
+              ? t("compose.autosaved")
+              : null}
+      </div>
+      {uploadAttachment && (
+        <div className="flex flex-col gap-2">
+          {/* shadcn-audit-ignore-next-line invisible native file picker */}
+          <input
+            ref={uploadInput}
+            type="file"
+            multiple
+            hidden
+            onChange={(event) => {
+              const files = Array.from(event.target.files ?? [])
+              event.target.value = ""
+              void uploadFiles(files)
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={
+              uploading ||
+              isSaving ||
+              isSending ||
+              isDiscarding ||
+              isSendUnresolved
+            }
+            onClick={() => uploadInput.current?.click()}
+          >
+            {uploading ? (
+              <LoaderCircleIcon className="size-4 animate-spin" />
+            ) : (
+              <Paperclip className="size-4" />
+            )}
+            {t("compose.attach")}
+          </Button>
+          {uploadError && (
+            <p role="alert">
+              {t("compose.attachmentUploadError", { filename: uploadError })}
+            </p>
+          )}
+        </div>
+      )}
+      {(values.attachments ?? []).map((attachment, index) => (
+        <Attachment key={`${attachment.id}:${index}`}>
+          <AttachmentContent>
+            <AttachmentTitle>{attachment.filename}</AttachmentTitle>
+          </AttachmentContent>
+          <AttachmentActions>
+            <AttachmentAction
+              type="button"
+              disabled={
+                isSaving ||
+                isSending ||
+                isDiscarding ||
+                isSendUnresolved ||
+                uploading
+              }
+              aria-label={t("compose.removeAttachment", {
+                filename: attachment.filename,
+              })}
+              onClick={() => {
+                if (ownedUploads.current.delete(attachment.id))
+                  void Promise.resolve(
+                    discardUploadedAttachment?.(attachment)
+                  ).catch((error) => onError?.(error, "attachmentDiscard"))
+                setValues((previous) => ({
+                  ...previous,
+                  attachments: previous.attachments?.filter(
+                    (_, position) => position !== index
+                  ),
+                }))
+              }}
+            >
+              <X className="size-4" />
+            </AttachmentAction>
+          </AttachmentActions>
+        </Attachment>
+      ))}
+      <FieldSet
         disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
         className="flex min-h-0 flex-1 flex-col gap-3"
       >
         <RecipientField
           id={toInputId}
-          label={t('message.to')}
+          label={t("message.to")}
           actions={
             (!showCc || !showBcc) && (
               <div className="flex items-center gap-1">
@@ -2269,12 +4361,12 @@ function Compose(props: {
                     variant="ghost"
                     size="xs"
                     onClick={() => {
-                      setShowCc(true);
-                      setFocusRecipient('cc');
+                      setShowCc(true)
+                      setFocusRecipient("cc")
                     }}
-                    className="text-muted-foreground hover:text-foreground h-auto rounded-sm px-1 py-0 text-sm font-medium hover:bg-transparent"
+                    className="h-auto rounded-sm px-1 py-0 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
                   >
-                    {t('message.cc')}
+                    {t("message.cc")}
                   </Button>
                 )}
                 {!showBcc && (
@@ -2283,12 +4375,12 @@ function Compose(props: {
                     variant="ghost"
                     size="xs"
                     onClick={() => {
-                      setShowBcc(true);
-                      setFocusRecipient('bcc');
+                      setShowBcc(true)
+                      setFocusRecipient("bcc")
                     }}
-                    className="text-muted-foreground hover:text-foreground h-auto rounded-sm px-1 py-0 text-sm font-medium hover:bg-transparent"
+                    className="h-auto rounded-sm px-1 py-0 text-sm font-medium text-muted-foreground hover:bg-transparent hover:text-foreground"
                   >
-                    {t('message.bcc')}
+                    {t("message.bcc")}
                   </Button>
                 )}
               </div>
@@ -2298,55 +4390,65 @@ function Compose(props: {
           <RecipientAutocompleteInput
             id={toInputId}
             value={values.to}
-            onChange={(value) => set('to', value)}
+            onChange={(value) => set("to", value)}
             placeholder=""
-            emptyLabel={t('contacts.noSuggestions')}
-            loadingLabel={t('loading')}
+            emptyLabel={t("contacts.noSuggestions")}
+            loadingLabel={t("loading")}
             loadSuggestions={loadContactSuggestions}
             className="h-7 px-2.5 py-0"
           />
         </RecipientField>
         {showCc && (
-          <RecipientField id={ccInputId} label={t('message.cc')}>
+          <RecipientField id={ccInputId} label={t("message.cc")}>
             <RecipientAutocompleteInput
               id={ccInputId}
               value={values.cc}
-              onChange={(value) => set('cc', value)}
+              onChange={(value) => set("cc", value)}
               placeholder=""
-              emptyLabel={t('contacts.noSuggestions')}
-              loadingLabel={t('loading')}
+              emptyLabel={t("contacts.noSuggestions")}
+              loadingLabel={t("loading")}
               loadSuggestions={loadContactSuggestions}
-              autoFocus={focusRecipient === 'cc'}
+              autoFocus={focusRecipient === "cc"}
               className="h-7 px-2.5 py-0"
             />
           </RecipientField>
         )}
         {showBcc && (
-          <RecipientField id={bccInputId} label={t('message.bcc')}>
+          <RecipientField id={bccInputId} label={t("message.bcc")}>
             <RecipientAutocompleteInput
               id={bccInputId}
               value={values.bcc}
-              onChange={(value) => set('bcc', value)}
+              onChange={(value) => set("bcc", value)}
               placeholder=""
-              emptyLabel={t('contacts.noSuggestions')}
-              loadingLabel={t('loading')}
+              emptyLabel={t("contacts.noSuggestions")}
+              loadingLabel={t("loading")}
               loadSuggestions={loadContactSuggestions}
-              autoFocus={focusRecipient === 'bcc'}
+              autoFocus={focusRecipient === "bcc"}
               className="h-7 px-2.5 py-0"
             />
           </RecipientField>
         )}
-        <Field label={t('message.subject')}>
+        <Field>
+          <FieldLabel htmlFor={subjectInputId}>
+            {t("message.subject")}
+          </FieldLabel>
           <Input
+            id={subjectInputId}
+            name="subject"
             value={values.subject}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              set('subject', event.target.value)
+              set("subject", event.target.value)
             }
           />
         </Field>
-        <div className="grid min-h-0 flex-1 gap-1.5 text-sm font-medium">
+        <Field className="min-h-0 flex-1 gap-1.5" aria-labelledby={bodyLabelId}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span>{t('message.body')}</span>
+            <Label
+              id={bodyLabelId}
+              htmlFor={bodyMode === "plainText" ? bodyInputId : undefined}
+            >
+              {t("message.body")}
+            </Label>
             {allowBodyModeSwitch && (
               <ToggleGroupCompat
                 selectionMode="single"
@@ -2356,25 +4458,25 @@ function Compose(props: {
                 <ToggleGroupCompatItem
                   type="button"
                   value="plainText"
-                  pressed={bodyMode === 'plainText'}
-                  onClick={() => switchBodyMode('plainText')}
+                  pressed={bodyMode === "plainText"}
+                  onClick={() => switchBodyMode("plainText")}
                   size="sm"
                 >
-                  {t('compose.mode.plainText')}
+                  {t("compose.mode.plainText")}
                 </ToggleGroupCompatItem>
                 <ToggleGroupCompatItem
                   type="button"
                   value="mailyEditor"
-                  pressed={bodyMode === 'mailyEditor'}
-                  onClick={() => switchBodyMode('mailyEditor')}
+                  pressed={bodyMode === "mailyEditor"}
+                  onClick={() => switchBodyMode("mailyEditor")}
                   size="sm"
                 >
-                  {t('compose.mode.mailyEditor')}
+                  {t("compose.mode.mailyEditor")}
                 </ToggleGroupCompatItem>
               </ToggleGroupCompat>
             )}
           </div>
-          {bodyMode === 'mailyEditor' ? (
+          {bodyMode === "mailyEditor" ? (
             <Editor
               {...editorProps}
               editable={
@@ -2387,14 +4489,15 @@ function Compose(props: {
               config={{
                 ...editorConfig,
                 hasMenuBar: editorConfig?.hasMenuBar ?? true,
-                wrapClassName: cn('min-h-0', editorConfig?.wrapClassName),
+                wrapClassName: cn("min-h-0", editorConfig?.wrapClassName),
                 bodyClassName: editorBodyClassName,
                 contentClassName: editorContentClassName,
-                autofocus: editorConfig?.autofocus ?? 'end',
+                autofocus: editorConfig?.autofocus ?? "end",
               }}
             />
           ) : (
             <Textarea
+              id={bodyInputId}
               value={values.text}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setBodyText(event.target.value)
@@ -2402,39 +4505,39 @@ function Compose(props: {
               className="h-full min-h-40 resize-none"
             />
           )}
-        </div>
-      </fieldset>
+        </Field>
+      </FieldSet>
     </form>
-  );
+  )
 }
 
-const RECIPIENT_SEPARATOR_PATTERN = /[,;\n]/;
+const RECIPIENT_SEPARATOR_PATTERN = /[,;\n]/
 
 function recipientTokenForCaret(value: string, caret: number) {
-  const position = Math.max(0, Math.min(caret, value.length));
-  let start = position;
-  let end = position;
+  const position = Math.max(0, Math.min(caret, value.length))
+  let start = position
+  let end = position
 
   while (start > 0 && !RECIPIENT_SEPARATOR_PATTERN.test(value[start - 1])) {
-    start -= 1;
+    start -= 1
   }
   while (end < value.length && !RECIPIENT_SEPARATOR_PATTERN.test(value[end])) {
-    end += 1;
+    end += 1
   }
 
   return {
     start,
     end,
     query: value.slice(start, end).trim(),
-  };
+  }
 }
 
 function formatContactSuggestion(
   suggestion: MailyMailboxContactSuggestion
 ): string {
-  const displayName = suggestion.displayName?.trim();
-  if (!displayName) return suggestion.address;
-  return `${displayName} <${suggestion.address}>`;
+  const displayName = suggestion.displayName?.trim()
+  if (!displayName) return suggestion.address
+  return `${displayName} <${suggestion.address}>`
 }
 
 function replaceRecipientToken(
@@ -2442,40 +4545,40 @@ function replaceRecipientToken(
   caret: number,
   suggestion: MailyMailboxContactSuggestion
 ) {
-  const token = recipientTokenForCaret(value, caret);
-  const before = value.slice(0, token.start);
-  const replacement = formatContactSuggestion(suggestion);
-  let after = value.slice(token.end);
+  const token = recipientTokenForCaret(value, caret)
+  const before = value.slice(0, token.start)
+  const replacement = formatContactSuggestion(suggestion)
+  let after = value.slice(token.end)
 
   if (!after) {
-    after = ', ';
+    after = ", "
   } else if (/^[,;]/.test(after)) {
-    after = after.replace(/^([,;])\s*/, '$1 ');
+    after = after.replace(/^([,;])\s*/, "$1 ")
   } else if (/^\n/.test(after)) {
-    after = after.replace(/^\n\s*/, '\n');
+    after = after.replace(/^\n\s*/, "\n")
   } else {
-    after = `, ${after.trimStart()}`;
+    after = `, ${after.trimStart()}`
   }
 
-  const leadingSpace = before.length > 0 && !/[\s\n]$/.test(before) ? ' ' : '';
-  const nextValue = `${before}${leadingSpace}${replacement}${after}`;
+  const leadingSpace = before.length > 0 && !/[\s\n]$/.test(before) ? " " : ""
+  const nextValue = `${before}${leadingSpace}${replacement}${after}`
 
   return {
     value: nextValue,
     caret: before.length + leadingSpace.length + replacement.length + 2,
-  };
+  }
 }
 
 function RecipientAutocompleteInput(props: {
-  id?: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  emptyLabel: string;
-  loadingLabel: string;
-  loadSuggestions: (q: string) => MaybePromise<MailyMailboxContactSuggestion[]>;
-  autoFocus?: boolean;
-  className?: string;
+  id?: string
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  emptyLabel: string
+  loadingLabel: string
+  loadSuggestions: (q: string) => MaybePromise<MailyMailboxContactSuggestion[]>
+  autoFocus?: boolean
+  className?: string
 }) {
   const {
     id,
@@ -2487,88 +4590,88 @@ function RecipientAutocompleteInput(props: {
     loadSuggestions,
     autoFocus,
     className,
-  } = props;
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const caretRef = React.useRef(0);
-  const requestRef = React.useRef(0);
-  const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
+  } = props
+  const inputRef = React.useRef<HTMLInputElement | null>(null)
+  const caretRef = React.useRef(0)
+  const requestRef = React.useRef(0)
+  const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState("")
+  const [loading, setLoading] = React.useState(false)
   const [suggestions, setSuggestions] = React.useState<
     MailyMailboxContactSuggestion[]
-  >([]);
+  >([])
 
   const updateQuery = React.useCallback((nextValue: string, caret: number) => {
-    caretRef.current = caret;
-    const nextQuery = recipientTokenForCaret(nextValue, caret).query;
-    setQuery(nextQuery);
-    setOpen(nextQuery.length > 0);
-  }, []);
+    caretRef.current = caret
+    const nextQuery = recipientTokenForCaret(nextValue, caret).query
+    setQuery(nextQuery)
+    setOpen(nextQuery.length > 0)
+  }, [])
 
   React.useEffect(() => {
-    const requestId = ++requestRef.current;
-    const q = query.trim();
+    const requestId = ++requestRef.current
+    const q = query.trim()
     if (!open || !q) {
-      setSuggestions([]);
-      setLoading(false);
-      return;
+      setSuggestions([])
+      setLoading(false)
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     const timer = window.setTimeout(() => {
       Promise.resolve(loadSuggestions(q))
         .then((next) => {
           if (requestRef.current === requestId) {
-            setSuggestions(next);
+            setSuggestions(next)
           }
         })
         .catch(() => {
-          if (requestRef.current === requestId) setSuggestions([]);
+          if (requestRef.current === requestId) setSuggestions([])
         })
         .finally(() => {
           if (requestRef.current === requestId) {
-            setLoading(false);
+            setLoading(false)
           }
-        });
-    }, 150);
+        })
+    }, 150)
 
     return () => {
-      window.clearTimeout(timer);
-      requestRef.current += 1;
-    };
-  }, [loadSuggestions, open, query]);
+      window.clearTimeout(timer)
+      requestRef.current += 1
+    }
+  }, [loadSuggestions, open, query])
 
   React.useEffect(() => {
     if (autoFocus) {
-      inputRef.current?.focus();
+      inputRef.current?.focus()
     }
-  }, [autoFocus]);
+  }, [autoFocus])
 
   React.useEffect(() => {
-    if (!open) return;
+    if (!open) return
 
     const frame = window.requestAnimationFrame(() => {
-      const input = inputRef.current;
-      if (!input) return;
+      const input = inputRef.current
+      if (!input) return
 
-      input.focus();
-      input.setSelectionRange(caretRef.current, caretRef.current);
-    });
+      input.focus()
+      input.setSelectionRange(caretRef.current, caretRef.current)
+    })
 
-    return () => window.cancelAnimationFrame(frame);
-  }, [open]);
+    return () => window.cancelAnimationFrame(frame)
+  }, [open])
 
   const selectSuggestion = (suggestion: MailyMailboxContactSuggestion) => {
-    const next = replaceRecipientToken(value, caretRef.current, suggestion);
-    onChange(next.value);
-    setOpen(false);
-    setQuery('');
+    const next = replaceRecipientToken(value, caretRef.current, suggestion)
+    onChange(next.value)
+    setOpen(false)
+    setQuery("")
     window.requestAnimationFrame(() => {
-      inputRef.current?.focus();
-      inputRef.current?.setSelectionRange(next.caret, next.caret);
-    });
-  };
+      inputRef.current?.focus()
+      inputRef.current?.setSelectionRange(next.caret, next.caret)
+    })
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -2579,12 +4682,12 @@ function RecipientAutocompleteInput(props: {
           type="text"
           value={value}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            const nextValue = event.target.value;
-            onChange(nextValue);
+            const nextValue = event.target.value
+            onChange(nextValue)
             updateQuery(
               nextValue,
               event.target.selectionStart ?? nextValue.length
-            );
+            )
           }}
           onFocus={(event: React.FocusEvent<HTMLInputElement>) =>
             updateQuery(
@@ -2608,7 +4711,7 @@ function RecipientAutocompleteInput(props: {
             )
           }
           onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-            if (event.key === 'Escape') setOpen(false);
+            if (event.key === "Escape") setOpen(false)
           }}
           placeholder={placeholder}
           autoComplete="off"
@@ -2618,50 +4721,52 @@ function RecipientAutocompleteInput(props: {
       <PopoverContent
         align="start"
         style={{
-          width: 'var(--radix-popover-trigger-width, var(--anchor-width))',
+          width: "var(--radix-popover-trigger-width, var(--anchor-width))",
         }}
         className="min-w-72 p-0"
       >
         <Command shouldFilter={false}>
           <CommandList className="max-h-56">
             {loading ? (
-              <div className="text-muted-foreground flex items-center justify-center gap-2 px-3 py-4 text-sm">
+              <div className="flex items-center justify-center gap-2 px-3 py-4 text-sm text-muted-foreground">
                 <LoaderCircleIcon className="size-4 animate-spin" />
                 {loadingLabel}
               </div>
             ) : suggestions.length > 0 ? (
               <CommandGroup>
                 {suggestions.map((suggestion) => {
-                  const label = formatContactSuggestion(suggestion);
+                  const label = formatContactSuggestion(suggestion)
                   return (
                     <CommandItem
                       key={suggestion.id ?? suggestion.address}
-                      value={`${suggestion.displayName ?? ''} ${suggestion.address}`}
+                      value={`${suggestion.displayName ?? ""} ${suggestion.address}`}
                       onSelect={() => selectSuggestion(suggestion)}
                       className="cursor-pointer"
                     >
-                      <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium">
-                        {senderInitial(
-                          suggestion.displayName || suggestion.address
-                        )}
-                      </span>
+                      <Avatar className="size-7 shrink-0">
+                        <AvatarFallback>
+                          {senderInitial(
+                            suggestion.displayName || suggestion.address
+                          )}
+                        </AvatarFallback>
+                      </Avatar>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">
                           {suggestion.displayName || suggestion.address}
                         </span>
                         {suggestion.displayName && (
-                          <span className="text-muted-foreground block truncate text-xs">
+                          <span className="block truncate text-xs text-muted-foreground">
                             {suggestion.address}
                           </span>
                         )}
                       </span>
                       <span className="sr-only">{label}</span>
                     </CommandItem>
-                  );
+                  )
                 })}
               </CommandGroup>
             ) : (
-              <div className="text-muted-foreground px-3 py-6 text-center text-sm">
+              <div className="px-3 py-6 text-center text-sm text-muted-foreground">
                 {emptyLabel}
               </div>
             )}
@@ -2669,24 +4774,27 @@ function RecipientAutocompleteInput(props: {
         </Command>
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
 function RecipientField(props: {
-  id: string;
-  label: string;
-  children: React.ReactNode;
-  actions?: React.ReactNode;
+  id: string
+  label: string
+  children: React.ReactNode
+  actions?: React.ReactNode
 }) {
   return (
-    <div className="border-border grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 border-b py-1 text-sm">
-      <label
+    <Field
+      orientation="horizontal"
+      className="grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 border-b border-border py-1"
+    >
+      <FieldLabel
         htmlFor={props.id}
-        className="text-muted-foreground shrink-0 font-medium"
+        className="shrink-0 font-medium text-muted-foreground"
       >
         {props.label}
-      </label>
-      <InputGroup className="bg-input/40 dark:bg-input/30 h-8 border-0 shadow-none">
+      </FieldLabel>
+      <InputGroup className="h-8 border-0 bg-input/40 shadow-none dark:bg-input/30">
         {props.children}
         {props.actions && (
           <InputGroupAddon align="inline-end" className="pr-1">
@@ -2694,41 +4802,23 @@ function RecipientField(props: {
           </InputGroupAddon>
         )}
       </InputGroup>
-    </div>
-  );
-}
-
-function Field(props: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <label className={cn('grid gap-1.5 text-sm font-medium', props.className)}>
-      <span>{props.label}</span>
-      {props.children}
-    </label>
-  );
+    </Field>
+  )
 }
 
 function EmptyState(props: {
-  title: string;
-  description?: string;
-  className?: string;
+  title: string
+  description?: string
+  className?: string
 }) {
   return (
-    <div
-      className={cn(
-        'flex min-h-40 flex-col items-center justify-center px-5 py-8 text-center',
-        props.className
-      )}
-    >
-      <div className="text-sm font-medium">{props.title}</div>
-      {props.description && (
-        <p className="text-muted-foreground mt-1 max-w-64 text-sm">
-          {props.description}
-        </p>
-      )}
-    </div>
-  );
+    <Empty className={cn("min-h-40 border-0 px-5 py-8", props.className)}>
+      <EmptyHeader>
+        <EmptyTitle>{props.title}</EmptyTitle>
+        {props.description && (
+          <EmptyDescription>{props.description}</EmptyDescription>
+        )}
+      </EmptyHeader>
+    </Empty>
+  )
 }

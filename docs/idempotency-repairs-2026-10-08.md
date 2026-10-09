@@ -23,7 +23,7 @@ Changes belong in packages/core/src and are generated into registry/default/mail
 - Direct node scripts/build-shadcn-registry.mjs passed: zero unmapped/preserved fallback icons. Local shadcn CLI built all four public registry JSON items.
 - All four public registry JSON items embed 274 staged source entries with exact byte equality. Generated staging was locally formatted before CLI build; final changed-file Prettier checks passed.
 - node scripts/audit-shadcn-primitives.mjs passed.
-- Fresh official shadcn CLI consumer installs/type/builds passed for Radix editor, Radix full granular, Base editor, Base full granular and Bun isolated full granular. The existing consumer script's browser runtime call was omitted in a temporary copy under the Veyme task's explicit no-browser boundary. No repository acceptance condition was relaxed. Its existing known Base scroll-area unused-import exception remains as documented in that script.
+- Fresh official shadcn CLI consumer installs/type/builds passed for Radix editor, Radix full granular, Base editor, Base full granular and Bun isolated full granular. The existing consumer script's browser runtime call was omitted in a temporary copy under an explicit no-browser validation boundary. No repository acceptance condition was relaxed. Its existing known Base scroll-area unused-import exception remains as documented in that script.
 
 ## Boundary
 

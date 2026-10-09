@@ -63,6 +63,12 @@ const EXTERNALIZED_MODULES = {
   'editor/components/ui/resizable': '@/components/ui/resizable',
   'editor/components/ui/scroll-area': '@/components/ui/scroll-area',
   'editor/components/ui/attachment': '@/components/ui/attachment',
+  'editor/components/ui/checkbox': '@/components/ui/checkbox',
+  'editor/components/ui/dialog': '@/components/ui/dialog',
+  'editor/components/ui/avatar': '@/components/ui/avatar',
+  'editor/components/ui/field': '@/components/ui/field',
+  'editor/components/ui/label': '@/components/ui/label',
+  'editor/components/ui/empty': '@/components/ui/empty',
 };
 
 // shadcn registry items the consumer must have for the externalized imports
@@ -86,6 +92,12 @@ const REGISTRY_DEPENDENCIES = [
   'resizable',
   'scroll-area',
   'attachment',
+  'checkbox',
+  'dialog',
+  'avatar',
+  'field',
+  'label',
+  'empty',
 ];
 
 const REGISTRY_DEPENDENCY_BY_UI_IMPORT = new Map(
@@ -106,6 +118,10 @@ const EXTERNALIZED_PACKAGE_DEPENDENCIES = [
   '@radix-ui/react-toggle-group',
   '@radix-ui/react-select',
   '@radix-ui/react-scroll-area',
+  '@radix-ui/react-checkbox',
+  '@radix-ui/react-dialog',
+  '@radix-ui/react-avatar',
+  '@radix-ui/react-label',
   'cmdk',
   'react-resizable-panels',
 ];

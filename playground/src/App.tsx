@@ -32,6 +32,8 @@ import {
   type MailyMailboxFolder,
   type MailyMailboxMessageAction,
   type MailyMailboxMessageDetail,
+  type MailyMailboxSearchQuery,
+  type MailyMailboxLabel,
 } from "@/components/maily/mailbox"
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 
@@ -46,6 +48,9 @@ const emailPreviewFontClassName = "[font-family:Inter,sans-serif]"
 const playgroundMessageActions = [
   "archive",
   "delete",
+  "restore",
+  "notSpam",
+  "deleteForever",
   "favorite",
   "markUnread",
   "blockSender",
@@ -289,6 +294,7 @@ const promotionalNewsletterHtml = `
 const baseMessages: MailyMailboxMessageDetail[] = [
   {
     id: "msg-in-1",
+    threadId: "thread-launch-kit",
     direction: "in",
     fromAddress: "Maily Studio <hello@maily.cn>",
     toAddresses: ["studio@maily.cn"],
@@ -301,7 +307,7 @@ const baseMessages: MailyMailboxMessageDetail[] = [
     hasAttachments: false,
     isFavorite: true,
     isUnread: true,
-    labels: ["Promotions"],
+    labels: ["Inbox", "Promotions"],
     createdAt: new Date("2026-07-25T09:20:00"),
     bodyText: promotionalNewsletterText,
     bodyHtml: promotionalNewsletterHtml,
@@ -314,6 +320,7 @@ const baseMessages: MailyMailboxMessageDetail[] = [
   },
   {
     id: "msg-in-2",
+    threadId: "thread-queue-clear",
     direction: "in",
     fromAddress: "billing@platform.example",
     toAddresses: ["studio@maily.cn"],
@@ -353,14 +360,15 @@ const baseMessages: MailyMailboxMessageDetail[] = [
   },
   {
     id: "msg-sent-1",
+    threadId: "thread-mailbox-handoff",
     direction: "out",
     fromAddress: "Maily Studio <studio@maily.cn>",
-    toAddresses: ["team@veyme.example"],
+    toAddresses: ["team@example.com"],
     ccAddresses: [],
     bccAddresses: [],
     subject: "Mailbox component handoff",
     snippet:
-      "The inbox/sent/drafts/bounced surface is now a backend adapter component.",
+      "The inbox/sent/drafts surface is now a backend adapter component.",
     status: "sent",
     hasAttachments: false,
     isFavorite: false,
@@ -368,7 +376,7 @@ const baseMessages: MailyMailboxMessageDetail[] = [
     labels: ["Sent"],
     createdAt: new Date("2026-07-25T08:40:00"),
     bodyText:
-      "The inbox/sent/drafts/bounced surface is now a backend adapter component. You can wire it to CRM, Veyme, or any mailbox API with the same dataSource contract.",
+      "The inbox/sent/drafts surface is now a backend adapter component. You can wire it to your mailbox API with the dataSource contract.",
     bodyHtml: null,
     attachments: [],
     messageId: "<mailbox-handoff@maily.cn>",
@@ -378,10 +386,37 @@ const baseMessages: MailyMailboxMessageDetail[] = [
     events: [],
   },
   {
+    id: "msg-in-handoff-reply",
+    threadId: "thread-mailbox-handoff",
+    direction: "in",
+    fromAddress: "Example Team <team@example.com>",
+    toAddresses: ["studio@maily.cn"],
+    subject: "Re: Mailbox component handoff",
+    snippet:
+      "The handoff is received. We will connect the data adapter this week.",
+    status: "sent",
+    hasAttachments: false,
+    isFavorite: false,
+    isUnread: true,
+    labels: ["Inbox", "Projects"],
+    createdAt: new Date("2026-07-25T09:00:00"),
+    bodyText:
+      "The handoff is received. We will connect the data adapter this week.",
+    bodyHtml: null,
+    attachments: [],
+    messageId: "<mailbox-handoff-reply@example.com>",
+    inReplyTo: "<mailbox-handoff@maily.cn>",
+    headers: null,
+    lastError: null,
+    events: [],
+  },
+  {
     id: "msg-draft-1",
+    _revision: "1",
+    threadId: "thread-playground-draft",
     direction: "out",
     fromAddress: "Maily Studio <studio@maily.cn>",
-    toAddresses: ["jakub@veyme.example"],
+    toAddresses: ["alex@example.com"],
     ccAddresses: [],
     bccAddresses: [],
     subject: "Draft: inbox/outbox playground",
@@ -403,6 +438,7 @@ const baseMessages: MailyMailboxMessageDetail[] = [
   },
   {
     id: "msg-bounced-1",
+    threadId: "thread-old-launch",
     direction: "out",
     fromAddress: "Maily Studio <studio@maily.cn>",
     toAddresses: ["old-address@example.invalid"],
@@ -430,17 +466,69 @@ const baseMessages: MailyMailboxMessageDetail[] = [
 const contactSuggestions: MailyMailboxContactSuggestion[] = [
   { address: "mia@northstar.example", displayName: "Mia Nowak" },
   { address: "billing@platform.example", displayName: "Platform Billing" },
-  { address: "team@veyme.example", displayName: "Veyme Team" },
-  { address: "jakub@veyme.example", displayName: "Jakub Kowalski" },
+  { address: "team@example.com", displayName: "Example Team" },
+  { address: "alex@example.com", displayName: "Alex Morgan" },
   { address: "ops@maily.cn", displayName: "Maily Operations" },
   { address: "studio@maily.cn", displayName: "Maily Studio" },
 ]
 
 function folderFor(message: MailyMailboxMessageDetail): MailyMailboxFolder {
-  if (message.status === "failed" || message.status === "dsn") return "bounced"
+  if (message.labels?.includes("Trash")) return "trash"
+  if (message.labels?.includes("Spam")) return "spam"
+  if (message.labels?.includes("Inbox")) return "inbox"
   if (message.status === "draft") return "drafts"
-  if (message.direction === "in") return "inbox"
+  if (message.direction === "in") return "allMail"
   return "sent"
+}
+
+const playgroundLabels: MailyMailboxLabel[] = [
+  { id: "label-promotions", name: "Promotions" },
+  { id: "label-projects", name: "Projects" },
+]
+
+function searchMatches(
+  message: MailyMailboxMessageDetail,
+  query?: MailyMailboxSearchQuery,
+  availableLabels = playgroundLabels
+) {
+  if (!query) return true
+  const includes = (value: string | null | undefined, term?: string) =>
+    !term || (value ?? "").toLowerCase().includes(term.trim().toLowerCase())
+  const allAddresses = [
+    ...message.toAddresses,
+    ...(message.ccAddresses ?? []),
+    ...(message.bccAddresses ?? []),
+  ].join(" ")
+  const labels = message.labels ?? []
+  const dateBoundary = (value: string) => {
+    const date = new Date(value.replaceAll("/", "-"))
+    return date.getTime()
+  }
+  const label = availableLabels.find((item) => item.id === query.labelId)
+  return (
+    includes(
+      [
+        message.subject ?? "",
+        message.snippet ?? "",
+        message.bodyText ?? "",
+      ].join(" "),
+      query.text
+    ) &&
+    includes(message.fromAddress, query.from) &&
+    includes(allAddresses, query.to) &&
+    includes(message.subject, query.subject) &&
+    (query.hasAttachments === undefined ||
+      Boolean(message.attachments?.length) === query.hasAttachments) &&
+    (!query.after ||
+      new Date(message.createdAt).getTime() >= dateBoundary(query.after)) &&
+    (!query.before ||
+      new Date(message.createdAt).getTime() < dateBoundary(query.before)) &&
+    (query.unread === undefined ||
+      Boolean(message.isUnread) === query.unread) &&
+    (query.starred === undefined ||
+      Boolean(message.isFavorite) === query.starred) &&
+    (!query.labelId || Boolean(label && labels.includes(label.name)))
+  )
 }
 
 function snippetFrom(text: string | null | undefined) {
@@ -452,8 +540,10 @@ function createMessageFromDraft(
   status: "draft" | "sent"
 ): MailyMailboxMessageDetail {
   const now = new Date()
+  const id = `msg-${status}-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`
   return {
-    id: `msg-${status}-${now.getTime()}`,
+    id,
+    threadId: draft.inReplyTo ? `thread-${draft.inReplyTo}` : id,
     direction: "out",
     fromAddress: "Maily Studio <studio@maily.cn>",
     toAddresses: draft.to,
@@ -462,11 +552,14 @@ function createMessageFromDraft(
     subject: draft.subject,
     snippet: snippetFrom(draft.text),
     status,
-    hasAttachments: false,
+    hasAttachments: Boolean(draft.attachments?.length),
+    isFavorite: false,
+    isUnread: false,
+    labels: [status === "draft" ? "Draft" : "Sent"],
     createdAt: now,
     bodyText: draft.text,
     bodyHtml: draft.html ?? null,
-    attachments: [],
+    attachments: draft.attachments ?? [],
     messageId: status === "sent" ? `<${now.getTime()}@maily.cn>` : null,
     inReplyTo: draft.inReplyTo ?? null,
     headers: null,
@@ -479,36 +572,184 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
   const [messages, setMessages] =
     useState<MailyMailboxMessageDetail[]>(baseMessages)
   const messagesRef = useRef(messages)
+  const labelsRef = useRef(playgroundLabels.map((label) => ({ ...label })))
+  const revisionCounter = useRef(2)
+  const uploadedFiles = useRef(new Map<string, File>())
+  const undoSnapshots = useRef(
+    new Map<
+      string,
+      {
+        expiresAt: number
+        entries: Array<{
+          before: MailyMailboxMessageDetail
+          after: MailyMailboxMessageDetail
+        }>
+      }
+    >()
+  )
 
   const writeMessages = (next: MailyMailboxMessageDetail[]) => {
+    const previouslyOwned = new Set(
+      messagesRef.current.flatMap((message) =>
+        (message.attachments ?? []).map((attachment) => attachment.id)
+      )
+    )
+    const stillOwned = new Set(
+      next.flatMap((message) =>
+        (message.attachments ?? []).map((attachment) => attachment.id)
+      )
+    )
+    for (const id of previouslyOwned) {
+      if (id && !stillOwned.has(id)) uploadedFiles.current.delete(id)
+    }
     messagesRef.current = next
     setMessages(next)
   }
 
+  const applyMessageAction: NonNullable<
+    MailyMailboxDataSource["runMessageAction"]
+  > = async ({ messageId, action, value }) => {
+    const existing = messagesRef.current.find(
+      (message) => message.id === messageId
+    )
+    if (!existing) throw new Error("Message not found")
+    if (action === "deleteForever") {
+      writeMessages(
+        messagesRef.current.filter((message) => message.id !== messageId)
+      )
+      return { id: messageId }
+    }
+    if (action === "archive") {
+      const original = messagesRef.current.find(
+        (message) => message.id === messageId
+      )
+      if (!original) throw new Error("Message not found")
+      const before = { ...original, labels: [...(original.labels ?? [])] }
+      const after = {
+        ...before,
+        labels: before.labels?.filter((label) => label !== "Inbox"),
+      }
+      const token = `undo-${crypto.randomUUID()}`
+      const expiresAt = Date.now() + 5000
+      undoSnapshots.current.set(token, {
+        entries: [{ before, after }],
+        expiresAt,
+      })
+      writeMessages(
+        messagesRef.current.map((message) =>
+          message.id === messageId ? after : message
+        )
+      )
+      return { undo: { token, expiresAt } }
+    }
+    if (action === "delete" || action === "restore" || action === "notSpam") {
+      writeMessages(
+        messagesRef.current.map((message) =>
+          message.id === messageId
+            ? {
+                ...message,
+                labels: [
+                  ...(message.labels ?? []).filter(
+                    (label) =>
+                      label !== "Trash" &&
+                      label !== "Inbox" &&
+                      (action === "delete" || label !== "Spam")
+                  ),
+                  ...(action === "delete" ? ["Trash"] : ["Inbox"]),
+                ],
+              }
+            : message
+        )
+      )
+      return { id: messageId }
+    }
+    if (
+      action === "reportSpam" ||
+      action === "reportPhishing" ||
+      action === "reportIllegal"
+    ) {
+      writeMessages(
+        messagesRef.current.map((message) =>
+          message.id === messageId
+            ? {
+                ...message,
+                labels: [
+                  ...(message.labels ?? []).filter(
+                    (label) =>
+                      label !== "Inbox" && label !== "Trash" && label !== "Spam"
+                  ),
+                  "Spam",
+                ],
+              }
+            : message
+        )
+      )
+      return { id: messageId }
+    }
+    const next = messagesRef.current.map((message) => {
+      if (message.id !== messageId) return message
+      if (action === "favorite")
+        return { ...message, isFavorite: Boolean(value) }
+      if (action === "markUnread")
+        return { ...message, isUnread: Boolean(value) }
+      if (action === "markRead") return { ...message, isUnread: false }
+      if (action === "blockSender")
+        return { ...message, labels: [...(message.labels ?? []), "Blocked"] }
+      if (action === "react")
+        return { ...message, labels: [...(message.labels ?? []), "Reacted"] }
+      return message
+    })
+    writeMessages(next)
+    return next.find((message) => message.id === messageId)
+  }
+
   return useMemo(
     () => ({
-      listMessages: async ({ folder, q }) => {
-        const search = q?.trim().toLowerCase()
-        const items = messagesRef.current
-          .filter((message) => folderFor(message) === folder)
+      listMessages: async ({
+        folder,
+        q,
+        search: advanced,
+        cursor,
+        limit = 20,
+        labelId,
+      }) => {
+        const query: MailyMailboxSearchQuery = {
+          ...advanced,
+          text: advanced ? advanced.text : q,
+          ...(labelId ? { labelId } : {}),
+        }
+        const all = messagesRef.current
           .filter((message) => {
-            if (!search) return true
-            return [
-              message.fromAddress,
-              message.toAddresses.join(", "),
-              message.subject ?? "",
-              message.snippet ?? "",
-              message.bodyText ?? "",
-            ]
-              .join(" ")
-              .toLowerCase()
-              .includes(search)
+            const location = folderFor(message)
+            if (folder === "allMail")
+              return (
+                location !== "spam" &&
+                location !== "trash" &&
+                message.status !== "draft"
+              )
+            if (folder === "starred")
+              return (
+                Boolean(message.isFavorite) &&
+                location !== "spam" &&
+                location !== "trash"
+              )
+            return location === folder
           })
+          .filter((message) => searchMatches(message, query, labelsRef.current))
           .sort(
             (a, b) =>
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )
-        return { items, nextCursor: null }
+        const parsedCursor = cursor ? Number.parseInt(cursor, 10) : 0
+        const offset =
+          Number.isFinite(parsedCursor) && parsedCursor >= 0 ? parsedCursor : 0
+        const items = all.slice(offset, offset + limit)
+        const nextOffset = offset + items.length
+        return {
+          items,
+          total: all.length,
+          nextCursor: nextOffset < all.length ? String(nextOffset) : null,
+        }
       },
       getMessage: async (messageId) => {
         const message = messagesRef.current.find(
@@ -520,11 +761,143 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
       getCounts: async () => {
         return messagesRef.current.reduce<MailyMailboxCounts>(
           (acc, message) => {
-            acc[folderFor(message)] += 1
+            const folder = folderFor(message)
+            acc[folder] += 1
+            if (
+              folder !== "spam" &&
+              folder !== "trash" &&
+              folder !== "allMail" &&
+              message.status !== "draft"
+            )
+              acc.allMail += 1
+            if (message.isFavorite && folder !== "spam" && folder !== "trash")
+              acc.starred += 1
             return acc
           },
-          { inbox: 0, sent: 0, drafts: 0, bounced: 0 }
+          {
+            inbox: 0,
+            allMail: 0,
+            starred: 0,
+            sent: 0,
+            drafts: 0,
+            bounced: 0,
+            spam: 0,
+            trash: 0,
+          }
         )
+      },
+      getThread: async (threadId) => ({
+        threadId,
+        messages: messagesRef.current
+          .filter((message) => (message.threadId ?? message.id) === threadId)
+          .sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          ),
+      }),
+      listLabels: async () => labelsRef.current.map((label) => ({ ...label })),
+      createLabel: async (name) => {
+        name = name.trim()
+        if (
+          !name ||
+          labelsRef.current.some(
+            (label) => label.name.toLowerCase() === name.toLowerCase()
+          ) ||
+          ["Inbox", "Sent", "Draft", "Bounced", "Spam", "Trash"].some(
+            (reserved) => reserved.toLowerCase() === name.toLowerCase()
+          )
+        )
+          throw new Error("Label name is empty or already used")
+        const label = { id: `label-${crypto.randomUUID()}`, name }
+        labelsRef.current.push(label)
+        return label
+      },
+      renameLabel: async (labelId, name) => {
+        const label = labelsRef.current.find((item) => item.id === labelId)
+        if (!label) throw new Error("Label not found")
+        name = name.trim()
+        if (
+          !name ||
+          labelsRef.current.some(
+            (other) =>
+              other.id !== labelId &&
+              other.name.toLowerCase() === name.toLowerCase()
+          ) ||
+          ["Inbox", "Sent", "Draft", "Bounced", "Spam", "Trash"].some(
+            (reserved) => reserved.toLowerCase() === name.toLowerCase()
+          )
+        )
+          throw new Error("Label name is empty or already used")
+        const oldName = label.name
+        label.name = name
+        writeMessages(
+          messagesRef.current.map((message) => ({
+            ...message,
+            labels: message.labels?.map((item) =>
+              item === oldName ? name : item
+            ),
+          }))
+        )
+        return label
+      },
+      deleteLabel: async (labelId) => {
+        const label = labelsRef.current.find((item) => item.id === labelId)
+        if (!label) return
+        labelsRef.current.splice(labelsRef.current.indexOf(label), 1)
+        writeMessages(
+          messagesRef.current.map((message) => ({
+            ...message,
+            labels: message.labels?.filter((item) => item !== label.name),
+          }))
+        )
+      },
+      applyLabel: async (messageIds, labelId) => {
+        const label = labelsRef.current.find((item) => item.id === labelId)
+        if (!label) throw new Error("Label not found")
+        const selected = new Set(messageIds)
+        writeMessages(
+          messagesRef.current.map((message) =>
+            selected.has(message.id)
+              ? {
+                  ...message,
+                  labels: [...new Set([...(message.labels ?? []), label.name])],
+                }
+              : message
+          )
+        )
+      },
+      removeLabel: async (messageIds, labelId) => {
+        const label = labelsRef.current.find((item) => item.id === labelId)
+        if (!label) return
+        const selected = new Set(messageIds)
+        writeMessages(
+          messagesRef.current.map((message) =>
+            selected.has(message.id)
+              ? {
+                  ...message,
+                  labels: message.labels?.filter((item) => item !== label.name),
+                }
+              : message
+          )
+        )
+      },
+      uploadAttachment: async (file) => {
+        const ref = {
+          id: `upload-${crypto.randomUUID()}`,
+          filename: file.name,
+          contentType: file.type || undefined,
+          size: file.size,
+        }
+        uploadedFiles.current.set(ref.id, file)
+        return ref
+      },
+      discardUploadedAttachment: async (attachment) => {
+        if (
+          !messagesRef.current.some((message) =>
+            message.attachments?.some((saved) => saved.id === attachment.id)
+          )
+        )
+          uploadedFiles.current.delete(attachment.id)
       },
       downloadAttachment: async ({
         messageId,
@@ -538,13 +911,16 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
         if (
           !stored?.id ||
           stored.id !== attachment.id ||
-          !(stored.id in attachmentContents)
+          (!(stored.id in attachmentContents) &&
+            !uploadedFiles.current.has(stored.id))
         ) {
           throw new Error("Attachment not found")
         }
-        const blob = new Blob([attachmentContents[stored.id]], {
-          type: stored.contentType,
-        })
+        const blob = uploadedFiles.current.has(stored.id)
+          ? uploadedFiles.current.get(stored.id)!
+          : new Blob([attachmentContents[stored.id]], {
+              type: stored.contentType,
+            })
         const url = URL.createObjectURL(blob)
         const link = document.createElement("a")
         link.href = url
@@ -568,14 +944,27 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
       },
       createDraft: async (draft) => {
         const created = createMessageFromDraft(draft, "draft")
+        created.threadId =
+          messagesRef.current.find(
+            (message) => message.messageId === draft.inReplyTo
+          )?.threadId ?? created.id
+        created._revision = String(revisionCounter.current++)
         writeMessages([created, ...messagesRef.current])
-        return { id: created.id }
+        return { id: created.id, _revision: created._revision }
       },
       updateDraft: async (messageId, draft) => {
+        const existing = messagesRef.current.find(
+          (message) => message.id === messageId
+        )
+        if (!existing || existing.status !== "draft")
+          throw new Error("Draft not found")
+        if (draft.revision !== existing._revision)
+          throw new Error("Draft revision is stale")
         const next = messagesRef.current.map((message) =>
           message.id === messageId
             ? {
                 ...message,
+                _revision: String(revisionCounter.current++),
                 toAddresses: draft.to,
                 ccAddresses: draft.cc,
                 bccAddresses: draft.bcc,
@@ -583,11 +972,18 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
                 snippet: snippetFrom(draft.text),
                 bodyText: draft.text,
                 bodyHtml: draft.html ?? null,
+                attachments: draft.attachments ?? [],
+                hasAttachments: Boolean(draft.attachments?.length),
+                inReplyTo: draft.inReplyTo ?? message.inReplyTo ?? null,
               }
             : message
         )
         writeMessages(next)
-        return { id: messageId }
+        return {
+          id: messageId,
+          _revision: next.find((message) => message.id === messageId)
+            ?._revision,
+        }
       },
       discardDraft: async (messageId) => {
         writeMessages(
@@ -595,74 +991,106 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
         )
       },
       sendDraft: async (messageId) => {
+        const existing = messagesRef.current.find(
+          (message) => message.id === messageId
+        )
+        if (!existing || existing.status !== "draft")
+          throw new Error("Draft not found")
         const now = new Date()
+        const sentMessageId = `<${now.getTime()}@maily.cn>`
         const next = messagesRef.current.map((message) =>
           message.id === messageId
             ? {
                 ...message,
                 status: "sent" as const,
                 createdAt: now,
-                messageId: `<${now.getTime()}@maily.cn>`,
+                messageId: sentMessageId,
+                _revision: String(revisionCounter.current++),
+                labels: [
+                  ...(message.labels ?? []).filter(
+                    (label) => label !== "Draft"
+                  ),
+                  "Sent",
+                ],
               }
             : message
         )
         writeMessages(next)
-        return { id: messageId, messageId: `<${now.getTime()}@maily.cn>` }
+        return { id: messageId, messageId: sentMessageId }
       },
-      runMessageAction: async ({ messageId, action, value }) => {
-        if (action === "archive" || action === "delete") {
-          writeMessages(
-            messagesRef.current.filter((message) => message.id !== messageId)
-          )
-          return { id: messageId }
-        }
-
+      runMessageAction: applyMessageAction,
+      runBulkMessageAction: async ({ messageIds, action, value }) => {
         if (
-          action === "reportSpam" ||
-          action === "reportPhishing" ||
-          action === "reportIllegal"
-        ) {
+          messageIds.some(
+            (id) => !messagesRef.current.some((message) => message.id === id)
+          )
+        )
+          throw new Error("Message not found")
+        if (action === "archive") {
+          const selected = new Set(messageIds)
+          const before = messagesRef.current
+            .filter((message) => selected.has(message.id))
+            .map((message) => ({
+              ...message,
+              labels: [...(message.labels ?? [])],
+            }))
           const next = messagesRef.current.map((message) =>
-            message.id === messageId
+            selected.has(message.id)
               ? {
                   ...message,
-                  labels: [
-                    ...(message.labels ?? []).filter(
-                      (label) => label !== "Inbox"
-                    ),
-                    "Reported",
-                  ],
+                  labels: (message.labels ?? []).filter(
+                    (label) => label !== "Inbox"
+                  ),
                 }
               : message
           )
+          const after = next.filter((message) => selected.has(message.id))
+          const token = `undo-${crypto.randomUUID()}`
+          const expiresAt = Date.now() + 5000
+          undoSnapshots.current.set(token, {
+            entries: before.map((item) => ({
+              before: item,
+              after: after.find((message) => message.id === item.id)!,
+            })),
+            expiresAt,
+          })
           writeMessages(next)
-          return { id: messageId }
+          return { undo: { token, expiresAt } }
         }
-
-        const next = messagesRef.current.map((message) => {
-          if (message.id !== messageId) return message
-          if (action === "favorite") {
-            return { ...message, isFavorite: Boolean(value) }
+        for (const messageId of new Set(messageIds)) {
+          await applyMessageAction({ messageId, action, value })
+        }
+      },
+      emptyFolder: async (folder) => {
+        if (folder !== "spam" && folder !== "trash")
+          throw new Error("Folder cannot be emptied")
+        writeMessages(
+          messagesRef.current.filter((message) => folderFor(message) !== folder)
+        )
+      },
+      undoMessageAction: async (token) => {
+        const receipt = undoSnapshots.current.get(token)
+        if (!receipt || Date.now() > receipt.expiresAt)
+          throw new Error("Undo expired")
+        undoSnapshots.current.delete(token)
+        const currentById = new Map(
+          messagesRef.current.map((message) => [message.id, message])
+        )
+        for (const { after } of receipt.entries) {
+          if (
+            JSON.stringify(currentById.get(after.id)) !== JSON.stringify(after)
+          ) {
+            throw new Error("Message changed after the action")
           }
-          if (action === "markUnread") {
-            return { ...message, isUnread: Boolean(value) }
-          }
-          if (action === "blockSender") {
-            return {
-              ...message,
-              labels: [...(message.labels ?? []), "Blocked"],
-            }
-          }
-          if (action === "react") {
-            return {
-              ...message,
-              labels: [...(message.labels ?? []), "Reacted"],
-            }
-          }
-          return message
-        })
-        writeMessages(next)
-        return next.find((message) => message.id === messageId)
+        }
+        const beforeById = new Map(
+          receipt.entries.map(({ before }) => [before.id, before])
+        )
+        writeMessages(
+          messagesRef.current.map(
+            (message) => beforeById.get(message.id) ?? message
+          )
+        )
       },
     }),
     []
@@ -795,11 +1223,14 @@ export function App() {
               <div className="min-w-0 overflow-x-auto">
                 <MailboxView
                   account={{
+                    id: "playground-account",
                     address: "studio@maily.cn",
                     displayName: "Maily Studio",
                   }}
+                  recoveryScope="maily-playground:studio-account"
                   dataSource={mailboxDataSource}
                   messageActions={playgroundMessageActions}
+                  pageSize={2}
                   pollIntervalMs={0}
                   labels={polish ? polishMailboxLabels : undefined}
                   className="max-h-none min-w-[56rem] rounded-none! border-0!"

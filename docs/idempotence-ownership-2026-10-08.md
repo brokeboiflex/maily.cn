@@ -21,11 +21,9 @@ compensation contract as image behavior.
 Local validation: `packages/core` Vitest run of `src/mailbox/index.test.ts` and
 `src/editor/utils/deferred-editor-action.test.ts`: 26 passing tests, including
 React/happy-dom departure after draft preparation and legacy recovery retention.
-Veyme actual-source handler tests additionally exercise image/logo replacement
-identity. These are local source/component checks, not live mail delivery or
+These are local source/component checks, not live mail delivery or
 browser consumer-matrix certification. Canonical registry and public registry
-artifacts are regenerated through `pnpm playground:sync`; Veyme consumes the three
-changed implementation files through the official shadcn CLI.
+artifacts are regenerated through `pnpm playground:sync`.
 
 References: [React effect cleanup](https://react.dev/reference/react/useEffect),
 [TipTap events](https://tiptap.dev/docs/editor/api/events), and the installed

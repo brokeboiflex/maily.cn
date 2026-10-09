@@ -92,12 +92,12 @@ async function renderSelectedMailbox(
 describe('filterMailboxContactSuggestions', () => {
   const contacts = [
     { address: 'mia@northstar.example', displayName: 'Mia Nowak' },
-    { address: 'team@veyme.example', displayName: 'Veyme Team' },
+    { address: 'team@example.com', displayName: 'Example Team' },
     { address: 'ops@maily.cn', displayName: 'Maily Operations' },
   ];
 
   it('matches contacts by display name', () => {
-    expect(filterMailboxContactSuggestions(contacts, 'veyme')).toEqual([
+    expect(filterMailboxContactSuggestions(contacts, 'Example Team')).toEqual([
       contacts[1],
     ]);
   });
@@ -727,6 +727,84 @@ describe('mailbox lifetime and actor recovery scope', () => {
     } finally {
       view.unmount();
       window.sessionStorage.removeItem(legacyKey);
+    }
+  });
+});
+
+describe('Spam and Trash folder actions', () => {
+  it.each([
+    ['spam', 'Not spam', 'notSpam'],
+    ['trash', 'Move to Inbox', 'restore'],
+    ['trash', 'Delete forever', 'deleteForever'],
+    ['spam', 'Delete forever', 'deleteForever'],
+  ] as const)(
+    'dispatches %s recovery/deletion through the host: %s',
+    async (folder, label, action) => {
+      const runner = vi.fn(async () => undefined);
+      const list = vi.fn(() => ({ items: [messageDetail] }));
+      const rendered = await renderSelectedMailbox({
+        initialFolder: folder,
+        dataSource: createDataSource({
+          listMessages: list,
+          runMessageAction: runner,
+        }),
+        messageActions: [
+          'delete',
+          'reportSpam',
+          'archive',
+          'restore',
+          'notSpam',
+          'deleteForever',
+        ],
+      });
+      try {
+        expect(list).toHaveBeenCalledWith(expect.objectContaining({ folder }));
+        expect(
+          rendered.container.querySelector('[aria-label="Delete"]')
+        ).toBeNull();
+        expect(
+          rendered.container.querySelector('[aria-label="Report spam"]')
+        ).toBeNull();
+        const button = rendered.container.querySelector(
+          `[aria-label="${label}"]`
+        );
+        expect(button).toBeTruthy();
+        await act(async () => {
+          button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        });
+        expect(runner).toHaveBeenCalledWith({
+          messageId: 'msg-1',
+          action,
+          value: undefined,
+        });
+        expect(rendered.container.querySelector('article')).toBeNull();
+        expect(list.mock.calls.length).toBeGreaterThan(1);
+      } finally {
+        rendered.unmount();
+      }
+    }
+  );
+
+  it('keeps recovery and permanent deletion capability-gated', async () => {
+    const rendered = await renderSelectedMailbox({
+      initialFolder: 'trash',
+      messageActions: ['restore', 'deleteForever'],
+    });
+    try {
+      expect(
+        rendered.container.querySelector('[aria-label="Move to Inbox"]')
+      ).toBeNull();
+      expect(
+        rendered.container.querySelector('[aria-label="Delete forever"]')
+      ).toBeNull();
+      expect(
+        rendered.container.querySelector('[aria-label="Trash"]')
+      ).toBeTruthy();
+      expect(
+        rendered.container.querySelector('[aria-label="Spam"]')
+      ).toBeTruthy();
+    } finally {
+      rendered.unmount();
     }
   });
 });

@@ -701,7 +701,13 @@
         "badge",
         "resizable",
         "scroll-area",
-        "attachment"
+        "attachment",
+        "checkbox",
+        "dialog",
+        "avatar",
+        "field",
+        "label",
+        "empty"
       ],
       "dependencies": [],
       "files": [
@@ -711,9 +717,29 @@
           "target": "@components/maily/mailbox/contacts.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/mailbox/conversations.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/conversations.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/mailbox/index.tsx",
           "type": "registry:component",
           "target": "@components/maily/mailbox/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/reply-all.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/reply-all.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/search.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/search.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/use-controllable-state.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/use-controllable-state.ts"
         }
       ],
       "docs": "Mailbox usage:\n\nimport { MailboxView } from '@/components/maily/mailbox'\n\nThis item installs the editor dependency because rich compose mode\nembeds the Maily Editor."
@@ -813,7 +839,13 @@
         "badge",
         "resizable",
         "scroll-area",
-        "attachment"
+        "attachment",
+        "checkbox",
+        "dialog",
+        "avatar",
+        "field",
+        "label",
+        "empty"
       ],
       "dependencies": [
         "@antfu/utils@^9.2.0",
@@ -1481,9 +1513,29 @@
           "target": "@components/maily/mailbox/contacts.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/mailbox/conversations.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/conversations.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/mailbox/index.tsx",
           "type": "registry:component",
           "target": "@components/maily/mailbox/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/reply-all.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/reply-all.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/search.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/search.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/use-controllable-state.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/use-controllable-state.ts"
         },
         {
           "path": "registry/default/maily/lib/maily-render/fontsource.ts",

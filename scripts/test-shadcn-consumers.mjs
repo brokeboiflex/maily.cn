@@ -57,7 +57,20 @@ const message: MailyMailboxMessageDetail = {
   attachments: [{ id: "part-1", filename: "report.txt", contentType: "text/plain", size: 7 }],
 }
 
+let mailboxLabels = [{ id: "projects", name: "Projects" }]
+
 const dataSource: MailyMailboxDataSource = {
+  listLabels: async () => mailboxLabels,
+  createLabel: async (name) => {
+    const label = { id: name.toLowerCase(), name }
+    mailboxLabels = [...mailboxLabels, label]
+    return label
+  },
+  renameLabel: async (id, name) => {
+    mailboxLabels = mailboxLabels.map((label) => label.id === id ? { id, name } : label)
+    return { id, name }
+  },
+  runBulkMessageAction: async () => undefined,
   listMessages: async () => ({ items: [message], nextCursor: null }),
   getMessage: async () => message,
   downloadAttachment: async ({ messageId, attachment, attachmentIndex }) => {
@@ -126,8 +139,9 @@ try {
     '@maily/maily-mailbox',
     '@maily/maily-render',
   ]);
-  await writeEditorFixture(radixProject);
+  await writeBaseRuntimeFixture(radixProject);
   await runProjectCommand(radixProject, ['run', 'build']);
+  await verifyConsumerRuntime(radixProject, 'radix');
   console.log('Radix full granular consumer passed');
 
   const baseProject = await createConsumer('base', 'base', registryTemplate);
@@ -142,7 +156,7 @@ try {
   ]);
   await writeBaseRuntimeFixture(baseProject);
   await verifyBaseFullConsumer(baseProject);
-  await verifyBaseRuntime(baseProject);
+  await verifyConsumerRuntime(baseProject, 'base');
   console.log('Base full granular consumer passed');
 
   const bunProject = await createBunConsumer('bun', 'radix', registryTemplate);
@@ -150,6 +164,19 @@ try {
     '@maily/maily-editor',
     '@maily/maily-mailbox',
   ]);
+  const installedMailbox = fs.readFileSync(
+    path.join(bunProject, 'src/components/maily/mailbox/index.tsx'),
+    'utf8'
+  );
+  for (const expected of [
+    '@/custom/ui/avatar',
+    '@/custom/ui/field',
+    '@/custom/ui/empty',
+    '@/shared/cn',
+  ]) {
+    if (!installedMailbox.includes(expected))
+      throw new Error(`Consumer alias was not inherited: ${expected}`);
+  }
   await writeBaseRuntimeFixture(bunProject);
   await runProjectCommand(bunProject, ['run', 'build']);
   console.log('Bun isolated full granular consumer passed');
@@ -226,6 +253,14 @@ async function createBunConsumer(name, base, registryTemplate) {
   const project = path.join(tempRoot, name);
   const componentsPath = path.join(project, 'components.json');
   const components = JSON.parse(fs.readFileSync(componentsPath, 'utf8'));
+  // Exercise consumer alias rewriting instead of only the default @/components/ui.
+  components.aliases.ui = '@/custom/ui';
+  components.aliases.utils = '@/shared/cn';
+  fs.mkdirSync(path.join(project, 'src/shared'), { recursive: true });
+  fs.copyFileSync(
+    path.join(project, 'src/lib/utils.ts'),
+    path.join(project, 'src/shared/cn.ts')
+  );
   components.registries = {
     ...(components.registries ?? {}),
     '@maily': registryTemplate,
@@ -298,7 +333,7 @@ async function verifyBaseFullConsumer(project) {
   await runProjectCommand(project, ['exec', 'vite', 'build']);
 }
 
-async function verifyBaseRuntime(project) {
+async function verifyConsumerRuntime(project, primitiveBase) {
   await run('pnpm', ['add', '-D', '@playwright/test@1.55.0'], {
     cwd: project,
   });
@@ -319,7 +354,7 @@ async function verifyBaseRuntime(project) {
     `import { expect, test } from "@playwright/test"
 import { readFile } from "node:fs/promises"
 
-test("inherits current Base UI primitive behavior", async ({ page }) => {
+test("inherits current host primitive behavior", async ({ page }) => {
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
   page.on("console", (message) => {
@@ -338,7 +373,7 @@ test("inherits current Base UI primitive behavior", async ({ page }) => {
   await page.keyboard.press("ArrowRight")
   await expect(alignCenter).toBeFocused()
   await alignCenter.click()
-  await expect(alignCenter).toHaveAttribute("aria-pressed", "true")
+  await expect(alignCenter).toHaveAttribute("${primitiveBase === 'radix' ? 'aria-checked' : 'aria-pressed'}", "true")
 
   await editor.locator('[aria-label="External URL"]').click()
   const linkInput = page.getByRole("combobox")
@@ -348,7 +383,40 @@ test("inherits current Base UI primitive behavior", async ({ page }) => {
   await expect(linkInput).toBeHidden()
 
   const mailbox = page.getByTestId("mailbox")
+  await expect(mailbox.locator('[data-slot="empty"]')).toBeVisible()
+  await expect(mailbox.locator('[data-slot="empty-title"]')).toHaveText("Select a message")
+  const createLabel = mailbox.getByRole("button", { name: "Create label", exact: true })
+  await createLabel.click()
+  const labelDialog = page.getByRole("dialog")
+  await expect(labelDialog.getByRole("textbox", { name: "Label name" })).toBeFocused()
+  await page.keyboard.press("Escape")
+  await expect(labelDialog).toBeHidden()
+  await expect(createLabel).toBeFocused()
+  await createLabel.click()
+  await labelDialog.getByRole("textbox", { name: "Label name" }).fill("Receipts")
+  await labelDialog.getByRole("button", { name: "Create label", exact: true }).click()
+  await expect(mailbox.getByRole("button", { name: "Receipts", exact: true })).toBeVisible()
+  await expect(createLabel).toBeFocused()
+
+  const labelMenu = mailbox.getByRole("button", { name: "More: Projects", exact: true })
+  await labelMenu.click()
+  await page.getByRole("menuitem", { name: "Rename label" }).focus()
+  await page.keyboard.press("Enter")
+  await expect(labelDialog.getByRole("textbox", { name: "Label name" })).toHaveValue("Projects")
+  await page.keyboard.press("Escape")
+  await expect(labelDialog).toBeHidden()
+  await expect(labelMenu).toBeFocused()
+
+  const selectAll = mailbox.getByRole("checkbox", { name: "Select all on this page" })
+  const selectRow = mailbox.getByRole("checkbox", { name: "Select conversation: Attachment compatibility" })
+  await selectAll.check()
+  await expect(selectRow).toBeChecked()
+  await selectRow.uncheck()
+  await expect(selectAll).not.toBeChecked()
+
   await mailbox.getByRole("button", { name: /Attachment compatibility/ }).click()
+  await expect(mailbox.locator('[data-slot="avatar-fallback"]')).toHaveText("S")
+  await expect(mailbox.locator('[data-slot="avatar"]')).not.toHaveAttribute("style", /background/)
   await expect(mailbox.getByRole("heading", { name: "Attachments (1)" })).toBeVisible()
   await expect(mailbox.getByText("text/plain · 7 B", { exact: true })).toBeVisible()
   const [download] = await Promise.all([
@@ -357,11 +425,14 @@ test("inherits current Base UI primitive behavior", async ({ page }) => {
   ])
   expect(download.suggestedFilename()).toBe("report.txt")
   expect(await readFile((await download.path())!, "utf8")).toBe("report\\n")
-  await mailbox.getByRole("button", { name: "New message" }).click()
-  const richMode = mailbox.getByRole("button", { name: "Visual editor" })
+  await mailbox.getByRole("button", { name: "Compose" }).click()
+  await expect(mailbox.getByRole("textbox", { name: "Subject", exact: true })).toBeVisible()
+  await expect(mailbox.getByRole("textbox", { name: "Body", exact: true })).toBeVisible()
+  await expect(mailbox.locator('[data-slot="field-set"]')).toHaveCount(1)
+  const richMode = mailbox.getByRole("${primitiveBase === 'radix' ? 'radio' : 'button'}", { name: "Visual editor" })
   await expect(richMode).toHaveCount(1)
   await richMode.click()
-  await expect(richMode).toHaveAttribute("aria-pressed", "true")
+  await expect(richMode).toHaveAttribute("${primitiveBase === 'radix' ? 'aria-checked' : 'aria-pressed'}", "true")
   await expect(mailbox.locator('[contenteditable="true"]')).toHaveCount(1)
 
   await expect(page.locator("button button")).toHaveCount(0)

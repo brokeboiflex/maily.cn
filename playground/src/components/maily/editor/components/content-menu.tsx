@@ -187,14 +187,14 @@ export function ContentMenu(props: ContentMenuProps) {
               sideOffset={8}
               className="w-max min-w-36"
             >
-              <DropdownMenuItem onSelect={duplicateNode}>
+              <DropdownMenuItem onClick={duplicateNode}>
                 <Copy
 />
                 {t('contentMenu.duplicate')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={deleteCurrentNode}
+                onClick={deleteCurrentNode}
               >
                 <Trash2
 />

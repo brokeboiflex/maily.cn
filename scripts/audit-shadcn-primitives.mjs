@@ -26,6 +26,7 @@ const rawInteractivePattern =
 const handmadeInputChromePattern =
   /className=(?:"[^"]*(?:border-input[^"]*rounded|rounded[^"]*border-input)[^"]*"|'[^']*(?:border-input[^']*rounded|rounded[^']*border-input)[^']*'|\{`[^`]*(?:border-input[^`]*rounded|rounded[^`]*border-input)[^`]*`\})/g;
 const manualStatePattern = /\bdata-state=(?:"[^"]+"|'[^']+'|\{[^}]+\})/g;
+const radixOnlyMenuActionPattern = /<DropdownMenuItem\b[^>]*\bonSelect=/g;
 const uiImportPattern = /from\s+['"]@\/components\/ui\/([^'"]+)['"]/g;
 
 const dependencyNameByImport = new Map([
@@ -47,6 +48,12 @@ const dependencyNameByImport = new Map([
   ['resizable', 'resizable'],
   ['scroll-area', 'scroll-area'],
   ['attachment', 'attachment'],
+  ['checkbox', 'checkbox'],
+  ['dialog', 'dialog'],
+  ['avatar', 'avatar'],
+  ['field', 'field'],
+  ['label', 'label'],
+  ['empty', 'empty'],
 ]);
 
 const findings = [];
@@ -82,7 +89,28 @@ function auditFile(file) {
   const lines = content.split(/\r?\n/);
   const isPrimitiveImplementation = primitiveImplementationFiles.has(relative);
 
+  if (relative.endsWith('/mailbox/index.tsx')) {
+    scanPattern(
+      /<(?:label|fieldset)\b|\bfunction\s+senderHue\b|\bbackgroundColor:\s*`hsl/g,
+      content,
+      lines,
+      relative,
+      'mailbox-display-primitive',
+      () =>
+        'Mailbox forms and avatars must compose host Field/Label/Avatar primitives and theme tokens.'
+    );
+  }
+
   if (!isPrimitiveImplementation) {
+    scanPattern(
+      radixOnlyMenuActionPattern,
+      content,
+      lines,
+      relative,
+      'radix-only-menu-action',
+      () =>
+        'Use onClick for DropdownMenuItem actions; Base UI does not invoke Radix onSelect. Both primitives route keyboard activation through click.'
+    );
     scanPattern(
       rawInteractivePattern,
       content,

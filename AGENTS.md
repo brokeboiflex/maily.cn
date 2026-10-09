@@ -83,7 +83,7 @@ The remaining `Select` is an editor-specific labelled/options composite that use
 
 Registry call sites must stay inside the prop/export intersection of current stock Radix and Base shadcn primitives. Do not pass Radix-only `position`, `onOpenAutoFocus`, or `onCloseAutoFocus` props through externalized `SelectContent`/`PopoverContent`, and do not depend on `PopoverAnchor`, which the Base item does not export. Preserve editor focus through Maily's controlled open-state callbacks and use `PopoverTrigger` for shared trigger composition.
 
-`MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It ports the CRM/Veyme inbox/sent/drafts/bounced surface as a backend-agnostic data-adapter component: local UI state, polling, message selection, reader, reply/forward compose seeding, and compose/draft actions live in the component, while accounts/messages/delivery/contact suggestions and optional message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell must stay aligned to the references: shadcn `ResizablePanelGroup` with compact expandable folder rail, message list, and reader/compose panels separated by `ResizableHandle`, plus `ScrollArea` around list/reader/compose overflow. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
+`MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It provides the inbox/sent/drafts surface as a backend-agnostic data-adapter component: local UI state, polling, message selection, reader, reply/forward compose seeding, and compose/draft actions live in the component, while accounts/messages/delivery/contact suggestions and optional message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell must stay aligned to the references: shadcn `ResizablePanelGroup` with compact expandable folder rail, message list, and reader/compose panels separated by `ResizableHandle`, plus `ScrollArea` around list/reader/compose overflow. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
 
 Mailbox compose body entry is dual-mode: the plain-text `Textarea` and embedded Maily `Editor` are switched through real shadcn `ToggleGroup` primitives. Keep textarea as a supported fallback, persist rich editor output through `MailyMailboxDraftInput.html`, and continue sending `text` so data sources that only need plain text remain compatible.
 
@@ -215,3 +215,81 @@ continuation. Image/logo uploads must match the captured immutable ProseMirror
 Node identity, not only equal type/attributes at the old position; stale results
 invoke the host's discard handler. See
 [ownership validation](docs/idempotence-ownership-2026-10-08.md).
+
+## Spam and Trash, 2026-10-09
+
+Mailbox folders include `spam` and `trash`. Hosts query/count these folders and
+implement `delete` as move to Trash, `reportSpam` as move to Spam, `restore` as
+move to Inbox, `notSpam` as remove spam classification and move to Inbox, and
+`deleteForever` as irreversible deletion. Recovery/permanent deletion actions
+remain explicitly capability-gated and folder-specific. Retention and classifier
+training belong to the host. See docs/mailbox-spam-trash.md.
+
+## Complete mailbox workflows, 2026-10-09
+
+The expanded mailbox must keep pagination/search generations, explicit host
+thread IDs, caller-owned upload references, observed draft revisions and
+backend-issued undo receipts. Archive preserves mail for All Mail; Starred is
+a filtered view. Bulk and folder-wide deletion are separate host capabilities.
+Never infer threads from matching subjects or fake undo/provider mutations.
+See [mailbox workflows](docs/mailbox-workflows.md) for the adapter boundary.
+
+Label create/rename/delete Dialogs contain only their form or confirmation;
+existing labels and their More menus remain in the folder rail. Default navigation follows the implemented Gmail folder subset and has no
+Bounced/Failed delivery folder. Failed outgoing messages remain in Sent with
+delivery status/details. The legacy `bounced` adapter id remains type-compatible.
+
+## Repository context isolation, 2026-10-09
+
+Keep mailbox documentation, playground examples, and test fixtures generic. Do not
+include private project names, integration histories, or cross-project validation
+claims in this public repository. Use neutral example identities and addresses.
+
+## Established mailbox controls
+
+Follow the inspected Gmail patterns: current-page Checkbox selection, a compact
+action toolbar with bulk actions inline beside the page selector (replacing Refresh
+while selected), always-visible query range and Newer/Older page arrows, search-filter Popover,
+and a Labels heading with create action and per-label More menu. Never append
+pages behind a Load more button. Never hide the page range during selection. `listMessages.total` is optional query-specific
+metadata; never invent totals from loaded rows. Use stock host Checkbox/Dialog
+primitives, externalized through the registry like the other controls.
+
+Thread reads are owned by the selected thread and must not be cleared by a
+slower detail request. Reopened compose sessions capture their reply header and
+observed revision independently of reader selection or paging.
+
+Label dialogs register their actual create/menu button with the host's
+`DialogTrigger`; controlled `open` alone does not restore keyboard focus in
+Radix. Keep each label menu in its own Dialog context, and open its dialog only
+from a chosen menu action. Use instance-local ids for form label associations.
+The clean consumer gate exercises these flows and Checkbox state in both Radix
+and Base UI, without modifying either host's primitives.
+
+DropdownMenuItem actions must use `onClick`, the common Radix/Base activation
+handler. Radix-specific `onSelect` passes TypeScript as a native selection event
+in Base consumers but does not invoke the action. The primitive audit rejects
+that prop on DropdownMenuItem; CommandItem keeps its own `onSelect` contract.
+
+## Host primitives and controlled mailbox state, 2026-10-09
+
+Mailbox sender/contact initials use stock Avatar; form layouts use Field,
+FieldLabel, FieldSet and Label; empty surfaces compose Empty parts. Their package
+fallbacks are adapted from official shadcn radix-nova source and are externalized
+to the host's `avatar`, `field`, `label` and `empty` registry items. Never restore
+generated HSL avatar chrome or handwritten label/fieldset replacements.
+
+Mailbox folder, search/filter/scope, label, reader and bulk selections support
+controlled props/change callbacks with independent uncontrolled defaults.
+Controlled props are authoritative; declined requests cannot mutate shadow state,
+external updates must not echo callbacks, and off-page reader IDs remain valid.
+Hosts coordinate related controlled values; external navigation resets only
+unmanaged subordinate state and must not silently discard a live composer.
+See docs/mailbox-workflows.md for the API and ownership contract. The consumer
+matrix covers Radix/Base runtime behavior and custom UI/utils aliases in Bun.
+
+Stock Radix Dialog can autofocus before its passive Escape listener registers.
+Label and unsaved-change dialogs handle Escape in their leaf content through the common
+`DialogContent.onKeyDown` prop so immediate dismissal is reliable; leave host
+modality/focus restoration intact. Do not hide this race with sleeps or retrying
+Escape in the consumer test.

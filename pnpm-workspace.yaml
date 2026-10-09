@@ -1,5 +1,7 @@
 packages:
   - 'packages/*'
+allowBuilds:
+  esbuild: set this to true or false
 minimumReleaseAgeExclude:
   - '@tiptap/core@3.30.5'
   - '@tiptap/extension-blockquote@3.30.5'

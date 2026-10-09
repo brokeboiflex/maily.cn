@@ -27,6 +27,35 @@
  */
 
 export const iconMap = {
+  ReplyAll: {
+    lucide: 'ReplyAll',
+    tabler: 'IconCornerUpLeftDouble',
+    phosphor: 'ArrowBendDoubleUpLeft',
+    hugeicons: 'MailReplyAll01Icon',
+    remixicon: 'RiReplyAllLine',
+  },
+  Tag: {
+    lucide: 'Tag',
+    tabler: 'IconTag',
+    phosphor: 'Tag',
+    hugeicons: 'Tag01Icon',
+    remixicon: 'RiPriceTagLine',
+  },
+  Check: {
+    lucide: 'Check',
+    tabler: 'IconCheck',
+    phosphor: 'Check',
+    hugeicons: 'Tick02Icon',
+    remixicon: 'RiCheckLine',
+  },
+  X: {
+    lucide: 'X',
+    tabler: 'IconX',
+    phosphor: 'X',
+    hugeicons: 'Cancel01Icon',
+    remixicon: 'RiCloseLine',
+  },
+
   // ── Block definition icons (blocks/*.tsx + slash commands) ──────────────
 
   Text: {

@@ -40,6 +40,8 @@ imports to the consumer aliases, and declares the corresponding stock items in
 | HTML code/preview state                                      | `tabs`                              |
 | Icon-bearing compact fields                                  | `input-group`                       |
 | Variable suggestions                                         | `command`                           |
+| Mailbox row selection                                        | `checkbox`                          |
+| Modal mailbox workflows                                      | `dialog`                            |
 | Message attachment metadata and download controls            | `attachment`, `button`              |
 
 The package copies are Radix-based standalone fallbacks only. A registry install
@@ -49,7 +51,7 @@ tokens.
 
 The optional `MailboxView` uses the same host-owned `button`, `input`,
 `textarea`, `badge`, `separator`, `dropdown-menu`, `popover`, `command`,
-`resizable`, `scroll-area`, and `attachment` primitives. It is a data-adapter component:
+`resizable`, `scroll-area`, `attachment`, `checkbox`, and `dialog` primitives. It is a data-adapter component:
 mailbox state and layout live in Maily source, while accounts, messages, drafts,
 delivery, polling data, recipient contact suggestions, and optional message
 actions come from the consumer's backend adapter. Optional message action chrome
@@ -82,7 +84,7 @@ These are not replacement primitives:
   variable completion.
 - `InputAutocomplete` positions Maily variable suggestions in a viewport-aware
   portal; the suggestions themselves use stock Command.
-- `MailboxView` combines a CRM/Veyme-style resizable folder rail, searchable
+- `MailboxView` combines a resizable folder rail, searchable
   message list, capability-gated reader actions, reply/forward compose seeding,
   compose form, and recipient autocomplete around caller-provided
   mailbox/contact/action data. It is application chrome, not an email-rendering
@@ -127,7 +129,7 @@ Run `pnpm registry:consumer-test` to regenerate the registry and test clean,
 current shadcn consumers. The automated matrix:
 
 - installs editor, mailbox, and renderer as granular items in a fresh Radix app
-  and production-builds the mounted editor;
+  and production-builds the mounted editor/mailbox, then exercises their runtime controls;
 - installs and strictly production-builds the editor in a fresh Base UI app;
 - adds the optional Base mailbox and renderer and rejects every diagnostic except
   the current upstream `scroll-area.tsx` unused React import, then rebuilds the
@@ -151,3 +153,24 @@ The icon release gate uses genuinely initialized shadcn consumers—not a change
 `iconLibrary` value on an existing Lucide app—and mounts and production-builds the
 editor with Lucide, Tabler, Hugeicons, Phosphor, and Remix. This catches invalid
 icon names, library-specific JSX transforms, and missing selected-library packages.
+
+## Mailbox primitive and controlled-state completion, 2026-10-09
+
+Sender/contact initials use stock Avatar/AvatarFallback and inherit host tokens.
+Compose, recipient, label and search fields compose stock Field, FieldLabel,
+FieldSet and Label; empty surfaces compose stock Empty parts. The standalone
+fallbacks come from the official radix-nova registry with only package-import
+adaptations. Registry installs exclude them and import the consumer's Avatar,
+Field, Label and Empty, with derived registry dependencies. The mailbox audit
+rejects native label/fieldset replacements and the old generated avatar colors.
+
+Folder, search text/filters/scope, selected label, reader message and bulk IDs
+support independent controlled values/change callbacks and uncontrolled defaults.
+Controlled values remain authoritative even when a host rejects a request;
+external updates do not echo callbacks. Compose input and transient disclosure
+state remain component-owned. See [the API contract](docs/mailbox-workflows.md#controlled-navigation-and-selection).
+
+Label dialogs use actual DialogTrigger composition. Radix and Base runtime
+fixtures exercise creation, keyboard rename, dismissal/focus return, Checkbox,
+Avatar, Field/Empty, compose switching and the existing editor/mailbox flows.
+The Bun isolated consumer additionally installs with custom UI/utils aliases.

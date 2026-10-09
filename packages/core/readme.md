@@ -382,3 +382,11 @@ the original Maily project separately through
 MIT. Original Maily copyright &copy; [Arik Chakma](https://github.com/arikchakma)
 and contributors; maily.cn modifications are maintained by
 [brokeboiflex](https://github.com/brokeboiflex).
+
+## Optional mailbox workflows
+
+The mailbox entrypoint supports caller-owned message storage and capabilities.
+See [mailbox workflows](../../docs/mailbox-workflows.md) for pagination, All Mail,
+Starred, attachments, Reply all, read state, bulk actions, labels, conversations,
+search, draft autosave and undo ownership. Enable only capabilities implemented
+by your data source.
