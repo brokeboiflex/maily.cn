@@ -12,8 +12,8 @@ The published page uses the same centered demo hierarchy as the
 introduction and resource links, visible Light/Dark/System and palette controls,
 an English/Polish component language switch, then framed editor and mailbox
 examples. The editor is seeded with editable content; on narrow screens, the
-desktop split-pane mailbox scrolls inside its own frame instead of widening the
-page.
+mailbox switches to a folder menu and one content page instead of widening the
+page. Opening a message replaces the list; Back restores the list.
 
 Open “SMTP queue cleared” to check attachment metadata and individual downloads.
 Its adapter saves two actual text files, including an empty error report, through

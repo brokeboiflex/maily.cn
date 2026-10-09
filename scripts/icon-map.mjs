@@ -27,6 +27,20 @@
  */
 
 export const iconMap = {
+  ArrowLeft: {
+    lucide: 'ArrowLeft',
+    tabler: 'IconArrowLeft',
+    phosphor: 'ArrowLeft',
+    hugeicons: 'ArrowLeft02Icon',
+    remixicon: 'RiArrowLeftLine',
+  },
+  Menu: {
+    lucide: 'Menu',
+    tabler: 'IconMenu2',
+    phosphor: 'List',
+    hugeicons: 'Menu01Icon',
+    remixicon: 'RiMenuLine',
+  },
   ReplyAll: {
     lucide: 'ReplyAll',
     tabler: 'IconCornerUpLeftDouble',

@@ -397,3 +397,28 @@ it('dismisses a leaf label dialog even when an older layer consumed Escape', asy
     await f.close();
   }
 });
+
+it('keeps controlled draft compose open until the host accepts Back', async () => {
+  const f = fixture();
+  const onSelectedMessageIdChange = vi.fn();
+  f.dataSource.getMessage = (id: string) => ({
+    ...f.row,
+    id,
+    status: 'draft',
+    bodyText: 'Saved draft body',
+  });
+  try {
+    await f.render({ selectedMessageId: 'first', onSelectedMessageIdChange });
+    expect(f.container.querySelector('input[name="subject"]')).toBeTruthy();
+    await f.click('Back to list');
+    expect(onSelectedMessageIdChange).toHaveBeenCalledWith(null);
+    expect(f.container.querySelector('input[name="subject"]')).toBeTruthy();
+    await f.render({ selectedMessageId: null, onSelectedMessageIdChange });
+    expect(f.container.querySelector('input[name="subject"]')).toBeNull();
+    expect(
+      f.container.querySelector('[tabindex="-1"]')?.hasAttribute('hidden')
+    ).toBe(false);
+  } finally {
+    await f.close();
+  }
+});

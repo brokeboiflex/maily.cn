@@ -1220,7 +1220,7 @@ export function App() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="min-w-0 overflow-x-auto">
+              <div className="min-w-0">
                 <MailboxView
                   account={{
                     id: "playground-account",
@@ -1233,7 +1233,7 @@ export function App() {
                   pageSize={2}
                   pollIntervalMs={0}
                   labels={polish ? polishMailboxLabels : undefined}
-                  className="max-h-none min-w-[56rem] rounded-none! border-0!"
+                  className="max-h-none w-full rounded-none! border-0!"
                 />
               </div>
             </CardContent>

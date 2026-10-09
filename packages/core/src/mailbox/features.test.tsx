@@ -171,6 +171,124 @@ async function flush() {
 }
 
 describe('MailboxView feature contracts', () => {
+  it('replaces the list with a message and restores its page, selection, scroll and focus on Back', async () => {
+    const first = detail(row('message-1', 'First page'));
+    const second = detail(row('message-2', 'Second page'));
+    const listMessages = vi.fn(({ cursor }) =>
+      cursor
+        ? { items: [second], nextCursor: null, total: 2 }
+        : { items: [first], nextCursor: 'second', total: 2 }
+    );
+    const rendered = await renderMailbox(
+      createDataSource({
+        listMessages,
+        getMessage: (id) => (id === second.id ? second : first),
+        runBulkMessageAction: () => undefined,
+      }),
+      { pageSize: 1, messageActions: ['delete'] }
+    );
+    try {
+      await rendered.click('[aria-label="Older"]');
+      await rendered.click('[aria-label="Select all on this page"]');
+      const trigger = Array.from(
+        rendered.container.querySelectorAll('button')
+      ).find((el) => el.textContent?.includes('Second page'))!;
+      const listPage = trigger.closest('[tabindex="-1"]') as HTMLElement;
+      const viewport = listPage.querySelector(
+        '[data-slot="scroll-area-viewport"]'
+      )!;
+      viewport.scrollTop = 80;
+      trigger.focus();
+      await rendered.clickButtonContaining('Second page');
+      expect(listPage.hidden).toBe(true);
+      expect(rendered.container.querySelector('article')).toBeTruthy();
+      await rendered.click('[aria-label="Back to list"]');
+      expect(listPage.hidden).toBe(false);
+      expect(viewport.scrollTop).toBe(80);
+      expect(document.activeElement).toBe(trigger);
+      expect(rendered.container.querySelector('article')).toBeNull();
+      expect(listPage.textContent).toContain('2–2 of 2');
+      expect(
+        listPage
+          .querySelector('[aria-label="Select all on this page"]')
+          ?.getAttribute('aria-checked')
+      ).toBe('true');
+      expect(listMessages).toHaveBeenCalledTimes(2);
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('requests controlled Back without hiding a reader the host has kept selected', async () => {
+    const onSelectedMessageIdChange = vi.fn();
+    const rendered = await renderMailbox(createDataSource(), {
+      selectedMessageId: 'message-1',
+      onSelectedMessageIdChange,
+    });
+    try {
+      await rendered.click('[aria-label="Back to list"]');
+      expect(onSelectedMessageIdChange).toHaveBeenCalledWith(null);
+      expect(rendered.container.querySelector('article')).toBeTruthy();
+      expect(rendered.container.querySelector('[hidden]')).toBeTruthy();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('keeps Back available while a message request is pending and ignores its stale result', async () => {
+    const pending = deferred<MailyMailboxMessageDetail>();
+    const rendered = await renderMailbox(
+      createDataSource({ getMessage: () => pending.promise })
+    );
+    try {
+      await rendered.clickButtonContaining('Feature subject');
+      await rendered.click('[aria-label="Back to list"]');
+      await act(async () => {
+        pending.resolve(detail(row('message-1', 'Feature subject')));
+      });
+      expect(rendered.container.querySelector('article')).toBeNull();
+      expect(
+        rendered.container.querySelector('[aria-label="Back to list"]')
+      ).toBeNull();
+      expect(
+        rendered.container
+          .querySelector('[tabindex="-1"]')
+          ?.hasAttribute('hidden')
+      ).toBe(false);
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('protects dirty compose when Back is requested', async () => {
+    const rendered = await renderMailbox(createDataSource());
+    try {
+      await rendered.click('[aria-label="Compose"]');
+      await rendered.edit('input[name="subject"]', 'Unsaved draft');
+      await rendered.click('[aria-label="Back to list"]');
+      expect(
+        document.querySelector('[data-slot="dialog-content"]')
+      ).toBeTruthy();
+      expect(
+        rendered.container.querySelector('input[name="subject"]')
+      ).toBeTruthy();
+      const stay = Array.from(document.querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === 'Keep editing'
+      );
+      expect(stay).toBeTruthy();
+      await act(async () => stay!.click());
+      expect(
+        (
+          rendered.container.querySelector(
+            'input[name="subject"]'
+          ) as HTMLInputElement
+        ).value
+      ).toBe('Unsaved draft');
+    } finally {
+      rendered.unmount();
+    }
+  });
+
   it('supports remove-only label hosts without showing an inert apply action', async () => {
     const removeLabel = vi.fn();
     const rendered = await renderMailbox(

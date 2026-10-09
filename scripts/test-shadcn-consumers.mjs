@@ -383,8 +383,8 @@ test("inherits current host primitive behavior", async ({ page }) => {
   await expect(linkInput).toBeHidden()
 
   const mailbox = page.getByTestId("mailbox")
-  await expect(mailbox.locator('[data-slot="empty"]')).toBeVisible()
-  await expect(mailbox.locator('[data-slot="empty-title"]')).toHaveText("Select a message")
+  await expect(mailbox.getByRole("button", { name: /Attachment compatibility/ })).toBeVisible()
+  await expect(mailbox.locator("article")).toHaveCount(0)
   const createLabel = mailbox.getByRole("button", { name: "Create label", exact: true })
   await createLabel.click()
   const labelDialog = page.getByRole("dialog")
@@ -415,6 +415,8 @@ test("inherits current host primitive behavior", async ({ page }) => {
   await expect(selectAll).not.toBeChecked()
 
   await mailbox.getByRole("button", { name: /Attachment compatibility/ }).click()
+  await expect(selectAll).toBeHidden()
+  await expect(mailbox.getByRole("button", { name: "Back to list" })).toBeFocused()
   await expect(mailbox.locator('[data-slot="avatar-fallback"]')).toHaveText("S")
   await expect(mailbox.locator('[data-slot="avatar"]')).not.toHaveAttribute("style", /background/)
   await expect(mailbox.getByRole("heading", { name: "Attachments (1)" })).toBeVisible()
@@ -425,6 +427,20 @@ test("inherits current host primitive behavior", async ({ page }) => {
   ])
   expect(download.suggestedFilename()).toBe("report.txt")
   expect(await readFile((await download.path())!, "utf8")).toBe("report\\n")
+  await mailbox.getByRole("button", { name: "Back to list" }).click()
+  await expect(mailbox.getByRole("button", { name: /Attachment compatibility/ })).toBeFocused()
+  await expect(selectAll).toBeVisible()
+  await page.setViewportSize({ width: 375, height: 812 })
+  await mailbox.getByRole("button", { name: "Main menu", exact: true }).click()
+  const navigation = page.getByRole("dialog", { name: "Main menu", exact: true })
+  await expect(navigation.getByRole("button", { name: "Inbox", exact: true })).toBeVisible()
+  await navigation.getByRole("button", { name: "Inbox", exact: true }).click()
+  await expect(navigation).toBeHidden()
+  await mailbox.getByRole("button", { name: /Attachment compatibility/ }).click()
+  await expect(selectAll).toBeHidden()
+  expect(await mailbox.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true)
+  await mailbox.getByRole("button", { name: "Back to list" }).click()
+  await page.setViewportSize({ width: 1280, height: 900 })
   await mailbox.getByRole("button", { name: "Compose" }).click()
   await expect(mailbox.getByRole("textbox", { name: "Subject", exact: true })).toBeVisible()
   await expect(mailbox.getByRole("textbox", { name: "Body", exact: true })).toBeVisible()
@@ -434,6 +450,15 @@ test("inherits current host primitive behavior", async ({ page }) => {
   await richMode.click()
   await expect(richMode).toHaveAttribute("${primitiveBase === 'radix' ? 'aria-checked' : 'aria-pressed'}", "true")
   await expect(mailbox.locator('[contenteditable="true"]')).toHaveCount(1)
+  await page.setViewportSize({ width: 320, height: 740 })
+  await expect(mailbox.getByRole("button", { name: "Main menu", exact: true })).toBeVisible()
+  expect(await mailbox.evaluate(el => {
+    const edge = el.getBoundingClientRect().right
+    return Array.from(el.querySelectorAll("button, input, textarea")).filter(control => {
+      const rect = control.getBoundingClientRect()
+      return rect.width > 0 && rect.right > edge + 1
+    }).length
+  })).toBe(0)
 
   await expect(page.locator("button button")).toHaveCount(0)
   expect(errors).toEqual([])

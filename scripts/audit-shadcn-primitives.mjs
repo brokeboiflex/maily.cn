@@ -50,6 +50,7 @@ const dependencyNameByImport = new Map([
   ['attachment', 'attachment'],
   ['checkbox', 'checkbox'],
   ['dialog', 'dialog'],
+  ['sheet', 'sheet'],
   ['avatar', 'avatar'],
   ['field', 'field'],
   ['label', 'label'],
@@ -181,30 +182,9 @@ function auditRegistryDependencies() {
     }
   }
 
-  const buildScriptPath = path.join(root, 'scripts/build-shadcn-registry.mjs');
-  const buildScript = fs.existsSync(buildScriptPath)
-    ? fs.readFileSync(buildScriptPath, 'utf8')
-    : '';
-  const externalizedImports = new Set(
-    [...buildScript.matchAll(/['"]@\/components\/ui\/([^'"]+)['"]/g)]
-      .map((match) => dependencyNameByImport.get(match[1]))
-      .filter(Boolean)
-  );
-  const fullItem = items.find((item) => item.name === 'maily');
-  const fullRegistryDependencies = new Set(
-    fullItem?.registryDependencies ?? []
-  );
-
-  for (const dependency of externalizedImports) {
-    if (!fullRegistryDependencies.has(dependency)) {
-      findings.push({
-        file: 'registry.json',
-        line: 1,
-        rule: 'missing-externalized-registry-dependency',
-        message: `scripts/build-shadcn-registry.mjs externalizes @/components/ui/${dependency}, but the full "maily" item does not include "${dependency}".`,
-      });
-    }
-  }
+  // Dependencies follow emitted imports, checked per item above. An unused
+  // externalization mapping (for example the retired mailbox Resizable shell)
+  // must not force an unused primitive into every consumer install.
 }
 
 function scanPattern(pattern, content, lines, relative, rule, messageForMatch) {

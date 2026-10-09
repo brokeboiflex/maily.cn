@@ -46,12 +46,21 @@ import {
   InputGroupInput,
 } from "@/components/ui/input-group"
 import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable"
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import {
   Dialog,
   DialogTrigger,
@@ -94,12 +103,14 @@ import {
   Smile,
   Send,
   FileText,
+  ArrowLeft,
   Pencil,
   Plus,
   Tag,
   MoreVertical,
-  Search,
+  Menu,
   X,
+  Search,
   LoaderCircleIcon,
   RotateCwIcon,
   ChevronRight,
@@ -433,6 +444,9 @@ export const defaultMailboxLabels = {
   "actions.print": "Print",
   "actions.download": "Download message",
   "actions.showOriginal": "Show original",
+  "navigation.menu": "Main menu",
+  "navigation.close": "Close menu",
+  "navigation.back": "Back to list",
   "source.back": "Back to message",
   "source.retry": "Retry",
   "source.error":
@@ -873,10 +887,12 @@ function errorLabelForAction(action: string): MailyMailboxLabelKey {
 
 export function MailboxView(props: MailyMailboxViewProps) {
   return (
-    <MailboxSession
-      key={props.recoveryScope ?? props.account?.id ?? "mailbox"}
-      {...props}
-    />
+    <TooltipProvider>
+      <MailboxSession
+        key={props.recoveryScope ?? props.account?.id ?? "mailbox"}
+        {...props}
+      />
+    </TooltipProvider>
   )
 }
 
@@ -929,6 +945,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     setThread(null)
     pendingFolderRequest.current = null
     pendingReaderRequest.current = null
+    pendingBackRequest.current = false
   }, [dataSource])
   const captureLifetime = React.useCallback(() => {
     const epoch = lifetime.epoch
@@ -1012,6 +1029,20 @@ function MailboxSession(props: MailyMailboxViewProps) {
     props.defaultSelectedMessageId ?? null,
     props.onSelectedMessageIdChange
   )
+  const mailboxRef = React.useRef<HTMLDivElement>(null)
+  const listRef = React.useRef<HTMLDivElement>(null)
+  const lastMessageTrigger = React.useRef<HTMLElement | null>(null)
+  const [compact, setCompact] = React.useState(false)
+  const [navigationOpen, setNavigationOpen] = React.useState(false)
+  React.useEffect(() => {
+    const element = mailboxRef.current
+    if (!element || typeof ResizeObserver === "undefined") return
+    const observer = new ResizeObserver(([entry]) => {
+      setCompact(entry.contentRect.width < 768)
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [])
   const [composeOpen, setComposeOpen] = React.useState(false)
   const [composeDraftId, setComposeDraftId] = React.useState<string | null>(
     null
@@ -1042,6 +1073,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     folder: MailyMailboxFolder
     labelId: string | null
   } | null>(null)
+  const pendingBackRequest = React.useRef(false)
   const pendingReaderRequest = React.useRef<MailyMailboxMessageRow | null>(null)
   const [pendingNavigation, setPendingNavigation] = React.useState<
     (() => void) | null
@@ -1516,11 +1548,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
     )
       return
     if (!allowComposeNavigation(() => selectFolder(next, labelId))) return
+    pendingBackRequest.current = false
     if (props.folder !== undefined && next !== folder) {
       pendingFolderRequest.current = { folder: next, labelId }
       setFolder(next)
       return
     }
+    setNavigationOpen(false)
     composeDirty.current = false
     composeOwned.current = false
     messagesGeneration.current += 1
@@ -1616,6 +1650,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
       return
     if (composeOpen && composeDraftId === row.id) return
     if (!allowComposeNavigation(() => selectMessage(row))) return
+    pendingBackRequest.current = false
     if (props.selectedMessageId !== undefined && row.id !== selectedId) {
       pendingReaderRequest.current = row
       setSelectedId(row.id)
@@ -1655,6 +1690,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
     )
       return
     if (!allowComposeNavigation(openNewDraft)) return
+    pendingBackRequest.current = false
+    setNavigationOpen(false)
     composeDirty.current = false
     composeOwned.current = false
     setComposeSession((session) => session + 1)
@@ -2253,767 +2290,852 @@ function MailboxSession(props: MailyMailboxViewProps) {
     </DialogContent>
   )
 
-  return (
-    <div
-      className={cn(
-        "maily-mailbox h-[42rem] max-h-[calc(100vh-2rem)] min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-border bg-muted/30 text-foreground",
-        className
-      )}
+  const returnToList = () => {
+    if (
+      composeLock.current ||
+      pendingSendRef.current ||
+      recoveryUnavailableRef.current
+    )
+      return
+    if (!allowComposeNavigation(returnToList)) return
+    if (props.selectedMessageId !== undefined && selectedId !== null) {
+      pendingBackRequest.current = true
+      setSelectedId(null)
+      return
+    }
+    setSelectedId(null)
+    setComposeOpen(false)
+    composeDraftRef.current = null
+    setComposeDraftId(null)
+    setComposeSeed(null)
+    setComposeInReplyTo(null)
+    composeOwned.current = false
+  }
+  React.useEffect(() => {
+    if (pendingBackRequest.current && selectedId === null) {
+      pendingBackRequest.current = false
+      returnToList()
+    }
+  }, [selectedId])
+  const detailOpen = composeOpen || !!selectedId
+  const previousDetailOpen = React.useRef(detailOpen)
+  React.useEffect(() => {
+    if (previousDetailOpen.current && !detailOpen) {
+      const target = lastMessageTrigger.current
+      if (target?.isConnected) target.focus({ preventScroll: true })
+      else listRef.current?.focus({ preventScroll: true })
+    }
+    previousDetailOpen.current = detailOpen
+  }, [detailOpen])
+  const focusBack = React.useCallback((node: HTMLButtonElement | null) => {
+    if (
+      node &&
+      (document.activeElement === document.body ||
+        document.activeElement === lastMessageTrigger.current)
+    ) {
+      node.focus({ preventScroll: true })
+    }
+  }, [])
+  const backButton = (
+    <MailboxIconButton
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="size-11 shrink-0"
+      ref={focusBack}
+      data-mailbox-back
+      aria-label={t("navigation.back")}
+      onClick={returnToList}
+      disabled={saving || sending || discarding || sendUnresolved}
     >
-      <ResizablePanelGroup
-        orientation="horizontal"
-        className="h-full min-h-0 min-w-0"
+      <ArrowLeft className="size-4" />
+    </MailboxIconButton>
+  )
+  const navigation = (
+    <div className="flex shrink-0 flex-col gap-2 p-3 [&_button]:min-h-11">
+      <Button
+        type="button"
+        size="icon"
+        onClick={openNewDraft}
+        className="w-full justify-start gap-2 px-2.5"
+        aria-label={t("compose.new")}
       >
-        <ResizablePanel
-          defaultSize="12rem"
-          minSize="48px"
-          maxSize="16rem"
-          groupResizeBehavior="preserve-pixel-size"
-          className="min-w-12"
-        >
-          <div className="@container/rail flex h-full flex-col items-center gap-2 p-2 @[4rem]/rail:items-stretch @[4rem]/rail:p-3">
+        <Pencil className="size-4" />
+        <span className="inline min-w-0 truncate">{t("compose.new")}</span>
+      </Button>
+      <nav className="flex w-full flex-col gap-0.5">
+        {FOLDERS.map((item) => {
+          const active = folder === item && !selectedLabelId && !globalSearch
+          const count = counts[item] ?? 0
+          return (
             <Button
+              key={item}
               type="button"
+              variant="ghost"
               size="icon"
-              onClick={openNewDraft}
-              className="justify-center gap-0 @[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5"
-              title={t("compose.new")}
-              aria-label={t("compose.new")}
+              aria-label={t(`folders.${item}`)}
+              aria-current={active ? "page" : undefined}
+              onClick={() => selectFolder(item)}
+              className={cn(
+                "relative w-full justify-start gap-2 px-2.5 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                active &&
+                  "bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              )}
             >
-              <Pencil className="size-4" />
-              <span className="hidden min-w-0 truncate @[4rem]/rail:inline">
-                {t("compose.new")}
+              {folderIcon(item, "size-4")}
+              <span className="inline min-w-0 flex-1 truncate text-left">
+                {t(`folders.${item}`)}
               </span>
+              {count > 0 && (
+                <span className="min-w-[2ch] text-right text-xs text-muted-foreground tabular-nums">
+                  {count}
+                </span>
+              )}
             </Button>
-            <nav className="flex w-full flex-col items-center gap-0.5 @[4rem]/rail:items-stretch">
-              {FOLDERS.map((item) => {
-                const active =
-                  folder === item && !selectedLabelId && !globalSearch
-                const count = counts[item] ?? 0
-                return (
-                  <Button
-                    key={item}
+          )
+        })}
+      </nav>
+      {dataSource.listLabels && (
+        <>
+          <div className="mt-4 flex w-full items-center justify-between">
+            <span className="inline px-2.5 text-sm font-medium">
+              {t("labels.heading")}
+            </span>
+            {dataSource.createLabel && (
+              <Dialog
+                open={labelForm?.mode === "create"}
+                onOpenChange={(open) => {
+                  if (!open) setLabelForm(null)
+                }}
+              >
+                <DialogTrigger asChild>
+                  <MailboxIconButton
                     type="button"
                     variant="ghost"
                     size="icon"
-                    title={t(`folders.${item}`)}
-                    aria-label={t(`folders.${item}`)}
-                    aria-current={active ? "page" : undefined}
-                    onClick={() => selectFolder(item)}
-                    className={cn(
-                      "relative justify-center gap-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground @[4rem]/rail:w-full @[4rem]/rail:justify-start @[4rem]/rail:gap-2 @[4rem]/rail:px-2.5",
-                      active &&
-                        "bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                    )}
-                  >
-                    {folderIcon(item, "size-4")}
-                    <span className="hidden min-w-0 flex-1 truncate text-left @[4rem]/rail:inline">
-                      {t(`folders.${item}`)}
-                    </span>
-                    {count > 0 && (
-                      <>
-                        <Badge
-                          variant={active ? "default" : "outline"}
-                          className="hidden @[4rem]/rail:inline-flex"
-                        >
-                          {count}
-                        </Badge>
-                        <span
-                          aria-hidden
-                          className="absolute top-1 right-1 size-1.5 rounded-full bg-primary @[4rem]/rail:hidden"
-                        />
-                      </>
-                    )}
-                  </Button>
-                )
-              })}
-            </nav>
-            {dataSource.listLabels && (
-              <>
-                <div className="mt-4 flex w-full items-center justify-center @[4rem]/rail:justify-between">
-                  <span className="hidden px-2.5 text-sm font-medium @[4rem]/rail:inline">
-                    {t("labels.heading")}
-                  </span>
-                  {dataSource.createLabel && (
-                    <Dialog
-                      open={labelForm?.mode === "create"}
-                      onOpenChange={(open) => {
-                        if (!open) setLabelForm(null)
-                      }}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          title={t("actions.createLabel")}
-                          aria-label={t("actions.createLabel")}
-                          onClick={() => {
-                            setLabelForm({ mode: "create" })
-                            setLabelName("")
-                          }}
-                        >
-                          <Plus className="size-4" />
-                        </Button>
-                      </DialogTrigger>
-                      {labelDialogContent}
-                    </Dialog>
-                  )}
-                </div>
-                <ul className="min-h-0 w-full flex-1 space-y-0.5 overflow-y-auto">
-                  {mailboxLabels.map((label) => (
-                    <li key={label.id} className="group flex items-center">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "min-w-0 flex-1 justify-center gap-0 @[4rem]/rail:justify-start @[4rem]/rail:gap-2",
-                          selectedLabelId === label.id &&
-                            "bg-accent font-medium"
-                        )}
-                        aria-label={label.name}
-                        title={label.name}
-                        aria-current={
-                          selectedLabelId === label.id ? "page" : undefined
-                        }
-                        onClick={() => {
-                          const navigate = () => {
-                            selectFolder("allMail", label.id)
-                          }
-                          if (
-                            !composeLock.current &&
-                            allowComposeNavigation(navigate)
-                          )
-                            navigate()
-                        }}
-                      >
-                        <Tag className="size-4 shrink-0" />
-                        <span className="hidden min-w-0 truncate @[4rem]/rail:inline">
-                          {label.name}
-                        </span>
-                      </Button>
-                      {(dataSource.renameLabel || dataSource.deleteLabel) && (
-                        <Dialog
-                          open={labelForm?.label?.id === label.id}
-                          onOpenChange={(open) => {
-                            if (!open) setLabelForm(null)
-                          }}
-                        >
-                          <DropdownMenu>
-                            <DialogTrigger asChild>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="hidden size-7 shrink-0 @[4rem]/rail:inline-flex"
-                                  aria-label={`${t("actions.more")}: ${label.name}`}
-                                >
-                                  <MoreVertical className="size-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                            </DialogTrigger>
-                            <DropdownMenuContent align="start">
-                              {dataSource.renameLabel && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setLabelForm({ mode: "rename", label })
-                                    setLabelName(label.name)
-                                  }}
-                                >
-                                  {t("actions.renameLabel")}
-                                </DropdownMenuItem>
-                              )}
-                              {dataSource.deleteLabel && (
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    setLabelForm({ mode: "delete", label })
-                                  }
-                                >
-                                  {t("actions.deleteLabel")}
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          {labelDialogContent}
-                        </Dialog>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle />
-
-        <ResizablePanel defaultSize="28%" minSize="18rem" className="min-h-0">
-          <div className="flex h-full min-h-0 flex-col">
-            <div className="border-b border-border p-2">
-              <InputGroup className="h-8 bg-muted/30">
-                <InputGroupAddon>
-                  <Search className="size-4" />
-                </InputGroupAddon>
-                <InputGroupInput
-                  value={search}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    setSearch(event.target.value)
-                    if (props.search !== undefined) return
-                    setGlobalSearch(!!event.target.value.trim())
-                    setSelectedLabelId(null)
-                  }}
-                  placeholder={t("searchPlaceholder")}
-                  aria-label={t("searchPlaceholder")}
-                  className="h-7 px-1.5 py-0"
-                />
-                <InputGroupAddon align="inline-end">
-                  {(search || Object.keys(searchFields).length > 0) && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-7"
-                      aria-label={t("search.clear")}
-                      onClick={() => {
-                        setSearch("")
-                        if (props.search !== undefined) return
-                        setSearchFields({})
-                        setGlobalSearch(false)
-                      }}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
-                  <Popover
-                    open={advancedSearchOpen}
-                    onOpenChange={(open) => {
-                      if (open) setSearchDraft(searchFields)
-                      setAdvancedSearchOpen(open)
+                    aria-label={t("actions.createLabel")}
+                    onClick={() => {
+                      setLabelForm({ mode: "create" })
+                      setLabelName("")
                     }}
                   >
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="ghost"
-                        className="size-7"
-                        aria-label={t("search.advanced")}
-                        title={t("search.advanced")}
-                      >
-                        <Filter className="size-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      align="start"
-                      className="w-80 max-w-[calc(100vw-2rem)] p-4"
-                    >
-                      <form
-                        className="space-y-3"
-                        onSubmit={(event) => {
-                          event.preventDefault()
-                          setSearchFields(searchDraft)
-                          if (props.searchFilters === undefined) {
-                            setGlobalSearch(true)
-                            setSelectedLabelId(null)
-                          }
-                          setAdvancedSearchOpen(false)
-                        }}
-                      >
-                        {(
-                          ["from", "to", "subject", "after", "before"] as const
-                        ).map((key) => (
-                          <Field
-                            key={key}
-                            orientation="horizontal"
-                            className="grid grid-cols-[6rem_1fr] items-center gap-2"
-                          >
-                            <FieldLabel
-                              htmlFor={`${labelInputId}-search-${key}`}
-                            >
-                              {t(`search.${key}`)}
-                            </FieldLabel>
-                            <Input
-                              id={`${labelInputId}-search-${key}`}
-                              value={searchDraft[key] ?? ""}
-                              onChange={(
-                                event: React.ChangeEvent<HTMLInputElement>
-                              ) => {
-                                setSearchDraft((current) => ({
-                                  ...current,
-                                  [key]: event.target.value || undefined,
-                                }))
-                              }}
-                            />
-                          </Field>
-                        ))}
-                        {(["hasAttachments", "unread"] as const).map((key) => (
-                          <Field key={key} orientation="horizontal">
-                            <Checkbox
-                              id={`${labelInputId}-search-${key}`}
-                              checked={!!searchDraft[key]}
-                              onCheckedChange={(checked) => {
-                                setSearchDraft((current) => ({
-                                  ...current,
-                                  [key]: checked === true || undefined,
-                                }))
-                              }}
-                            />
-                            <FieldLabel
-                              htmlFor={`${labelInputId}-search-${key}`}
-                            >
-                              {t(`search.${key}`)}
-                            </FieldLabel>
-                          </Field>
-                        ))}
-                        <div className="flex justify-end">
-                          <Button type="submit" size="sm">
-                            {t("search.submit")}
-                          </Button>
-                        </div>
-                      </form>
-                    </PopoverContent>
-                  </Popover>
-                </InputGroupAddon>
-                {refreshing && (
-                  <InputGroupAddon align="inline-end">
-                    <LoaderCircleIcon
-                      className="size-4 animate-spin"
-                      aria-label={t("refresh")}
-                    />
-                  </InputGroupAddon>
-                )}
-              </InputGroup>
-              {!globalSearch &&
-                dataSource.emptyFolder &&
-                (folder === "trash" || folder === "spam") && (
-                  <Popover
-                    open={emptyConfirmOpen}
-                    onOpenChange={setEmptyConfirmOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="mt-2"
-                        disabled={emptyingFolder}
-                      >
-                        {t(
-                          folder === "trash"
-                            ? "actions.emptyTrash"
-                            : "actions.deleteAllSpam"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-72 space-y-3">
-                      <p className="text-sm">
-                        {t(
-                          folder === "trash"
-                            ? "confirm.emptyTrash"
-                            : "confirm.deleteAllSpam"
-                        )}
-                      </p>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEmptyConfirmOpen(false)}
-                        >
-                          {t("actions.cancel")}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            setEmptyConfirmOpen(false)
-                            void emptyFolder()
-                          }}
-                        >
-                          {t("actions.confirm")}
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                )}
-            </div>
-            {undoReceipt && dataSource.undoMessageAction && (
-              <div
-                role="status"
-                className="flex items-center justify-between gap-3 bg-foreground px-3 py-2 text-sm text-background"
-              >
-                <span>{t("actions.completed")}</span>
+                    <Plus className="size-4" />
+                  </MailboxIconButton>
+                </DialogTrigger>
+                {labelDialogContent}
+              </Dialog>
+            )}
+          </div>
+          <ul className="w-full space-y-0.5">
+            {mailboxLabels.map((label) => (
+              <li key={label.id} className="group flex items-center">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  disabled={
-                    !!messageActionPending || saving || sending || discarding
-                  }
-                  onClick={() => void runUndo()}
-                >
-                  {t("actions.undo")}
-                </Button>
-              </div>
-            )}
-            <div className="flex min-h-11 items-center gap-2 border-b border-border px-3">
-              {(dataSource.runBulkMessageAction ||
-                dataSource.applyLabel ||
-                dataSource.removeLabel) && (
-                <Checkbox
-                  aria-label={t("actions.selectAll")}
-                  checked={
-                    messages.items.length > 0 &&
-                    messages.items.every((message) =>
-                      selectedIds.includes(message.id)
-                    )
-                  }
-                  disabled={
-                    !messages.items.length || messagesLoading || loadingMore
-                  }
-                  onCheckedChange={(checked) =>
-                    setSelectedIds(
-                      checked === true
-                        ? messages.items.map((message) => message.id)
-                        : []
-                    )
-                  }
-                />
-              )}
-              {selectedIds.length > 0 && (
-                <div className="flex shrink-0 items-center gap-1">
-                  <span className="sr-only">
-                    {t("selection.count", { count: selectedIds.length })}
-                  </span>
-                  {dataSource.runBulkMessageAction &&
-                    Array.from(new Set(messageActions))
-                      .filter((action) =>
-                        [
-                          "archive",
-                          "delete",
-                          "reportSpam",
-                          "markRead",
-                          "markUnread",
-                          "restore",
-                          "notSpam",
-                          "deleteForever",
-                        ].includes(action)
-                      )
-                      .filter((action) => {
-                        if (action === "markRead")
-                          return messages.items.some(
-                            (row) =>
-                              selectedIds.includes(row.id) && row.isUnread
-                          )
-                        if (action === "markUnread")
-                          return messages.items.some(
-                            (row) =>
-                              selectedIds.includes(row.id) && !row.isUnread
-                          )
-                        if (action === "archive")
-                          return !globalSearch && folder === "inbox"
-                        if (action === "restore")
-                          return (
-                            folder === "trash" ||
-                            folder === "allMail" ||
-                            folder === "starred"
-                          )
-                        if (action === "notSpam")
-                          return !globalSearch && folder === "spam"
-                        if (action === "deleteForever")
-                          return (
-                            !globalSearch &&
-                            (folder === "trash" || folder === "spam")
-                          )
-                        if (action === "delete" || action === "reportSpam")
-                          return (
-                            globalSearch ||
-                            (folder !== "trash" && folder !== "spam")
-                          )
-                        return true
-                      })
-                      .map((action) => (
-                        <Button
-                          key={action}
-                          type="button"
-                          size="icon"
-                          className="size-8"
-                          variant="ghost"
-                          aria-label={t(MESSAGE_ACTION_METADATA[action].label)}
-                          title={t(MESSAGE_ACTION_METADATA[action].label)}
-                          disabled={!!messageActionPending}
-                          onClick={() =>
-                            void runBulkAction(
-                              action,
-                              MESSAGE_ACTION_METADATA[action].value
-                            )
-                          }
-                        >
-                          {MESSAGE_ACTION_METADATA[action].icon("size-4")}
-                        </Button>
-                      ))}
-                  {mailboxLabels.length > 0 &&
-                    (dataSource.applyLabel || dataSource.removeLabel) && (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="size-8"
-                            aria-label={t(
-                              dataSource.applyLabel
-                                ? "actions.applyLabel"
-                                : "actions.removeLabel"
-                            )}
-                            title={t("labels.heading")}
-                          >
-                            <Tag className="size-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                          align="start"
-                          className="w-56 space-y-1"
-                        >
-                          {mailboxLabels.map((label, labelIndex) => {
-                            const checked = messages.items
-                              .filter((row) => selectedIds.includes(row.id))
-                              .every(
-                                (row) =>
-                                  row.labels?.includes(label.id) ||
-                                  row.labels?.includes(label.name)
-                              )
-                            return (
-                              <Field
-                                key={label.id}
-                                orientation="horizontal"
-                                className="gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
-                              >
-                                <Checkbox
-                                  id={`${labelInputId}-apply-${labelIndex}`}
-                                  checked={checked}
-                                  disabled={
-                                    checked
-                                      ? !dataSource.removeLabel
-                                      : !dataSource.applyLabel
-                                  }
-                                  onCheckedChange={(value) =>
-                                    void applyLabelToSelection(
-                                      label.id,
-                                      value !== true
-                                    )
-                                  }
-                                />
-                                <FieldLabel
-                                  htmlFor={`${labelInputId}-apply-${labelIndex}`}
-                                  className="min-w-0 truncate"
-                                >
-                                  {label.name}
-                                </FieldLabel>
-                              </Field>
-                            )
-                          })}
-                        </PopoverContent>
-                      </Popover>
-                    )}
-                </div>
-              )}
-              {selectedIds.length === 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  title={t("refresh")}
-                  aria-label={t("refresh")}
-                  disabled={refreshing || loadingMore}
-                  onClick={() => void refreshMailbox()}
-                >
-                  <RotateCwIcon
-                    className={cn("size-4", refreshing && "animate-spin")}
-                  />
-                </Button>
-              )}
-              <div className="ml-auto flex items-center gap-1">
-                <span
-                  className="px-1 text-xs whitespace-nowrap text-muted-foreground tabular-nums"
-                  aria-live="polite"
-                >
-                  {t(
-                    pageTotal === undefined
-                      ? "pagination.range"
-                      : "pagination.rangeWithTotal",
-                    { start: pageStart, end: pageEnd, total: pageTotal ?? 0 }
+                  className={cn(
+                    "min-w-0 flex-1 justify-start gap-2",
+                    selectedLabelId === label.id && "bg-accent font-medium"
                   )}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t("pagination.previous")}
-                  title={t("pagination.previous")}
-                  disabled={
-                    !hasPreviousPage ||
-                    messagesLoading ||
-                    loadingMore ||
-                    refreshing
+                  aria-label={label.name}
+                  aria-current={
+                    selectedLabelId === label.id ? "page" : undefined
                   }
-                  onClick={() => void changePage("previous")}
-                >
-                  <ChevronRight className="size-4 rotate-180" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-8"
-                  aria-label={t("pagination.next")}
-                  title={t("pagination.next")}
-                  disabled={
-                    !messages.nextCursor ||
-                    messagesLoading ||
-                    loadingMore ||
-                    refreshing
-                  }
-                  onClick={() => void changePage("next")}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-            </div>
-            <ScrollArea className="min-h-0 flex-1">
-              <MessageList
-                folder={globalSearch ? "allMail" : folder}
-                labels={labels}
-                rows={messages.items}
-                isLoading={messagesLoading}
-                selectedId={selectedId}
-                selectedIds={selectedIds}
-                onSelect={selectMessage}
-                onToggleSelection={
-                  dataSource.runBulkMessageAction ||
-                  dataSource.applyLabel ||
-                  dataSource.removeLabel
-                    ? (ids) =>
-                        setSelectedIds((current) =>
-                          ids.every((id) => current.includes(id))
-                            ? current.filter((id) => !ids.includes(id))
-                            : [...new Set([...current, ...ids])]
-                        )
-                    : undefined
-                }
-                onToggleFavorite={
-                  enabledMessageActions.includes("favorite")
-                    ? (row) =>
-                        void runMessageAction(row, "favorite", !row.isFavorite)
-                    : undefined
-                }
-                formatDate={formatDate}
-              />
-            </ScrollArea>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle />
-
-        <ResizablePanel minSize="22rem" className="min-h-0">
-          <div className="flex h-full min-h-0 flex-col">
-            {pendingNavigation && (
-              <Dialog
-                open
-                onOpenChange={(open) => {
-                  if (!open) setPendingNavigation(null)
-                }}
-              >
-                <DialogContent
-                  showCloseButton={false}
-                  className="sm:max-w-sm"
-                  aria-describedby={undefined}
-                  onKeyDown={(event) => {
-                    if (event.key === "Escape") {
-                      event.preventDefault()
-                      setPendingNavigation(null)
+                  onClick={() => {
+                    const navigate = () => {
+                      selectFolder("allMail", label.id)
                     }
+                    if (
+                      !composeLock.current &&
+                      allowComposeNavigation(navigate)
+                    )
+                      navigate()
                   }}
                 >
-                  <DialogHeader>
-                    <DialogTitle>{t("compose.unsavedConfirm")}</DialogTitle>
-                  </DialogHeader>
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setPendingNavigation(null)}
+                  <Tag className="size-4 shrink-0" />
+                  <span className="inline min-w-0 truncate">{label.name}</span>
+                </Button>
+                {(dataSource.renameLabel || dataSource.deleteLabel) && (
+                  <Dialog
+                    open={labelForm?.label?.id === label.id}
+                    onOpenChange={(open) => {
+                      if (!open) setLabelForm(null)
+                    }}
+                  >
+                    <DropdownMenu>
+                      <DialogTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <MailboxIconButton
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="inline-flex size-11 shrink-0"
+                            aria-label={`${t("actions.more")}: ${label.name}`}
+                          >
+                            <MoreVertical className="size-4" />
+                          </MailboxIconButton>
+                        </DropdownMenuTrigger>
+                      </DialogTrigger>
+                      <DropdownMenuContent align="start">
+                        {dataSource.renameLabel && (
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setLabelForm({ mode: "rename", label })
+                              setLabelName(label.name)
+                            }}
+                          >
+                            {t("actions.renameLabel")}
+                          </DropdownMenuItem>
+                        )}
+                        {dataSource.deleteLabel && (
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setLabelForm({ mode: "delete", label })
+                            }
+                          >
+                            {t("actions.deleteLabel")}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    {labelDialogContent}
+                  </Dialog>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  )
+
+  return (
+    <div
+      ref={mailboxRef}
+      className={cn(
+        "maily-mailbox @container/mailbox flex h-[42rem] max-h-[calc(100dvh-2rem)] min-h-0 min-w-0 overflow-hidden rounded-lg border border-border bg-background text-foreground",
+        className
+      )}
+    >
+      {!compact && (
+        <aside
+          aria-label={t("navigation.menu")}
+          className="flex w-52 shrink-0 flex-col overflow-y-auto border-r border-border bg-muted/30"
+        >
+          {navigation}
+        </aside>
+      )}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex shrink-0 items-center border-b border-border">
+          {compact && (
+            <Sheet open={navigationOpen} onOpenChange={setNavigationOpen}>
+              <SheetTrigger asChild>
+                <MailboxIconButton
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="ml-1 size-11 shrink-0"
+                  aria-label={t("navigation.menu")}
+                >
+                  <Menu className="size-5" />
+                </MailboxIconButton>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                showCloseButton={false}
+                aria-describedby={undefined}
+                className="flex w-72 max-w-[calc(100vw-3rem)] flex-col gap-0 p-0"
+              >
+                <SheetHeader className="flex-row items-center justify-between p-3">
+                  <SheetTitle>{t("navigation.menu")}</SheetTitle>
+                  <SheetClose asChild>
+                    <MailboxIconButton
+                      variant="ghost"
+                      size="icon"
+                      className="size-11"
+                      aria-label={t("navigation.close")}
                     >
-                      {t("compose.stay")}
-                    </Button>
+                      <X className="size-4" />
+                    </MailboxIconButton>
+                  </SheetClose>
+                </SheetHeader>
+                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                  {navigation}
+                </div>
+              </SheetContent>
+            </Sheet>
+          )}
+          <div className="min-w-0 flex-1 p-2">
+            <InputGroup className="h-11 bg-muted/30">
+              <InputGroupAddon>
+                <Search className="size-4" />
+              </InputGroupAddon>
+              <InputGroupInput
+                value={search}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                  setSearch(event.target.value)
+                  if (props.search !== undefined) return
+                  setGlobalSearch(!!event.target.value.trim())
+                  setSelectedLabelId(null)
+                }}
+                placeholder={t("searchPlaceholder")}
+                aria-label={t("searchPlaceholder")}
+                className="h-10 min-w-0 px-1.5 py-0 text-base"
+              />
+              <InputGroupAddon align="inline-end">
+                {(search || Object.keys(searchFields).length > 0) && (
+                  <MailboxIconButton
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="size-11"
+                    aria-label={t("search.clear")}
+                    onClick={() => {
+                      setSearch("")
+                      if (props.search !== undefined) return
+                      setSearchFields({})
+                      setGlobalSearch(false)
+                    }}
+                  >
+                    <X className="size-4" />
+                  </MailboxIconButton>
+                )}
+                <Popover
+                  open={advancedSearchOpen}
+                  onOpenChange={(open) => {
+                    if (open) setSearchDraft(searchFields)
+                    setAdvancedSearchOpen(open)
+                  }}
+                >
+                  <PopoverTrigger asChild>
+                    <MailboxIconButton
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="size-11"
+                      aria-label={t("search.advanced")}
+                    >
+                      <Filter className="size-4" />
+                    </MailboxIconButton>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    className="w-80 max-w-[calc(100vw-2rem)] p-4"
+                  >
+                    <form
+                      className="space-y-3"
+                      onSubmit={(event) => {
+                        event.preventDefault()
+                        setSearchFields(searchDraft)
+                        if (props.searchFilters === undefined) {
+                          setGlobalSearch(true)
+                          setSelectedLabelId(null)
+                        }
+                        setAdvancedSearchOpen(false)
+                      }}
+                    >
+                      {(
+                        ["from", "to", "subject", "after", "before"] as const
+                      ).map((key) => (
+                        <Field
+                          key={key}
+                          orientation="horizontal"
+                          className="grid grid-cols-[6rem_1fr] items-center gap-2"
+                        >
+                          <FieldLabel htmlFor={`${labelInputId}-search-${key}`}>
+                            {t(`search.${key}`)}
+                          </FieldLabel>
+                          <Input
+                            id={`${labelInputId}-search-${key}`}
+                            value={searchDraft[key] ?? ""}
+                            onChange={(
+                              event: React.ChangeEvent<HTMLInputElement>
+                            ) => {
+                              setSearchDraft((current) => ({
+                                ...current,
+                                [key]: event.target.value || undefined,
+                              }))
+                            }}
+                          />
+                        </Field>
+                      ))}
+                      {(["hasAttachments", "unread"] as const).map((key) => (
+                        <Field key={key} orientation="horizontal">
+                          <Checkbox
+                            id={`${labelInputId}-search-${key}`}
+                            checked={!!searchDraft[key]}
+                            onCheckedChange={(checked) => {
+                              setSearchDraft((current) => ({
+                                ...current,
+                                [key]: checked === true || undefined,
+                              }))
+                            }}
+                          />
+                          <FieldLabel htmlFor={`${labelInputId}-search-${key}`}>
+                            {t(`search.${key}`)}
+                          </FieldLabel>
+                        </Field>
+                      ))}
+                      <div className="flex justify-end">
+                        <Button type="submit" size="sm">
+                          {t("search.submit")}
+                        </Button>
+                      </div>
+                    </form>
+                  </PopoverContent>
+                </Popover>
+              </InputGroupAddon>
+              {refreshing && (
+                <InputGroupAddon align="inline-end">
+                  <LoaderCircleIcon
+                    className="size-4 animate-spin"
+                    aria-label={t("refresh")}
+                  />
+                </InputGroupAddon>
+              )}
+            </InputGroup>
+            {!globalSearch &&
+              dataSource.emptyFolder &&
+              (folder === "trash" || folder === "spam") && (
+                <Popover
+                  open={emptyConfirmOpen}
+                  onOpenChange={setEmptyConfirmOpen}
+                >
+                  <PopoverTrigger asChild>
                     <Button
                       type="button"
                       variant="destructive"
-                      onClick={() => {
-                        const navigate = pendingNavigation
-                        composeDirty.current = false
-                        setPendingNavigation(null)
-                        navigate()
-                      }}
+                      size="sm"
+                      className="mt-2"
+                      disabled={emptyingFolder}
                     >
-                      {t("compose.discard")}
+                      {t(
+                        folder === "trash"
+                          ? "actions.emptyTrash"
+                          : "actions.deleteAllSpam"
+                      )}
                     </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="start"
+                    className="w-72 max-w-[calc(100vw-2rem)] space-y-3"
+                  >
+                    <p className="text-sm">
+                      {t(
+                        folder === "trash"
+                          ? "confirm.emptyTrash"
+                          : "confirm.deleteAllSpam"
+                      )}
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEmptyConfirmOpen(false)}
+                      >
+                        {t("actions.cancel")}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => {
+                          setEmptyConfirmOpen(false)
+                          void emptyFolder()
+                        }}
+                      >
+                        {t("actions.confirm")}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+          </div>
+        </div>
+        {pendingNavigation && (
+          <Dialog
+            open
+            onOpenChange={(open) => {
+              if (!open) setPendingNavigation(null)
+            }}
+          >
+            <DialogContent
+              showCloseButton={false}
+              className="sm:max-w-sm"
+              aria-describedby={undefined}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.preventDefault()
+                  setPendingNavigation(null)
+                }
+              }}
+            >
+              <DialogHeader>
+                <DialogTitle>{t("compose.unsavedConfirm")}</DialogTitle>
+              </DialogHeader>
+              <div className="flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setPendingNavigation(null)}
+                >
+                  {t("compose.stay")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    const navigate = pendingNavigation
+                    composeDirty.current = false
+                    setPendingNavigation(null)
+                    navigate()
+                  }}
+                >
+                  {t("compose.discard")}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+        {errorKey && (
+          <div
+            role="status"
+            className="flex shrink-0 items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            <AlertCircle className="size-4 shrink-0" />
+            <span>{t(errorKey)}</span>
+          </div>
+        )}
+        {undoReceipt && dataSource.undoMessageAction && (
+          <div
+            role="status"
+            className="flex items-center justify-between gap-3 bg-foreground px-3 py-2 text-sm text-background"
+          >
+            <span>{t("actions.completed")}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={
+                !!messageActionPending || saving || sending || discarding
+              }
+              onClick={() => void runUndo()}
+            >
+              {t("actions.undo")}
+            </Button>
+          </div>
+        )}
+        <div
+          ref={listRef}
+          tabIndex={-1}
+          hidden={detailOpen}
+          className={cn(
+            "min-h-0 flex-1 flex-col outline-none",
+            detailOpen ? "hidden" : "flex"
+          )}
+        >
+          <div className="flex min-h-11 flex-wrap items-center gap-x-0 gap-y-1 border-b border-border py-1 pr-2">
+            {(dataSource.runBulkMessageAction ||
+              dataSource.applyLabel ||
+              dataSource.removeLabel) && (
+              <Label className="flex size-11 shrink-0 items-center justify-center">
+                <MailboxTooltip label={t("actions.selectAll")}>
+                  <Checkbox
+                    aria-label={t("actions.selectAll")}
+                    checked={
+                      messages.items.length > 0 &&
+                      messages.items.every((message) =>
+                        selectedIds.includes(message.id)
+                      )
+                    }
+                    disabled={
+                      !messages.items.length || messagesLoading || loadingMore
+                    }
+                    onCheckedChange={(checked) =>
+                      setSelectedIds(
+                        checked === true
+                          ? messages.items.map((message) => message.id)
+                          : []
+                      )
+                    }
+                  />
+                </MailboxTooltip>
+              </Label>
             )}
-            {errorKey && (
-              <div
-                role="status"
-                className="flex shrink-0 items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
-              >
-                <AlertCircle className="size-4 shrink-0" />
-                <span>{t(errorKey)}</span>
+            {selectedIds.length > 0 && (
+              <div className="flex min-w-0 flex-wrap items-center gap-1">
+                <span className="sr-only">
+                  {t("selection.count", { count: selectedIds.length })}
+                </span>
+                {dataSource.runBulkMessageAction &&
+                  Array.from(new Set(messageActions))
+                    .filter((action) =>
+                      [
+                        "archive",
+                        "delete",
+                        "reportSpam",
+                        "markRead",
+                        "markUnread",
+                        "restore",
+                        "notSpam",
+                        "deleteForever",
+                      ].includes(action)
+                    )
+                    .filter((action) => {
+                      if (action === "markRead")
+                        return messages.items.some(
+                          (row) => selectedIds.includes(row.id) && row.isUnread
+                        )
+                      if (action === "markUnread")
+                        return messages.items.some(
+                          (row) => selectedIds.includes(row.id) && !row.isUnread
+                        )
+                      if (action === "archive")
+                        return !globalSearch && folder === "inbox"
+                      if (action === "restore")
+                        return (
+                          folder === "trash" ||
+                          folder === "allMail" ||
+                          folder === "starred"
+                        )
+                      if (action === "notSpam")
+                        return !globalSearch && folder === "spam"
+                      if (action === "deleteForever")
+                        return (
+                          !globalSearch &&
+                          (folder === "trash" || folder === "spam")
+                        )
+                      if (action === "delete" || action === "reportSpam")
+                        return (
+                          globalSearch ||
+                          (folder !== "trash" && folder !== "spam")
+                        )
+                      return true
+                    })
+                    .map((action) => (
+                      <MailboxIconButton
+                        key={action}
+                        type="button"
+                        size="icon"
+                        className="size-11"
+                        variant="ghost"
+                        aria-label={t(MESSAGE_ACTION_METADATA[action].label)}
+                        disabled={!!messageActionPending}
+                        onClick={() =>
+                          void runBulkAction(
+                            action,
+                            MESSAGE_ACTION_METADATA[action].value
+                          )
+                        }
+                      >
+                        {MESSAGE_ACTION_METADATA[action].icon("size-4")}
+                      </MailboxIconButton>
+                    ))}
+                {mailboxLabels.length > 0 &&
+                  (dataSource.applyLabel || dataSource.removeLabel) && (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <MailboxIconButton
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="size-11"
+                          aria-label={t(
+                            dataSource.applyLabel
+                              ? "actions.applyLabel"
+                              : "actions.removeLabel"
+                          )}
+                        >
+                          <Tag className="size-4" />
+                        </MailboxIconButton>
+                      </PopoverTrigger>
+                      <PopoverContent align="start" className="w-56 space-y-1">
+                        {mailboxLabels.map((label, labelIndex) => {
+                          const checked = messages.items
+                            .filter((row) => selectedIds.includes(row.id))
+                            .every(
+                              (row) =>
+                                row.labels?.includes(label.id) ||
+                                row.labels?.includes(label.name)
+                            )
+                          return (
+                            <Field
+                              key={label.id}
+                              orientation="horizontal"
+                              className="gap-2 rounded-sm px-2 py-1.5 hover:bg-accent"
+                            >
+                              <Checkbox
+                                id={`${labelInputId}-apply-${labelIndex}`}
+                                checked={checked}
+                                disabled={
+                                  checked
+                                    ? !dataSource.removeLabel
+                                    : !dataSource.applyLabel
+                                }
+                                onCheckedChange={(value) =>
+                                  void applyLabelToSelection(
+                                    label.id,
+                                    value !== true
+                                  )
+                                }
+                              />
+                              <FieldLabel
+                                htmlFor={`${labelInputId}-apply-${labelIndex}`}
+                                className="min-w-0 truncate"
+                              >
+                                {label.name}
+                              </FieldLabel>
+                            </Field>
+                          )
+                        })}
+                      </PopoverContent>
+                    </Popover>
+                  )}
               </div>
             )}
-            {composeOpen ? (
-              <ScrollArea className="min-h-0 flex-1">
-                {!composeHydrated ? (
-                  <div role="status" className="p-5">
-                    {t("loading")}
-                  </div>
-                ) : (
-                  <Compose
-                    key={composeSession}
-                    initialValues={initialComposeValues}
-                    labels={labels}
-                    loadContactSuggestions={loadContactSuggestions}
-                    defaultBodyMode={defaultComposeBodyMode}
-                    allowBodyModeSwitch={allowComposeBodyModeSwitch}
-                    editorProps={composeEditorProps}
-                    isExistingDraft={!!composeDraftId}
-                    isSaving={saving}
-                    isSendUnresolved={sendUnresolved}
-                    isSending={sending}
-                    isDiscarding={discarding}
-                    ownershipToken={lifetime}
-                    uploadAttachment={dataSource.uploadAttachment}
-                    discardUploadedAttachment={
-                      dataSource.discardUploadedAttachment
-                    }
-                    onError={onError}
-                    onDirtyChange={(dirty) => {
-                      composeDirty.current = dirty
-                    }}
-                    onSave={saveDraft}
-                    onSend={sendDraft}
-                    onDiscard={discardDraft}
-                  />
+            {selectedIds.length === 0 && (
+              <MailboxIconButton
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-11"
+                aria-label={t("refresh")}
+                disabled={refreshing || loadingMore}
+                onClick={() => void refreshMailbox()}
+              >
+                <RotateCwIcon
+                  className={cn("size-4", refreshing && "animate-spin")}
+                />
+              </MailboxIconButton>
+            )}
+            <div className="ml-auto flex items-center gap-1">
+              <span
+                className="px-1 text-xs whitespace-nowrap text-muted-foreground tabular-nums"
+                aria-live="polite"
+              >
+                {t(
+                  pageTotal === undefined
+                    ? "pagination.range"
+                    : "pagination.rangeWithTotal",
+                  { start: pageStart, end: pageEnd, total: pageTotal ?? 0 }
                 )}
-              </ScrollArea>
+              </span>
+              <MailboxIconButton
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-11"
+                aria-label={t("pagination.previous")}
+                disabled={
+                  !hasPreviousPage ||
+                  messagesLoading ||
+                  loadingMore ||
+                  refreshing
+                }
+                onClick={() => void changePage("previous")}
+              >
+                <ChevronRight className="size-4 rotate-180" />
+              </MailboxIconButton>
+              <MailboxIconButton
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-11"
+                aria-label={t("pagination.next")}
+                disabled={
+                  !messages.nextCursor ||
+                  messagesLoading ||
+                  loadingMore ||
+                  refreshing
+                }
+                onClick={() => void changePage("next")}
+              >
+                <ChevronRight className="size-4" />
+              </MailboxIconButton>
+            </div>
+          </div>
+          <ScrollArea className="min-h-0 flex-1">
+            <MessageList
+              folder={globalSearch ? "allMail" : folder}
+              labels={labels}
+              rows={messages.items}
+              isLoading={messagesLoading}
+              selectedId={selectedId}
+              selectedIds={selectedIds}
+              onSelect={(row) => {
+                lastMessageTrigger.current =
+                  document.activeElement as HTMLElement
+                selectMessage(row)
+              }}
+              onToggleSelection={
+                dataSource.runBulkMessageAction ||
+                dataSource.applyLabel ||
+                dataSource.removeLabel
+                  ? (ids) =>
+                      setSelectedIds((current) =>
+                        ids.every((id) => current.includes(id))
+                          ? current.filter((id) => !ids.includes(id))
+                          : [...new Set([...current, ...ids])]
+                      )
+                  : undefined
+              }
+              onToggleFavorite={
+                enabledMessageActions.includes("favorite")
+                  ? (row) =>
+                      void runMessageAction(row, "favorite", !row.isFavorite)
+                  : undefined
+              }
+              formatDate={formatDate}
+            />
+          </ScrollArea>
+        </div>
+        {detailOpen && (
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            {composeOpen ? (
+              <>
+                <div className="flex min-h-12 items-center border-b border-border px-2">
+                  {backButton}
+                </div>
+                <ScrollArea className="min-h-0 flex-1">
+                  {!composeHydrated ? (
+                    <div role="status" className="p-5">
+                      {t("loading")}
+                    </div>
+                  ) : (
+                    <Compose
+                      key={composeSession}
+                      initialValues={initialComposeValues}
+                      labels={labels}
+                      loadContactSuggestions={loadContactSuggestions}
+                      defaultBodyMode={defaultComposeBodyMode}
+                      allowBodyModeSwitch={allowComposeBodyModeSwitch}
+                      editorProps={composeEditorProps}
+                      isExistingDraft={!!composeDraftId}
+                      isSaving={saving}
+                      isSendUnresolved={sendUnresolved}
+                      isSending={sending}
+                      isDiscarding={discarding}
+                      ownershipToken={lifetime}
+                      uploadAttachment={dataSource.uploadAttachment}
+                      discardUploadedAttachment={
+                        dataSource.discardUploadedAttachment
+                      }
+                      onError={onError}
+                      onDirtyChange={(dirty) => {
+                        composeDirty.current = dirty
+                      }}
+                      onSave={saveDraft}
+                      onSend={sendDraft}
+                      onDiscard={discardDraft}
+                    />
+                  )}
+                </ScrollArea>
+              </>
             ) : selectedId ? (
               <MessageReader
                 key={selectedId}
+                backButton={backButton}
                 getMessageSource={dataSource.getMessageSource}
                 thread={thread}
                 detail={detail}
@@ -3054,16 +3176,10 @@ function MailboxSession(props: MailyMailboxViewProps) {
                 downloadAttachment={dataSource.downloadAttachment}
                 onError={onError}
               />
-            ) : (
-              <EmptyState
-                title={t("empty.noSelection")}
-                description={t("empty.noSelectionDesc")}
-                className="h-full"
-              />
-            )}
+            ) : null}
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+        )}
+      </div>
     </div>
   )
 }
@@ -3113,7 +3229,7 @@ function MessageList(props: {
   }
 
   return (
-    <div className="min-w-0 [contain:inline-size]">
+    <div className="@container/list min-w-0 [contain:inline-size]">
       <ul className="divide-y divide-border">
         {groupMailboxMessagesByThread(rows).map((conversation) => {
           const groupRows = conversation.messages
@@ -3138,29 +3254,37 @@ function MessageList(props: {
               )}
             >
               {onToggleSelection && (
-                <div className="flex shrink-0 items-start pt-3.5 pl-3">
-                  <Checkbox
-                    aria-label={t(
+                <Label className="flex size-11 shrink-0 items-center justify-center">
+                  <MailboxTooltip
+                    label={t(
                       allSelected
                         ? "actions.deselectConversation"
                         : "actions.selectConversation",
                       { subject: row.subject || t("message.noSubject") }
                     )}
-                    checked={allSelected}
-                    onCheckedChange={() => onToggleSelection?.(conversationIds)}
-                  />
-                </div>
+                  >
+                    <Checkbox
+                      aria-label={t(
+                        allSelected
+                          ? "actions.deselectConversation"
+                          : "actions.selectConversation",
+                        { subject: row.subject || t("message.noSubject") }
+                      )}
+                      checked={allSelected}
+                      onCheckedChange={() =>
+                        onToggleSelection?.(conversationIds)
+                      }
+                    />
+                  </MailboxTooltip>
+                </Label>
               )}
               {onToggleFavorite && (
-                <Button
+                <MailboxIconButton
                   type="button"
                   size="icon"
                   variant="ghost"
-                  className="mt-1.5 size-8 shrink-0"
+                  className="size-11 shrink-0"
                   aria-label={t(
-                    row.isFavorite ? "actions.unfavorite" : "actions.favorite"
-                  )}
-                  title={t(
                     row.isFavorite ? "actions.unfavorite" : "actions.favorite"
                   )}
                   onClick={() => onToggleFavorite(row)}
@@ -3171,54 +3295,54 @@ function MessageList(props: {
                       row.isFavorite && "fill-current text-amber-500"
                     )}
                   />
-                </Button>
+                </MailboxIconButton>
               )}
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => onSelect(row)}
                 className={cn(
-                  "h-auto min-w-0 flex-1 flex-col items-stretch justify-start gap-1.5 rounded-none px-3 py-2.5 text-left font-normal whitespace-normal hover:bg-accent",
+                  "grid h-auto min-h-11 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 rounded-none px-2 py-2 text-left font-normal whitespace-normal hover:bg-accent @3xl/list:grid-cols-[12rem_minmax(0,1fr)_auto]",
                   active && "bg-accent"
                 )}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={cn(
-                      "truncate text-sm",
-                      row.isUnread ? "font-semibold" : "font-medium"
-                    )}
-                  >
-                    {display || t("message.unknownSender")}
-                  </span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {formatDate(row.createdAt, "short")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {row.isFavorite && !onToggleFavorite && (
-                    <Star className="size-3.5 shrink-0 fill-current text-amber-500" />
+                <span
+                  className={cn(
+                    "col-start-1 row-start-1 min-w-0 truncate text-sm",
+                    row.isUnread ? "font-semibold" : "font-medium"
                   )}
-                  <span
-                    className={cn(
-                      "truncate text-sm",
-                      row.isUnread && "font-semibold"
+                >
+                  {display || t("message.unknownSender")}
+                </span>
+                <span className="col-span-2 col-start-1 row-start-2 flex min-w-0 flex-col @3xl/list:col-span-1 @3xl/list:col-start-2 @3xl/list:row-start-1 @3xl/list:flex-row @3xl/list:items-center @3xl/list:gap-2">
+                  <span className="flex min-w-0 items-center gap-1.5 @3xl/list:max-w-[65%] @3xl/list:shrink-0">
+                    {row.isFavorite && !onToggleFavorite && (
+                      <Star className="size-3.5 shrink-0 fill-current text-amber-500" />
                     )}
-                  >
-                    {row.subject || t("message.noSubject")}
+                    <span
+                      className={cn(
+                        "truncate text-sm",
+                        row.isUnread && "font-semibold"
+                      )}
+                    >
+                      {row.subject || t("message.noSubject")}
+                    </span>
                     {groupRows.length > 1 && (
                       <Badge variant="outline">{groupRows.length}</Badge>
                     )}
+                    {row.hasAttachments && (
+                      <Paperclip className="size-3 shrink-0 text-muted-foreground" />
+                    )}
                   </span>
-                  {row.hasAttachments && (
-                    <Paperclip className="size-3 shrink-0 text-muted-foreground" />
+                  {row.snippet && (
+                    <span className="min-w-0 truncate text-sm text-muted-foreground">
+                      {row.snippet}
+                    </span>
                   )}
-                </div>
-                {row.snippet && (
-                  <p className="truncate text-xs text-muted-foreground">
-                    {row.snippet}
-                  </p>
-                )}
+                </span>
+                <span className="col-start-2 row-start-1 text-xs text-muted-foreground @3xl/list:col-start-3">
+                  {formatDate(row.createdAt, "short")}
+                </span>
                 {(row.status === "failed" || row.status === "dsn") && (
                   <Badge variant="destructive" className="self-start">
                     {t("message.bounced")}
@@ -3314,6 +3438,7 @@ function MessageSource(props: {
 }
 
 function MessageReader(props: {
+  backButton: React.ReactNode
   getMessageSource: MailyMailboxDataSource["getMessageSource"]
   thread?: MailyMailboxThread | null
   detail: MailyMailboxMessageDetail | null
@@ -3377,14 +3502,27 @@ function MessageReader(props: {
 
   if (isLoading) {
     return (
-      <div className="flex h-full items-center justify-center gap-2 text-sm text-muted-foreground">
-        <LoaderCircleIcon className="size-4 animate-spin" />
-        {t("loading")}
-      </div>
+      <>
+        <div className="flex min-h-12 shrink-0 items-center border-b border-border px-2">
+          {props.backButton}
+        </div>
+        <div
+          role="status"
+          className="flex flex-1 items-center justify-center gap-2 text-sm text-muted-foreground"
+        >
+          <LoaderCircleIcon className="size-4 animate-spin" />
+          {t("loading")}
+        </div>
+      </>
     )
   }
 
-  if (!detail) return null
+  if (!detail)
+    return (
+      <div className="flex min-h-12 items-center border-b border-border px-2">
+        {props.backButton}
+      </div>
+    )
 
   const threadMessages =
     props.thread?.threadId && props.thread.threadId === detail.threadId
@@ -3402,8 +3540,6 @@ function MessageReader(props: {
   const headerActions = HEADER_MESSAGE_ACTIONS.filter((action) =>
     enabledActions.has(action)
   )
-  const hasToolbarActions =
-    toolbarLeadingActions.length > 0 || toolbarTrailingActions.length > 0
   const run = (
     action: MailyMailboxMessageAction,
     value?: string | boolean | null
@@ -3435,6 +3571,9 @@ function MessageReader(props: {
     <MessageActionButton
       key={action}
       label={actionLabel(action, "button")}
+      className={
+        action === "react" ? "hidden @md/mailbox:inline-flex" : undefined
+      }
       pending={actionPending === action}
       pressed={action === "favorite" ? isFavorite : undefined}
       onClick={() => run(action, actionValue(action))}
@@ -3449,160 +3588,177 @@ function MessageReader(props: {
 
   return (
     <article className="flex h-full min-h-0 flex-col overflow-hidden">
-      {hasToolbarActions && (
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2">
-          <div className="flex items-center gap-1">
-            {toolbarLeadingActions.map(renderActionButton)}
-          </div>
-          <div className="flex items-center gap-1">
-            {toolbarTrailingActions.map(renderActionButton)}
-          </div>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-1 border-b border-border px-2 py-1">
+        <div className="flex flex-wrap items-center gap-1">
+          {props.backButton}
+          {toolbarLeadingActions.map(renderActionButton)}
         </div>
-      )}
-
-      <div className="flex shrink-0 flex-col gap-4 px-5 pt-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="min-w-0 text-xl leading-tight font-semibold">
-                {detail.subject || t("message.noSubject")}
-              </h2>
-              {labelsToShow.map((label) => (
-                <Badge key={label} variant="secondary">
-                  {label}
-                </Badge>
-              ))}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1">
-            {headerActions.map(renderActionButton)}
-            <MessageActionButton
-              label={t("actions.reply")}
-              pending={false}
-              onClick={() => onReply(detail)}
-            >
-              <Reply className="size-4" />
-            </MessageActionButton>
-            <MessageActionButton
-              label={t("actions.replyAll")}
-              pending={false}
-              onClick={() => onReplyAll(detail)}
-            >
-              <ReplyAll className="size-4" />
-            </MessageActionButton>
-            <MessageActionButton
-              label={t("actions.forward")}
-              pending={false}
-              onClick={() => onForward(detail)}
-            >
-              <Forward className="size-4" />
-            </MessageActionButton>
-            {messageActions.length > 0 && (
-              <MessageMoreMenu
-                detail={detail}
-                labels={labels}
-                messageActions={messageActions}
-                actionPending={actionPending}
-                isFavorite={isFavorite}
-                onRunAction={runReaderAction}
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-start gap-3">
-          <Avatar className="size-10 shrink-0">
-            <AvatarFallback>{senderInitial(detail.fromAddress)}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between gap-3">
-              <span className="truncate text-sm font-medium">
-                {detail.fromAddress}
-              </span>
-              <time className="shrink-0 text-xs text-muted-foreground">
-                {formatDate(detail.createdAt, "long")}
-              </time>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {t("message.toPrefix")}{" "}
-              <span>{formatRecipients(detail.toAddresses)}</span>
-              {detail.ccAddresses && detail.ccAddresses.length > 0 && (
-                <>
-                  {" - "}
-                  {t("message.cc")}{" "}
-                  <span>{formatRecipients(detail.ccAddresses)}</span>
-                </>
-              )}
-            </div>
-            {detail.lastError && (
-              <div className="mt-1 text-xs text-destructive">
-                {detail.lastError}
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-1">
+          {toolbarTrailingActions.map(renderActionButton)}
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 pt-4">
-        <ScrollArea className="h-full">
-          {threadMessages.map((message) => (
-            <section
-              key={message.id}
-              className="mx-5 my-3 border-b border-border pb-4 last:border-b-0"
-            >
-              {threadMessages.length > 1 && (
-                <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{message.fromAddress}</span>
-                  <time>{formatDate(message.createdAt, "long")}</time>
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="min-w-0 [contain:inline-size]">
+          <div className="flex flex-col gap-4 px-3 pt-4 @lg/mailbox:px-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="min-w-0 text-xl leading-tight font-semibold [overflow-wrap:anywhere] break-words">
+                    {detail.subject || t("message.noSubject")}
+                  </h2>
+                  {labelsToShow.map((label) => (
+                    <Badge key={label} variant="secondary">
+                      {label}
+                    </Badge>
+                  ))}
                 </div>
-              )}
-              <div className="px-2">
-                {message.bodyHtml ? (
-                  <HtmlBody html={message.bodyHtml} />
-                ) : message.bodyText ? (
-                  <pre className="px-4 py-2 font-sans text-sm leading-relaxed whitespace-pre-wrap">
-                    {message.bodyText}
-                  </pre>
-                ) : (
-                  <p className="px-4 py-2 text-sm text-muted-foreground">
-                    {t("message.noBody")}
-                  </p>
+              </div>
+              <div className="flex min-w-0 flex-wrap items-center gap-1">
+                {headerActions.map(renderActionButton)}
+                <MessageActionButton
+                  label={t("actions.reply")}
+                  pending={false}
+                  onClick={() => onReply(detail)}
+                >
+                  <Reply className="size-4" />
+                </MessageActionButton>
+                <MessageActionButton
+                  className={
+                    messageActions.length > 0
+                      ? "hidden @md/mailbox:inline-flex"
+                      : undefined
+                  }
+                  label={t("actions.replyAll")}
+                  pending={false}
+                  onClick={() => onReplyAll(detail)}
+                >
+                  <ReplyAll className="size-4" />
+                </MessageActionButton>
+                <MessageActionButton
+                  className={
+                    messageActions.length > 0
+                      ? "hidden @md/mailbox:inline-flex"
+                      : undefined
+                  }
+                  label={t("actions.forward")}
+                  pending={false}
+                  onClick={() => onForward(detail)}
+                >
+                  <Forward className="size-4" />
+                </MessageActionButton>
+                {messageActions.length > 0 && (
+                  <MessageMoreMenu
+                    detail={detail}
+                    labels={labels}
+                    messageActions={messageActions}
+                    actionPending={actionPending}
+                    isFavorite={isFavorite}
+                    onRunAction={runReaderAction}
+                    onReplyAll={() => onReplyAll(detail)}
+                    onForward={() => onForward(detail)}
+                  />
                 )}
               </div>
-              {message.attachments && message.attachments.length > 0 && (
-                <section
-                  aria-label={t("message.attachments", {
-                    count: message.attachments.length,
-                  })}
-                  className="mx-3 my-4 border-t border-border pt-4"
-                >
-                  <h3 className="mb-3 text-sm font-medium">
-                    {t("message.attachments", {
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Avatar className="size-10 shrink-0">
+                <AvatarFallback>
+                  {senderInitial(detail.fromAddress)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <span className="truncate text-sm font-medium">
+                    {detail.fromAddress}
+                  </span>
+                  <time className="shrink-0 text-xs text-muted-foreground">
+                    {formatDate(detail.createdAt, "long")}
+                  </time>
+                </div>
+                <div className="text-xs [overflow-wrap:anywhere] break-words text-muted-foreground">
+                  {t("message.toPrefix")}{" "}
+                  <span>{formatRecipients(detail.toAddresses)}</span>
+                  {detail.ccAddresses && detail.ccAddresses.length > 0 && (
+                    <>
+                      {" - "}
+                      {t("message.cc")}{" "}
+                      <span>{formatRecipients(detail.ccAddresses)}</span>
+                    </>
+                  )}
+                </div>
+                {detail.lastError && (
+                  <div className="mt-1 text-xs text-destructive">
+                    {detail.lastError}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="min-w-0 pt-4">
+            {threadMessages.map((message) => (
+              <section
+                key={message.id}
+                className="mx-5 my-3 border-b border-border pb-4 last:border-b-0"
+              >
+                {threadMessages.length > 1 && (
+                  <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{message.fromAddress}</span>
+                    <time>{formatDate(message.createdAt, "long")}</time>
+                  </div>
+                )}
+                <div className="px-2">
+                  {message.bodyHtml ? (
+                    <HtmlBody html={message.bodyHtml} />
+                  ) : message.bodyText ? (
+                    <pre className="py-2 font-sans text-sm leading-relaxed [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
+                      {message.bodyText}
+                    </pre>
+                  ) : (
+                    <p className="px-4 py-2 text-sm text-muted-foreground">
+                      {t("message.noBody")}
+                    </p>
+                  )}
+                </div>
+                {message.attachments && message.attachments.length > 0 && (
+                  <section
+                    aria-label={t("message.attachments", {
                       count: message.attachments.length,
                     })}
-                  </h3>
-                  <ul className="space-y-2">
-                    {message.attachments.map((attachment, attachmentIndex) => (
-                      <li
-                        key={`${message.id}:${attachment.id ?? attachmentIndex}`}
-                      >
-                        <MessageAttachment
-                          messageId={message.id}
-                          attachment={attachment}
-                          attachmentIndex={attachmentIndex}
-                          labels={labels}
-                          downloadAttachment={props.downloadAttachment}
-                          onError={props.onError}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-            </section>
-          ))}
-        </ScrollArea>
-      </div>
+                    className="mx-3 my-4 border-t border-border pt-4"
+                  >
+                    <h3 className="mb-3 text-sm font-medium">
+                      {t("message.attachments", {
+                        count: message.attachments.length,
+                      })}
+                    </h3>
+                    <ul className="space-y-2">
+                      {message.attachments.map(
+                        (attachment, attachmentIndex) => (
+                          <li
+                            key={`${message.id}:${attachment.id ?? attachmentIndex}`}
+                          >
+                            <MessageAttachment
+                              messageId={message.id}
+                              attachment={attachment}
+                              attachmentIndex={attachmentIndex}
+                              labels={labels}
+                              downloadAttachment={props.downloadAttachment}
+                              onError={props.onError}
+                            />
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </section>
+                )}
+              </section>
+            ))}
+          </div>
+        </div>
+      </ScrollArea>
     </article>
   )
 }
@@ -3706,28 +3862,76 @@ function MessageAttachment({
       </AttachmentContent>
       {downloadAttachment && (
         <AttachmentActions>
-          <AttachmentAction
-            type="button"
-            size="icon"
-            aria-label={downloadLabel}
-            title={downloadLabel}
-            disabled={pending}
-            onClick={download}
-          >
-            {pending ? (
-              <LoaderCircleIcon
-                className="size-4 animate-spin"
-                aria-hidden="true"
-              />
-            ) : (
-              <Download className="size-4" aria-hidden="true" />
-            )}
-          </AttachmentAction>
+          <MailboxTooltip label={downloadLabel}>
+            <AttachmentAction
+              type="button"
+              size="icon"
+              aria-label={downloadLabel}
+              disabled={pending}
+              onClick={download}
+            >
+              {pending ? (
+                <LoaderCircleIcon
+                  className="size-4 animate-spin"
+                  aria-hidden="true"
+                />
+              ) : (
+                <Download className="size-4" aria-hidden="true" />
+              )}
+            </AttachmentAction>
+          </MailboxTooltip>
         </AttachmentActions>
       )}
     </Attachment>
   )
 }
+
+/** A neutral tooltip trigger preserves the nested control's own primitive state. */
+function MailboxTooltip({
+  label,
+  className,
+  children,
+}: {
+  label: string
+  className?: string
+  children: React.ReactNode
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(
+            "inline-flex shrink-0 items-center justify-center",
+            className
+          )}
+        >
+          {children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+// Forward trigger props/ref through to the host Button for Popover/Dialog/Sheet/Menu composition.
+const MailboxIconButton = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<typeof Button> & {
+    "aria-label": string
+    tooltipClassName?: string
+  }
+>(({ title: _title, className, tooltipClassName, ...props }, ref) => (
+  <MailboxTooltip label={props["aria-label"]} className={tooltipClassName}>
+    <Button
+      {...props}
+      ref={ref}
+      className={cn("size-11 shrink-0", className)}
+    />
+  </MailboxTooltip>
+))
+MailboxIconButton.displayName = "MailboxIconButton"
 
 function MessageActionButton(props: {
   label: string
@@ -3738,27 +3942,29 @@ function MessageActionButton(props: {
   className?: string
 }) {
   return (
-    <Button
+    <MailboxIconButton
       type="button"
       variant="ghost"
       size="icon"
-      title={props.label}
       aria-label={props.label}
       aria-pressed={props.pressed}
       disabled={props.pending}
       onClick={props.onClick}
-      className={props.className}
+      className="size-11 shrink-0"
+      tooltipClassName={props.className}
     >
       {props.pending ? (
         <LoaderCircleIcon className="size-4 animate-spin" />
       ) : (
         props.children
       )}
-    </Button>
+    </MailboxIconButton>
   )
 }
 
 function MessageMoreMenu(props: {
+  onReplyAll: () => void
+  onForward: () => void
   detail: MailyMailboxMessageDetail
   labels: MailyMailboxLabels
   messageActions: readonly MailyMailboxMessageAction[]
@@ -3817,17 +4023,28 @@ function MessageMoreMenu(props: {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
+        <MailboxIconButton
           type="button"
           variant="ghost"
           size="icon"
-          title={t("actions.more")}
+          className="size-11 shrink-0"
           aria-label={t("actions.more")}
         >
           <MoreVertical className="size-4" />
-        </Button>
+        </MailboxIconButton>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent
+        align="end"
+        className="w-72 max-w-[calc(100vw-2rem)]"
+      >
+        <DropdownMenuItem onClick={props.onReplyAll}>
+          <ReplyAll className="size-4" />
+          {t("actions.replyAll")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={props.onForward}>
+          <Forward className="size-4" />
+          {t("actions.forward")}
+        </DropdownMenuItem>
         {messageActions.map((action) => item(action))}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -4210,13 +4427,13 @@ function Compose(props: {
 
   return (
     <form
-      className="flex h-full min-h-0 flex-col gap-4 p-5"
+      className="flex min-h-0 min-w-0 flex-col gap-4 p-3 [contain:inline-size] @lg/mailbox:p-5"
       onSubmit={(event) => {
         event.preventDefault()
         void submit()
       }}
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 @lg/mailbox:flex-row @lg/mailbox:items-center @lg/mailbox:justify-between">
         <h2 className="text-lg font-semibold">
           {isExistingDraft ? t("compose.editDraft") : t("compose.new")}
         </h2>
@@ -4224,6 +4441,7 @@ function Compose(props: {
           <Button
             type="button"
             size="sm"
+            className="min-h-11"
             variant="ghost"
             onClick={() => onDiscard()}
             disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
@@ -4234,6 +4452,7 @@ function Compose(props: {
           <Button
             type="button"
             size="sm"
+            className="min-h-11"
             variant="outline"
             onClick={() => {
               setSaveError(false)
@@ -4247,6 +4466,7 @@ function Compose(props: {
           <Button
             type="submit"
             size="sm"
+            className="min-h-11"
             disabled={isSaving || isSending || isDiscarding || uploading}
           >
             {isSending ? (
@@ -4286,6 +4506,7 @@ function Compose(props: {
             type="button"
             variant="outline"
             size="sm"
+            className="min-h-11"
             disabled={
               uploading ||
               isSaving ||
@@ -4315,33 +4536,39 @@ function Compose(props: {
             <AttachmentTitle>{attachment.filename}</AttachmentTitle>
           </AttachmentContent>
           <AttachmentActions>
-            <AttachmentAction
-              type="button"
-              disabled={
-                isSaving ||
-                isSending ||
-                isDiscarding ||
-                isSendUnresolved ||
-                uploading
-              }
-              aria-label={t("compose.removeAttachment", {
+            <MailboxTooltip
+              label={t("compose.removeAttachment", {
                 filename: attachment.filename,
               })}
-              onClick={() => {
-                if (ownedUploads.current.delete(attachment.id))
-                  void Promise.resolve(
-                    discardUploadedAttachment?.(attachment)
-                  ).catch((error) => onError?.(error, "attachmentDiscard"))
-                setValues((previous) => ({
-                  ...previous,
-                  attachments: previous.attachments?.filter(
-                    (_, position) => position !== index
-                  ),
-                }))
-              }}
             >
-              <X className="size-4" />
-            </AttachmentAction>
+              <AttachmentAction
+                type="button"
+                disabled={
+                  isSaving ||
+                  isSending ||
+                  isDiscarding ||
+                  isSendUnresolved ||
+                  uploading
+                }
+                aria-label={t("compose.removeAttachment", {
+                  filename: attachment.filename,
+                })}
+                onClick={() => {
+                  if (ownedUploads.current.delete(attachment.id))
+                    void Promise.resolve(
+                      discardUploadedAttachment?.(attachment)
+                    ).catch((error) => onError?.(error, "attachmentDiscard"))
+                  setValues((previous) => ({
+                    ...previous,
+                    attachments: previous.attachments?.filter(
+                      (_, position) => position !== index
+                    ),
+                  }))
+                }}
+              >
+                <X className="size-4" />
+              </AttachmentAction>
+            </MailboxTooltip>
           </AttachmentActions>
         </Attachment>
       ))}
@@ -4461,6 +4688,7 @@ function Compose(props: {
                   pressed={bodyMode === "plainText"}
                   onClick={() => switchBodyMode("plainText")}
                   size="sm"
+                  className="min-h-11"
                 >
                   {t("compose.mode.plainText")}
                 </ToggleGroupCompatItem>
@@ -4470,6 +4698,7 @@ function Compose(props: {
                   pressed={bodyMode === "mailyEditor"}
                   onClick={() => switchBodyMode("mailyEditor")}
                   size="sm"
+                  className="min-h-11"
                 >
                   {t("compose.mode.mailyEditor")}
                 </ToggleGroupCompatItem>
@@ -4723,7 +4952,7 @@ function RecipientAutocompleteInput(props: {
         style={{
           width: "var(--radix-popover-trigger-width, var(--anchor-width))",
         }}
-        className="min-w-72 p-0"
+        className="max-w-[calc(100vw-2rem)] min-w-[min(18rem,calc(100vw-2rem))] p-0"
       >
         <Command shouldFilter={false}>
           <CommandList className="max-h-56">

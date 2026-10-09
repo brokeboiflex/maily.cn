@@ -223,9 +223,9 @@ Users can still paste a URL when an upload handler is not appropriate.
 ## Mailbox view
 
 `<MailboxView />` is an optional application-shell component for an
-inbox / sent / drafts / bounced surface. It owns local folder, search,
+inbox / sent / drafts / spam / trash surface. It owns local folder, search,
 selection, compose, draft, and polling state inside a shadcn
-`ResizablePanelGroup` shell, but it does not assume a backend. Wire your own API
+responsive list-to-message shell with a mobile Sheet menu. It does not assume a backend. Wire your own API
 through the `dataSource` adapter.
 
 ```tsx

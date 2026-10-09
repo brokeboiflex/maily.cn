@@ -1,6 +1,6 @@
 # Mailbox workflows
 
-The component follows Gmail's documented [archive workflow](https://support.google.com/mail/answer/6576), [label management](https://support.google.com/mail/answer/118708), [search filters](https://support.google.com/mail/answer/7190), [reply behavior](https://support.google.com/mail/answer/6585), and [conversation grouping](https://support.google.com/mail/answer/5900). Its existing ResizablePanelGroup and ScrollArea shell remains the presentation foundation.
+The component follows Gmail's documented [archive workflow](https://support.google.com/mail/answer/6576), [label management](https://support.google.com/mail/answer/118708), [search filters](https://support.google.com/mail/answer/7190), [reply behavior](https://support.google.com/mail/answer/6585), and [conversation grouping](https://support.google.com/mail/answer/5900). Its shell uses Gmail no-split list-to-message navigation and shadcn ScrollArea.
 
 ## Adapter ownership
 
@@ -39,7 +39,7 @@ The header select-all Checkbox covers the current page, and each conversation Ch
 
 ## Intentional adaptations
 
-The component remains backend-agnostic and keeps the existing three-panel mailbox shell and rich/plain compose switch. Provider retention, spam training and delivery remain outside Maily. Snooze, scheduled send and keyboard shortcuts are explicitly outside this change.
+The component remains backend-agnostic and uses a shared list/message content area and keeps the rich/plain compose switch. Provider retention, spam training and delivery remain outside Maily. Snooze, scheduled send and keyboard shortcuts are explicitly outside this change.
 
 ## Playground
 
@@ -73,20 +73,20 @@ type is retained for compatibility. Reference: https://support.google.com/mail/a
 
 Reference evidence: the supplied Gmail sidebar screenshot, the [Gmail pagination screenshot](https://storage.googleapis.com/support-forums-api/attachment/message-103480293-1824559811633958673.jpg), [official toolbar documentation and imagery](https://support.google.com/mail/answer/2473038), and [label management](https://support.google.com/mail/answer/118708).
 
-Mailbox navigation starts expanded and remains resizable. The list header has
+Mailbox navigation is a desktop sidebar, moving into a Sheet below 768px of container width. The list header has
 selection, refresh, a range/count and Newer/Older arrows. Bulk actions appear
 only with a selection. Message rows have Checkbox and capability-gated star
 actions. Labels have a heading, create action and per-label More menu; create
 and rename use a focused Dialog. Search filters use a Popover, and unsaved
 changes use a Dialog. Host-owned shadcn Checkbox/Dialog are externalized.
 
-Intentional adaptations: the resizable three-pane reading layout, visual/plain
-compose and optional host capabilities remain. Nested/colored labels and
+Intentional adaptations: visual/plain compose uses the same content area,
+and optional host capabilities remain. Nested/colored labels and
 select-all-across-the-entire-query are not supported by the current adapter.
 No such control is displayed. Range totals are optional for cursor-only hosts.
 
 The vertical message list uses inline-size containment so Radix ScrollArea’s
-intrinsic-width content wrapper cannot expand rows beyond the pane. This keeps
+intrinsic-width content wrapper cannot expand rows beyond the content area. This keeps
 dates visible and allows text ellipsis; consumer primitive source is untouched.
 See [Radix upstream report](https://github.com/radix-ui/primitives/issues/2722).
 
@@ -179,3 +179,45 @@ Refresh with the supported actions and label picker; the page checkbox clears
 the selection, and pagination stays on the right. There is no second action row
 or duplicate clear-selection button.
 The page range stays visible during selection.
+
+## Responsive list-to-message navigation
+
+References inspected: Google's [No split setting](https://support.google.com/mail/answer/9499937?hl=en) and the inbox and opened-message screenshots on the [official Gmail page](https://workspace.google.com/gmail/).
+
+Opening a message replaces the list with the reader. Back returns to the same
+mounted list, preserving its search, page, selection and scroll position, and
+restores keyboard focus to the opened row. The reader receives focus on entry.
+Controlled selectedMessageId remains authoritative, including when the host
+declines Back. Drafts and new compose occupy that same area; Back retains the
+existing unsaved-change confirmation and pending-send exclusion.
+
+A ResizeObserver follows the mailbox's container, not the viewport. Below 768px,
+folder navigation uses the consumer's Sheet with the same folders and label
+actions. Desktop rows align sender, subject/snippet and date horizontally; narrow
+rows stack their text. Toolbar actions remain beside selection; pagination can
+wrap on narrow widths, and its range is never hidden. Reader headers and bodies
+scroll together so long metadata cannot consume the entire mobile reader.
+On narrow screens, secondary reader actions use the existing More menu while
+Back, star and Reply remain directly accessible.
+
+Intentional adaptations: this embedded component does not own the host's browser
+URL/history, and compose remains a full content page rather than Gmail's desktop
+floating compose window. Shadcn theme tokens and host capabilities remain the
+visual and backend boundary.
+
+Validation for this layout change: 90 unit tests, package TypeScript and tsup,
+playground production build, and clean Radix/Base/Bun consumer installs passed.
+Consumer browser checks cover list/reader replacement, Back focus restoration,
+mobile Sheet navigation and 320px rich-compose containment. Base retains only
+its documented upstream ScrollArea unused-React-import exception. Manual browser
+checks covered 320, 375, 768, 1024 and 1440px, English/Polish, and light/dark;
+physical iOS/Android devices were not available. The design detector flagged
+only existing fonts in email content, which intentionally retain email-safe
+fallbacks. No consumer-owned primitive source was modified.
+
+Mailbox icon-only controls and selection checkboxes use stock host Tooltips
+with translated accessible labels, including disabled pagination. Tooltip
+triggers wrap a neutral span; trigger events and refs still reach the actual
+Button when composed with Dialog, Popover, Sheet or DropdownMenu. Folder counts
+are plain right-aligned tabular numbers. Label create/More controls share square
+44px targets and one sidebar scroller so their centers align.

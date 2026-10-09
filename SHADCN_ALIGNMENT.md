@@ -60,7 +60,7 @@ is rendered only for ids explicitly passed through `messageActions` and backed b
 
 Attachment rows follow the official shadcn Attachment composition: media icon,
 title, description, and independent action. The mailbox uses a vertical list
-inside the reader's ScrollArea and wraps long names to fit the resizable panel.
+inside the reader's ScrollArea and wraps long names to fit the available content area.
 Metadata is always visible; a download action exists only with
 `dataSource.downloadAttachment`. The package fallback changes only import paths
 from the CLI-installed Radix item. Registry consumers own the stock primitive.
@@ -84,8 +84,8 @@ These are not replacement primitives:
   variable completion.
 - `InputAutocomplete` positions Maily variable suggestions in a viewport-aware
   portal; the suggestions themselves use stock Command.
-- `MailboxView` combines a resizable folder rail, searchable
-  message list, capability-gated reader actions, reply/forward compose seeding,
+- `MailboxView` combines a desktop folder sidebar/mobile Sheet and searchable
+  list-to-message pages, capability-gated reader actions, reply/forward compose seeding,
   compose form, and recipient autocomplete around caller-provided
   mailbox/contact/action data. It is application chrome, not an email-rendering
   primitive. Recipient autocomplete uses the shared `PopoverTrigger` contract
@@ -174,3 +174,8 @@ Label dialogs use actual DialogTrigger composition. Radix and Base runtime
 fixtures exercise creation, keyboard rename, dismissal/focus return, Checkbox,
 Avatar, Field/Empty, compose switching and the existing editor/mailbox flows.
 The Bun isolated consumer additionally installs with custom UI/utils aliases.
+
+Mailbox navigation uses the stock consumer Sheet on narrow containers. The
+mailbox no longer imports Resizable primitives; list and reader share one page
+area. The standalone Sheet fallback is official radix-nova registry source with
+package import/icon adaptations only.

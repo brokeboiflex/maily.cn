@@ -83,7 +83,7 @@ The remaining `Select` is an editor-specific labelled/options composite that use
 
 Registry call sites must stay inside the prop/export intersection of current stock Radix and Base shadcn primitives. Do not pass Radix-only `position`, `onOpenAutoFocus`, or `onCloseAutoFocus` props through externalized `SelectContent`/`PopoverContent`, and do not depend on `PopoverAnchor`, which the Base item does not export. Preserve editor focus through Maily's controlled open-state callbacks and use `PopoverTrigger` for shared trigger composition.
 
-`MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It provides the inbox/sent/drafts surface as a backend-agnostic data-adapter component: local UI state, polling, message selection, reader, reply/forward compose seeding, and compose/draft actions live in the component, while accounts/messages/delivery/contact suggestions and optional message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell must stay aligned to the references: shadcn `ResizablePanelGroup` with compact expandable folder rail, message list, and reader/compose panels separated by `ResizableHandle`, plus `ScrollArea` around list/reader/compose overflow. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
+`MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It provides the inbox/sent/drafts surface as a backend-agnostic data-adapter component: local UI state, polling, message selection, reader, reply/forward compose seeding, and compose/draft actions live in the component, while accounts/messages/delivery/contact suggestions and optional message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell follows Gmail no-split navigation: opening a message or draft replaces the list in a shared content area; Back returns to the mounted list with its query, pagination, bulk selection and scroll position preserved. Use a desktop folder sidebar and a stock shadcn `Sheet` navigation menu below 768px of mailbox container width, plus `ScrollArea` around content overflow. Do not restore simultaneous list/reader panes or a forced desktop minimum width. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
 
 Mailbox compose body entry is dual-mode: the plain-text `Textarea` and embedded Maily `Editor` are switched through real shadcn `ToggleGroup` primitives. Keep textarea as a supported fallback, persist rich editor output through `MailyMailboxDraftInput.html`, and continue sending `text` so data sources that only need plain text remain compatible.
 
@@ -139,8 +139,8 @@ Vite base while local development keeps `/`.
 Its presentation follows the sibling `shadcn-theme-provider-demo`: centered
 product hero and resource links, visible mode/palette and component-language
 controls, then framed editor and mailbox showcases. Keep the editor as the
-primary example; on narrow screens, contain the desktop mailbox in its own
-horizontal scroller so it never widens the page.
+primary example; the mailbox adapts to its own container and must fit narrow
+screens without a forced minimum width or outer horizontal scroller.
 
 `pnpm registry:consumer-test` owns the clean-current compatibility gate. Radix
 installs all granular items; Base UI must pass a strict editor-only build before
@@ -293,3 +293,17 @@ Label and unsaved-change dialogs handle Escape in their leaf content through the
 `DialogContent.onKeyDown` prop so immediate dismissal is reliable; leave host
 modality/focus restoration intact. Do not hide this race with sleeps or retrying
 Escape in the consumer test.
+
+## Responsive mailbox navigation, 2026-10-09
+
+The Gmail no-split reference supersedes the old resizable three-panel layout.
+The selected message remains caller-controllable; Back requests a null selection
+and respects host acceptance. Compose Back follows existing dirty-draft and
+pending-send guards. Sheet is externalized to the consumer just like Dialog.
+See [mailbox workflows](docs/mailbox-workflows.md).
+
+Mailbox icon controls must use host Tooltip primitives with the same translated
+label as their accessible name. Keep trigger state on its own primitive via a
+neutral tooltip span and forward menu/dialog trigger props to the actual Button.
+Folder counts remain unbadged numbers; label create and More controls use equal
+square targets, aligned within the same scrolling sidebar.
