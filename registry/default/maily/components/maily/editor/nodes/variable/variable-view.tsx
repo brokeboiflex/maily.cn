@@ -1,4 +1,5 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
+import { updateNodeViewAttributes } from '../../utils/update-attribute';
 import {
   Popover,
   PopoverContent,
@@ -22,7 +23,9 @@ import {
 
 export function VariableView(props: NodeViewProps) {
   const { t } = useMailyContext();
-  const { node, updateAttributes, editor } = props;
+  const { node, editor } = props;
+  const updateAttributes = (attrs: Record<string, any>) =>
+    updateNodeViewAttributes(props, attrs);
   const {
     id,
     fallback,
@@ -190,13 +193,13 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
     return (
       <div className="border-(--button-var-border-color) bg-muted/50 text-foreground inline-flex max-w-xs select-none items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium leading-none">
         <IconPlaceholder
-  lucide="Braces"
-  tabler="IconBraces"
-  hugeicons="BracesIcon"
-  phosphor="BracketsCurly"
-  remixicon="RiBracesLine"
-  className="text-muted-foreground size-3 shrink-0 stroke-[2.5]"
-/>
+          lucide="Braces"
+          tabler="IconBraces"
+          hugeicons="BracesIcon"
+          phosphor="BracketsCurly"
+          remixicon="RiBracesLine"
+          className="text-muted-foreground size-3 shrink-0 stroke-[2.5]"
+        />
         <span className="min-w-0 truncate text-left">{variableLabel}</span>
       </div>
     );
@@ -212,13 +215,13 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
         )}
       >
         <IconPlaceholder
-  lucide="Braces"
-  tabler="IconBraces"
-  hugeicons="BracesIcon"
-  phosphor="BracketsCurly"
-  remixicon="RiBracesLine"
-  className="text-muted-foreground size-3 shrink-0 stroke-[2.5]"
-/>
+          lucide="Braces"
+          tabler="IconBraces"
+          hugeicons="BracesIcon"
+          phosphor="BracketsCurly"
+          remixicon="RiBracesLine"
+          className="text-muted-foreground size-3 shrink-0 stroke-[2.5]"
+        />
         <span className="min-w-0 truncate text-left">{variableLabel}</span>
       </div>
     );
@@ -230,23 +233,23 @@ export const DefaultRenderVariable: RenderVariableFunction = (props) => {
       className="not-prose gap-(--variable-icon-gap) border-border/70 bg-muted/60 text-foreground hover:bg-muted inline-flex max-w-[14rem] select-none items-center rounded-md border px-1.5 py-0.5 align-baseline text-[0.78em] font-medium leading-[1.25] shadow-sm transition-colors"
     >
       <IconPlaceholder
-  lucide="Braces"
-  tabler="IconBraces"
-  hugeicons="BracesIcon"
-  phosphor="BracketsCurly"
-  remixicon="RiBracesLine"
-  className="text-muted-foreground size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]"
-/>
+        lucide="Braces"
+        tabler="IconBraces"
+        hugeicons="BracesIcon"
+        phosphor="BracketsCurly"
+        remixicon="RiBracesLine"
+        className="text-muted-foreground size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]"
+      />
       <span className="min-w-0 truncate">{variableLabel}</span>
       {required && !fallback && (
         <IconPlaceholder
-  lucide="AlertTriangle"
-  tabler="IconAlertTriangle"
-  hugeicons="AlertCircleIcon"
-  phosphor="Warning"
-  remixicon="RiAlertLine"
-  className="text-destructive size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]"
-/>
+          lucide="AlertTriangle"
+          tabler="IconAlertTriangle"
+          hugeicons="AlertCircleIcon"
+          phosphor="Warning"
+          remixicon="RiAlertLine"
+          className="text-destructive size-[var(--variable-icon-size)] shrink-0 stroke-[2.5]"
+        />
       )}
     </span>
   );

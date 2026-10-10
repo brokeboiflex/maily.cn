@@ -1,3 +1,4 @@
+import { updateNodeViewAttributes } from '@/editor/utils/update-attribute';
 import {
   Popover,
   PopoverContent,
@@ -22,7 +23,9 @@ import {
 
 export function VariableView(props: NodeViewProps) {
   const { t } = useMailyContext();
-  const { node, updateAttributes, editor } = props;
+  const { node, editor } = props;
+  const updateAttributes = (attrs: Record<string, any>) =>
+    updateNodeViewAttributes(props, attrs);
   const {
     id,
     fallback,

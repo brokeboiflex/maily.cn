@@ -1,4 +1,5 @@
 import { mergeAttributes, Node } from '@tiptap/core';
+import { updateSelectedAttributes } from '../utils/update-attribute';
 import {
   type AllowedTextDirection,
   DEFAULT_TEXT_DIRECTION,
@@ -66,13 +67,8 @@ export const Footer = Node.create<FooterOptions>({
         ({ commands }) => {
           return commands.setNode(this.name);
         },
-      setFooterTextDirection:
-        (direction: AllowedTextDirection) =>
-        ({ commands }) => {
-          return commands.updateAttributes('footer', {
-            textDirection: direction,
-          });
-        },
+      setFooterTextDirection: (direction: AllowedTextDirection) =>
+        updateSelectedAttributes('footer', { textDirection: direction }),
     };
   },
 

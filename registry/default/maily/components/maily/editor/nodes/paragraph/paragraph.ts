@@ -1,6 +1,7 @@
 import { type Command } from '@tiptap/core';
 import TiptapParagraph from '@tiptap/extension-paragraph';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
+import { updateSelectedAttributes } from '../../utils/update-attribute';
 
 export const allowedTextDirection = ['ltr', 'rtl'] as const;
 export type AllowedTextDirection = (typeof allowedTextDirection)[number];
@@ -65,13 +66,8 @@ export const ParagraphExtension = TiptapParagraph.extend({
   addCommands() {
     return {
       ...this.parent?.(),
-      setMailyTextDirection:
-        (direction: AllowedTextDirection): Command =>
-        ({ commands }) => {
-          return commands.updateAttributes(this.name, {
-            textDirection: direction,
-          });
-        },
+      setMailyTextDirection: (direction: AllowedTextDirection): Command =>
+        updateSelectedAttributes(this.name, { textDirection: direction }),
     };
   },
 });

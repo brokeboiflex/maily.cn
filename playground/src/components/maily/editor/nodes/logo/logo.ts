@@ -1,102 +1,103 @@
-import TiptapImage from '@tiptap/extension-image';
-import { ReactNodeViewRenderer } from '@tiptap/react';
-import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
-import { LogoView } from './logo-view';
+import TiptapImage from "@tiptap/extension-image"
+import { ReactNodeViewRenderer } from "@tiptap/react"
+import { DEFAULT_SECTION_SHOW_IF_KEY } from "../section/section"
+import { LogoView } from "./logo-view"
+import { updateSelectedAttributes } from "../../utils/update-attribute"
 
-export const allowedLogoSize = ['sm', 'md', 'lg'] as const;
-export type AllowedLogoSize = (typeof allowedLogoSize)[number];
+export const allowedLogoSize = ["sm", "md", "lg"] as const
+export type AllowedLogoSize = (typeof allowedLogoSize)[number]
 
-export const allowedLogoAlignment = ['left', 'center', 'right'] as const;
-export type AllowedLogoAlignment = (typeof allowedLogoAlignment)[number];
+export const allowedLogoAlignment = ["left", "center", "right"] as const
+export type AllowedLogoAlignment = (typeof allowedLogoAlignment)[number]
 
 interface LogoOptions {
-  src: string;
-  alt?: string;
-  title?: string;
-  size?: AllowedLogoSize;
-  alignment?: AllowedLogoAlignment;
+  src: string
+  alt?: string
+  title?: string
+  size?: AllowedLogoSize
+  alignment?: AllowedLogoAlignment
 }
 
 export interface LogoAttributes {
-  src?: string;
-  size?: AllowedLogoSize;
-  alignment?: AllowedLogoAlignment;
+  src?: string
+  size?: AllowedLogoSize
+  alignment?: AllowedLogoAlignment
 
-  showIfKey: string;
-  isSrcVariable?: boolean;
+  showIfKey: string
+  isSrcVariable?: boolean
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     logo: {
-      setLogoImage: (options: LogoOptions) => ReturnType;
-      setLogoAttributes: (attributes: Partial<LogoAttributes>) => ReturnType;
-    };
+      setLogoImage: (options: LogoOptions) => ReturnType
+      setLogoAttributes: (attributes: Partial<LogoAttributes>) => ReturnType
+    }
   }
 }
 
-const DEFAULT_ALIGNMENT: AllowedLogoAlignment = 'left';
-export const DEFAULT_LOGO_SIZE: AllowedLogoSize = 'sm';
+const DEFAULT_ALIGNMENT: AllowedLogoAlignment = "left"
+export const DEFAULT_LOGO_SIZE: AllowedLogoSize = "sm"
 
 export const logoSizes: Record<AllowedLogoSize, string> = {
-  sm: '40px',
-  md: '48px',
-  lg: '64px',
-};
+  sm: "40px",
+  md: "48px",
+  lg: "64px",
+}
 
 export const LogoExtension = TiptapImage.extend({
-  name: 'logo',
+  name: "logo",
   priority: 1000,
 
   addAttributes() {
     return {
       ...this.parent?.(),
-      'maily-component': {
-        default: 'logo',
+      "maily-component": {
+        default: "logo",
         renderHTML: (attributes) => {
           return {
-            'data-maily-component': attributes['maily-component'],
-          };
+            "data-maily-component": attributes["maily-component"],
+          }
         },
         parseHTML: (element: Element) =>
-          element.getAttribute('data-maily-component'),
+          element.getAttribute("data-maily-component"),
       },
       size: {
         default: DEFAULT_LOGO_SIZE,
         parseHTML: (element) =>
-          element.getAttribute('data-size') as AllowedLogoSize,
+          element.getAttribute("data-size") as AllowedLogoSize,
         renderHTML: (attributes) => {
           return {
-            'data-size': attributes.size,
-          };
+            "data-size": attributes.size,
+          }
         },
       },
       alignment: {
         default: DEFAULT_ALIGNMENT,
         parseHTML: (element) =>
-          element.getAttribute('data-alignment') as AllowedLogoAlignment,
+          element.getAttribute("data-alignment") as AllowedLogoAlignment,
         renderHTML: (attributes) => {
           return {
-            'data-alignment': attributes.alignment,
-          };
+            "data-alignment": attributes.alignment,
+          }
         },
       },
       showIfKey: {
         default: DEFAULT_SECTION_SHOW_IF_KEY,
         parseHTML: (element) => {
           return (
-            element.getAttribute('data-show-if-key') ||
+            element.getAttribute("data-show-if-key") ||
             DEFAULT_SECTION_SHOW_IF_KEY
-          );
+          )
         },
         renderHTML(attributes) {
           if (!attributes.showIfKey) {
-            return {};
+            return {}
           }
 
           return {
-            'data-show-if-key': attributes.showIfKey,
-          };
+            "data-show-if-key": attributes.showIfKey,
+          }
         },
       },
 
@@ -106,19 +107,19 @@ export const LogoExtension = TiptapImage.extend({
       isSrcVariable: {
         default: false,
         parseHTML: (element) => {
-          return element.getAttribute('data-is-src-variable') === 'true';
+          return element.getAttribute("data-is-src-variable") === "true"
         },
         renderHTML: (attributes) => {
           if (!attributes.isSrcVariable) {
-            return {};
+            return {}
           }
 
           return {
-            'data-is-src-variable': 'true',
-          };
+            "data-is-src-variable": "true",
+          }
         },
       },
-    };
+    }
   },
   addCommands() {
     return {
@@ -128,25 +129,22 @@ export const LogoExtension = TiptapImage.extend({
           return commands.insertContent({
             type: this.name,
             attrs: options,
-          });
+          })
         },
-      setLogoAttributes:
-        (attributes) =>
-        ({ commands }) => {
-          return commands.updateAttributes('logo', attributes);
-        },
-    };
+      setLogoAttributes: (attributes) =>
+        updateSelectedAttributes("logo", attributes),
+    }
   },
   parseHTML() {
     return [
       {
         tag: `img[data-maily-component="${this.name}"]`,
       },
-    ];
+    ]
   },
   addNodeView() {
     return ReactNodeViewRenderer(LogoView, {
-      className: 'relative',
-    });
+      className: "relative",
+    })
   },
-});
+})

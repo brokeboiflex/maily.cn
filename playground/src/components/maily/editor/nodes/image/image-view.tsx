@@ -2,6 +2,7 @@ import {
   type CSSProperties,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react"
@@ -9,6 +10,8 @@ import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react"
 import { useImageUploadOptions } from "../../extensions/image-upload/image-upload"
 import { cn } from "@/lib/utils"
 import { useEvent } from "../../utils/use-event"
+import { captureNodeAction } from "../../utils/node-action"
+import { updateNodeViewAttributes } from "../../utils/update-attribute"
 import { getAspectRatio, getNewHeight } from "../../utils/aspect-ratio"
 import { useMailyContext } from "../../provider"
 import { ImageOffIcon, GrabIcon, Loader2, Ban, BracesIcon } from "lucide-react"
@@ -21,13 +24,13 @@ export type ImageStatus = "idle" | "loading" | "loaded" | "error"
 
 export function ImageView(props: NodeViewProps) {
   const { t } = useMailyContext()
-  const { node, updateAttributes, selected, editor, getPos } = props
+  const { node, selected, editor, getPos } = props
 
   const resizeCleanup = useRef<(() => void) | null>(null)
-  useEffect(() => () => resizeCleanup.current?.(), [])
+  useLayoutEffect(() => () => resizeCleanup.current?.(), [])
   const uploadLock = useRef(false)
   const uploadGeneration = useRef(0)
-  useEffect(
+  useLayoutEffect(
     () => () => {
       uploadGeneration.current += 1
     },
@@ -61,6 +64,18 @@ export function ImageView(props: NodeViewProps) {
         return
       }
 
+      let position
+      try {
+        position = getPos()
+      } catch {
+        return
+      }
+      const action =
+        typeof position === "number"
+          ? captureNodeAction(editor, position, node)
+          : null
+      if (!action) return
+
       const imageParentWidth = Math.max(
         imageParent.offsetWidth,
         IMAGE_MAX_WIDTH
@@ -85,14 +100,28 @@ export function ImageView(props: NodeViewProps) {
       }
       const removeListeners = () => {
         cleanup()
-        window.removeEventListener("mousemove", mouseMoveHandler)
-        window.removeEventListener("mouseup", removeListeners)
         const aspectRatio = getAspectRatio(newWidth, newHeight)
-        updateAttributes({ width: newWidth, height: newHeight, aspectRatio })
+        action.run(() => {
+          if (
+            node.attrs.width !== newWidth ||
+            node.attrs.height !== newHeight ||
+            node.attrs.aspectRatio !== aspectRatio
+          )
+            updateNodeViewAttributes(props, {
+              width: newWidth,
+              height: newHeight,
+              aspectRatio,
+            })
+        })
         setResizingStyle(undefined)
       }
 
       const mouseMoveHandler = (event: MouseEvent) => {
+        if (!action.isCurrent()) {
+          cleanup()
+          setResizingStyle(undefined)
+          return
+        }
         newWidth = Math.max(
           currentWidth + transformX * (event.clientX - initialXPosition),
           MIN_WIDTH
@@ -184,7 +213,7 @@ export function ImageView(props: NodeViewProps) {
     editor.isEditable &&
     !hasImageSrc &&
     !isSrcVariable &&
-    status === "idle"
+    (status === "idle" || status === "error")
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isDroppable || !e.target.files || e.target.files.length === 0) {
@@ -192,6 +221,7 @@ export function ImageView(props: NodeViewProps) {
     }
 
     const file = e.target.files[0]
+    e.target.value = ""
     await handleImageUpload(file)
   }
 
@@ -229,7 +259,7 @@ export function ImageView(props: NodeViewProps) {
           await onImageUploadDiscard?.(imageUrl)
           return
         }
-        updateAttributes({ src: imageUrl })
+        updateNodeViewAttributes(props, { src: imageUrl })
         setIsPlaceholderImage(false)
         setStatus("loaded")
       } catch (error) {
@@ -242,7 +272,7 @@ export function ImageView(props: NodeViewProps) {
     [
       onImageUpload,
       onImageUploadDiscard,
-      updateAttributes,
+      props,
       isDroppable,
       editor,
       getPos,
@@ -254,6 +284,7 @@ export function ImageView(props: NodeViewProps) {
   // then if the image is loaded, set the status to loaded
   useEffect(() => {
     if (!src || isSrcVariable) {
+      setStatus("idle")
       return
     }
 
@@ -262,18 +293,43 @@ export function ImageView(props: NodeViewProps) {
       editor?.extensionStorage?.imageUpload?.placeholderImages?.has(src) ??
       false
     setIsPlaceholderImage(isPlaceHolder)
+    let active = true
     const img = new Image()
     img.src = src
     img.onload = () => {
-      setStatus("loaded")
+      if (!active) return
       // for some reason Apple Mail doesn't respect the width and height attributes
       // update the dimensions to ensure that the image is not stretched
       const { naturalWidth, naturalHeight } = img
       const wrapper = wrapperRef?.current
+      let currentNode
+      if (!editor.isDestroyed) {
+        try {
+          const position = getPos()
+          currentNode =
+            typeof position === "number"
+              ? editor.state.doc.nodeAt(position)
+              : null
+        } catch {
+          /* Removed node views have no position. */
+        }
+      }
 
-      if (!wrapper || width !== "auto" || !naturalWidth) {
+      if (
+        !wrapper ||
+        !currentNode ||
+        currentNode !== node ||
+        currentNode.attrs.src !== src ||
+        currentNode.attrs.isSrcVariable ||
+        isPlaceHolder ||
+        currentNode.attrs.width !== "auto" ||
+        currentNode.attrs.height !== "auto" ||
+        !naturalWidth
+      ) {
+        if (currentNode === node) setStatus("loaded")
         return
       }
+      setStatus("loaded")
 
       const wrapperWidth = wrapper.offsetWidth
       const aspectRatio = getAspectRatio(naturalWidth, naturalHeight)
@@ -282,22 +338,23 @@ export function ImageView(props: NodeViewProps) {
         naturalHeight
       )
 
-      updateAttributes({
+      updateNodeViewAttributes(props, {
         width: Math.min(wrapperWidth, naturalWidth),
         height: Math.min(calculatedHeight, naturalHeight),
         aspectRatio,
       })
     }
     img.onerror = () => {
-      setStatus("error")
+      if (active) setStatus("error")
     }
 
     return () => {
+      active = false
       img.src = ""
       img.onload = null
       img.onerror = null
     }
-  }, [src])
+  }, [node, src, isSrcVariable])
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -309,7 +366,7 @@ export function ImageView(props: NodeViewProps) {
       e.stopPropagation()
       setIsDraggingOver(true)
     },
-    [onImageUpload]
+    [isDroppable]
   )
 
   const handleDragLeave = useCallback(
@@ -322,7 +379,7 @@ export function ImageView(props: NodeViewProps) {
       e.stopPropagation()
       setIsDraggingOver(false)
     },
-    [onImageUpload]
+    [isDroppable]
   )
 
   const handleDrop = useCallback(
@@ -346,7 +403,7 @@ export function ImageView(props: NodeViewProps) {
 
       await handleImageUpload(firstFile)
     },
-    [handleImageUpload]
+    [handleImageUpload, isDroppable, allowedMimeTypes]
   )
 
   return (
@@ -406,7 +463,7 @@ export function ImageView(props: NodeViewProps) {
       {hasImageSrc && status === "loading" && !isSrcVariable && (
         <ImageStatusLabel status="loading" minHeight={height} />
       )}
-      {hasImageSrc && status === "error" && !isSrcVariable && (
+      {status === "error" && !isSrcVariable && (
         <ImageStatusLabel status="error" minHeight={height} />
       )}
 

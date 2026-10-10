@@ -1,7 +1,7 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import type { Plugin } from '@tiptap/pm/state';
+import { Plugin } from '@tiptap/pm/state';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ImageUploadPlugin } from './image-upload-plugin';
 
@@ -146,6 +146,7 @@ describe('paste/drop upload ownership', () => {
     const upload = pending();
     const { editor, plugin, discard } = setup(() => upload.promise);
     paste(editor, plugin);
+    await Promise.resolve();
     editor.destroy();
     upload.resolve('https://example.com/upload.png');
     await vi.waitFor(() =>
@@ -154,6 +155,95 @@ describe('paste/drop upload ownership', () => {
       )
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
-    expect(URL.revokeObjectURL).toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith(
+      'blob:owned-image'
+    );
+  });
+
+  it('keeps an in-flight placeholder alive across plugin-view recreation', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.registerPlugin(new Plugin({}));
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    expect(editor.storage.imageUpload.placeholderImages.size).toBe(1);
+    upload.resolve('https://example.com/upload.png');
+    await settle();
+    expect(images(editor)[0]?.attrs?.src).toBe(
+      'https://example.com/upload.png'
+    );
+    expect(discard).not.toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('ends ownership and compensates once when the upload plugin is removed', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.unregisterPlugin('imageUpload');
+    await Promise.resolve();
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    upload.resolve('https://example.com/upload.png');
+    await vi.waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
+    expect(images(editor)).toEqual([]);
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips queued host work after synchronous destruction', async () => {
+    const upload = vi.fn(async () => 'https://example.com/upload.png');
+    const { editor, plugin, discard } = setup(upload);
+    paste(editor, plugin);
+    editor.destroy();
+    await settle();
+    expect(upload).not.toHaveBeenCalled();
+    expect(discard).not.toHaveBeenCalled();
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('ends pending ownership on editor unmount', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.unmount();
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    upload.resolve('https://example.com/upload.png');
+    await vi.waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not release a new upload when removed-plugin cleanup finishes', async () => {
+    const oldUpload = pending();
+    const newUpload = pending();
+    const upload = vi
+      .fn()
+      .mockImplementationOnce(() => oldUpload.promise)
+      .mockImplementationOnce(() => newUpload.promise);
+    const { editor, plugin, discard } = setup(upload);
+    vi.mocked(URL.createObjectURL)
+      .mockReturnValueOnce('blob:old-upload')
+      .mockReturnValueOnce('blob:new-upload');
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.unregisterPlugin('imageUpload');
+    editor.registerPlugin(plugin);
+    paste(editor, plugin);
+    await Promise.resolve();
+    expect(images(editor)).toHaveLength(1);
+    expect(images(editor)[0]?.attrs?.src).toBe('blob:new-upload');
+    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith(
+      'blob:old-upload'
+    );
+    newUpload.resolve('https://example.com/new.png');
+    oldUpload.resolve('https://example.com/old.png');
+    await vi.waitFor(() =>
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2)
+    );
+    expect(images(editor)[0]?.attrs?.src).toBe('https://example.com/new.png');
+    expect(discard).toHaveBeenCalledExactlyOnceWith(
+      'https://example.com/old.png'
+    );
   });
 });

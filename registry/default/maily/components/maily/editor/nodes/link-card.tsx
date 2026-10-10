@@ -1,3 +1,4 @@
+import { updateNodeViewAttributes } from '../utils/update-attribute';
 import { AdaptiveNodePopover } from '../components/adaptive-node-popover';
 import { useMobileEditor } from '../components/mobile-editor-context';
 import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
@@ -29,6 +30,8 @@ export function LinkCardComponent(props: NodeViewProps) {
     fontSize,
   } = props.node.attrs as LinkCardAttributes;
   const { getPos, editor } = props;
+  const updateAttributes = (attrs: Record<string, any>) =>
+    updateNodeViewAttributes(props, attrs);
   const currentFont = fontSelectionFromAttrs(props.node.attrs);
   const currentFontStack = currentFont ? fontStack(currentFont) : undefined;
   const typographyStyle = {
@@ -134,10 +137,10 @@ export function LinkCardComponent(props: NodeViewProps) {
               editor={editor}
               currentFont={currentFont}
               onFontChange={(font) => {
-                props.updateAttributes(font);
+                updateAttributes(font);
               }}
               onFontUnset={() => {
-                props.updateAttributes(
+                updateAttributes(
                   Object.fromEntries(
                     FONT_ATTRIBUTE_KEYS.map((key) => [
                       key,
@@ -151,7 +154,7 @@ export function LinkCardComponent(props: NodeViewProps) {
             <FontSizePicker
               value={fontSize || ''}
               onValueChange={(value) => {
-                props.updateAttributes({
+                updateAttributes({
                   fontSize: value || null,
                 });
               }}
@@ -168,7 +171,7 @@ export function LinkCardComponent(props: NodeViewProps) {
               type="url"
               value={image}
               onChange={(e) => {
-                props.updateAttributes({
+                updateAttributes({
                   image: e.target.value,
                 });
               }}
@@ -184,7 +187,7 @@ export function LinkCardComponent(props: NodeViewProps) {
               placeholder={t('linkCard.titlePlaceholder')}
               value={title}
               onChange={(e) => {
-                props.updateAttributes({
+                updateAttributes({
                   title: e.target.value,
                 });
               }}
@@ -199,7 +202,7 @@ export function LinkCardComponent(props: NodeViewProps) {
               placeholder={t('linkCard.descriptionPlaceholder')}
               value={description}
               onChange={(e) => {
-                props.updateAttributes({
+                updateAttributes({
                   description: e.target.value,
                 });
               }}
@@ -216,7 +219,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 placeholder={t('linkCard.linkTitlePlaceholder')}
                 value={linkTitle}
                 onChange={(e) => {
-                  props.updateAttributes({
+                  updateAttributes({
                     linkTitle: e.target.value,
                   });
                 }}
@@ -232,7 +235,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 placeholder={t('linkCard.linkPlaceholder')}
                 value={link}
                 onChange={(e) => {
-                  props.updateAttributes({
+                  updateAttributes({
                     link: e.target.value,
                   });
                 }}
@@ -250,7 +253,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 placeholder={t('linkCard.badgeTextPlaceholder')}
                 value={badgeText}
                 onChange={(e) => {
-                  props.updateAttributes({
+                  updateAttributes({
                     badgeText: e.target.value,
                   });
                 }}
@@ -266,7 +269,7 @@ export function LinkCardComponent(props: NodeViewProps) {
                 placeholder={t('linkCard.subTitlePlaceholder')}
                 value={subTitle}
                 onChange={(e) => {
-                  props.updateAttributes({
+                  updateAttributes({
                     subTitle: e.target.value,
                   });
                 }}

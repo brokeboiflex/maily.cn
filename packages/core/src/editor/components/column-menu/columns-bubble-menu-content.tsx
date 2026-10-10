@@ -3,12 +3,7 @@ import { useColumnsState } from './use-columns-state';
 import { Separator } from '@/editor/components/ui/divider';
 import { TooltipProvider } from '@/editor/components/ui/tooltip';
 import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
-import {
-  getColumnCount,
-  addColumnByIndex,
-  removeColumnByIndex,
-  updateColumnWidth,
-} from '../../utils/columns';
+import { setColumnCount, updateColumnWidth } from '../../utils/columns';
 import { ShowPopover } from '../show-popover';
 import { ColumnsWidthConfig } from './columns-width-config';
 import { Select } from '../ui/select';
@@ -44,12 +39,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               columnsCount={currentColumnCount}
               columnWidths={state.columnWidths}
               onColumnsCountChange={(count) => {
-                const currentColumnCount = getColumnCount(editor);
-                if (count > currentColumnCount) {
-                  addColumnByIndex(editor);
-                } else if (count < currentColumnCount) {
-                  removeColumnByIndex(editor);
-                }
+                setColumnCount(editor, count);
               }}
               onColumnWidthChange={(index, width) => {
                 updateColumnWidth(editor, index, width);

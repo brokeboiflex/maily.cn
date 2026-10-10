@@ -1,20 +1,21 @@
 import { type NodeViewProps } from "@tiptap/core"
 import { NodeViewWrapper } from "@tiptap/react"
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react"
 import { useState } from "react"
 import { type LogoAttributes, logoSizes } from "./logo"
 import { type ImageStatus, ImageStatusLabel } from "../image/image-view"
 import { useImageUploadOptions } from "../../extensions/image-upload/image-upload"
 import { cn } from "@/lib/utils"
 import { useMailyContext } from "../../provider"
+import { updateNodeViewAttributes } from "../../utils/update-attribute"
 
 export function LogoView(props: NodeViewProps) {
   const { t } = useMailyContext()
-  const { node, editor, updateAttributes, getPos } = props
+  const { node, editor, getPos } = props
 
   const uploadLock = useRef(false)
   const uploadGeneration = useRef(0)
-  useEffect(
+  useLayoutEffect(
     () => () => {
       uploadGeneration.current += 1
     },
@@ -39,7 +40,10 @@ export function LogoView(props: NodeViewProps) {
 
   const hasImageSrc = !!logoSrc
   const isDroppable =
-    !!onImageUpload && editor.isEditable && !isSrcVariable && status === "idle"
+    !!onImageUpload &&
+    editor.isEditable &&
+    !isSrcVariable &&
+    (status === "idle" || status === "error")
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isDroppable || !e.target.files || e.target.files.length === 0) {
@@ -47,6 +51,7 @@ export function LogoView(props: NodeViewProps) {
     }
 
     const file = e.target.files[0]
+    e.target.value = ""
     await handleImageUpload(file)
   }
 
@@ -84,7 +89,7 @@ export function LogoView(props: NodeViewProps) {
           await onImageUploadDiscard?.(imageUrl)
           return
         }
-        updateAttributes({ src: imageUrl })
+        updateNodeViewAttributes(props, { src: imageUrl })
         setIsPlaceholderImage(false)
         setStatus("loaded")
       } catch (error) {
@@ -97,7 +102,7 @@ export function LogoView(props: NodeViewProps) {
     [
       onImageUpload,
       onImageUploadDiscard,
-      updateAttributes,
+      props,
       isDroppable,
       editor,
       getPos,
@@ -115,7 +120,7 @@ export function LogoView(props: NodeViewProps) {
       e.stopPropagation()
       setIsDraggingOver(true)
     },
-    [onImageUpload]
+    [isDroppable]
   )
 
   const handleDragLeave = useCallback(
@@ -128,7 +133,7 @@ export function LogoView(props: NodeViewProps) {
       e.stopPropagation()
       setIsDraggingOver(false)
     },
-    [onImageUpload]
+    [isDroppable]
   )
 
   const handleDrop = useCallback(
@@ -152,13 +157,14 @@ export function LogoView(props: NodeViewProps) {
 
       await handleImageUpload(firstFile)
     },
-    [handleImageUpload]
+    [handleImageUpload, isDroppable, allowedMimeTypes]
   )
 
   // load the image using new Image() to avoid layout shift
   // then if the image is loaded, set the status to loaded
   useEffect(() => {
     if (!logoSrc) {
+      setStatus("idle")
       return
     }
 
@@ -227,7 +233,7 @@ export function LogoView(props: NodeViewProps) {
       {hasImageSrc && status === "loading" && !isSrcVariable && (
         <ImageStatusLabel status="loading" minHeight={logoSize} />
       )}
-      {hasImageSrc && status === "error" && !isSrcVariable && (
+      {status === "error" && !isSrcVariable && (
         <ImageStatusLabel status="error" minHeight={logoSize} />
       )}
 

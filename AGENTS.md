@@ -365,3 +365,27 @@ mailbox mutations refresh the latest committed query and preserve newer external
 reader/bulk selections. Rejected label mutations must not suppress an initial
 valid label response.
 See [audit and repairs](docs/idempotence-audit-2026-10-10.md).
+
+## Re-audit repairs, 2026-10-10
+
+Desired attribute writes compare schema-normalized live markup before adding
+steps, including TipTap selection commands and NodeView writes. Repeating a
+setting must preserve Undo/Redo. Column-count requests reach the requested count
+in one transaction while retaining surviving content and attributes.
+
+Plugin-view setup and cleanup follow ProseMirror's recreatable view lifetime;
+ordinary menu registration must not terminate retained upload work or drag
+listeners. Uploads, intrinsic image loading and resize commits own their captured
+node/document. Temporary upload images defer intrinsic attribute writes until
+the upload is acknowledged. Failed empty image/logo uploads retain translated
+error and retry controls.
+
+Compose refs and revisions belong to a data-source lifetime and compose intent.
+Retain departed acknowledged draft receipts independently, without attaching them
+to a newer composer. Multiple unresolved receipts block sending for explicit host
+reconciliation. Read success, failure and loading cleanup share query generations;
+label deletion and form completion own their selection/form sessions. Only
+acknowledged reader mutations overlay thread messages; a slower ordinary detail
+read must preserve a fresher thread. See
+[the 14 repairs and validation](docs/idempotence-reaudit-2026-10-10.md) and
+[mailbox ownership](docs/mailbox-workflows.md).

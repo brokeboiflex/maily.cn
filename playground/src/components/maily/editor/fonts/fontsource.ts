@@ -14,7 +14,11 @@ const FONT_CATEGORIES = new Set<FontsourceCategory>([
 ])
 
 export type FontsourceCategory =
-  "sans-serif" | "serif" | "display" | "handwriting" | "monospace"
+  | "sans-serif"
+  | "serif"
+  | "display"
+  | "handwriting"
+  | "monospace"
 
 export type FontFallback = "Arial" | "Georgia" | "monospace" | "cursive"
 

@@ -1,3 +1,4 @@
+import { updateNodeViewAttributes } from "../../utils/update-attribute"
 import {
   Popover,
   PopoverContent,
@@ -22,7 +23,9 @@ import { Braces, AlertTriangle } from "lucide-react"
 
 export function VariableView(props: NodeViewProps) {
   const { t } = useMailyContext()
-  const { node, updateAttributes, editor } = props
+  const { node, editor } = props
+  const updateAttributes = (attrs: Record<string, any>) =>
+    updateNodeViewAttributes(props, attrs)
   const { id, fallback, required, hideDefaultValue = false, label } = node.attrs
 
   const variableOptions = useMemo(() => {

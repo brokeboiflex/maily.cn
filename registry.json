@@ -343,6 +343,11 @@
           "target": "@components/maily/editor/components/vertical-alignment-switch.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/extensions/attribute-commands.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/attribute-commands.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/extensions/color.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/color.ts"
@@ -765,6 +770,11 @@
           "path": "registry/default/maily/components/maily/mailbox/search.ts",
           "type": "registry:component",
           "target": "@components/maily/mailbox/search.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/send-recovery.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/send-recovery.ts"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/use-controllable-state.ts",
@@ -1202,6 +1212,11 @@
           "target": "@components/maily/editor/components/vertical-alignment-switch.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/extensions/attribute-commands.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/extensions/attribute-commands.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/extensions/color.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/color.ts"
@@ -1590,6 +1605,11 @@
           "path": "registry/default/maily/components/maily/mailbox/search.ts",
           "type": "registry:component",
           "target": "@components/maily/mailbox/search.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/send-recovery.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/send-recovery.ts"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/use-controllable-state.ts",

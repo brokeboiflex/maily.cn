@@ -3,6 +3,7 @@ import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
+import { redoDepth, undoDepth } from '@tiptap/pm/history';
 import { expect, it, vi } from 'vitest';
 import { Spacer } from '../../nodes/spacer';
 import { VariableExtension } from '../../nodes/variable/variable';
@@ -40,6 +41,10 @@ it('preserves visibility when the actual spacer height controls are reapplied', 
   const root = createRoot(container);
   try {
     await act(async () => root.render(<SpacerBubbleMenu editor={editor} />));
+    const changes: number[] = [];
+    editor.on('transaction', ({ transaction }) => {
+      if (transaction.docChanged) changes.push(transaction.steps.length);
+    });
     for (const size of ['sm', 'md', 'md']) {
       await act(async () => {
         const control = container.querySelector<HTMLButtonElement>(
@@ -51,6 +56,18 @@ it('preserves visibility when the actual spacer height controls are reapplied', 
       expect(editor.state.doc.firstChild?.attrs.showIfKey).toBe('customer.vip');
       expect(editor.state.doc.childCount).toBe(2);
     }
+    expect(editor.state.doc.firstChild?.attrs.height).toBe(16);
+    expect(changes).toHaveLength(1);
+    expect(undoDepth(editor.state)).toBe(1);
+    await act(async () => editor.commands.undo());
+    expect(editor.state.doc.firstChild?.attrs.height).toBe(8);
+    await act(async () =>
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label="sm"]')!
+        .click()
+    );
+    expect(redoDepth(editor.state)).toBe(1);
+    await act(async () => editor.commands.redo());
     expect(editor.state.doc.firstChild?.attrs.height).toBe(16);
   } finally {
     await act(async () => root.unmount());

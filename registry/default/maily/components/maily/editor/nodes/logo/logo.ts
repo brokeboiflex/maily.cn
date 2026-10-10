@@ -2,6 +2,7 @@ import TiptapImage from '@tiptap/extension-image';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
 import { LogoView } from './logo-view';
+import { updateSelectedAttributes } from '../../utils/update-attribute';
 
 export const allowedLogoSize = ['sm', 'md', 'lg'] as const;
 export type AllowedLogoSize = (typeof allowedLogoSize)[number];
@@ -130,11 +131,8 @@ export const LogoExtension = TiptapImage.extend({
             attrs: options,
           });
         },
-      setLogoAttributes:
-        (attributes) =>
-        ({ commands }) => {
-          return commands.updateAttributes('logo', attributes);
-        },
+      setLogoAttributes: (attributes) =>
+        updateSelectedAttributes('logo', attributes),
     };
   },
   parseHTML() {

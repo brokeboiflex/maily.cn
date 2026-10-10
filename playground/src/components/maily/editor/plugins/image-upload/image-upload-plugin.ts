@@ -23,12 +23,49 @@ export type ImageUploadPluginOptions = {
 export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
   const { editor, onImageUpload, onImageUploadDiscard, allowedMimeTypes } =
     options
-  const placeholders = new Set<string>()
-  let destroyed = false
+  const placeholders = new Map<string, () => void>()
+  let generation = 0
+  let active = false
+  let subscribed = false
+
+  const releasePlaceholder = (src: string) => {
+    if (!placeholders.delete(src)) return
+    editor.extensionStorage.imageUpload?.placeholderImages.delete(src)
+    URL.revokeObjectURL(src)
+  }
+  const endLifetime = (removeNodes = false) => {
+    active = false
+    generation += 1
+    const ownedPlaceholders = [...placeholders]
+    const releaseOwned = () => {
+      for (const [src, remove] of ownedPlaceholders) {
+        if (placeholders.get(src) !== remove) continue
+        if (removeNodes) remove()
+        releasePlaceholder(src)
+      }
+    }
+    // A removal destructor runs inside PM's plugin-view reconfiguration. Finish
+    // that stack before deleting live nodes; keep their blob URLs until then.
+    if (removeNodes) queueMicrotask(releaseOwned)
+    else releaseOwned()
+    if (subscribed) {
+      editor.off("destroy", onEditorEnd)
+      editor.off("unmount", onEditorEnd)
+      subscribed = false
+    }
+  }
+  const onEditorEnd = () => endLifetime()
 
   function handleImageUpload(view: EditorView, file: File, pos?: number) {
+    const ownedGeneration = generation
+    const isCurrent = () =>
+      active &&
+      ownedGeneration === generation &&
+      !view.isDestroyed &&
+      !editor.isDestroyed &&
+      view.state.plugins.includes(plugin)
+    if (!isCurrent()) return
     const placeholderSrc = URL.createObjectURL(file)
-    placeholders.add(placeholderSrc)
 
     const { tr, schema } = view.state
     const imageNode = schema.nodes.image.create({
@@ -47,9 +84,6 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
         ? view.state.doc.resolve(pos)
         : view.state.selection.$head
 
-    const transaction = tr.insert(resolvedPos.pos, imageNode)
-    view.dispatch(transaction)
-
     const ownedPosition = () => {
       let position: number | null = null
       let matches = 0
@@ -63,18 +97,22 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       return matches === 1 ? position : null
     }
     const removeOwnedPlaceholder = () => {
-      if (destroyed || editor.isDestroyed) return
+      if (view.isDestroyed || editor.isDestroyed) return
       const position = ownedPosition()
       if (position !== null)
         view.dispatch(
           view.state.tr.delete(position, position + imageNode.nodeSize)
         )
     }
+    placeholders.set(placeholderSrc, removeOwnedPlaceholder)
+    const transaction = tr.insert(resolvedPos.pos, imageNode)
+    view.dispatch(transaction)
 
     Promise.resolve()
-      .then(() => onImageUpload!(file))
+      .then(() => (isCurrent() ? onImageUpload!(file) : undefined))
       .then(async (uploadedSrc) => {
-        if (destroyed || editor.isDestroyed) {
+        if (uploadedSrc === undefined) return
+        if (!isCurrent()) {
           await onImageUploadDiscard?.(uploadedSrc)
           return
         }
@@ -89,27 +127,31 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
         } else await onImageUploadDiscard?.(uploadedSrc)
       })
       .catch((error) => {
-        removeOwnedPlaceholder()
+        if (isCurrent()) removeOwnedPlaceholder()
         console.error("Image upload failed", error)
       })
       .finally(() => {
-        editor.extensionStorage.imageUpload?.placeholderImages.delete(
-          placeholderSrc
-        )
-        placeholders.delete(placeholderSrc)
-        URL.revokeObjectURL(placeholderSrc)
+        releasePlaceholder(placeholderSrc)
       })
   }
 
-  return new Plugin({
+  const plugin = new Plugin({
     key: new PluginKey("imageUpload"),
-    view: () => ({
-      destroy() {
-        destroyed = true
-        for (const src of placeholders) URL.revokeObjectURL(src)
-        placeholders.clear()
-      },
-    }),
+    view: (view) => {
+      active = true
+      if (!subscribed) {
+        editor.on("destroy", onEditorEnd)
+        editor.on("unmount", onEditorEnd)
+        subscribed = true
+      }
+      return {
+        destroy() {
+          // ProseMirror recreates every plugin view when any plugin changes.
+          // Uploads belong to the retained plugin, not its temporary view.
+          if (!view.state.plugins.includes(plugin)) endLifetime(true)
+        },
+      }
+    },
     props: {
       handleDrop: (view, event) => {
         if (
@@ -162,4 +204,5 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       },
     },
   })
+  return plugin
 }

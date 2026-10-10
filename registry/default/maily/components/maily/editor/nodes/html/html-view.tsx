@@ -1,3 +1,4 @@
+import { updateNodeViewAttributes } from '../../utils/update-attribute';
 import { cn } from '@/lib/utils';
 import { type NodeViewProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
@@ -5,7 +6,9 @@ import { useMemo } from 'react';
 import { type HtmlCodeBlockAttributes } from './html';
 
 export function HTMLCodeBlockView(props: NodeViewProps) {
-  const { node, updateAttributes } = props;
+  const { node } = props;
+  const updateAttributes = (attrs: Record<string, any>) =>
+    updateNodeViewAttributes(props, attrs);
 
   let { language, activeTab = 'code' } = node.attrs as HtmlCodeBlockAttributes;
   activeTab ||= 'code';

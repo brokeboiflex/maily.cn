@@ -38,11 +38,36 @@ export default function App() {
 `;
 
 const baseRuntimeFixture = `import { Editor } from "@/components/maily"
+import { ImageUploadExtension } from "@/components/maily/extensions"
 import {
   MailboxView,
   type MailyMailboxDataSource,
   type MailyMailboxMessageDetail,
 } from "@/components/maily/mailbox"
+
+declare global {
+  interface Window {
+    mailyTestEditor: import("@tiptap/core").Editor
+    mailyUploadCalls: number
+    mailyDiscardCalls: number
+    mailyFinishUpload: () => void
+  }
+}
+
+window.mailyUploadCalls = 0
+window.mailyDiscardCalls = 0
+const uploadedImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII="
+const uploadExtension = ImageUploadExtension.configure({
+  onImageUpload: async () => {
+    window.mailyUploadCalls += 1
+    return new Promise<string>((resolve) => {
+      window.mailyFinishUpload = () => resolve(uploadedImage)
+    })
+  },
+  onImageUploadDiscard: async () => {
+    window.mailyDiscardCalls += 1
+  },
+})
 
 const message: MailyMailboxMessageDetail = {
   id: "attachment-message",
@@ -98,6 +123,8 @@ export default function App() {
       <section data-testid="editor">
         <Editor
           config={{ immediatelyRender: true }}
+          extensions={[uploadExtension]}
+          onCreate={(editor) => { window.mailyTestEditor = editor }}
           contentJson={{
             type: "doc",
             content: [
@@ -354,6 +381,40 @@ async function verifyConsumerRuntime(project, primitiveBase) {
     `import { expect, test } from "@playwright/test"
 import { readFile } from "node:fs/promises"
 
+test("paste uploads survive public editor menu registration", async ({ page }) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  await page.goto("${baseUrl}")
+  const surface = page.getByTestId("editor").locator('[contenteditable="true"]')
+  await surface.click()
+  await surface.evaluate((element) => {
+    const clipboardData = new DataTransfer()
+    const png = atob("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII=")
+    clipboardData.items.add(new File([Uint8Array.from(png, (character) => character.charCodeAt(0))], "paste.png", { type: "image/png" }))
+    element.dispatchEvent(new ClipboardEvent("paste", { clipboardData, bubbles: true, cancelable: true }))
+  })
+  const placeholder = surface.locator('img[src^="blob:"]')
+  await expect(placeholder).toBeVisible()
+  await expect.poll(async () => {
+    return placeholder.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)
+  }).toBe(true)
+  await page.setViewportSize({ width: 375, height: 812 })
+  await expect(page.getByRole("button", { name: "Insert block", exact: true })).toBeVisible()
+  await page.evaluate(() => window.mailyFinishUpload())
+  await expect.poll(async () => {
+    return page.evaluate(() => JSON.stringify(window.mailyTestEditor.getJSON()))
+  }).toContain("data:image/png;base64,")
+  const result = await page.evaluate(() => ({
+    json: JSON.stringify(window.mailyTestEditor.getJSON()),
+    uploads: window.mailyUploadCalls,
+    discards: window.mailyDiscardCalls,
+  }))
+  expect(result.json).not.toContain("blob:")
+  expect(result.uploads).toBe(1)
+  expect(result.discards).toBe(0)
+  expect(errors).toEqual([])
+})
+
 test("mobile editor uses real blocks and preserves content across breakpoints", async ({ page }) => {
   const errors: string[] = []
   page.on("pageerror", (error) => errors.push(error.message))
@@ -525,10 +586,9 @@ test("inherits current host primitive behavior", async ({ page }) => {
   );
 
   const preview = spawn(
-    'pnpm',
+    process.execPath,
     [
-      'exec',
-      'vite',
+      path.join(project, 'node_modules/vite/bin/vite.js'),
       'preview',
       '--host',
       '127.0.0.1',

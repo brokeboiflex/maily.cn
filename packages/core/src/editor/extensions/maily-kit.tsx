@@ -28,6 +28,7 @@ import { type LinkOptions } from '@tiptap/extension-link';
 import { HeadingExtension } from '../nodes/heading/heading';
 import { ParagraphExtension } from '../nodes/paragraph/paragraph';
 import { RepeatExtension } from '../nodes/repeat/repeat';
+import { AttributeCommands } from './attribute-commands';
 
 export type MailyKitOptions = {
   linkCard?: Partial<LinkCardOptions> | false;
@@ -60,6 +61,7 @@ export const MailyKit = Extension.create<MailyKitOptions>({
 
   addExtensions() {
     const extensions: AnyExtension[] = [
+      AttributeCommands,
       Document.extend({
         content: '(block|columns)+',
       }),

@@ -1,62 +1,63 @@
-import { mergeAttributes, Node } from '@tiptap/core';
+import { mergeAttributes, Node } from "@tiptap/core"
+import { updateSelectedAttributes } from "../utils/update-attribute"
 import {
   type AllowedTextDirection,
   DEFAULT_TEXT_DIRECTION,
-} from './paragraph/paragraph';
+} from "./paragraph/paragraph"
 
 export interface FooterOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, any>
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     footer: {
-      setFooter: () => ReturnType;
-      setFooterTextDirection: (direction: AllowedTextDirection) => ReturnType;
-    };
+      setFooter: () => ReturnType
+      setFooterTextDirection: (direction: AllowedTextDirection) => ReturnType
+    }
   }
 }
 
 export const Footer = Node.create<FooterOptions>({
-  name: 'footer',
-  group: 'block',
-  content: 'inline*',
+  name: "footer",
+  group: "block",
+  content: "inline*",
 
   addAttributes() {
     return {
-      'maily-component': {
-        default: 'footer',
+      "maily-component": {
+        default: "footer",
         renderHTML: (attributes) => {
           return {
-            'data-maily-component': attributes['maily-component'],
-          };
+            "data-maily-component": attributes["maily-component"],
+          }
         },
-        parseHTML: (element) => element?.getAttribute('data-maily-component'),
+        parseHTML: (element) => element?.getAttribute("data-maily-component"),
       },
       textDirection: {
         default: DEFAULT_TEXT_DIRECTION,
         parseHTML: (element) => {
           return (
-            element.getAttribute('data-text-direction') ||
-            element.getAttribute('dir') ||
+            element.getAttribute("data-text-direction") ||
+            element.getAttribute("dir") ||
             DEFAULT_TEXT_DIRECTION
-          );
+          )
         },
         renderHTML(attributes) {
           if (
             !attributes.textDirection ||
             attributes.textDirection === DEFAULT_TEXT_DIRECTION
           ) {
-            return {};
+            return {}
           }
 
           return {
-            'data-text-direction': attributes.textDirection,
+            "data-text-direction": attributes.textDirection,
             dir: attributes.textDirection,
-          };
+          }
         },
       },
-    };
+    }
   },
 
   addCommands() {
@@ -64,29 +65,24 @@ export const Footer = Node.create<FooterOptions>({
       setFooter:
         () =>
         ({ commands }) => {
-          return commands.setNode(this.name);
+          return commands.setNode(this.name)
         },
-      setFooterTextDirection:
-        (direction: AllowedTextDirection) =>
-        ({ commands }) => {
-          return commands.updateAttributes('footer', {
-            textDirection: direction,
-          });
-        },
-    };
+      setFooterTextDirection: (direction: AllowedTextDirection) =>
+        updateSelectedAttributes("footer", { textDirection: direction }),
+    }
   },
 
   parseHTML() {
-    return [{ tag: 'small[data-maily-component="footer"]' }];
+    return [{ tag: 'small[data-maily-component="footer"]' }]
   },
 
   renderHTML({ HTMLAttributes }) {
     return [
-      'small',
+      "small",
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes, {
-        class: 'footer block text-[13px] text-muted-foreground relative mb-5',
+        class: "footer block text-[13px] text-muted-foreground relative mb-5",
       }),
       0,
-    ];
+    ]
   },
-});
+})

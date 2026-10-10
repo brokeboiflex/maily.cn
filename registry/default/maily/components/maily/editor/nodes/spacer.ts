@@ -1,5 +1,6 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from './section/section';
+import { updateSelectedAttributes } from '../utils/update-attribute';
 
 export interface SpacerOptions {
   height: number;
@@ -71,17 +72,10 @@ export const Spacer = Node.create<SpacerOptions>({
           });
         },
 
-      setSpacerSize:
-        (height) =>
-        ({ commands }) => {
-          return commands.updateAttributes('spacer', { height });
-        },
+      setSpacerSize: (height) => updateSelectedAttributes('spacer', { height }),
 
-      setSpacerShowIfKey:
-        (showIfKey) =>
-        ({ commands }) => {
-          return commands.updateAttributes('spacer', { showIfKey });
-        },
+      setSpacerShowIfKey: (showIfKey) =>
+        updateSelectedAttributes('spacer', { showIfKey }),
 
       unsetSpacer:
         () =>

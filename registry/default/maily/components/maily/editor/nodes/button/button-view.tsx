@@ -1,3 +1,4 @@
+import { updateNodeViewAttributes } from '../../utils/update-attribute';
 import { AdaptiveNodePopover } from '../../components/adaptive-node-popover';
 import { useMobileEditor } from '../../components/mobile-editor-context';
 import { AlignmentSwitch } from '../../components/alignment-switch';
@@ -29,7 +30,9 @@ import { ButtonLabelInput } from './button-label-input';
 export function ButtonView(props: NodeViewProps) {
   const { t } = useMailyContext();
   const { compact } = useMobileEditor();
-  const { node, editor, getPos, updateAttributes } = props;
+  const { node, editor, getPos } = props;
+  const updateAttributes = (attrs: Record<string, any>) =>
+    updateNodeViewAttributes(props, attrs);
   const {
     text,
     isTextVariable,

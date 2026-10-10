@@ -280,7 +280,7 @@ it('completes label navigation after the parent accepts a controlled folder requ
     expect(f.listMessages).toHaveBeenLastCalledWith(
       expect.objectContaining({
         folder: 'allMail',
-        q: undefined,
+        q: 'label:projects',
         labelId: 'projects',
       })
     );

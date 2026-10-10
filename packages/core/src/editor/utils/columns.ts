@@ -4,9 +4,45 @@ import { TextSelection } from '@tiptap/pm/state';
 import { v4 as uuidv4 } from 'uuid';
 import { findParentNode } from '@tiptap/core';
 import { DEFAULT_COLUMN_WIDTH } from '../nodes/columns/column';
+import { setNodeAttributes } from './update-attribute';
 
 export function getColumnCount(editor: Editor) {
   return getClosestNodeByName(editor, 'columns')?.node?.childCount || 0;
+}
+
+export function setColumnCount(editor: Editor, count: number) {
+  const columns = getClosestNodeByName(editor, 'columns');
+  if (!columns || !Number.isInteger(count) || count < 1) return false;
+  const { node, pos } = columns;
+  if (node.childCount === count) return true;
+  const { state, dispatch } = editor.view;
+  const tr = state.tr;
+  if (count > node.childCount) {
+    const added = Array.from({ length: count - node.childCount }, () =>
+      state.schema.nodes.column.create(
+        { width: DEFAULT_COLUMN_WIDTH, columnId: uuidv4() },
+        state.schema.nodes.paragraph.create()
+      )
+    );
+    const insertPos = pos + node.nodeSize - 1;
+    tr.insert(insertPos, Fragment.from(added));
+    const lastPos =
+      insertPos +
+      added.slice(0, -1).reduce((size, column) => size + column.nodeSize, 0);
+    tr.setSelection(TextSelection.near(tr.doc.resolve(lastPos + 2)));
+  } else {
+    let retainedSize = 0;
+    node.forEach((column, _, index) => {
+      if (index < count) retainedSize += column.nodeSize;
+    });
+    const removeFrom = pos + 1 + retainedSize;
+    tr.delete(removeFrom, pos + node.nodeSize - 1);
+    if (state.selection.from >= removeFrom) {
+      tr.setSelection(TextSelection.near(tr.doc.resolve(removeFrom - 1), -1));
+    }
+  }
+  dispatch(tr);
+  return true;
 }
 
 export function getClosestNodeByName(editor: Editor, name: string) {
@@ -223,43 +259,19 @@ export function updateColumnWidth(
     return false;
   }
 
+  if (!Number.isInteger(index) || index < 0 || index >= columnsNode.childCount)
+    return false;
   const { state, dispatch } = editor.view;
-  const { tr } = state;
-  const { selection } = state;
-
-  const beforeNodeEnd = columnsNodePos + columnsNode.nodeSize;
-  const selectionRelative = {
-    from: selection.from - columnsNodePos,
-    to: selection.to - columnsNodePos,
-  };
-
-  const updatedContent: Node[] = [];
-  columnsNode.content.forEach((child, _, i) => {
-    updatedContent.push(
-      child.type.create(
-        {
-          ...child?.attrs,
-          width: i === index ? width : child?.attrs?.width,
-        },
-        child.content
-      )
-    );
+  const tr = state.tr;
+  columnsNode.forEach((column, offset, i) => {
+    if (i === index) {
+      setNodeAttributes(tr, columnsNodePos + 1 + offset, {
+        ...column.attrs,
+        width,
+      });
+    }
   });
-
-  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent));
-  const transaction = tr.replaceWith(
-    columnsNodePos,
-    beforeNodeEnd,
-    updatedColumnsNode
-  );
-
-  const newSelection = TextSelection.create(
-    transaction.doc,
-    columnsNodePos + selectionRelative.from,
-    columnsNodePos + selectionRelative.to
-  );
-
-  dispatch(transaction.setSelection(newSelection));
+  if (tr.docChanged) dispatch(tr);
   return true;
 }
 

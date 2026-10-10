@@ -220,3 +220,36 @@ triggers wrap a neutral span; trigger events and refs still reach the actual
 Button when composed with Dialog, Popover, Sheet or DropdownMenu. Folder counts
 are plain right-aligned tabular numbers. Label create/More controls share square
 44px targets and one sidebar scroller so their centers align.
+
+## Async ownership and recovery receipts
+
+Compose identity, observed revision, pending-send state and uploaded-reference
+ownership belong to the mounted data-source lifetime and the current compose
+intent. New Compose, Reply and Forward start without an unrelated draft revision.
+A departed preparation may still acknowledge a persisted draft and transfer its
+uploaded references to that draft, but cannot assign its ID to a newer composer
+or dispatch from the newer data source.
+
+The backward-compatible scalar receipt remains at
+`maily:pending-send:${recoveryScope ?? account.id}`. Each acknowledged draft also
+has an independent session-storage entry at
+`maily:pending-send-receipts:${encodeURIComponent(primaryKey)}:${encodeURIComponent(draftId)}`.
+Encoding the complete primary key keeps opaque recovery scopes isolated. A late
+acknowledgment never overwrites an unrelated primary receipt; successful delivery
+clears only its own receipt. Multiple unresolved IDs remain retained and block
+compose/send until the host reconciles them. Hosts should remove only receipts
+whose status they have established; unknown delivery must not become a new draft
+or an arbitrary resend. Storage is local recovery evidence, not proof of remote
+delivery or server-side deduplication.
+
+Initial reads, refresh and cursor pages serialize the same complete filters into
+`q`. Their success, error and pending-state cleanup all own the current source,
+query and read generation. Label mutation completion may update acknowledged
+label data, but clears selection or closes a form only when the captured
+selection/form session still owns that state.
+
+Acknowledged reader mutation results, including a fallback `getMessage`, overlay
+the matching selected thread message and trigger a thread refresh. Ordinary
+initial detail requests do not replace a newer thread snapshot. These repairs
+leave adapter signatures and consumer-owned shadcn primitives unchanged; see
+[regressions and validation](idempotence-reaudit-2026-10-10.md).

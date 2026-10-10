@@ -1,15 +1,10 @@
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { useColumnsState } from './use-columns-state';
 import { Separator } from '@/components/ui/separator';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
-import {
-  getColumnCount,
-  addColumnByIndex,
-  removeColumnByIndex,
-  updateColumnWidth,
-} from '../../utils/columns';
+import { setColumnCount, updateColumnWidth } from '../../utils/columns';
 import { ShowPopover } from '../show-popover';
 import { ColumnsWidthConfig } from './columns-width-config';
 import { Select } from '../ui/select';
@@ -44,12 +39,7 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               columnsCount={currentColumnCount}
               columnWidths={state.columnWidths}
               onColumnsCountChange={(count) => {
-                const currentColumnCount = getColumnCount(editor);
-                if (count > currentColumnCount) {
-                  addColumnByIndex(editor);
-                } else if (count < currentColumnCount) {
-                  removeColumnByIndex(editor);
-                }
+                setColumnCount(editor, count);
               }}
               onColumnWidthChange={(index, width) => {
                 updateColumnWidth(editor, index, width);
@@ -72,13 +62,15 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
         <Separator orientation="vertical" />
 
         <Select
-          icon={<IconPlaceholder
-  lucide="Space"
-  tabler="IconSpace"
-  hugeicons="HorizontalResizeIcon"
-  phosphor="ArrowsOutLineHorizontal"
-  remixicon="RiSpace"
-/>}
+          icon={
+            <IconPlaceholder
+              lucide="Space"
+              tabler="IconSpace"
+              hugeicons="HorizontalResizeIcon"
+              phosphor="ArrowsOutLineHorizontal"
+              remixicon="RiSpace"
+            />
+          }
           label={t('columnMenu.gap')}
           value={state.currentColumnsGap}
           options={[
@@ -99,13 +91,15 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={<IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-/>}
+          icon={
+            <IconPlaceholder
+              lucide="Trash2"
+              tabler="IconTrash"
+              hugeicons="Delete02Icon"
+              phosphor="Trash"
+              remixicon="RiDeleteBinLine"
+            />
+          }
           tooltip={t('columnMenu.delete')}
           command={() => {
             deleteNode(editor, 'columns');

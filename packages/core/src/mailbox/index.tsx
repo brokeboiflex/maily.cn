@@ -83,6 +83,11 @@ import {
 } from './contacts';
 import { getMailboxReplyAllRecipients } from './reply-all';
 import {
+  clearPendingSendReceipt,
+  readPendingSendReceipts,
+  retainPendingSendReceipt,
+} from './send-recovery';
+import {
   buildMailboxSearchQuery,
   type MailyMailboxSearchQuery,
 } from './search';
@@ -934,6 +939,12 @@ function MailboxSession(props: MailyMailboxViewProps) {
       if (props.selectedMessageId === undefined) setSelectedId(null);
       if (props.selectedMessageIds === undefined) setSelectedIds([]);
       composeDraftRef.current = null;
+      composeRevision.current = undefined;
+      setComposeDraftId(null);
+      setComposeSeed(null);
+      setComposeInReplyTo(null);
+      setSendUnresolved(false);
+      setLabelForm(null);
       setSaving(false);
       setSending(false);
       setDiscarding(false);
@@ -1010,13 +1021,26 @@ function MailboxSession(props: MailyMailboxViewProps) {
     props.defaultSelectedLabelId ?? null,
     props.onSelectedLabelIdChange
   );
+  const labelSelection = React.useRef({ id: selectedLabelId, epoch: 0 });
+  React.useLayoutEffect(() => {
+    if (labelSelection.current.id !== selectedLabelId)
+      labelSelection.current = {
+        id: selectedLabelId,
+        epoch: labelSelection.current.epoch + 1,
+      };
+  }, [selectedLabelId]);
   const [mailboxLabels, setMailboxLabels] = React.useState<MailyMailboxLabel[]>(
     []
   );
-  const [labelForm, setLabelForm] = React.useState<{
+  const [labelForm, updateLabelForm] = React.useState<{
     mode: 'create' | 'rename' | 'delete';
     label?: MailyMailboxLabel;
   } | null>(null);
+  const labelFormOwner = React.useRef(labelForm);
+  const setLabelForm = (next: typeof labelForm) => {
+    labelFormOwner.current = next;
+    updateLabelForm(next);
+  };
   const [labelName, setLabelName] = React.useState('');
   const [selectedIds, setSelectedIds] = useControllableState(
     props.selectedMessageIds,
@@ -1093,8 +1117,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
   const [refreshing, setRefreshing] = React.useState(false);
   // Each source lifetime owns its locks; an old finally cannot unlock a new action.
   const composeLock = React.useMemo(() => ({ current: false }), [lifetime]);
-  const composeDirty = React.useRef(false);
-  const composeOwned = React.useRef(false);
+  const composeDirty = React.useMemo(() => ({ current: false }), [lifetime]);
+  const composeOwned = React.useMemo(() => ({ current: false }), [lifetime]);
   const pendingFolderRequest = React.useRef<{
     folder: MailyMailboxFolder;
     labelId: string | null;
@@ -1111,9 +1135,18 @@ function MailboxSession(props: MailyMailboxViewProps) {
     setPendingNavigation(() => navigate);
     return false;
   };
-  const composeRevision = React.useRef<string | undefined>(undefined);
-  const pendingSendRef = React.useRef<string | null>(null);
-  const recoveryUnavailableRef = React.useRef(false);
+  const composeRevision = React.useMemo(
+    () => ({ current: undefined as string | undefined }),
+    [lifetime]
+  );
+  const pendingSendRef = React.useMemo(
+    () => ({ current: null as string | null }),
+    [lifetime]
+  );
+  const recoveryUnavailableRef = React.useMemo(
+    () => ({ current: false }),
+    [lifetime]
+  );
   const [sendUnresolved, setSendUnresolved] = React.useState(false);
   const recoveryKey = props.account?.id
     ? `maily:pending-send:${props.recoveryScope ?? props.account.id}`
@@ -1128,7 +1161,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
       if (
         legacyKey &&
         legacyKey !== recoveryKey &&
-        window.sessionStorage.getItem(legacyKey)
+        readPendingSendReceipts(legacyKey).length
       ) {
         // An older receipt has no actor identity. Keep the flow blocked until
         // its original operation is reconciled; never resend as a new actor.
@@ -1137,7 +1170,16 @@ function MailboxSession(props: MailyMailboxViewProps) {
         setErrorKey(errorLabelForAction('sendDraft'));
         return;
       }
-      draftId = window.sessionStorage.getItem(recoveryKey);
+      const receipts = readPendingSendReceipts(recoveryKey);
+      if (receipts.length > 1) {
+        // Multiple acknowledged intents cannot be identified by the current
+        // composer. Retain all receipts for explicit host reconciliation.
+        recoveryUnavailableRef.current = true;
+        setSendUnresolved(true);
+        setErrorKey(errorLabelForAction('sendDraft'));
+        return;
+      }
+      draftId = receipts[0] ?? null;
     } catch {
       recoveryUnavailableRef.current = true;
       setSendUnresolved(true);
@@ -1151,8 +1193,11 @@ function MailboxSession(props: MailyMailboxViewProps) {
       setComposeOpen(true);
       setSendUnresolved(true);
     }
-  }, [recoveryKey, props.account?.id]);
-  const composeDraftRef = React.useRef<string | null>(null);
+  }, [recoveryKey, props.account?.id, lifetime]);
+  const composeDraftRef = React.useMemo(
+    () => ({ current: null as string | null }),
+    [lifetime]
+  );
   const messagesGeneration = React.useRef(0);
   const pageCursorsRef = React.useRef<
     Array<{ cursor?: string; start: number }>
@@ -1194,6 +1239,52 @@ function MailboxSession(props: MailyMailboxViewProps) {
     [onError]
   );
 
+  const queryKey = JSON.stringify([
+    folder,
+    globalSearch,
+    search,
+    searchFields,
+    selectedLabelId,
+  ]);
+  const queryOwner = React.useRef({ key: queryKey, epoch: 0 });
+  React.useLayoutEffect(() => {
+    if (queryOwner.current.key === queryKey) return;
+    queryOwner.current = {
+      key: queryKey,
+      epoch: queryOwner.current.epoch + 1,
+    };
+    messagesGeneration.current += 1;
+    pageChangeLock.current = false;
+    setRefreshing(false);
+    setLoadingMore(false);
+    setErrorKey(null);
+  }, [queryKey, pageChangeLock]);
+  const beginMessageRead = React.useCallback(() => {
+    const isCurrent = captureLifetime();
+    const query = queryOwner.current;
+    if (!isCurrent() || query.key !== queryKey) return () => false;
+    const generation = ++messagesGeneration.current;
+    // The new read takes ownership of shared progress indicators and paging.
+    pageChangeLock.current = false;
+    setRefreshing(false);
+    setLoadingMore(false);
+    return () =>
+      isCurrent() &&
+      query.key === queryKey &&
+      queryOwner.current === query &&
+      messagesGeneration.current === generation;
+  }, [captureLifetime, queryKey, pageChangeLock]);
+  const structuredSearch = React.useMemo<MailyMailboxSearchQuery>(
+    () => ({
+      ...searchFields,
+      text: search.trim() || undefined,
+      labelId: selectedLabelId ?? searchFields.labelId,
+    }),
+    [search, searchFields, selectedLabelId]
+  );
+  const serializedSearch =
+    buildMailboxSearchQuery(structuredSearch) || undefined;
+
   const loadContactSuggestions = React.useCallback(
     async (q: string) => {
       if (dataSource.listContactSuggestions) {
@@ -1227,10 +1318,12 @@ function MailboxSession(props: MailyMailboxViewProps) {
   }, [captureLifetime, dataSource]);
 
   const refreshMessages = React.useCallback(
-    async (preservePages = false, folderOverride?: MailyMailboxFolder) => {
-      const isCurrent = captureLifetime();
+    async (
+      preservePages: boolean,
+      folderOverride: MailyMailboxFolder | undefined,
+      isCurrent: () => boolean
+    ) => {
       if (!isCurrent()) return;
-      const generation = ++messagesGeneration.current;
       const nextFolder =
         (props.folder === undefined ? folderOverride : undefined) ??
         (globalSearch ? 'allMail' : folder);
@@ -1244,21 +1337,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
         // pagination, including a recovered send before the first list loads.
       }
       let currentIndex = pageIndexRef.current;
-      const structuredSearch: MailyMailboxSearchQuery = {
-        ...searchFields,
-        text: search.trim() || undefined,
-        labelId: selectedLabelId ?? searchFields.labelId,
-      };
-      const q = buildMailboxSearchQuery({
-        text: structuredSearch.text,
-        from: structuredSearch.from,
-        to: structuredSearch.to,
-        subject: structuredSearch.subject,
-        after: structuredSearch.after,
-        before: structuredSearch.before,
-        unread: structuredSearch.unread,
-        hasAttachments: structuredSearch.hasAttachments,
-      });
       // Rebuild the cursor chain after mutations/polling: a host cursor can
       // depend on the preceding page. Keep only the requested page visible.
       const refreshedPages: Array<{ cursor?: string; start: number }> = [
@@ -1270,13 +1348,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
       for (let index = 0; index <= currentIndex; index += 1) {
         const page = await dataSource.listMessages({
           folder: nextFolder,
-          q: q || undefined,
+          q: serializedSearch,
           search: structuredSearch,
           labelId: selectedLabelId ?? undefined,
           cursor,
           limit: pageSize,
         });
-        if (!isCurrent() || generation !== messagesGeneration.current) return;
+        if (!isCurrent()) return;
         total = page.total ?? total;
         const atTarget = index === currentIndex;
         if (atTarget || !page.nextCursor) {
@@ -1308,26 +1386,25 @@ function MailboxSession(props: MailyMailboxViewProps) {
       }
     },
     [
-      captureLifetime,
       dataSource,
       folder,
       globalSearch,
       pageSize,
-      search,
-      searchFields,
+      structuredSearch,
+      serializedSearch,
       selectedLabelId,
     ]
   );
 
   const refreshMailbox = React.useCallback(
     async (folderOverride?: MailyMailboxFolder) => {
-      const isCurrent = captureLifetime();
+      const isCurrent = beginMessageRead();
       if (!isCurrent()) return;
       setRefreshing(true);
       try {
         await Promise.all([
           refreshCounts(),
-          refreshMessages(true, folderOverride),
+          refreshMessages(true, folderOverride, isCurrent),
         ]);
         if (!isCurrent()) return;
         setErrorKey(null);
@@ -1339,7 +1416,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
         if (isCurrent()) setMessagesLoading(false);
       }
     },
-    [captureLifetime, refreshCounts, refreshMessages, reportError]
+    [beginMessageRead, refreshCounts, refreshMessages, reportError]
   );
 
   const latestRefreshMailbox = React.useRef(refreshMailbox);
@@ -1355,15 +1432,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
         direction === 'next' ? currentIndex + 1 : currentIndex - 1;
       if (nextIndex < 0 || (direction === 'next' && !messages.nextCursor))
         return;
-      const isCurrent = captureLifetime();
+      const isCurrent = beginMessageRead();
       if (!isCurrent()) return;
-      const generation = ++messagesGeneration.current;
-      const query: MailyMailboxSearchQuery = {
-        ...searchFields,
-        text: search.trim() || undefined,
-        labelId: selectedLabelId ?? searchFields.labelId,
-      };
-      const q = buildMailboxSearchQuery(query);
       const target =
         direction === 'next'
           ? { cursor: messages.nextCursor ?? undefined, start: pageEnd + 1 }
@@ -1373,13 +1443,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
       try {
         const page = await dataSource.listMessages({
           folder: globalSearch ? 'allMail' : folder,
-          q: q || undefined,
-          search: query,
+          q: serializedSearch,
+          search: structuredSearch,
           labelId: selectedLabelId ?? undefined,
           cursor: target?.cursor,
           limit: pageSize,
         });
-        if (!isCurrent() || generation !== messagesGeneration.current) return;
+        if (!isCurrent()) return;
         if (!page.items.length && direction === 'next') {
           setMessages((current) => ({
             ...current,
@@ -1399,15 +1469,16 @@ function MailboxSession(props: MailyMailboxViewProps) {
           setSelectedId(null);
         setMessages({ ...page, total: page.total ?? messages.total });
       } catch (error) {
-        if (isCurrent() && generation === messagesGeneration.current)
-          reportError(error, 'refresh');
+        if (isCurrent()) reportError(error, 'refresh');
       } finally {
-        pageChangeLock.current = false;
-        if (isCurrent()) setLoadingMore(false);
+        if (isCurrent()) {
+          pageChangeLock.current = false;
+          setLoadingMore(false);
+        }
       }
     },
     [
-      captureLifetime,
+      beginMessageRead,
       dataSource,
       folder,
       globalSearch,
@@ -1418,8 +1489,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
       pageSize,
       pageChangeLock,
       reportError,
-      search,
-      searchFields,
+      structuredSearch,
+      serializedSearch,
       selectedLabelId,
     ]
   );
@@ -1450,16 +1521,20 @@ function MailboxSession(props: MailyMailboxViewProps) {
     let cancelled = false;
 
     async function run() {
+      const isCurrent = beginMessageRead();
       setMessagesLoading(true);
       try {
-        await Promise.all([refreshCounts(), refreshMessages()]);
+        await Promise.all([
+          refreshCounts(),
+          refreshMessages(false, undefined, isCurrent),
+        ]);
       } catch (error) {
-        if (!cancelled) {
+        if (!cancelled && isCurrent()) {
           reportError(error, 'refresh');
           setMessages({ items: [], nextCursor: null });
         }
       } finally {
-        if (!cancelled) setMessagesLoading(false);
+        if (!cancelled && isCurrent()) setMessagesLoading(false);
       }
     }
 
@@ -1470,23 +1545,49 @@ function MailboxSession(props: MailyMailboxViewProps) {
       };
 
     const id = window.setInterval(() => {
-      Promise.all([refreshCounts(), refreshMessages(true)]).catch((error) => {
-        if (!cancelled) reportError(error, 'refresh');
-      });
+      const isCurrent = beginMessageRead();
+      Promise.all([
+        refreshCounts(),
+        refreshMessages(true, undefined, isCurrent),
+      ])
+        .catch((error) => {
+          if (!cancelled && isCurrent()) reportError(error, 'refresh');
+        })
+        .finally(() => {
+          if (!cancelled && isCurrent()) setMessagesLoading(false);
+        });
     }, pollIntervalMs);
     return () => {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [pollIntervalMs, refreshCounts, refreshMessages, reportError]);
+  }, [
+    pollIntervalMs,
+    beginMessageRead,
+    refreshCounts,
+    refreshMessages,
+    reportError,
+  ]);
 
   const [detailRevision, invalidateDetail] = React.useReducer(
     (n: number) => n + 1,
     0
   );
+  const [threadRevision, invalidateThread] = React.useReducer(
+    (n: number) => n + 1,
+    0
+  );
+  const [threadDetailOverride, setThreadDetailOverride] = React.useState<{
+    selection: typeof readerSelection.current;
+    detail: MailyMailboxMessageDetail;
+  } | null>(null);
+  React.useLayoutEffect(() => {
+    setThreadDetailOverride(null);
+  }, [dataSource, selectedId]);
   const clearReaderAfterMutation = () => {
     setSelectedId(null);
     setDetail(null);
+    setThreadDetailOverride(null);
     // A host may keep the same selected ID after a mutation. Re-read its
     // actual backend state rather than overriding that controlled selection.
     if (props.selectedMessageId != null) invalidateDetail();
@@ -1519,6 +1620,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
           ) {
             const isDraft = next.status === 'draft';
             composeDraftRef.current = isDraft ? next.id : null;
+            composeRevision.current = isDraft ? next._revision : undefined;
             composeOwned.current = false;
             setComposeSession((session) => session + 1);
             setComposeDraftId(isDraft ? next.id : null);
@@ -1571,7 +1673,14 @@ function MailboxSession(props: MailyMailboxViewProps) {
     return () => {
       cancelled = true;
     };
-  }, [dataSource, reportError, selectedId, selectedThreadId]);
+  }, [
+    dataSource,
+    reportError,
+    selectedId,
+    selectedThreadId,
+    threadRevision,
+    detailRevision,
+  ]);
 
   const selectFolder = (
     next: MailyMailboxFolder,
@@ -1596,6 +1705,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     composeOwned.current = false;
     messagesGeneration.current += 1;
     composeDraftRef.current = null;
+    composeRevision.current = undefined;
     setFolder(next);
     if (!acceptedByHost || props.searchScope === undefined)
       setGlobalSearch(false);
@@ -1651,13 +1761,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
     if (props.selectedLabelId === undefined) setSelectedLabelId(null);
   }, [committedSearchKey]);
 
-  const queryKey = JSON.stringify([
-    folder,
-    globalSearch,
-    search,
-    searchFields,
-    selectedLabelId,
-  ]);
   const previousQuery = React.useRef(queryKey);
   React.useEffect(() => {
     if (previousQuery.current !== queryKey) {
@@ -1675,6 +1778,15 @@ function MailboxSession(props: MailyMailboxViewProps) {
   ]);
 
   const [composeSession, setComposeSession] = React.useState(0);
+  const composeIntent = React.useMemo(() => ({}), [lifetime, composeSession]);
+  const currentComposeIntent = React.useRef(composeIntent);
+  React.useLayoutEffect(() => {
+    currentComposeIntent.current = composeIntent;
+  }, [composeIntent]);
+  const captureCompose = () => {
+    const isCurrent = captureLifetime();
+    return () => isCurrent() && currentComposeIntent.current === composeIntent;
+  };
 
   const selectMessage = (row: MailyMailboxMessageRow) => {
     if (
@@ -1732,6 +1844,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     composeOwned.current = false;
     setComposeSession((session) => session + 1);
     composeDraftRef.current = null;
+    composeRevision.current = undefined;
     setSelectedId(null);
     setDetail(null);
     setComposeDraftId(null);
@@ -1748,7 +1861,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
   const saveDraft = async (
     values: MailyMailboxComposeValues
   ): Promise<boolean> => {
-    const isCurrent = captureLifetime();
+    const isCurrent = captureCompose();
     if (!isCurrent()) return false;
     if (!composeHydrated) return false;
     const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
@@ -1798,7 +1911,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
     values: MailyMailboxComposeValues,
     onPrepared?: () => void
   ) => {
-    const isCurrent = captureLifetime();
+    const isLifetimeCurrent = captureLifetime();
+    const isCurrent = captureCompose();
     const selection = readerSelection.current;
 
     if (!isCurrent()) return;
@@ -1829,44 +1943,45 @@ function MailboxSession(props: MailyMailboxViewProps) {
         draftId = pendingSendRef.current;
       } else if (draftId) {
         const saved = await dataSource.updateDraft(draftId, draft);
-        composeRevision.current = saved._revision;
+        if (isCurrent()) composeRevision.current = saved._revision;
       } else {
         const created = await dataSource.createDraft(draft);
         draftId = created.id;
-        composeRevision.current = created._revision;
-        composeDraftRef.current = draftId;
         if (isCurrent()) {
+          composeRevision.current = created._revision;
+          composeDraftRef.current = draftId;
           setComposeDraftId(draftId);
           setSelectedId(draftId);
         }
       }
 
+      // Acknowledgment hands the captured form's uploaded references to the
+      // draft, even if that form departed. Its callback owns its own lifecycle.
       onPrepared?.();
-
       // Persist the actual draft before send: its create receipt is already complete.
       // A reload must recover this draft rather than create another message.
       if (!recoveryKey)
         throw new Error('errors.idempotency.storage-unavailable');
-      window.sessionStorage.setItem(recoveryKey, draftId);
-      if (window.sessionStorage.getItem(recoveryKey) !== draftId)
-        throw new Error('errors.idempotency.storage-unavailable');
-      pendingSendRef.current = draftId;
+      retainPendingSendReceipt(recoveryKey, draftId);
       if (!isCurrent()) return;
+      pendingSendRef.current = draftId;
       setSendUnresolved(true);
       const result = await dataSource.sendDraft(draftId);
-      if (!isCurrent()) return;
-      pendingSendRef.current = null;
       if (recoveryKey) {
         try {
-          window.sessionStorage.removeItem(recoveryKey);
+          clearPendingSendReceipt(recoveryKey, draftId);
         } catch {
           if (!isCurrent()) return;
           /* In-page recovery remains available. */
         }
       }
+      if (!isCurrent()) return;
+      pendingSendRef.current = null;
       setSendUnresolved(false);
       onSent?.(result);
       setComposeOpen(false);
+      composeDraftRef.current = null;
+      composeRevision.current = undefined;
       setComposeDraftId(null);
       setComposeSeed(null);
       setComposeInReplyTo(null);
@@ -1880,7 +1995,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
       reportError(error, 'sendDraft');
     } finally {
       composeLock.current = false;
-      if (isCurrent()) setSending(false);
+      if (isLifetimeCurrent()) setSending(false);
     }
   };
 
@@ -1903,6 +2018,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
         if (!isCurrent()) return;
       }
       setComposeOpen(false);
+      composeDraftRef.current = null;
+      composeRevision.current = undefined;
       setComposeDraftId(null);
       setComposeSeed(null);
       setComposeInReplyTo(null);
@@ -1931,6 +2048,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     composeOwned.current = false;
     setComposeSession((session) => session + 1);
     composeDraftRef.current = null;
+    composeRevision.current = undefined;
     const date = formatDate(message.createdAt, 'long');
     setSelectedId(message.id);
     setComposeDraftId(null);
@@ -1958,6 +2076,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     composeOwned.current = false;
     setComposeSession((session) => session + 1);
     composeDraftRef.current = null;
+    composeRevision.current = undefined;
     setSelectedId(message.id);
     setComposeDraftId(null);
     setComposeInReplyTo(null);
@@ -2020,11 +2139,23 @@ function MailboxSession(props: MailyMailboxViewProps) {
         clearReaderAfterMutation();
       } else if (ownsReader() && result && 'fromAddress' in result) {
         setDetail(result);
+        setThreadDetailOverride({
+          selection: readerSelection.current,
+          detail: result,
+        });
+        invalidateThread();
       } else if (ownsReader()) {
         try {
           const nextDetail = await dataSource.getMessage(message.id);
           if (!isCurrent()) return;
-          if (ownsReader()) setDetail(nextDetail);
+          if (ownsReader()) {
+            setDetail(nextDetail);
+            setThreadDetailOverride({
+              selection: readerSelection.current,
+              detail: nextDetail,
+            });
+            invalidateThread();
+          }
           if (!isCurrent()) return;
         } catch {
           if (!isCurrent()) return;
@@ -2181,6 +2312,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
     const name = requestedName?.trim();
     if (operation !== 'delete' && (!name || name.length > 128)) return;
     const isCurrent = captureLifetime();
+    const selectedLabel = labelSelection.current;
+    const form = labelFormOwner.current;
     composeLock.current = true;
     try {
       if (operation === 'create' && dataSource.createLabel)
@@ -2190,15 +2323,21 @@ function MailboxSession(props: MailyMailboxViewProps) {
       if (operation === 'delete' && label && dataSource.deleteLabel) {
         await dataSource.deleteLabel(label.id);
         if (!isCurrent()) return;
-        if (selectedLabelId === label.id) setSelectedLabelId(null);
+        if (
+          labelSelection.current === selectedLabel &&
+          selectedLabel.id === label.id
+        )
+          setSelectedLabelId(null);
       }
       if (!isCurrent()) return;
       const generation = ++labelsGeneration.current;
       const nextLabels = await dataSource.listLabels();
       if (!isCurrent()) return;
       if (generation === labelsGeneration.current) setMailboxLabels(nextLabels);
-      setLabelForm(null);
-      setLabelName('');
+      if (labelFormOwner.current === form) {
+        setLabelForm(null);
+        setLabelName('');
+      }
       await latestRefreshMailbox.current();
     } catch (error) {
       if (isCurrent()) reportError(error, 'messageAction');
@@ -2338,6 +2477,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     setSelectedId(null);
     setComposeOpen(false);
     composeDraftRef.current = null;
+    composeRevision.current = undefined;
     setComposeDraftId(null);
     setComposeSeed(null);
     setComposeInReplyTo(null);
@@ -3113,6 +3253,11 @@ function MailboxSession(props: MailyMailboxViewProps) {
                 backButton={backButton}
                 getMessageSource={dataSource.getMessageSource}
                 thread={thread}
+                threadDetailOverride={
+                  threadDetailOverride?.selection === readerSelection.current
+                    ? threadDetailOverride.detail
+                    : null
+                }
                 detail={detail}
                 isLoading={detailLoading}
                 labels={labels}
@@ -3416,6 +3561,7 @@ function MessageReader(props: {
   backButton: React.ReactNode;
   getMessageSource: MailyMailboxDataSource['getMessageSource'];
   thread?: MailyMailboxThread | null;
+  threadDetailOverride?: MailyMailboxMessageDetail | null;
   detail: MailyMailboxMessageDetail | null;
   isLoading: boolean;
   labels: MailyMailboxLabels;
@@ -3499,9 +3645,18 @@ function MessageReader(props: {
       </div>
     );
 
+  const threadDetail = props.threadDetailOverride;
   const threadMessages =
     props.thread?.threadId && props.thread.threadId === detail.threadId
-      ? props.thread.messages
+      ? !threadDetail
+        ? props.thread.messages
+        : props.thread.messages.some(
+              (message) => message.id === threadDetail.id
+            )
+          ? props.thread.messages.map((message) =>
+              message.id === threadDetail.id ? threadDetail : message
+            )
+          : [...props.thread.messages, threadDetail]
       : [detail];
   const labelsToShow = detail.labels ?? [];
   const isFavorite = detail.isFavorite ?? false;

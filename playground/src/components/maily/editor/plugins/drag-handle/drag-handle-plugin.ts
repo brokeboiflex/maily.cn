@@ -196,7 +196,7 @@ const findElementNextToCoords = (options: FindElementNextToCoords) => {
   let resultNode = null
   let d = null
   let l = x
-  for (; null === resultNode && l < window.innerWidth && l > 0;) {
+  for (; null === resultNode && l < window.innerWidth && l > 0; ) {
     const elements = document.elementsFromPoint(l, y)
     const index = elements.findIndex((el) =>
       el.classList.contains("ProseMirror")
@@ -263,7 +263,7 @@ const getAncestorNodeAtDepth = (e: TNode, t: number) => {
     o = e.resolve(t)
   let { depth: r } = o,
     i = n
-  for (; r > 0;) {
+  for (; r > 0; ) {
     const e = o.node(r)
     ;((r -= 1), 0 === r && (i = e))
   }
@@ -272,7 +272,7 @@ const getAncestorNodeAtDepth = (e: TNode, t: number) => {
 // @ts-ignore
 const getOuterNodePos = (e, t) => {
   let n = t
-  for (; n && n.parentNode && n.parentNode !== e.dom;) n = n.parentNode
+  for (; n && n.parentNode && n.parentNode !== e.dom; ) n = n.parentNode
   return n
 }
 
@@ -318,12 +318,16 @@ export function DragHandlePlugin(
 
   let dragImage: HTMLElement | null = null
   let dragTimer: ReturnType<typeof setTimeout> | null = null
+  let ownedDragging: typeof editor.view.dragging = null
   const cleanupDrag = () => {
     if (dragTimer) clearTimeout(dragTimer)
     dragTimer = null
     dragImage?.remove()
     dragImage = null
     document.removeEventListener("drop", cleanupDrag)
+    if (ownedDragging && editor.view.dragging === ownedDragging)
+      editor.view.dragging = null
+    ownedDragging = null
     element.style.pointerEvents = "auto"
   }
   const onDragStart = (e: DragEvent) => {
@@ -355,6 +359,7 @@ export function DragHandlePlugin(
     e.dataTransfer.clearData()
     e.dataTransfer.setDragImage(h, 0, 0)
     view.dragging = { slice: E, move: true }
+    ownedDragging = view.dragging
     g.setSelection(C as unknown as Selection)
     view.dispatch(g)
     document.addEventListener("drop", cleanupDrag, { once: true })
@@ -362,9 +367,6 @@ export function DragHandlePlugin(
       element && (element.style.pointerEvents = "none")
     }, 0)
   }
-  element.addEventListener("dragstart", onDragStart)
-  element.addEventListener("dragend", cleanupDrag)
-
   return new Plugin({
     key: typeof e === "string" ? new PluginKey(e) : e,
     state: {
@@ -394,6 +396,8 @@ export function DragHandlePlugin(
     },
     view: (e) => {
       var t
+      element.addEventListener("dragstart", onDragStart)
+      element.addEventListener("dragend", cleanupDrag)
       return (
         (element.draggable = true),
         (element.style.pointerEvents = "auto"),
@@ -461,6 +465,9 @@ export function DragHandlePlugin(
             element.removeEventListener("dragend", cleanupDrag)
             ;(null == tippyInstance || tippyInstance.destroy(),
               element && removeNode(container))
+            tippyInstance = null
+            currentNode = null
+            lastNodePos = -1
           },
         }
       )
