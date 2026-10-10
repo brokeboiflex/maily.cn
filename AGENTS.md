@@ -398,6 +398,10 @@ callbacks because composite controls may project one attribute while updating
 several. Repeated text-block type commands must avoid TipTap's clear/rebuild
 fallback without suppressing deliberate wrapper conversion.
 
+Desktop and floating/mobile text alignment controls share `setTextAlignment`.
+Keep its full selected-range default comparison so selecting Left on implicit
+default text preserves Redo, while mixed alignments still change every target.
+
 TipTap unmount retains editor state. Cancelled paste placeholders must be removed
 from that current retained state before URL revocation, including queued plugin
 removal followed by unmount/remount; an obsolete view cannot own that cleanup.

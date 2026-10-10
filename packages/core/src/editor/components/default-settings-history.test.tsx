@@ -7,6 +7,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { extensions } from '../extensions';
 import { ButtonView } from '../nodes/button/button-view';
 import { TextBubbleContent } from './text-menu/text-bubble-content';
+import { EditorMenuBar } from './editor-menu-bar';
 import { TooltipProvider } from './ui/tooltip';
 
 // Only the NodeView host and outer settings surface are adapted for HappyDOM.
@@ -203,6 +204,90 @@ it('Left still changes every block in a mixed alignment selection', async () => 
     expect(editor.state.doc.child(0).attrs.textAlign).toBe('left');
     expect(editor.state.doc.child(1).attrs.textAlign).toBe('left');
     editor.commands.undo();
+    expect(editor.getJSON()).toEqual(before);
+  } finally {
+    await view.dispose();
+    editor.destroy();
+  }
+});
+
+it.each(['paragraph', 'heading', 'footer'])(
+  'the desktop Left control preserves implicit %s alignment and Redo',
+  async (type) => {
+    const editor = make([
+      { type, content: [{ type: 'text', text: 'abc' }] },
+      { type: 'paragraph' },
+    ]);
+    editor.commands.setTextSelection({ from: 1, to: 4 });
+    editor.commands.setMark('bold');
+    editor.commands.undo();
+    const before = editor.getJSON();
+    const view = await mount(
+      <TooltipProvider>
+        <EditorMenuBar
+          editor={editor}
+          config={{}}
+          viewMode="design"
+          onViewModeChange={() => {}}
+        />
+      </TooltipProvider>
+    );
+    try {
+      await click(
+        view.container.querySelector<HTMLElement>(
+          'button[aria-label="Align Left"]'
+        )
+      );
+      expect(editor.getJSON()).toEqual(before);
+      expect(redoDepth(editor.state)).toBe(1);
+      expect(undoDepth(editor.state)).toBe(0);
+      await act(async () => {
+        expect(editor.commands.redo()).toBe(true);
+      });
+    } finally {
+      await view.dispose();
+      editor.destroy();
+    }
+  }
+);
+
+it('the desktop Left control still aligns every block in a mixed selection', async () => {
+  const editor = make([
+    {
+      type: 'paragraph',
+      content: [{ type: 'text', text: 'abc' }],
+    },
+    {
+      type: 'heading',
+      attrs: { textAlign: 'right', level: 2 },
+      content: [{ type: 'text', text: 'def' }],
+    },
+    { type: 'paragraph' },
+  ]);
+  editor.commands.setTextSelection({ from: 1, to: 9 });
+  const before = editor.getJSON();
+  const view = await mount(
+    <TooltipProvider>
+      <EditorMenuBar
+        editor={editor}
+        config={{}}
+        viewMode="design"
+        onViewModeChange={() => {}}
+      />
+    </TooltipProvider>
+  );
+  try {
+    await click(
+      view.container.querySelector<HTMLElement>(
+        'button[aria-label="Align Left"]'
+      )
+    );
+    expect(editor.state.doc.child(0).attrs.textAlign).toBe('left');
+    expect(editor.state.doc.child(1).attrs.textAlign).toBe('left');
+    expect(undoDepth(editor.state)).toBe(1);
+    await act(async () => {
+      expect(editor.commands.undo()).toBe(true);
+    });
     expect(editor.getJSON()).toEqual(before);
   } finally {
     await view.dispose();

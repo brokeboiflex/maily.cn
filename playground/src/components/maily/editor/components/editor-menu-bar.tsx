@@ -9,6 +9,7 @@ import { Editor as EditorType } from "@tiptap/core"
 import { useEditorState } from "@tiptap/react"
 import { type EditorProps, type EditorViewMode } from ".."
 import { cn } from "@/lib/utils"
+import { setTextAlignment } from "../utils/set-text-alignment"
 import { BubbleMenuButton } from "./bubble-menu-button"
 import { type BubbleMenuItem } from "./text-menu/text-bubble-menu"
 import {
@@ -258,7 +259,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: "left",
-        command: () => editor.chain().focus().setTextAlign("left").run(),
+        command: () => setTextAlignment(editor, "left"),
         isActive: () => editorState.textAlign === "left",
         group: "alignment",
         icon: <AlignLeft />,
@@ -266,7 +267,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: "center",
-        command: () => editor.chain().focus().setTextAlign("center").run(),
+        command: () => setTextAlignment(editor, "center"),
         isActive: () => editorState.textAlign === "center",
         group: "alignment",
         icon: <AlignCenter />,
@@ -274,7 +275,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: "right",
-        command: () => editor.chain().focus().setTextAlign("right").run(),
+        command: () => setTextAlignment(editor, "right"),
         isActive: () => editorState.textAlign === "right",
         group: "alignment",
         icon: <AlignRight />,

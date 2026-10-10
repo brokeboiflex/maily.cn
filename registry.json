@@ -668,6 +668,11 @@
           "target": "@components/maily/editor/utils/replace-deprecated.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/utils/set-text-alignment.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/set-text-alignment.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/utils/spacing.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/spacing.ts"
@@ -1535,6 +1540,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/replace-deprecated.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/replace-deprecated.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/set-text-alignment.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/set-text-alignment.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/spacing.ts",

@@ -388,3 +388,21 @@ build passes with the original 29 host-file hashes unchanged. The primitive
 audit, changed-file Prettier and generated-source consistency checks pass;
 ESLint adds no diagnostics relative to the prior source (existing diagnostics
 remain). Provider and physical-device limitations stated above still apply.
+
+The fresh audit of `6edfe05` found one further original F03 entry point: the
+desktop toolbar's Left action still serialized the implicit default and cleared
+Redo. Desktop and floating/mobile controls now share the same live full-range
+comparison. Four mounted regressions cover paragraph/heading/footer defaults and
+a genuinely mixed range; the independent synchronous auditor rechecks this
+correction before the final report.
+
+That independent review passed 48 retained synchronous tests and 52 temporary
+checks, including whole-range desktop alignment, exact history restoration and
+atomic column changes. After the correction, all **197 core tests and 28 render
+tests pass (225 total)**. TypeScript, workspace/playground production builds,
+the clean Radix/Base/Bun consumer matrix, six consumer browser checks and nine
+playground browser checks pass. All 29 host-file hashes are unchanged; all 302
+embedded registry entries match staging. The final delta introduces no ESLint
+diagnostics: the text menu's 11 existing errors are identical to the prior
+source. The fresh audit findings are reported separately; passing these gates
+does not establish a defect-free editor or mailbox.

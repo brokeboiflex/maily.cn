@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { type EditorProps, type EditorViewMode } from '@/editor';
 import { cn } from '../utils/classname';
+import { setTextAlignment } from '../utils/set-text-alignment';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -254,7 +255,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: 'left',
-        command: () => editor.chain().focus().setTextAlign('left').run(),
+        command: () => setTextAlignment(editor, 'left'),
         isActive: () => editorState.textAlign === 'left',
         group: 'alignment',
         icon: <AlignLeft />,
@@ -262,7 +263,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: 'center',
-        command: () => editor.chain().focus().setTextAlign('center').run(),
+        command: () => setTextAlignment(editor, 'center'),
         isActive: () => editorState.textAlign === 'center',
         group: 'alignment',
         icon: <AlignCenter />,
@@ -270,7 +271,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
       },
       {
         name: 'right',
-        command: () => editor.chain().focus().setTextAlign('right').run(),
+        command: () => setTextAlignment(editor, 'right'),
         isActive: () => editorState.textAlign === 'right',
         group: 'alignment',
         icon: <AlignRight />,
