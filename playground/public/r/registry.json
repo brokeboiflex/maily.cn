@@ -50,9 +50,7 @@
         "tippy.js@^6.3.7",
         "uuid@^11.1.0"
       ],
-      "devDependencies": [
-        "@tailwindcss/typography@^0.5.16"
-      ],
+      "devDependencies": ["@tailwindcss/typography@^0.5.16"],
       "files": [
         {
           "path": "registry/default/maily/components/maily/blocks/button.tsx",
@@ -648,6 +646,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/mobile-block-actions.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/mobile-block-actions.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/node-action.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/node-action.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/node-options.ts",
@@ -906,9 +909,7 @@
         "tippy.js@^6.3.7",
         "uuid@^11.1.0"
       ],
-      "devDependencies": [
-        "@tailwindcss/typography@^0.5.16"
-      ],
+      "devDependencies": ["@tailwindcss/typography@^0.5.16"],
       "files": [
         {
           "path": "registry/default/maily/components/maily/blocks/button.tsx",
@@ -1504,6 +1505,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/mobile-block-actions.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/mobile-block-actions.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/node-action.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/node-action.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/node-options.ts",

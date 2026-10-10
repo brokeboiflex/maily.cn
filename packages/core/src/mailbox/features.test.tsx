@@ -1058,3 +1058,162 @@ describe('MailboxView feature contracts', () => {
     }
   });
 });
+
+it('releases replaced-source pending UI and keeps new operations locked after old completion', async () => {
+  const oldPending = deferred<MailyMailboxMessageDetail>();
+  const newPending = deferred<MailyMailboxMessageDetail>();
+  const newAction = vi.fn(() => newPending.promise);
+  const rendered = await renderMailbox(
+    createDataSource({ runMessageAction: () => oldPending.promise }),
+    { messageActions: ['favorite'] }
+  );
+  try {
+    await rendered.clickButtonContaining('Feature subject');
+    await rendered.click('[aria-label="Add star"]');
+    await rendered.replaceDataSource(
+      createDataSource({ runMessageAction: newAction })
+    );
+    await rendered.click('[aria-label="Compose"]');
+    expect(
+      rendered.container.querySelector('input[name="subject"]')
+    ).toBeTruthy();
+    await rendered.click('[aria-label="Back to list"]');
+    await rendered.clickButtonContaining('Feature subject');
+    await rendered.click('[aria-label="Add star"]');
+    oldPending.resolve(detail(row('message-1', 'Feature subject')));
+    await flush();
+    await rendered.click('[aria-label="Add star"]');
+    expect(newAction).toHaveBeenCalledTimes(1);
+    newPending.resolve(
+      detail(row('message-1', 'Feature subject'), { isFavorite: true })
+    );
+    await flush();
+    expect(
+      rendered.container.querySelector('[aria-label="Remove star"]')
+    ).toBeTruthy();
+  } finally {
+    rendered.unmount();
+  }
+});
+
+it('rejects an initial label snapshot after a newer acknowledged label mutation', async () => {
+  const initial = deferred<{ id: string; name: string }[]>();
+  const created = { id: 'new-label', name: 'Created label' };
+  const listLabels = vi
+    .fn()
+    .mockImplementationOnce(() => initial.promise)
+    .mockResolvedValue([created]);
+  const rendered = await renderMailbox(
+    createDataSource({ listLabels, createLabel: () => created })
+  );
+  try {
+    await rendered.click('[aria-label="Create label"]');
+    await act(async () => {
+      const dialog = document.querySelector('[role="dialog"]')!;
+      const input = dialog.querySelector('input')!;
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, 'Created label');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      document
+        .querySelector('[role="dialog"] form')!
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    );
+    await flush();
+    expect(rendered.container.textContent).toContain('Created label');
+    initial.resolve([{ id: 'stale-label', name: 'Stale label' }]);
+    await flush();
+    expect(rendered.container.textContent).toContain('Created label');
+    expect(rendered.container.textContent).not.toContain('Stale label');
+  } finally {
+    rendered.unmount();
+  }
+});
+
+it('keeps the mounted editor when the active Visual editor mode is selected again', async () => {
+  const rendered = await renderMailbox(createDataSource(), {
+    defaultComposeBodyMode: 'mailyEditor',
+  });
+  try {
+    await rendered.click('[aria-label="Compose"]');
+    await flush();
+    const editor = rendered.container.querySelector<HTMLElement>('.tiptap');
+    expect(editor).toBeTruthy();
+    editor!.focus();
+    await rendered.clickButtonText('Visual editor');
+    expect(rendered.container.querySelector('.tiptap')).toBe(editor);
+  } finally {
+    rendered.unmount();
+  }
+});
+
+it('keeps a pending initial label read valid when label creation rejects', async () => {
+  const initial = deferred<{ id: string; name: string }[]>();
+  const listLabels = vi.fn(() => initial.promise);
+  const rendered = await renderMailbox(
+    createDataSource({
+      listLabels,
+      createLabel: () => Promise.reject(Error('write rejected')),
+    })
+  );
+  try {
+    await rendered.click('[aria-label="Create label"]');
+    await act(async () => {
+      const dialog = document.querySelector('[role="dialog"]')!;
+      const input = dialog.querySelector('input')!;
+      Object.getOwnPropertyDescriptor(
+        HTMLInputElement.prototype,
+        'value'
+      )!.set!.call(input, 'Rejected label');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () =>
+      document
+        .querySelector('[role="dialog"] form')!
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    );
+    await flush();
+    initial.resolve([{ id: 'existing-label', name: 'Existing label' }]);
+    await flush();
+    expect(rendered.container.textContent).toContain('Existing label');
+    expect(listLabels).toHaveBeenCalledTimes(1);
+  } finally {
+    rendered.unmount();
+  }
+});
+
+it('returns a newly prepared draft to the Sent list after its pending send succeeds', async () => {
+  const pending = deferred<void>();
+  const sendDraft = vi.fn(() => pending.promise);
+  const draft = detail(
+    row('draft-1', 'Prepared draft', { direction: 'out', status: 'draft' })
+  );
+  const rendered = await renderMailbox(
+    createDataSource({ sendDraft, getMessage: () => draft }),
+    { account: { id: crypto.randomUUID(), address: 'me@example.com' } }
+  );
+  try {
+    await rendered.click('[aria-label="Compose"]');
+    await rendered.clickButtonText('Send');
+    await flush();
+    expect(sendDraft).toHaveBeenCalledWith('draft-1');
+    pending.resolve();
+    await flush();
+    expect(
+      rendered.container.querySelector('[aria-label="Back to list"]')
+    ).toBeNull();
+    expect(
+      rendered.container.querySelector('input[name="subject"]')
+    ).toBeNull();
+    expect(
+      rendered.container
+        .querySelector('[aria-label="Sent"]')
+        ?.getAttribute('aria-current')
+    ).toBe('page');
+  } finally {
+    rendered.unmount();
+  }
+});

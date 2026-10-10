@@ -219,12 +219,19 @@ export async function resolveFontSelection(
         }
 
         const value = (await response.json()) as Partial<FontsourceVersion>;
-        return typeof value.latest === 'string' &&
-          FONT_VERSION_PATTERN.test(value.latest)
-          ? value.latest
-          : 'latest';
+        if (
+          typeof value.latest !== 'string' ||
+          value.latest.toLowerCase() === 'latest' ||
+          !FONT_VERSION_PATTERN.test(value.latest)
+        ) {
+          throw new Error('Fontsource returned an invalid pinned version');
+        }
+        return value.latest;
       })
-      .catch(() => 'latest');
+      .catch((error) => {
+        versionPromises.delete(font.id);
+        throw error;
+      });
     versionPromises.set(font.id, promise);
   }
 

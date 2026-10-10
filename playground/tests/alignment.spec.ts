@@ -71,7 +71,13 @@ test("stays within a narrow viewport without horizontal document overflow", asyn
 }) => {
   await page.setViewportSize({ width: 320, height: 800 })
   await page.goto("/")
-  const command = await openSlashCommand(page)
+  await useEnglish(page)
+  await page.getByRole("button", { name: "Insert block", exact: true }).click()
+  const command = page.getByRole("region", {
+    name: "Insert block",
+    exact: true,
+  })
+  await expect(command).toBeVisible()
 
   const widths = await page.evaluate(() => ({
     client: document.documentElement.clientWidth,

@@ -1,7 +1,11 @@
 import type { Editor } from '@tiptap/core';
-import { useCallback, useEffect, useState } from 'react';
-
-import type { NodeSelection } from '@tiptap/pm/state';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import type { Node } from '@tiptap/pm/model';
 import { Copy, GripVertical, Plus, Trash2 } from 'lucide-react';
@@ -20,6 +24,7 @@ import {
 } from './ui/tooltip';
 import { DragHandle } from '../plugins/drag-handle/drag-handle';
 import { cn } from '../utils/classname';
+import { captureNodeAction } from '../utils/node-action';
 import { useMailyContext } from '../provider';
 
 export type ContentMenuProps = {
@@ -31,81 +36,74 @@ export function ContentMenu(props: ContentMenuProps) {
   const { t } = useMailyContext();
 
   const [menuOpen, setMenuOpen] = useState(false);
-  const [currentNode, setCurrentNode] = useState<Node | null>(null);
   const [currentNodePos, setCurrentNodePos] = useState<number>(-1);
+  const menuOpenRef = useRef(false);
+  const target = useRef<ReturnType<typeof captureNodeAction>>(null);
+
+  useLayoutEffect(
+    () => () => {
+      menuOpenRef.current = false;
+      target.current = null;
+    },
+    [editor]
+  );
 
   const handleNodeChange = useCallback(
     (data: { node: Node | null; editor: Editor; pos: number }) => {
-      if (data.node) {
-        setCurrentNode(data.node);
-      }
+      if (menuOpenRef.current) return;
+      target.current = captureNodeAction(editor, data.pos, data.node);
 
       setCurrentNodePos(data.pos);
     },
-    [setCurrentNodePos, setCurrentNode]
+    [editor]
   );
 
   function duplicateNode() {
-    editor.commands.setNodeSelection(currentNodePos);
-    const { $anchor } = editor.state.selection;
-    const selectedNode =
-      $anchor.node(1) || (editor.state.selection as NodeSelection).node;
-    editor
-      .chain()
-      .setMeta('hideDragHandle', true)
-      .insertContentAt(
-        currentNodePos + (currentNode?.nodeSize || 0),
-        selectedNode.toJSON()
-      )
-      .run();
-
+    target.current?.run((node, pos) => {
+      editor
+        .chain()
+        .setMeta('hideDragHandle', true)
+        .insertContentAt(pos + node.nodeSize, node.toJSON())
+        .run();
+    });
+    menuOpenRef.current = false;
     setMenuOpen(false);
   }
 
   function deleteCurrentNode() {
-    editor
-      .chain()
-      .setMeta('hideDragHandle', true)
-      .setNodeSelection(currentNodePos)
-      .deleteSelection()
-      .run();
-
+    target.current?.run((node, pos) => {
+      editor
+        .chain()
+        .setMeta('hideDragHandle', true)
+        .deleteRange({ from: pos, to: pos + node.nodeSize })
+        .run();
+    });
+    menuOpenRef.current = false;
     setMenuOpen(false);
   }
 
   function handleAddNewNode() {
-    if (currentNodePos !== -1) {
-      const currentNodeSize = currentNode?.nodeSize || 0;
-      const insertPos = currentNodePos + currentNodeSize;
-      const currentNodeIsEmptyParagraph =
-        currentNode?.type.name === 'paragraph' &&
-        currentNode?.content?.size === 0;
-      const focusPos = currentNodeIsEmptyParagraph
-        ? currentNodePos + 2
-        : insertPos + 2;
+    target.current?.run((node, pos) => {
+      const insertPos = pos + node.nodeSize;
+      const empty = node.type.name === 'paragraph' && node.content.size === 0;
       editor
         .chain()
-        .command(({ dispatch, tr, state }) => {
-          if (dispatch) {
-            if (currentNodeIsEmptyParagraph) {
-              tr.insertText('/', currentNodePos, currentNodePos + 1);
-            } else {
-              tr.insert(
-                insertPos,
-                state.schema.nodes.paragraph.create(null, [
-                  state.schema.text('/'),
-                ])
-              );
-            }
-
-            return dispatch(tr);
+        .command(({ tr, state }) => {
+          if (empty) {
+            tr.insertText('/', pos + 1);
+          } else {
+            tr.insert(
+              insertPos,
+              state.schema.nodes.paragraph.create(null, [
+                state.schema.text('/'),
+              ])
+            );
           }
-
           return true;
         })
-        .focus(focusPos)
+        .focus(empty ? pos + 2 : insertPos + 2)
         .run();
-    }
+    });
   }
 
   useEffect(() => {
@@ -154,8 +152,15 @@ export function ContentMenu(props: ContentMenuProps) {
           <DropdownMenu
             open={menuOpen}
             onOpenChange={(open) => {
+              menuOpenRef.current = open;
               setMenuOpen(open);
               if (open) {
+                const owned = target.current;
+                if (!owned?.isCurrent()) {
+                  menuOpenRef.current = false;
+                  setMenuOpen(false);
+                  return;
+                }
                 editor.commands.setNodeSelection(currentNodePos);
               }
             }}

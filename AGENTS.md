@@ -346,3 +346,22 @@ Use host Collapsible for this nonmodal disclosure; do not remount the toolbar in
 Sheet or autofocus a replacement trigger. Only the outer accessory translates,
 with reduced-motion support. Repeated requests for the active panel must not
 reset its navigation, selection snapshot, history boundary, focus or scroll.
+
+## Idempotence follow-up, 2026-10-10
+
+Spacer height changes update the selected spacer and preserve its conditional
+visibility. Desktop node actions must validate their captured document/node before
+mutating; stale positions must never select a replacement block. Paste/drop uploads
+own the inserted immutable node, compensate stale results and remove failed owned
+placeholders before revoking temporary URLs. Font selection requires a pinned
+version; transient version failures must remain retryable.
+
+Mailbox exclusion and pending UI belong to the current data-source lifetime; old
+completions cannot release a newer operation's lock. Reader mutation results must
+also own the selected-reader generation. Label reads share a generation with label
+mutations. Selecting the active compose body mode must preserve the editor instance.
+Open desktop menus freeze their captured target across drag callbacks. Async
+mailbox mutations refresh the latest committed query and preserve newer external
+reader/bulk selections. Rejected label mutations must not suppress an initial
+valid label response.
+See [audit and repairs](docs/idempotence-audit-2026-10-10.md).

@@ -1,5 +1,4 @@
 import { Editor } from "@tiptap/core"
-import { Node } from "@tiptap/pm/model"
 import { Plugin, PluginKey } from "@tiptap/pm/state"
 import { EditorView } from "@tiptap/pm/view"
 
@@ -51,36 +50,50 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
     const transaction = tr.insert(resolvedPos.pos, imageNode)
     view.dispatch(transaction)
 
-    onImageUpload?.(file)
+    const ownedPosition = () => {
+      let position: number | null = null
+      let matches = 0
+      view.state.doc.descendants((node, pos) => {
+        if (node === imageNode) {
+          position = pos
+          matches += 1
+          return false
+        }
+      })
+      return matches === 1 ? position : null
+    }
+    const removeOwnedPlaceholder = () => {
+      if (destroyed || editor.isDestroyed) return
+      const position = ownedPosition()
+      if (position !== null)
+        view.dispatch(
+          view.state.tr.delete(position, position + imageNode.nodeSize)
+        )
+    }
+
+    Promise.resolve()
+      .then(() => onImageUpload!(file))
       .then(async (uploadedSrc) => {
         if (destroyed || editor.isDestroyed) {
           await onImageUploadDiscard?.(uploadedSrc)
           return
         }
-        const updateTr = view.state.tr
-
-        // Find the placeholder image node
-        const predicate = (node: Node) =>
-          node.type.name === "image" && node.attrs.src === placeholderSrc
-
-        view.state.doc.descendants((node, pos) => {
-          if (predicate(node)) {
-            updateTr.setNodeMarkup(pos, undefined, {
-              ...node.attrs,
+        const position = ownedPosition()
+        if (position !== null) {
+          view.dispatch(
+            view.state.tr.setNodeMarkup(position, undefined, {
+              ...imageNode.attrs,
               src: uploadedSrc,
             })
-            return false
-          }
-        })
-
-        if (updateTr.docChanged) view.dispatch(updateTr)
-        else await onImageUploadDiscard?.(uploadedSrc)
+          )
+        } else await onImageUploadDiscard?.(uploadedSrc)
       })
       .catch((error) => {
+        removeOwnedPlaceholder()
         console.error("Image upload failed", error)
       })
       .finally(() => {
-        editor.extensionStorage.imageUpload.placeholderImages.delete(
+        editor.extensionStorage.imageUpload?.placeholderImages.delete(
           placeholderSrc
         )
         placeholders.delete(placeholderSrc)

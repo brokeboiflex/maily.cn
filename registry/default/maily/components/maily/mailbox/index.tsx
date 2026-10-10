@@ -1,5 +1,5 @@
 'use client';
-import { IconPlaceholder } from "@/components/icon-placeholder"
+import { IconPlaceholder } from '@/components/icon-placeholder';
 import * as React from 'react';
 import { useControllableState } from './use-controllable-state';
 
@@ -564,217 +564,255 @@ const MESSAGE_ACTION_METADATA: Record<
 > = {
   archive: {
     label: 'actions.archive',
-    icon: (className) => <IconPlaceholder
-  lucide="Archive"
-  tabler="IconArchive"
-  hugeicons="ArchiveIcon"
-  phosphor="Archive"
-  remixicon="RiArchiveLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Archive"
+        tabler="IconArchive"
+        hugeicons="ArchiveIcon"
+        phosphor="Archive"
+        remixicon="RiArchiveLine"
+        className={className}
+      />
+    ),
   },
   restore: {
     label: 'actions.restore',
-    icon: (className) => <IconPlaceholder
-  lucide="Inbox"
-  tabler="IconInbox"
-  hugeicons="InboxIcon"
-  phosphor="Tray"
-  remixicon="RiInboxLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Inbox"
+        tabler="IconInbox"
+        hugeicons="InboxIcon"
+        phosphor="Tray"
+        remixicon="RiInboxLine"
+        className={className}
+      />
+    ),
   },
   notSpam: {
     label: 'actions.notSpam',
-    icon: (className) => <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="MailOpen"
+        tabler="IconMailOpened"
+        hugeicons="MailOpenIcon"
+        phosphor="EnvelopeOpen"
+        remixicon="RiMailOpenLine"
+        className={className}
+      />
+    ),
   },
   deleteForever: {
     label: 'actions.deleteForever',
-    icon: (className) => <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Trash2"
+        tabler="IconTrash"
+        hugeicons="Delete02Icon"
+        phosphor="Trash"
+        remixicon="RiDeleteBinLine"
+        className={className}
+      />
+    ),
     variant: 'destructive',
   },
   delete: {
     label: 'actions.delete',
-    icon: (className) => <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Trash2"
+        tabler="IconTrash"
+        hugeicons="Delete02Icon"
+        phosphor="Trash"
+        remixicon="RiDeleteBinLine"
+        className={className}
+      />
+    ),
     variant: 'destructive',
   },
   favorite: {
     label: 'actions.favorite',
-    icon: (className) => <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Star"
+        tabler="IconStar"
+        hugeicons="StarIcon"
+        phosphor="Star"
+        remixicon="RiStarLine"
+        className={className}
+      />
+    ),
   },
   markUnread: {
     label: 'actions.markUnread',
-    icon: (className) => <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="MailOpen"
+        tabler="IconMailOpened"
+        hugeicons="MailOpenIcon"
+        phosphor="EnvelopeOpen"
+        remixicon="RiMailOpenLine"
+        className={className}
+      />
+    ),
     value: true,
   },
   markRead: {
     label: 'actions.markRead',
-    icon: (className) => <IconPlaceholder
-  lucide="MailOpen"
-  tabler="IconMailOpened"
-  hugeicons="MailOpenIcon"
-  phosphor="EnvelopeOpen"
-  remixicon="RiMailOpenLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="MailOpen"
+        tabler="IconMailOpened"
+        hugeicons="MailOpenIcon"
+        phosphor="EnvelopeOpen"
+        remixicon="RiMailOpenLine"
+        className={className}
+      />
+    ),
     value: true,
   },
   blockSender: {
     label: 'actions.blockSender',
-    icon: (className) => <IconPlaceholder
-  lucide="Ban"
-  tabler="IconBan"
-  hugeicons="Cancel01Icon"
-  phosphor="Prohibit"
-  remixicon="RiForbidLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Ban"
+        tabler="IconBan"
+        hugeicons="Cancel01Icon"
+        phosphor="Prohibit"
+        remixicon="RiForbidLine"
+        className={className}
+      />
+    ),
   },
   reportSpam: {
     label: 'actions.reportSpam',
-    icon: (className) => <IconPlaceholder
-  lucide="ShieldAlert"
-  tabler="IconShieldExclamation"
-  hugeicons="SpamIcon"
-  phosphor="ShieldWarning"
-  remixicon="RiSpam2Line"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="ShieldAlert"
+        tabler="IconShieldExclamation"
+        hugeicons="SpamIcon"
+        phosphor="ShieldWarning"
+        remixicon="RiSpam2Line"
+        className={className}
+      />
+    ),
   },
   reportPhishing: {
     label: 'actions.reportPhishing',
-    icon: (className) => <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Flag"
+        tabler="IconFlag"
+        hugeicons="Flag01Icon"
+        phosphor="Flag"
+        remixicon="RiFlagLine"
+        className={className}
+      />
+    ),
   },
   reportIllegal: {
     label: 'actions.reportIllegal',
-    icon: (className) => <IconPlaceholder
-  lucide="Flag"
-  tabler="IconFlag"
-  hugeicons="Flag01Icon"
-  phosphor="Flag"
-  remixicon="RiFlagLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Flag"
+        tabler="IconFlag"
+        hugeicons="Flag01Icon"
+        phosphor="Flag"
+        remixicon="RiFlagLine"
+        className={className}
+      />
+    ),
   },
   filterSimilar: {
     label: 'actions.filterSimilar',
-    icon: (className) => <IconPlaceholder
-  lucide="Filter"
-  tabler="IconFilter"
-  hugeicons="FilterIcon"
-  phosphor="Funnel"
-  remixicon="RiFilter3Line"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Filter"
+        tabler="IconFilter"
+        hugeicons="FilterIcon"
+        phosphor="Funnel"
+        remixicon="RiFilter3Line"
+        className={className}
+      />
+    ),
   },
   translate: {
     label: 'actions.translate',
-    icon: (className) => <IconPlaceholder
-  lucide="Languages"
-  tabler="IconLanguage"
-  hugeicons="TranslateIcon"
-  phosphor="Translate"
-  remixicon="RiTranslate"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Languages"
+        tabler="IconLanguage"
+        hugeicons="TranslateIcon"
+        phosphor="Translate"
+        remixicon="RiTranslate"
+        className={className}
+      />
+    ),
   },
   print: {
     label: 'actions.print',
-    icon: (className) => <IconPlaceholder
-  lucide="Printer"
-  tabler="IconPrinter"
-  hugeicons="PrinterIcon"
-  phosphor="Printer"
-  remixicon="RiPrinterLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Printer"
+        tabler="IconPrinter"
+        hugeicons="PrinterIcon"
+        phosphor="Printer"
+        remixicon="RiPrinterLine"
+        className={className}
+      />
+    ),
   },
   download: {
     label: 'actions.download',
-    icon: (className) => <IconPlaceholder
-  lucide="Download"
-  tabler="IconDownload"
-  hugeicons="Download01Icon"
-  phosphor="DownloadSimple"
-  remixicon="RiDownloadLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Download"
+        tabler="IconDownload"
+        hugeicons="Download01Icon"
+        phosphor="DownloadSimple"
+        remixicon="RiDownloadLine"
+        className={className}
+      />
+    ),
   },
   showOriginal: {
     label: 'actions.showOriginal',
     toolbarLabel: 'actions.openExternal',
-    icon: (className) => <IconPlaceholder
-  lucide="CodeIcon"
-  tabler="IconCode"
-  hugeicons="SourceCodeIcon"
-  phosphor="Code"
-  remixicon="RiCodeLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="CodeIcon"
+        tabler="IconCode"
+        hugeicons="SourceCodeIcon"
+        phosphor="Code"
+        remixicon="RiCodeLine"
+        className={className}
+      />
+    ),
   },
   feedback: {
     label: 'actions.feedback',
-    icon: (className) => <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="AlertCircle"
+        tabler="IconAlertCircle"
+        hugeicons="AlertCircleIcon"
+        phosphor="WarningCircle"
+        remixicon="RiErrorWarningLine"
+        className={className}
+      />
+    ),
   },
   react: {
     label: 'actions.react',
-    icon: (className) => <IconPlaceholder
-  lucide="Smile"
-  tabler="IconMoodSmile"
-  hugeicons="SmileIcon"
-  phosphor="Smiley"
-  remixicon="RiEmotionHappyLine"
-  className={className}
-/>,
+    icon: (className) => (
+      <IconPlaceholder
+        lucide="Smile"
+        tabler="IconMoodSmile"
+        hugeicons="SmileIcon"
+        phosphor="Smiley"
+        remixicon="RiEmotionHappyLine"
+        className={className}
+      />
+    ),
     value: 'smile',
   },
 };
@@ -947,77 +985,93 @@ function interpolate(label: string, vars?: Record<string, string | number>) {
 function folderIcon(folder: MailyMailboxFolder, className: string) {
   switch (folder) {
     case 'inbox':
-      return <IconPlaceholder
-  lucide="Inbox"
-  tabler="IconInbox"
-  hugeicons="InboxIcon"
-  phosphor="Tray"
-  remixicon="RiInboxLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Inbox"
+          tabler="IconInbox"
+          hugeicons="InboxIcon"
+          phosphor="Tray"
+          remixicon="RiInboxLine"
+          className={className}
+        />
+      );
     case 'allMail':
-      return <IconPlaceholder
-  lucide="Archive"
-  tabler="IconArchive"
-  hugeicons="ArchiveIcon"
-  phosphor="Archive"
-  remixicon="RiArchiveLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Archive"
+          tabler="IconArchive"
+          hugeicons="ArchiveIcon"
+          phosphor="Archive"
+          remixicon="RiArchiveLine"
+          className={className}
+        />
+      );
     case 'starred':
-      return <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Star"
+          tabler="IconStar"
+          hugeicons="StarIcon"
+          phosphor="Star"
+          remixicon="RiStarLine"
+          className={className}
+        />
+      );
     case 'sent':
-      return <IconPlaceholder
-  lucide="Send"
-  tabler="IconSend"
-  hugeicons="MailSend02Icon"
-  phosphor="PaperPlaneTilt"
-  remixicon="RiSendPlaneLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Send"
+          tabler="IconSend"
+          hugeicons="MailSend02Icon"
+          phosphor="PaperPlaneTilt"
+          remixicon="RiSendPlaneLine"
+          className={className}
+        />
+      );
     case 'drafts':
-      return <IconPlaceholder
-  lucide="FileText"
-  tabler="IconFileText"
-  hugeicons="File02Icon"
-  phosphor="FileText"
-  remixicon="RiFileTextLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="FileText"
+          tabler="IconFileText"
+          hugeicons="File02Icon"
+          phosphor="FileText"
+          remixicon="RiFileTextLine"
+          className={className}
+        />
+      );
     case 'spam':
-      return <IconPlaceholder
-  lucide="ShieldAlert"
-  tabler="IconShieldExclamation"
-  hugeicons="SpamIcon"
-  phosphor="ShieldWarning"
-  remixicon="RiSpam2Line"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="ShieldAlert"
+          tabler="IconShieldExclamation"
+          hugeicons="SpamIcon"
+          phosphor="ShieldWarning"
+          remixicon="RiSpam2Line"
+          className={className}
+        />
+      );
     case 'trash':
-      return <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="Trash2"
+          tabler="IconTrash"
+          hugeicons="Delete02Icon"
+          phosphor="Trash"
+          remixicon="RiDeleteBinLine"
+          className={className}
+        />
+      );
     case 'bounced':
-      return <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className={className}
-/>;
+      return (
+        <IconPlaceholder
+          lucide="AlertCircle"
+          tabler="IconAlertCircle"
+          hugeicons="AlertCircleIcon"
+          phosphor="WarningCircle"
+          remixicon="RiErrorWarningLine"
+          className={className}
+        />
+      );
   }
 }
 
@@ -1083,12 +1137,18 @@ function MailboxSession(props: MailyMailboxViewProps) {
     };
   }, [lifetime]);
   const previousDataSource = React.useRef(dataSource);
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (previousDataSource.current !== dataSource) {
       previousDataSource.current = dataSource;
       if (props.selectedMessageId === undefined) setSelectedId(null);
       if (props.selectedMessageIds === undefined) setSelectedIds([]);
       composeDraftRef.current = null;
+      setSaving(false);
+      setSending(false);
+      setDiscarding(false);
+      setLoadingMore(false);
+      setMessageActionPending(null);
+      setRefreshing(false);
     }
     setComposeOpen(false);
     composeDirty.current = false;
@@ -1181,6 +1241,28 @@ function MailboxSession(props: MailyMailboxViewProps) {
     props.defaultSelectedMessageId ?? null,
     props.onSelectedMessageIdChange
   );
+  const readerSelection = React.useRef({ id: selectedId, epoch: 0 });
+  React.useLayoutEffect(() => {
+    if (readerSelection.current.id !== selectedId)
+      readerSelection.current = {
+        id: selectedId,
+        epoch: readerSelection.current.epoch + 1,
+      };
+  }, [selectedId]);
+
+  const bulkSelection = React.useRef({
+    key: JSON.stringify(selectedIds),
+    epoch: 0,
+  });
+  const bulkSelectionKey = JSON.stringify(selectedIds);
+  React.useLayoutEffect(() => {
+    if (bulkSelection.current.key !== bulkSelectionKey)
+      bulkSelection.current = {
+        key: bulkSelectionKey,
+        epoch: bulkSelection.current.epoch + 1,
+      };
+  }, [bulkSelectionKey]);
+
   const mailboxRef = React.useRef<HTMLDivElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
   const lastMessageTrigger = React.useRef<HTMLElement | null>(null);
@@ -1218,7 +1300,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
   const [messagesLoading, setMessagesLoading] = React.useState(true);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [refreshing, setRefreshing] = React.useState(false);
-  const composeLock = React.useRef(false);
+  // Each source lifetime owns its locks; an old finally cannot unlock a new action.
+  const composeLock = React.useMemo(() => ({ current: false }), [lifetime]);
   const composeDirty = React.useRef(false);
   const composeOwned = React.useRef(false);
   const pendingFolderRequest = React.useRef<{
@@ -1285,7 +1368,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
   >([{ start: 1 }]);
   const pageIndexRef = React.useRef(0);
   const [pageIndex, setPageIndex] = React.useState(0);
-  const pageChangeLock = React.useRef(false);
+  const pageChangeLock = React.useMemo(() => ({ current: false }), [lifetime]);
   const hasPreviousPage = pageIndex > 0;
   const pageStart = messages.items.length
     ? (pageCursorsRef.current[pageIndex]?.start ?? 1)
@@ -1468,6 +1551,11 @@ function MailboxSession(props: MailyMailboxViewProps) {
     [captureLifetime, refreshCounts, refreshMessages, reportError]
   );
 
+  const latestRefreshMailbox = React.useRef(refreshMailbox);
+  React.useLayoutEffect(() => {
+    latestRefreshMailbox.current = refreshMailbox;
+  }, [refreshMailbox]);
+
   const changePage = React.useCallback(
     async (direction: 'previous' | 'next') => {
       if (pageChangeLock.current || messagesLoading) return;
@@ -1537,6 +1625,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
       messages.total,
       pageEnd,
       pageSize,
+      pageChangeLock,
       reportError,
       search,
       searchFields,
@@ -1544,18 +1633,22 @@ function MailboxSession(props: MailyMailboxViewProps) {
     ]
   );
 
+  const labelsGeneration = React.useRef(0);
   React.useEffect(() => {
     let cancelled = false;
+    const generation = ++labelsGeneration.current;
     if (!dataSource.listLabels) {
       setMailboxLabels([]);
       return;
     }
     Promise.resolve(dataSource.listLabels())
       .then((next) => {
-        if (!cancelled) setMailboxLabels(next);
+        if (!cancelled && generation === labelsGeneration.current)
+          setMailboxLabels(next);
       })
       .catch((error) => {
-        if (!cancelled) reportError(error, 'messageAction');
+        if (!cancelled && generation === labelsGeneration.current)
+          reportError(error, 'messageAction');
       });
     return () => {
       cancelled = true;
@@ -1896,7 +1989,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
         setFolder('drafts');
         onDraftSaved?.(createdId);
       }
-      await refreshMailbox(composeDraftId ? undefined : 'drafts');
+      await latestRefreshMailbox.current(composeDraftId ? undefined : 'drafts');
       if (!isCurrent()) return false;
       setErrorKey(null);
       return true;
@@ -1915,6 +2008,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
     onPrepared?: () => void
   ) => {
     const isCurrent = captureLifetime();
+    const selection = readerSelection.current;
+
     if (!isCurrent()) return;
     if (!composeHydrated && !pendingSendRef.current) return;
     const draft = composeValuesToMailboxDraft(values, draftInReplyTo);
@@ -1922,6 +2017,12 @@ function MailboxSession(props: MailyMailboxViewProps) {
     if (composeLock.current) return;
     composeLock.current = true;
     let draftId = composeDraftRef.current ?? composeDraftId;
+    const preparesNewDraft = !draftId;
+    const ownsSelection = () =>
+      readerSelection.current === selection ||
+      (preparesNewDraft &&
+        readerSelection.current.id === draftId &&
+        readerSelection.current.epoch === selection.epoch + 1);
     setSending(true);
     try {
       if (recoveryUnavailableRef.current)
@@ -1978,9 +2079,9 @@ function MailboxSession(props: MailyMailboxViewProps) {
       setComposeDraftId(null);
       setComposeSeed(null);
       setComposeInReplyTo(null);
-      clearReaderAfterMutation();
+      if (ownsSelection()) clearReaderAfterMutation();
       setFolder('sent');
-      await refreshMailbox('sent');
+      await latestRefreshMailbox.current('sent');
       if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
@@ -1994,6 +2095,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
 
   const discardDraft = async () => {
     const isCurrent = captureLifetime();
+    const selection = readerSelection.current;
+    const ownsSelection = () => readerSelection.current === selection;
     if (!isCurrent()) return;
     if (
       composeLock.current ||
@@ -2012,8 +2115,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
       setComposeDraftId(null);
       setComposeSeed(null);
       setComposeInReplyTo(null);
-      clearReaderAfterMutation();
-      await refreshMailbox();
+      if (ownsSelection()) clearReaderAfterMutation();
+      await latestRefreshMailbox.current();
       if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
@@ -2079,6 +2182,10 @@ function MailboxSession(props: MailyMailboxViewProps) {
     value?: string | boolean | null
   ) => {
     const isCurrent = captureLifetime();
+    const selectionEpoch = readerSelection.current.epoch;
+    const ownsReader = () =>
+      readerSelection.current.id === message.id &&
+      readerSelection.current.epoch === selectionEpoch;
     if (!isCurrent()) return;
     if (
       !dataSource.runMessageAction ||
@@ -2109,32 +2216,35 @@ function MailboxSession(props: MailyMailboxViewProps) {
       }
 
       if (
-        action === 'archive' ||
-        action === 'delete' ||
-        action === 'restore' ||
-        action === 'notSpam' ||
-        action === 'deleteForever' ||
-        action === 'reportSpam' ||
-        action === 'reportPhishing' ||
-        action === 'reportIllegal'
+        ownsReader() &&
+        (action === 'archive' ||
+          action === 'delete' ||
+          action === 'restore' ||
+          action === 'notSpam' ||
+          action === 'deleteForever' ||
+          action === 'reportSpam' ||
+          action === 'reportPhishing' ||
+          action === 'reportIllegal')
       ) {
         clearReaderAfterMutation();
-      } else if (result && 'fromAddress' in result) {
+      } else if (ownsReader() && result && 'fromAddress' in result) {
         setDetail(result);
-      } else {
+      } else if (ownsReader()) {
         try {
           const nextDetail = await dataSource.getMessage(message.id);
           if (!isCurrent()) return;
-          setDetail(nextDetail);
+          if (ownsReader()) setDetail(nextDetail);
           if (!isCurrent()) return;
         } catch {
           if (!isCurrent()) return;
-          setSelectedId(null);
-          setDetail(null);
+          if (ownsReader()) {
+            setSelectedId(null);
+            setDetail(null);
+          }
         }
       }
 
-      await refreshMailbox();
+      await latestRefreshMailbox.current();
       if (!isCurrent()) return;
       setErrorKey(null);
     } catch (error) {
@@ -2167,7 +2277,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
       return;
     autoReadMessageIds.add(detail.id);
     void runMessageAction(detail, 'markRead', true);
-  }, [detail, enabledMessageActions, markReadOnOpen, autoReadMessageIds]);
+  }, [
+    detail,
+    enabledMessageActions,
+    markReadOnOpen,
+    autoReadMessageIds,
+    composeLock,
+  ]);
 
   const runBulkAction = async (
     action: MailyMailboxMessageAction,
@@ -2181,6 +2297,8 @@ function MailboxSession(props: MailyMailboxViewProps) {
     if (action === 'notSpam' && (globalSearch || folder !== 'spam')) return;
     if (action === 'archive' && (globalSearch || folder !== 'inbox')) return;
     const ids = [...selectedIds];
+    const selectedSet = bulkSelection.current;
+    const reader = readerSelection.current;
     const isCurrent = captureLifetime();
     if (!ids.length || !dataSource.runBulkMessageAction || !isCurrent()) return;
     if (
@@ -2205,9 +2323,9 @@ function MailboxSession(props: MailyMailboxViewProps) {
         action !== 'deleteForever'
       )
         setUndoReceipt(result.undo);
-      setSelectedIds([]);
-      clearReaderAfterMutation();
-      await refreshMailbox();
+      if (bulkSelection.current === selectedSet) setSelectedIds([]);
+      if (readerSelection.current === reader) clearReaderAfterMutation();
+      await latestRefreshMailbox.current();
     } catch (error) {
       if (isCurrent()) reportError(error, 'messageAction');
     } finally {
@@ -2238,7 +2356,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
       await dataSource.undoMessageAction(undoReceipt.token);
       if (!isCurrent()) return;
       setUndoReceipt(null);
-      await refreshMailbox();
+      await latestRefreshMailbox.current();
     } catch (error) {
       if (isCurrent()) reportError(error, 'messageAction');
     } finally {
@@ -2284,12 +2402,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
         if (selectedLabelId === label.id) setSelectedLabelId(null);
       }
       if (!isCurrent()) return;
+      const generation = ++labelsGeneration.current;
       const nextLabels = await dataSource.listLabels();
       if (!isCurrent()) return;
-      setMailboxLabels(nextLabels);
+      if (generation === labelsGeneration.current) setMailboxLabels(nextLabels);
       setLabelForm(null);
       setLabelName('');
-      await refreshMailbox();
+      await latestRefreshMailbox.current();
     } catch (error) {
       if (isCurrent()) reportError(error, 'messageAction');
     } finally {
@@ -2312,7 +2431,7 @@ function MailboxSession(props: MailyMailboxViewProps) {
     try {
       await action(selectedIds, labelId);
       if (!isCurrent()) return;
-      await refreshMailbox();
+      await latestRefreshMailbox.current();
     } catch (error) {
       if (isCurrent()) reportError(error, 'messageAction');
     } finally {
@@ -2471,13 +2590,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
       disabled={saving || sending || discarding || sendUnresolved}
     >
       <IconPlaceholder
-  lucide="ArrowLeft"
-  tabler="IconArrowLeft"
-  hugeicons="ArrowLeft02Icon"
-  phosphor="ArrowLeft"
-  remixicon="RiArrowLeftLine"
-  className="size-4"
-/>
+        lucide="ArrowLeft"
+        tabler="IconArrowLeft"
+        hugeicons="ArrowLeft02Icon"
+        phosphor="ArrowLeft"
+        remixicon="RiArrowLeftLine"
+        className="size-4"
+      />
     </MailboxIconButton>
   );
   const navigation = (
@@ -2490,13 +2609,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
         aria-label={t('compose.new')}
       >
         <IconPlaceholder
-  lucide="Pencil"
-  tabler="IconPencil"
-  hugeicons="PencilIcon"
-  phosphor="Pencil"
-  remixicon="RiPencilLine"
-  className="size-4"
-/>
+          lucide="Pencil"
+          tabler="IconPencil"
+          hugeicons="PencilIcon"
+          phosphor="Pencil"
+          remixicon="RiPencilLine"
+          className="size-4"
+        />
         <span className="inline min-w-0 truncate">{t('compose.new')}</span>
       </Button>
       <nav className="flex w-full flex-col gap-0.5">
@@ -2556,13 +2675,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                     }}
                   >
                     <IconPlaceholder
-  lucide="Plus"
-  tabler="IconPlus"
-  hugeicons="Add01Icon"
-  phosphor="Plus"
-  remixicon="RiAddLine"
-  className="size-4"
-/>
+                      lucide="Plus"
+                      tabler="IconPlus"
+                      hugeicons="Add01Icon"
+                      phosphor="Plus"
+                      remixicon="RiAddLine"
+                      className="size-4"
+                    />
                   </MailboxIconButton>
                 </DialogTrigger>
                 {labelDialogContent}
@@ -2596,13 +2715,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                   }}
                 >
                   <IconPlaceholder
-  lucide="Tag"
-  tabler="IconTag"
-  hugeicons="Tag01Icon"
-  phosphor="Tag"
-  remixicon="RiPriceTagLine"
-  className="size-4 shrink-0"
-/>
+                    lucide="Tag"
+                    tabler="IconTag"
+                    hugeicons="Tag01Icon"
+                    phosphor="Tag"
+                    remixicon="RiPriceTagLine"
+                    className="size-4 shrink-0"
+                  />
                   <span className="inline min-w-0 truncate">{label.name}</span>
                 </Button>
                 {(dataSource.renameLabel || dataSource.deleteLabel) && (
@@ -2623,13 +2742,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                             aria-label={`${t('actions.more')}: ${label.name}`}
                           >
                             <IconPlaceholder
-  lucide="MoreVertical"
-  tabler="IconDotsVertical"
-  hugeicons="MoreVerticalIcon"
-  phosphor="DotsThreeVertical"
-  remixicon="RiMore2Line"
-  className="size-4"
-/>
+                              lucide="MoreVertical"
+                              tabler="IconDotsVertical"
+                              hugeicons="MoreVerticalIcon"
+                              phosphor="DotsThreeVertical"
+                              remixicon="RiMore2Line"
+                              className="size-4"
+                            />
                           </MailboxIconButton>
                         </DropdownMenuTrigger>
                       </DialogTrigger>
@@ -2695,13 +2814,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                   aria-label={t('navigation.menu')}
                 >
                   <IconPlaceholder
-  lucide="Menu"
-  tabler="IconMenu2"
-  hugeicons="Menu01Icon"
-  phosphor="List"
-  remixicon="RiMenuLine"
-  className="size-5"
-/>
+                    lucide="Menu"
+                    tabler="IconMenu2"
+                    hugeicons="Menu01Icon"
+                    phosphor="List"
+                    remixicon="RiMenuLine"
+                    className="size-5"
+                  />
                 </MailboxIconButton>
               </SheetTrigger>
               <SheetContent
@@ -2720,13 +2839,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                       aria-label={t('navigation.close')}
                     >
                       <IconPlaceholder
-  lucide="X"
-  tabler="IconX"
-  hugeicons="Cancel01Icon"
-  phosphor="X"
-  remixicon="RiCloseLine"
-  className="size-4"
-/>
+                        lucide="X"
+                        tabler="IconX"
+                        hugeicons="Cancel01Icon"
+                        phosphor="X"
+                        remixicon="RiCloseLine"
+                        className="size-4"
+                      />
                     </MailboxIconButton>
                   </SheetClose>
                 </SheetHeader>
@@ -2740,13 +2859,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
             <InputGroup className="bg-muted/30 h-11">
               <InputGroupAddon>
                 <IconPlaceholder
-  lucide="Search"
-  tabler="IconSearch"
-  hugeicons="Search01Icon"
-  phosphor="MagnifyingGlass"
-  remixicon="RiSearchLine"
-  className="size-4"
-/>
+                  lucide="Search"
+                  tabler="IconSearch"
+                  hugeicons="Search01Icon"
+                  phosphor="MagnifyingGlass"
+                  remixicon="RiSearchLine"
+                  className="size-4"
+                />
               </InputGroupAddon>
               <InputGroupInput
                 value={search}
@@ -2776,13 +2895,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                     }}
                   >
                     <IconPlaceholder
-  lucide="X"
-  tabler="IconX"
-  hugeicons="Cancel01Icon"
-  phosphor="X"
-  remixicon="RiCloseLine"
-  className="size-4"
-/>
+                      lucide="X"
+                      tabler="IconX"
+                      hugeicons="Cancel01Icon"
+                      phosphor="X"
+                      remixicon="RiCloseLine"
+                      className="size-4"
+                    />
                   </MailboxIconButton>
                 )}
                 <Popover
@@ -2801,13 +2920,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                       aria-label={t('search.advanced')}
                     >
                       <IconPlaceholder
-  lucide="Filter"
-  tabler="IconFilter"
-  hugeicons="FilterIcon"
-  phosphor="Funnel"
-  remixicon="RiFilter3Line"
-  className="size-4"
-/>
+                        lucide="Filter"
+                        tabler="IconFilter"
+                        hugeicons="FilterIcon"
+                        phosphor="Funnel"
+                        remixicon="RiFilter3Line"
+                        className="size-4"
+                      />
                     </MailboxIconButton>
                   </PopoverTrigger>
                   <PopoverContent
@@ -2880,14 +2999,14 @@ function MailboxSession(props: MailyMailboxViewProps) {
               {refreshing && (
                 <InputGroupAddon align="inline-end">
                   <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
+                    lucide="LoaderCircleIcon"
+                    tabler="IconLoader2"
+                    hugeicons="Loading03Icon"
+                    phosphor="CircleNotch"
+                    remixicon="RiLoader2Line"
+                    className="size-4 animate-spin"
                     aria-label={t('refresh')}
-/>
+                  />
                 </InputGroupAddon>
               )}
             </InputGroup>
@@ -2944,13 +3063,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
             className="border-destructive/30 bg-destructive/10 text-destructive flex shrink-0 items-center gap-2 rounded-md border px-3 py-2 text-sm"
           >
             <IconPlaceholder
-  lucide="AlertCircle"
-  tabler="IconAlertCircle"
-  hugeicons="AlertCircleIcon"
-  phosphor="WarningCircle"
-  remixicon="RiErrorWarningLine"
-  className="size-4 shrink-0"
-/>
+              lucide="AlertCircle"
+              tabler="IconAlertCircle"
+              hugeicons="AlertCircleIcon"
+              phosphor="WarningCircle"
+              remixicon="RiErrorWarningLine"
+              className="size-4 shrink-0"
+            />
             <span>{t(errorKey)}</span>
           </div>
         )}
@@ -3095,13 +3214,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                           )}
                         >
                           <IconPlaceholder
-  lucide="Tag"
-  tabler="IconTag"
-  hugeicons="Tag01Icon"
-  phosphor="Tag"
-  remixicon="RiPriceTagLine"
-  className="size-4"
-/>
+                            lucide="Tag"
+                            tabler="IconTag"
+                            hugeicons="Tag01Icon"
+                            phosphor="Tag"
+                            remixicon="RiPriceTagLine"
+                            className="size-4"
+                          />
                         </MailboxIconButton>
                       </PopoverTrigger>
                       <PopoverContent align="start" className="w-56 space-y-1">
@@ -3159,13 +3278,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                 onClick={() => void refreshMailbox()}
               >
                 <IconPlaceholder
-  lucide="RotateCwIcon"
-  tabler="IconRepeat"
-  hugeicons="RepeatIcon"
-  phosphor="Repeat"
-  remixicon="RiRepeatLine"
-  className={cn('size-4', refreshing && 'animate-spin')}
-/>
+                  lucide="RotateCwIcon"
+                  tabler="IconRepeat"
+                  hugeicons="RepeatIcon"
+                  phosphor="Repeat"
+                  remixicon="RiRepeatLine"
+                  className={cn('size-4', refreshing && 'animate-spin')}
+                />
               </MailboxIconButton>
             )}
             <div className="ml-auto flex items-center gap-1">
@@ -3195,13 +3314,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                 onClick={() => void changePage('previous')}
               >
                 <IconPlaceholder
-  lucide="ChevronRight"
-  tabler="IconChevronRight"
-  hugeicons="ChevronRightIcon"
-  phosphor="CaretRight"
-  remixicon="RiArrowRightSLine"
-  className="size-4 rotate-180"
-/>
+                  lucide="ChevronRight"
+                  tabler="IconChevronRight"
+                  hugeicons="ChevronRightIcon"
+                  phosphor="CaretRight"
+                  remixicon="RiArrowRightSLine"
+                  className="size-4 rotate-180"
+                />
               </MailboxIconButton>
               <MailboxIconButton
                 type="button"
@@ -3218,13 +3337,13 @@ function MailboxSession(props: MailyMailboxViewProps) {
                 onClick={() => void changePage('next')}
               >
                 <IconPlaceholder
-  lucide="ChevronRight"
-  tabler="IconChevronRight"
-  hugeicons="ChevronRightIcon"
-  phosphor="CaretRight"
-  remixicon="RiArrowRightSLine"
-  className="size-4"
-/>
+                  lucide="ChevronRight"
+                  tabler="IconChevronRight"
+                  hugeicons="ChevronRightIcon"
+                  phosphor="CaretRight"
+                  remixicon="RiArrowRightSLine"
+                  className="size-4"
+                />
               </MailboxIconButton>
             </div>
           </div>
@@ -3392,13 +3511,13 @@ function MessageList(props: {
     return (
       <div className="text-muted-foreground flex h-40 items-center justify-center gap-2 text-sm">
         <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="LoaderCircleIcon"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
         {t('loading')}
       </div>
     );
@@ -3470,16 +3589,16 @@ function MessageList(props: {
                   onClick={() => onToggleFavorite(row)}
                 >
                   <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className={cn(
+                    lucide="Star"
+                    tabler="IconStar"
+                    hugeicons="StarIcon"
+                    phosphor="Star"
+                    remixicon="RiStarLine"
+                    className={cn(
                       'text-muted-foreground size-4',
                       row.isFavorite && 'fill-current text-amber-500'
                     )}
-/>
+                  />
                 </MailboxIconButton>
               )}
               <Button
@@ -3503,13 +3622,13 @@ function MessageList(props: {
                   <span className="@3xl/list:shrink-0 @3xl/list:max-w-[65%] flex min-w-0 items-center gap-1.5">
                     {row.isFavorite && !onToggleFavorite && (
                       <IconPlaceholder
-  lucide="Star"
-  tabler="IconStar"
-  hugeicons="StarIcon"
-  phosphor="Star"
-  remixicon="RiStarLine"
-  className="size-3.5 shrink-0 fill-current text-amber-500"
-/>
+                        lucide="Star"
+                        tabler="IconStar"
+                        hugeicons="StarIcon"
+                        phosphor="Star"
+                        remixicon="RiStarLine"
+                        className="size-3.5 shrink-0 fill-current text-amber-500"
+                      />
                     )}
                     <span
                       className={cn(
@@ -3524,13 +3643,13 @@ function MessageList(props: {
                     )}
                     {row.hasAttachments && (
                       <IconPlaceholder
-  lucide="Paperclip"
-  tabler="IconPaperclip"
-  hugeicons="AttachmentIcon"
-  phosphor="Paperclip"
-  remixicon="RiAttachmentLine"
-  className="text-muted-foreground size-3 shrink-0"
-/>
+                        lucide="Paperclip"
+                        tabler="IconPaperclip"
+                        hugeicons="AttachmentIcon"
+                        phosphor="Paperclip"
+                        remixicon="RiAttachmentLine"
+                        className="text-muted-foreground size-3 shrink-0"
+                      />
                     )}
                   </span>
                   {row.snippet && (
@@ -3710,13 +3829,13 @@ function MessageReader(props: {
           className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm"
         >
           <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+            lucide="LoaderCircleIcon"
+            tabler="IconLoader2"
+            hugeicons="Loading03Icon"
+            phosphor="CircleNotch"
+            remixicon="RiLoader2Line"
+            className="size-4 animate-spin"
+          />
           {t('loading')}
         </div>
       </>
@@ -3786,13 +3905,13 @@ function MessageReader(props: {
     >
       {action === 'showOriginal' && !props.getMessageSource ? (
         <IconPlaceholder
-  lucide="ExternalLink"
-  tabler="IconExternalLink"
-  hugeicons="ArrowUpRight01Icon"
-  phosphor="ArrowSquareOut"
-  remixicon="RiExternalLinkLine"
-  className="size-4"
-/>
+          lucide="ExternalLink"
+          tabler="IconExternalLink"
+          hugeicons="ArrowUpRight01Icon"
+          phosphor="ArrowSquareOut"
+          remixicon="RiExternalLinkLine"
+          className="size-4"
+        />
       ) : (
         MESSAGE_ACTION_METADATA[action].icon(actionIconClassName(action))
       )}
@@ -3835,13 +3954,13 @@ function MessageReader(props: {
                   onClick={() => onReply(detail)}
                 >
                   <IconPlaceholder
-  lucide="Reply"
-  tabler="IconCornerUpLeft"
-  hugeicons="MailReply01Icon"
-  phosphor="ArrowBendUpLeft"
-  remixicon="RiReplyLine"
-  className="size-4"
-/>
+                    lucide="Reply"
+                    tabler="IconCornerUpLeft"
+                    hugeicons="MailReply01Icon"
+                    phosphor="ArrowBendUpLeft"
+                    remixicon="RiReplyLine"
+                    className="size-4"
+                  />
                 </MessageActionButton>
                 <MessageActionButton
                   className={
@@ -3854,13 +3973,13 @@ function MessageReader(props: {
                   onClick={() => onReplyAll(detail)}
                 >
                   <IconPlaceholder
-  lucide="ReplyAll"
-  tabler="IconCornerUpLeftDouble"
-  hugeicons="MailReplyAll01Icon"
-  phosphor="ArrowBendDoubleUpLeft"
-  remixicon="RiReplyAllLine"
-  className="size-4"
-/>
+                    lucide="ReplyAll"
+                    tabler="IconCornerUpLeftDouble"
+                    hugeicons="MailReplyAll01Icon"
+                    phosphor="ArrowBendDoubleUpLeft"
+                    remixicon="RiReplyAllLine"
+                    className="size-4"
+                  />
                 </MessageActionButton>
                 <MessageActionButton
                   className={
@@ -3873,13 +3992,13 @@ function MessageReader(props: {
                   onClick={() => onForward(detail)}
                 >
                   <IconPlaceholder
-  lucide="Forward"
-  tabler="IconArrowForward"
-  hugeicons="Forward01Icon"
-  phosphor="ArrowBendUpRight"
-  remixicon="RiShareForwardLine"
-  className="size-4"
-/>
+                    lucide="Forward"
+                    tabler="IconArrowForward"
+                    hugeicons="Forward01Icon"
+                    phosphor="ArrowBendUpRight"
+                    remixicon="RiShareForwardLine"
+                    className="size-4"
+                  />
                 </MessageActionButton>
                 {messageActions.length > 0 && (
                   <MessageMoreMenu
@@ -4075,13 +4194,14 @@ function MessageAttachment({
     <Attachment className="w-full flex-nowrap" aria-busy={pending}>
       <AttachmentMedia>
         <IconPlaceholder
-  lucide="FileText"
-  tabler="IconFileText"
-  hugeicons="File02Icon"
-  phosphor="FileText"
-  remixicon="RiFileTextLine"
-  className="size-4" aria-hidden="true"
-/>
+          lucide="FileText"
+          tabler="IconFileText"
+          hugeicons="File02Icon"
+          phosphor="FileText"
+          remixicon="RiFileTextLine"
+          className="size-4"
+          aria-hidden="true"
+        />
       </AttachmentMedia>
       <AttachmentContent>
         <AttachmentTitle className="whitespace-normal [overflow-wrap:anywhere]">
@@ -4113,23 +4233,24 @@ function MessageAttachment({
             >
               {pending ? (
                 <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
+                  lucide="LoaderCircleIcon"
+                  tabler="IconLoader2"
+                  hugeicons="Loading03Icon"
+                  phosphor="CircleNotch"
+                  remixicon="RiLoader2Line"
+                  className="size-4 animate-spin"
                   aria-hidden="true"
-/>
+                />
               ) : (
                 <IconPlaceholder
-  lucide="Download"
-  tabler="IconDownload"
-  hugeicons="Download01Icon"
-  phosphor="DownloadSimple"
-  remixicon="RiDownloadLine"
-  className="size-4" aria-hidden="true"
-/>
+                  lucide="Download"
+                  tabler="IconDownload"
+                  hugeicons="Download01Icon"
+                  phosphor="DownloadSimple"
+                  remixicon="RiDownloadLine"
+                  className="size-4"
+                  aria-hidden="true"
+                />
               )}
             </AttachmentAction>
           </MailboxTooltip>
@@ -4208,13 +4329,13 @@ function MessageActionButton(props: {
     >
       {props.pending ? (
         <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+          lucide="LoaderCircleIcon"
+          tabler="IconLoader2"
+          hugeicons="Loading03Icon"
+          phosphor="CircleNotch"
+          remixicon="RiLoader2Line"
+          className="size-4 animate-spin"
+        />
       ) : (
         props.children
       )}
@@ -4265,13 +4386,13 @@ function MessageMoreMenu(props: {
       >
         {actionPending === action ? (
           <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+            lucide="LoaderCircleIcon"
+            tabler="IconLoader2"
+            hugeicons="Loading03Icon"
+            phosphor="CircleNotch"
+            remixicon="RiLoader2Line"
+            className="size-4 animate-spin"
+          />
         ) : (
           metadata.icon(
             cn(
@@ -4298,13 +4419,13 @@ function MessageMoreMenu(props: {
           aria-label={t('actions.more')}
         >
           <IconPlaceholder
-  lucide="MoreVertical"
-  tabler="IconDotsVertical"
-  hugeicons="MoreVerticalIcon"
-  phosphor="DotsThreeVertical"
-  remixicon="RiMore2Line"
-  className="size-4"
-/>
+            lucide="MoreVertical"
+            tabler="IconDotsVertical"
+            hugeicons="MoreVerticalIcon"
+            phosphor="DotsThreeVertical"
+            remixicon="RiMore2Line"
+            className="size-4"
+          />
         </MailboxIconButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -4313,24 +4434,24 @@ function MessageMoreMenu(props: {
       >
         <DropdownMenuItem onClick={props.onReplyAll}>
           <IconPlaceholder
-  lucide="ReplyAll"
-  tabler="IconCornerUpLeftDouble"
-  hugeicons="MailReplyAll01Icon"
-  phosphor="ArrowBendDoubleUpLeft"
-  remixicon="RiReplyAllLine"
-  className="size-4"
-/>
+            lucide="ReplyAll"
+            tabler="IconCornerUpLeftDouble"
+            hugeicons="MailReplyAll01Icon"
+            phosphor="ArrowBendDoubleUpLeft"
+            remixicon="RiReplyAllLine"
+            className="size-4"
+          />
           {t('actions.replyAll')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={props.onForward}>
           <IconPlaceholder
-  lucide="Forward"
-  tabler="IconArrowForward"
-  hugeicons="Forward01Icon"
-  phosphor="ArrowBendUpRight"
-  remixicon="RiShareForwardLine"
-  className="size-4"
-/>
+            lucide="Forward"
+            tabler="IconArrowForward"
+            hugeicons="Forward01Icon"
+            phosphor="ArrowBendUpRight"
+            remixicon="RiShareForwardLine"
+            className="size-4"
+          />
           {t('actions.forward')}
         </DropdownMenuItem>
         {messageActions.map((action) => item(action))}
@@ -4703,6 +4824,7 @@ function Compose(props: {
   };
 
   const switchBodyMode = (nextMode: MailyMailboxComposeBodyMode) => {
+    if (nextMode === bodyMode) return;
     setBodyMode(nextMode);
     if (nextMode === 'mailyEditor') {
       setEditorRevision((revision) => revision + 1);
@@ -4735,13 +4857,13 @@ function Compose(props: {
             disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
           >
             <IconPlaceholder
-  lucide="Trash2"
-  tabler="IconTrash"
-  hugeicons="Delete02Icon"
-  phosphor="Trash"
-  remixicon="RiDeleteBinLine"
-  className="size-4"
-/>
+              lucide="Trash2"
+              tabler="IconTrash"
+              hugeicons="Delete02Icon"
+              phosphor="Trash"
+              remixicon="RiDeleteBinLine"
+              className="size-4"
+            />
             {t('compose.discard')}
           </Button>
           <Button
@@ -4755,14 +4877,16 @@ function Compose(props: {
             }}
             disabled={isSaving || isSending || isDiscarding || isSendUnresolved}
           >
-            {isSaving && <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>}
+            {isSaving && (
+              <IconPlaceholder
+                lucide="LoaderCircleIcon"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
+            )}
             {t('compose.saveDraft')}
           </Button>
           <Button
@@ -4773,22 +4897,22 @@ function Compose(props: {
           >
             {isSending ? (
               <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                lucide="LoaderCircleIcon"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
             ) : (
               <IconPlaceholder
-  lucide="Send"
-  tabler="IconSend"
-  hugeicons="MailSend02Icon"
-  phosphor="PaperPlaneTilt"
-  remixicon="RiSendPlaneLine"
-  className="size-4"
-/>
+                lucide="Send"
+                tabler="IconSend"
+                hugeicons="MailSend02Icon"
+                phosphor="PaperPlaneTilt"
+                remixicon="RiSendPlaneLine"
+                className="size-4"
+              />
             )}
             {t('compose.send')}
           </Button>
@@ -4834,22 +4958,22 @@ function Compose(props: {
           >
             {uploading ? (
               <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                lucide="LoaderCircleIcon"
+                tabler="IconLoader2"
+                hugeicons="Loading03Icon"
+                phosphor="CircleNotch"
+                remixicon="RiLoader2Line"
+                className="size-4 animate-spin"
+              />
             ) : (
               <IconPlaceholder
-  lucide="Paperclip"
-  tabler="IconPaperclip"
-  hugeicons="AttachmentIcon"
-  phosphor="Paperclip"
-  remixicon="RiAttachmentLine"
-  className="size-4"
-/>
+                lucide="Paperclip"
+                tabler="IconPaperclip"
+                hugeicons="AttachmentIcon"
+                phosphor="Paperclip"
+                remixicon="RiAttachmentLine"
+                className="size-4"
+              />
             )}
             {t('compose.attach')}
           </Button>
@@ -4897,13 +5021,13 @@ function Compose(props: {
                 }}
               >
                 <IconPlaceholder
-  lucide="X"
-  tabler="IconX"
-  hugeicons="Cancel01Icon"
-  phosphor="X"
-  remixicon="RiCloseLine"
-  className="size-4"
-/>
+                  lucide="X"
+                  tabler="IconX"
+                  hugeicons="Cancel01Icon"
+                  phosphor="X"
+                  remixicon="RiCloseLine"
+                  className="size-4"
+                />
               </AttachmentAction>
             </MailboxTooltip>
           </AttachmentActions>
@@ -5296,13 +5420,13 @@ function RecipientAutocompleteInput(props: {
             {loading ? (
               <div className="text-muted-foreground flex items-center justify-center gap-2 px-3 py-4 text-sm">
                 <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-/>
+                  lucide="LoaderCircleIcon"
+                  tabler="IconLoader2"
+                  hugeicons="Loading03Icon"
+                  phosphor="CircleNotch"
+                  remixicon="RiLoader2Line"
+                  className="size-4 animate-spin"
+                />
                 {loadingLabel}
               </div>
             ) : suggestions.length > 0 ? (

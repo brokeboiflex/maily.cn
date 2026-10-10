@@ -24,11 +24,13 @@ function fixture() {
     createdAt: '2026-10-09',
     bodyText: 'First body',
   };
-  const listMessages = vi.fn(() => ({
-    items: [row],
-    nextCursor: 'page-two',
-    total: 2,
-  }));
+  const listMessages = vi.fn(
+    (_params: Parameters<MailyMailboxDataSource['listMessages']>[0]) => ({
+      items: [row],
+      nextCursor: 'page-two',
+      total: 2,
+    })
+  );
   const getMessage = vi.fn((id: string) => ({
     ...row,
     id,
@@ -418,6 +420,125 @@ it('keeps controlled draft compose open until the host accepts Back', async () =
     expect(
       f.container.querySelector('[tabindex="-1"]')?.hasAttribute('hidden')
     ).toBe(false);
+  } finally {
+    await f.close();
+  }
+});
+
+for (const returnsDetail of [true, false]) {
+  it(`rejects old reader action completion after controlled selection changes (${returnsDetail ? 'detail result' : 'detail refetch'})`, async () => {
+    const f = fixture();
+    let resolve!: (
+      value: Awaited<ReturnType<typeof f.dataSource.getMessage>> | undefined
+    ) => void;
+    const pending = new Promise<
+      Awaited<ReturnType<typeof f.dataSource.getMessage>> | undefined
+    >((done) => {
+      resolve = done;
+    });
+    f.dataSource.runMessageAction = () => pending;
+    const props = { messageActions: ['favorite'] as const };
+    try {
+      await f.render({ ...props, selectedMessageId: 'first' });
+      await f.click('Add star');
+      await f.render({ ...props, selectedMessageId: 'second' });
+      expect(f.container.textContent).toContain('second body');
+      await act(async () => {
+        resolve(returnsDetail ? { ...f.row, isFavorite: true } : undefined);
+      });
+      expect(f.container.textContent).toContain('second body');
+      expect(f.container.querySelector('h2')?.textContent).toBe(
+        'First subject'
+      );
+      expect(
+        f.container.querySelector('[aria-label="Remove star"]')
+      ).toBeNull();
+    } finally {
+      await f.close();
+    }
+  });
+}
+
+it('refreshes the current controlled query after an older message action completes', async () => {
+  const f = fixture();
+  let resolve!: () => void;
+  const pending = new Promise<void>((done) => {
+    resolve = done;
+  });
+  f.dataSource.runMessageAction = () => pending;
+  const props = {
+    messageActions: ['favorite'] as const,
+    searchScope: 'folder' as const,
+  };
+  try {
+    await f.render({
+      ...props,
+      selectedMessageId: 'first',
+      folder: 'inbox',
+      search: 'old search',
+    });
+    await f.click('Add star');
+    await f.render({
+      ...props,
+      selectedMessageId: 'second',
+      folder: 'sent',
+      search: 'current search',
+      selectedLabelId: 'current-label',
+    });
+    await act(async () => resolve());
+    const lastQuery = f.listMessages.mock.calls.at(-1)?.[0] as {
+      folder: string;
+      search: { text: string };
+      labelId: string;
+    };
+    expect(lastQuery).toMatchObject({
+      folder: 'sent',
+      search: { text: 'current search' },
+      labelId: 'current-label',
+    });
+    expect(f.container.textContent).toContain('second body');
+  } finally {
+    await f.close();
+  }
+});
+
+it('keeps newer controlled bulk selection and reader while refreshing the current query', async () => {
+  const f = fixture();
+  let resolve!: () => void;
+  const pending = new Promise<void>((done) => {
+    resolve = done;
+  });
+  f.dataSource.runBulkMessageAction = () => pending;
+  const onSelectedMessageIdsChange = vi.fn();
+  const onSelectedMessageIdChange = vi.fn();
+  const props = {
+    messageActions: ['archive'] as const,
+    onSelectedMessageIdsChange,
+    onSelectedMessageIdChange,
+  };
+  try {
+    await f.render({
+      ...props,
+      selectedMessageIds: ['first'],
+      selectedMessageId: null,
+      folder: 'inbox',
+    });
+    await f.click('Archive');
+    await f.render({
+      ...props,
+      selectedMessageIds: ['second'],
+      selectedMessageId: 'second',
+      folder: 'sent',
+    });
+    onSelectedMessageIdsChange.mockClear();
+    onSelectedMessageIdChange.mockClear();
+    await act(async () => resolve());
+    expect(onSelectedMessageIdsChange).not.toHaveBeenCalled();
+    expect(onSelectedMessageIdChange).not.toHaveBeenCalled();
+    expect(f.container.textContent).toContain('second body');
+    expect(f.listMessages.mock.calls.at(-1)?.[0]).toMatchObject({
+      folder: 'sent',
+    });
   } finally {
     await f.close();
   }

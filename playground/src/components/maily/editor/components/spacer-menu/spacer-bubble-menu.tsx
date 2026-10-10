@@ -30,7 +30,7 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
           name,
           isActive: () => editor?.isActive("spacer", { height }),
           command: () => {
-            editor?.chain().focus().setSpacer({ height }).run()
+            editor?.chain().focus().setSpacerSize(height).run()
           },
         }
       }),

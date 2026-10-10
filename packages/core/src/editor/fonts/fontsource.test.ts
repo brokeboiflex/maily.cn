@@ -3,6 +3,7 @@ import {
   dedupeFontsourceFonts,
   fontsourceFileUrl,
   getFontFallback,
+  resolveFontSelection,
   type FontsourceFont,
 } from './fontsource';
 
@@ -20,6 +21,43 @@ const font: FontsourceFont = {
 };
 
 describe('Fontsource font selection', () => {
+  it('retries a failed version request and deduplicates successful pinned requests', async () => {
+    const fetcher = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ latest: '5.2.9' })));
+    vi.stubGlobal('fetch', fetcher);
+    try {
+      const retryFont = { ...font, id: 'retry-audit-font' };
+      await expect(resolveFontSelection(retryFont)).rejects.toThrow('offline');
+      const [first, second] = await Promise.all([
+        resolveFontSelection(retryFont),
+        resolveFontSelection(retryFont),
+      ]);
+      expect(first.fontVersion).toBe('5.2.9');
+      expect(second.fontVersion).toBe('5.2.9');
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each(['latest', 'LATEST', 'Latest', 'invalid', undefined])(
+    'rejects an unpinned API version %s',
+    async (latest) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => new Response(JSON.stringify({ latest })))
+      );
+      try {
+        await expect(
+          resolveFontSelection({ ...font, id: `invalid-${String(latest)}` })
+        ).rejects.toThrow('invalid pinned version');
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    }
+  );
   it('chooses the closest useful regular and bold weights', () => {
     expect(createFontSelection(font, '5.2.8')).toEqual({
       fontFamily: 'Fraunces',

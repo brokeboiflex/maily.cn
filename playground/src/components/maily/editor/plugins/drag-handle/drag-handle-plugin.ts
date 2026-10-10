@@ -196,7 +196,7 @@ const findElementNextToCoords = (options: FindElementNextToCoords) => {
   let resultNode = null
   let d = null
   let l = x
-  for (; null === resultNode && l < window.innerWidth && l > 0; ) {
+  for (; null === resultNode && l < window.innerWidth && l > 0;) {
     const elements = document.elementsFromPoint(l, y)
     const index = elements.findIndex((el) =>
       el.classList.contains("ProseMirror")
@@ -263,7 +263,7 @@ const getAncestorNodeAtDepth = (e: TNode, t: number) => {
     o = e.resolve(t)
   let { depth: r } = o,
     i = n
-  for (; r > 0; ) {
+  for (; r > 0;) {
     const e = o.node(r)
     ;((r -= 1), 0 === r && (i = e))
   }
@@ -272,7 +272,7 @@ const getAncestorNodeAtDepth = (e: TNode, t: number) => {
 // @ts-ignore
 const getOuterNodePos = (e, t) => {
   let n = t
-  for (; n && n.parentNode && n.parentNode !== e.dom; ) n = n.parentNode
+  for (; n && n.parentNode && n.parentNode !== e.dom;) n = n.parentNode
   return n
 }
 
