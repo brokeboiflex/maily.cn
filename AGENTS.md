@@ -405,3 +405,8 @@ default text preserves Redo, while mixed alignments still change every target.
 TipTap unmount retains editor state. Cancelled paste placeholders must be removed
 from that current retained state before URL revocation, including queued plugin
 removal followed by unmount/remount; an obsolete view cannot own that cleanup.
+
+The post-repair action audit closes the original 14 reported cases but records
+14 additional defects and a separate live-receipt reconciliation policy gap.
+See [the final audit](docs/idempotence-postrepair-audit-2026-10-10.md) before
+claiming the complete editor/mailbox action surface is idempotent or defect-free.
