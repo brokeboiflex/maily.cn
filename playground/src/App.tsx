@@ -36,6 +36,7 @@ import {
   type MailyMailboxLabel,
 } from "@/components/maily/mailbox"
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
+import { paginateMessages } from "@/lib/mailbox-pagination"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL
 const attachmentContents: Record<string, string> = {
@@ -736,20 +737,8 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
             return location === folder
           })
           .filter((message) => searchMatches(message, query, labelsRef.current))
-          .sort(
-            (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-        const parsedCursor = cursor ? Number.parseInt(cursor, 10) : 0
-        const offset =
-          Number.isFinite(parsedCursor) && parsedCursor >= 0 ? parsedCursor : 0
-        const items = all.slice(offset, offset + limit)
-        const nextOffset = offset + items.length
-        return {
-          items,
-          total: all.length,
-          nextCursor: nextOffset < all.length ? String(nextOffset) : null,
-        }
+
+        return paginateMessages(all, { folder, search: query }, cursor, limit)
       },
       getMessage: async (messageId) => {
         const message = messagesRef.current.find(

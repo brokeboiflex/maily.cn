@@ -10,6 +10,11 @@ All Mail includes archived messages and excludes Spam and Trash. Starred is a fi
 
 Pagination uses listMessages cursor/limit and returned nextCursor. Each navigation replaces the current page; Newer/Older arrows use cursor history. Refresh replays the fresh cursor chain to the current page and falls back when the last page empties. Optional `total` supplies the exact query count; without it only the known range is shown, never a fabricated total. Pages belong to the same folder/search generation. Structured search fields are passed to the host; provider-specific operator parsing remains with the adapter.
 
+The playground uses timestamp/immutable-ID keyset boundaries scoped to the
+folder and search/label filters, so insertion or deletion before a page does not
+shift its continuation. Production cursor implementation remains host-owned.
+README adapters forward the complete `listMessages` parameters.
+
 Reply all excludes the account's own address and deduplicates recipient email identities, preserving sender/To recipients in To and Cc recipients in Cc. It never copies Bcc. RFC messageId remains the reply threading header; storage row IDs are not RFC IDs. Conversation grouping uses explicit host thread IDs.
 
 Uploaded attachments are persisted host references in draft input. Acknowledged draft saves transfer ownership to the persisted draft; unsaved discarded uploads belong to the uploader cleanup capability. Save/send must not race pending uploads.

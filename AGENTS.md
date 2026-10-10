@@ -410,3 +410,10 @@ The post-repair action audit closes the original 14 reported cases but records
 14 additional defects and a separate live-receipt reconciliation policy gap.
 See [the final audit](docs/idempotence-postrepair-audit-2026-10-10.md) before
 claiming the complete editor/mailbox action surface is idempotent or defect-free.
+
+## Playground message cursors, 2026-10-10
+
+The playground message adapter uses a timestamp/immutable-ID keyset boundary,
+scoped to folder/search/label filters. Do not substitute numeric offsets for
+cursors. README adapters must forward all `listMessages` parameters unchanged.
+Thread, label and autocomplete contracts remain unchanged.

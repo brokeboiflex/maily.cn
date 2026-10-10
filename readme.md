@@ -236,7 +236,7 @@ import {
 } from '@/components/maily/mailbox';
 
 const dataSource: MailyMailboxDataSource = {
-  listMessages: ({ folder, q }) => api.mail.messages({ folder, q }),
+  listMessages: (params) => api.mail.messages(params),
   getMessage: (messageId) => api.mail.message(messageId),
   getCounts: () => api.mail.counts(),
   listContactSuggestions: ({ q, limit }) => api.contacts.search({ q, limit }),
