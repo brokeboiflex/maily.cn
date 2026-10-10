@@ -1,9 +1,7 @@
+import { AdaptiveNodePopover } from '../../components/adaptive-node-popover';
+import { useMobileEditor } from '../../components/mobile-editor-context';
 import { AlignmentSwitch } from '../../components/alignment-switch';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { ShowPopover } from '../../components/show-popover';
 import { ColorPicker } from '../../components/ui/color-picker';
 import { Separator } from '@/components/ui/separator';
@@ -30,6 +28,7 @@ import { ButtonLabelInput } from './button-label-input';
 
 export function ButtonView(props: NodeViewProps) {
   const { t } = useMailyContext();
+  const { compact } = useMobileEditor();
   const { node, editor, getPos, updateAttributes } = props;
   const {
     text,
@@ -93,7 +92,7 @@ export function ButtonView(props: NodeViewProps) {
         textAlign: alignment,
       }}
     >
-      <Popover open={props.selected && editor.isEditable}>
+      <Popover open={props.selected && editor.isEditable && !compact}>
         <PopoverTrigger asChild>
           <div className="inline-flex">
             {/* shadcn-audit-ignore-next-line email content preview renders the actual message button */}
@@ -156,7 +155,8 @@ export function ButtonView(props: NodeViewProps) {
             </button>
           </div>
         </PopoverTrigger>
-        <PopoverContent
+        <AdaptiveNodePopover
+          active={props.selected && editor.isEditable}
           align={popoverAlign}
           side="top"
           className="p-0.5! w-max rounded-lg"
@@ -333,7 +333,7 @@ export function ButtonView(props: NodeViewProps) {
               />
             </div>
           </TooltipProvider>
-        </PopoverContent>
+        </AdaptiveNodePopover>
       </Popover>
     </NodeViewWrapper>
   );

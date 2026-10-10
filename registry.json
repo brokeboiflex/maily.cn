@@ -22,7 +22,8 @@
         "tabs",
         "input-group",
         "command",
-        "badge"
+        "badge",
+        "collapsible"
       ],
       "dependencies": [
         "@tanstack/react-virtual@^3.14.6",
@@ -102,6 +103,16 @@
           "path": "registry/default/maily/components/maily/blocks.ts",
           "type": "registry:component",
           "target": "@components/maily/blocks.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/adaptive-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/adaptive-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/adaptive-node-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/adaptive-node-popover.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/alignment-switch.tsx",
@@ -202,6 +213,16 @@
           "path": "registry/default/maily/components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/mobile-editor-context.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/mobile-editor-context.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/mobile-editor.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/mobile-editor.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/repeat-menu/repeat-bubble-menu.tsx",
@@ -622,6 +643,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/is-text-selected.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/is-text-selected.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/mobile-block-actions.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/mobile-block-actions.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/node-options.ts",
@@ -843,6 +869,7 @@
         "checkbox",
         "dialog",
         "sheet",
+        "collapsible",
         "avatar",
         "field",
         "label",
@@ -932,6 +959,16 @@
           "path": "registry/default/maily/components/maily/blocks.ts",
           "type": "registry:component",
           "target": "@components/maily/blocks.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/adaptive-bubble-menu.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/adaptive-bubble-menu.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/adaptive-node-popover.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/adaptive-node-popover.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/alignment-switch.tsx",
@@ -1032,6 +1069,16 @@
           "path": "registry/default/maily/components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/components/inline-image-menu/use-inline-image-state.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/mobile-editor-context.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/mobile-editor-context.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/components/mobile-editor.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/components/mobile-editor.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/editor/components/repeat-menu/repeat-bubble-menu.tsx",
@@ -1452,6 +1499,11 @@
           "path": "registry/default/maily/components/maily/editor/utils/is-text-selected.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/is-text-selected.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/mobile-block-actions.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/mobile-block-actions.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/node-options.ts",

@@ -1,4 +1,4 @@
-import { BubbleMenu } from "@tiptap/react/menus"
+import { AdaptiveBubbleMenu as BubbleMenu } from "../adaptive-bubble-menu"
 import { useCallback } from "react"
 import { getRenderContainer } from "../../utils/get-render-container"
 import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"

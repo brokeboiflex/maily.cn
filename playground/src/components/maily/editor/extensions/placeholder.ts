@@ -12,7 +12,7 @@ export function createPlaceholderExtension(t: TranslateFn) {
   return Placeholder.configure({
     emptyEditorClass: `is-editor-empty ${PLACEHOLDER_CLASS}`,
     emptyNodeClass: `is-empty ${PLACEHOLDER_CLASS}`,
-    placeholder: ({ node }) => {
+    placeholder: ({ node, editor }) => {
       if (node.type.name === "heading") {
         return t("placeholder.heading", { level: node.attrs.level })
       } else if (node.type.name === "htmlCodeBlock") {
@@ -33,7 +33,11 @@ export function createPlaceholderExtension(t: TranslateFn) {
         return ""
       }
 
-      return t("placeholder.default")
+      return t(
+        editor.view.dom.closest("[data-maily-mobile=true]")
+          ? "placeholder.mobile"
+          : "placeholder.default"
+      )
     },
     includeChildren: true,
   })

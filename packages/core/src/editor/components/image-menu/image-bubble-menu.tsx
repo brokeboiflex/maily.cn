@@ -4,7 +4,7 @@ import {
 } from '@/editor/nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '@/editor/utils/aspect-ratio';
 import { borderRadius } from '@/editor/utils/border-radius';
-import { BubbleMenu } from '@tiptap/react/menus';
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 import { ImageDown, LockIcon, LockOpenIcon } from 'lucide-react';
 import { AlignmentSwitch } from '../alignment-switch';
 import { BubbleMenuButton } from '../bubble-menu-button';

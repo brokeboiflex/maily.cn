@@ -307,3 +307,42 @@ label as their accessible name. Keep trigger state on its own primitive via a
 neutral tooltip span and forward menu/dialog trigger props to the actual Button.
 Folder counts remain unbadged numbers; label create and More controls use equal
 square targets, aligned within the same scrolling sidebar.
+
+## Responsive editor, 2026-10-10
+
+### Icon rules
+
+- Use established icon libraries for interface icons. Do not author SVG paths,
+  CSS-drawn icons, or text stand-ins such as a literal `Aa` formatting icon.
+- Do not impose blanket restrictions against icons. Use appropriate library
+  icons wherever the reference or interaction calls for them.
+- Keep each toolbar's icon family, rendered size, weight, alignment, and touch
+  targets coherent. Size the icon itself so host primitive defaults cannot
+  silently shrink it. Registry installs must inherit the consumer's chosen icon
+  library through verified mappings.
+
+Follow the supplied Notion mobile editor reference: bottom toolbar, plus-driven
+two-column block picker, and touch formatting panel. Compact editing is based on
+the editor container (below 640px, or below 1024px with a coarse pointer), not a
+new editor instance. Disable mobile slash suggestions and hover drag controls;
+keep the complete caller-supplied block tree and real node settings accessible.
+Reuse node controls through adaptive bubble/popover surfaces in the host Collapsible.
+Preserve document/selection ownership for deferred insertion and make toolbar
+actions separate undo events. Keep responsive column stacking confined to the
+editing surface; never rewrite saved email widths to fit the editor. See
+[responsive editor](docs/editor-mobile.md) for the reference and validation boundary.
+
+Mobile editor chrome must inherit host primitive corner shapes. Do not override
+Button, Toggle or Sheet radii to copy a reference silhouette. Custom containers
+use host radius tokens, never `rounded-full` or fixed pixel radii; verify both
+zero-radius and rounded themes while retaining touch targets and padding.
+
+## Mailbox folder-wide deletion (2026-10-10)
+
+Do not render Empty Trash or Delete all spam buttons. Deletion stays scoped to selected messages through the host action capability.
+
+Mobile editor dock and expanded picker share one persistent toolbar and portal.
+Use host Collapsible for this nonmodal disclosure; do not remount the toolbar in
+Sheet or autofocus a replacement trigger. Only the outer accessory translates,
+with reduced-motion support. Repeated requests for the active panel must not
+reset its navigation, selection snapshot, history boundary, focus or scroll.

@@ -86,7 +86,7 @@ const initialEditorContent: JSONContent = {
         },
         {
           type: "text",
-          text: ", start typing, select text to format it, or enter / to explore the email blocks.",
+          text: ", start typing, select text to format it, or use the block picker to build your email.",
         },
       ],
     },
@@ -1060,13 +1060,6 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
         for (const messageId of new Set(messageIds)) {
           await applyMessageAction({ messageId, action, value })
         }
-      },
-      emptyFolder: async (folder) => {
-        if (folder !== "spam" && folder !== "trash")
-          throw new Error("Folder cannot be emptied")
-        writeMessages(
-          messagesRef.current.filter((message) => folderFor(message) !== folder)
-        )
       },
       undoMessageAction: async (token) => {
         const receipt = undoSnapshots.current.get(token)

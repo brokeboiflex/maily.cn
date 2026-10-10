@@ -9,6 +9,17 @@ import type { MailyMailboxLabels } from "@/components/maily/mailbox"
  * the missing key. That is the i18n contract working as designed.
  */
 export const polishLabels: MailyLabels = {
+  "mobile.toolbar": "Narzędzia edycji",
+  "mobile.insert": "Wstaw blok",
+  "mobile.format": "Formatowanie",
+  "mobile.undo": "Cofnij",
+  "mobile.redo": "Ponów",
+  "mobile.close": "Zamknij narzędzia edycji",
+  "mobile.back": "Wstecz",
+  "mobile.moveUp": "Przenieś wyżej",
+  "mobile.moveDown": "Przenieś niżej",
+  "placeholder.mobile": "Zacznij pisać…",
+
   // ── Slash-command default blocks ──
   "block.text.title": "Tekst",
   "block.text.description": "Po prostu zacznij pisać zwykły tekst.",
@@ -347,8 +358,6 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "actions.renameLabel": "Zmień nazwę etykiety",
   "actions.deleteLabel": "Usuń etykietę",
   "actions.removeLabel": "Usuń etykietę z wiadomości",
-  "actions.emptyTrash": "Opróżnij kosz",
-  "actions.deleteAllSpam": "Usuń cały spam",
   "actions.loadMore": "Wczytaj więcej",
   "pagination.previous": "Nowsze",
   "pagination.next": "Starsze",
@@ -374,8 +383,6 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "actions.openExternal": "Otwórz w nowym oknie",
   searchPlaceholder: "Szukaj poczty",
   "search.advanced": "Wyszukiwanie zaawansowane",
-  "confirm.emptyTrash": "Trwale usunąć wszystkie wiadomości z kosza?",
-  "confirm.deleteAllSpam": "Trwale usunąć wszystkie wiadomości ze spamu?",
   "actions.confirm": "Potwierdź",
   "actions.cancel": "Anuluj",
   "actions.selectConversation": "Zaznacz wątek: {subject}",

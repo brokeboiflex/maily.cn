@@ -5,7 +5,7 @@ import {
 } from '../../nodes/logo/logo';
 import { getNewHeight, getNewWidth } from '../../utils/aspect-ratio';
 import { borderRadius } from '../../utils/border-radius';
-import { BubbleMenu } from '@tiptap/react/menus';
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 import { AlignmentSwitch } from '../alignment-switch';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { ShowPopover } from '../show-popover';

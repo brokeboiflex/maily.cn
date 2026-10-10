@@ -288,7 +288,6 @@ export type MailyMailboxDataSource = {
     action: MailyMailboxMessageAction;
     value?: string | boolean | null;
   }) => MaybePromise<MailyMailboxMessageActionResult>;
-  emptyFolder?: (folder: 'spam' | 'trash') => MaybePromise<void>;
   undoMessageAction?: (token: string) => MaybePromise<void>;
   uploadAttachment?: (
     file: File
@@ -375,8 +374,6 @@ export const defaultMailboxLabels = {
   'actions.renameLabel': 'Rename label',
   'actions.deleteLabel': 'Delete label',
   'actions.removeLabel': 'Remove label',
-  'actions.emptyTrash': 'Empty Trash',
-  'actions.deleteAllSpam': 'Delete all spam',
   'actions.loadMore': 'Load more',
   'pagination.previous': 'Newer',
   'pagination.next': 'Older',
@@ -393,8 +390,6 @@ export const defaultMailboxLabels = {
   'search.unread': 'Unread',
   'search.global': 'Search all mail',
   'search.advanced': 'Advanced search',
-  'confirm.emptyTrash': 'Permanently delete every message in Trash?',
-  'confirm.deleteAllSpam': 'Permanently delete every message in Spam?',
   'actions.confirm': 'Confirm',
   'compose.attach': 'Attach files',
   'compose.removeAttachment': 'Remove {filename}',
@@ -1172,7 +1167,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
     label?: MailyMailboxLabel;
   } | null>(null);
   const [labelName, setLabelName] = React.useState('');
-  const [emptyConfirmOpen, setEmptyConfirmOpen] = React.useState(false);
   const [selectedIds, setSelectedIds] = useControllableState(
     props.selectedMessageIds,
     props.defaultSelectedMessageIds ?? [],
@@ -1312,7 +1306,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
   const [sending, setSending] = React.useState(false);
   const [discarding, setDiscarding] = React.useState(false);
   const [loadingMore, setLoadingMore] = React.useState(false);
-  const [emptyingFolder, setEmptyingFolder] = React.useState(false);
   const [messageActionPending, setMessageActionPending] =
     React.useState<MailyMailboxMessageAction | null>(null);
   const [errorKey, setErrorKey] = React.useState<MailyMailboxLabelKey | null>(
@@ -1726,7 +1719,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
     if (!acceptedByHost || props.searchFilters === undefined)
       setSearchFields({});
     setAdvancedSearchOpen(false);
-    setEmptyConfirmOpen(false);
     if (
       !acceptedByHost ||
       props.selectedLabelId === undefined ||
@@ -1790,7 +1782,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
       if (props.selectedMessageId === undefined && !composeDraftRef.current)
         setSelectedId(null);
     }
-    setEmptyConfirmOpen(false);
   }, [
     queryKey,
     props.selectedMessageIds,
@@ -2222,36 +2213,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
     } finally {
       composeLock.current = false;
       if (isCurrent()) setMessageActionPending(null);
-    }
-  };
-
-  const emptyFolder = async () => {
-    if (
-      globalSearch ||
-      (folder !== 'trash' && folder !== 'spam') ||
-      !dataSource.emptyFolder
-    )
-      return;
-    if (
-      composeLock.current ||
-      pendingSendRef.current ||
-      recoveryUnavailableRef.current
-    )
-      return;
-    const isCurrent = captureLifetime();
-    composeLock.current = true;
-    setEmptyingFolder(true);
-    try {
-      await dataSource.emptyFolder(folder);
-      if (!isCurrent()) return;
-      setSelectedIds([]);
-      clearReaderAfterMutation();
-      await refreshMailbox();
-    } catch (error) {
-      if (isCurrent()) reportError(error, 'messageAction');
-    } finally {
-      composeLock.current = false;
-      if (isCurrent()) setEmptyingFolder(false);
     }
   };
 
@@ -2930,63 +2891,6 @@ function MailboxSession(props: MailyMailboxViewProps) {
                 </InputGroupAddon>
               )}
             </InputGroup>
-            {!globalSearch &&
-              dataSource.emptyFolder &&
-              (folder === 'trash' || folder === 'spam') && (
-                <Popover
-                  open={emptyConfirmOpen}
-                  onOpenChange={setEmptyConfirmOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="mt-2"
-                      disabled={emptyingFolder}
-                    >
-                      {t(
-                        folder === 'trash'
-                          ? 'actions.emptyTrash'
-                          : 'actions.deleteAllSpam'
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    className="w-72 max-w-[calc(100vw-2rem)] space-y-3"
-                  >
-                    <p className="text-sm">
-                      {t(
-                        folder === 'trash'
-                          ? 'confirm.emptyTrash'
-                          : 'confirm.deleteAllSpam'
-                      )}
-                    </p>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEmptyConfirmOpen(false)}
-                      >
-                        {t('actions.cancel')}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => {
-                          setEmptyConfirmOpen(false);
-                          void emptyFolder();
-                        }}
-                      >
-                        {t('actions.confirm')}
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
           </div>
         </div>
         {pendingNavigation && (

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 import { Node } from '@tiptap/pm/model';
 import { type ReactNode } from 'react';
@@ -35,6 +36,15 @@ export function DragHandle(props: DragHandleProps) {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
   const pluginRef = useRef<ReturnType<typeof DragHandlePlugin> | null>(null);
 
+  // The plugin reparents its element into Tippy's container. React must own
+  // only the portal's children, not a host div that the plugin moves elsewhere.
+  useEffect(() => {
+    setElement(document.createElement('div'));
+  }, []);
+  useEffect(() => {
+    if (element) element.className = className;
+  }, [element, className]);
+
   useEffect(() => {
     if (!element) {
       return () => {
@@ -66,9 +76,5 @@ export function DragHandle(props: DragHandleProps) {
     };
   }, [element, editor, onNodeChange, pluginKey]);
 
-  return (
-    <div className={className} ref={setElement}>
-      {children}
-    </div>
-  );
+  return element ? createPortal(children, element) : null;
 }

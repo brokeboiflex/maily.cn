@@ -7,6 +7,17 @@
  * `{token}` placeholders are filled by the translator's `vars` argument.
  */
 export const defaultLabels = {
+  'mobile.toolbar': 'Editing tools',
+  'mobile.insert': 'Insert block',
+  'mobile.format': 'Format',
+  'mobile.undo': 'Undo',
+  'mobile.redo': 'Redo',
+  'mobile.close': 'Close editing tools',
+  'mobile.back': 'Back',
+  'mobile.moveUp': 'Move up',
+  'mobile.moveDown': 'Move down',
+  'placeholder.mobile': 'Write something…',
+
   // ── Slash-command default blocks: block.<exportName>.{title,description} ──
   'block.text.title': 'Text',
   'block.text.description': 'Just start typing with plain text.',

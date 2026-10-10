@@ -43,6 +43,7 @@ interface EditorMenuItem extends BubbleMenuItem {
 }
 
 type EditorMenuBarProps = {
+  compact?: boolean
   config: EditorProps["config"]
   editor: EditorType
   viewMode: EditorViewMode
@@ -178,7 +179,7 @@ const ToggleItemControl = forwardRef<HTMLButtonElement, ToggleItemControlProps>(
 ToggleItemControl.displayName = "ToggleItemControl"
 
 export const EditorMenuBar = (props: EditorMenuBarProps) => {
-  const { editor, config, viewMode, onViewModeChange } = props
+  const { editor, config, viewMode, onViewModeChange, compact = false } = props
   const { t } = useMailyContext()
   const editorState = useEditorState({
     editor,
@@ -305,20 +306,22 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         config?.toolbarClassName
       )}
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-2">
-        {groups.map((group) => {
-          const groupItems = items.filter((item) => item.group === group)
+      {!compact && (
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {groups.map((group) => {
+            const groupItems = items.filter((item) => item.group === group)
 
-          return (
-            <div
-              key={group}
-              className="flex items-center gap-1 rounded-md border border-border bg-background p-1"
-            >
-              {renderGroup(group, groupItems)}
-            </div>
-          )
-        })}
-      </div>
+            return (
+              <div
+                key={group}
+                className="flex items-center gap-1 rounded-md border border-border bg-background p-1"
+              >
+                {renderGroup(group, groupItems)}
+              </div>
+            )
+          })}
+        </div>
+      )}
       <div className="flex items-center gap-1 rounded-md border border-border bg-background p-1">
         <ToggleGroupCompat
           selectionMode="single"
@@ -331,7 +334,10 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
             pressed={viewMode === "design"}
             onClick={() => onViewModeChange("design")}
             aria-label={t("toolbar.viewMode.design")}
-            className="h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium"
+            className={cn(
+              "h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium",
+              compact && "h-11! px-3 text-sm"
+            )}
             type="button"
           >
             <Pencil className="size-3.5" />
@@ -342,7 +348,10 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
             pressed={viewMode === "render"}
             onClick={() => onViewModeChange("render")}
             aria-label={t("toolbar.viewMode.render")}
-            className="h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium"
+            className={cn(
+              "h-7! min-w-0! gap-1.5 px-2.5 text-xs font-medium",
+              compact && "h-11! px-3 text-sm"
+            )}
             type="button"
           >
             <Eye className="size-3.5" />

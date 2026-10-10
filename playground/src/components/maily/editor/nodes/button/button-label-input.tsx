@@ -1,45 +1,47 @@
-import { InputAutocomplete } from '../../components/ui/input-autocomplete';
-import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../variable/variable';
-import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
-import { useVariableOptions } from '../../utils/node-options';
-import { processVariables } from '../../utils/variable';
-import { Editor } from '@tiptap/core';
-import { useMemo, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useOwnedTimeout } from "../../utils/use-owned-timeout"
+import { InputAutocomplete } from "../../components/ui/input-autocomplete"
+import { DEFAULT_VARIABLE_TRIGGER_CHAR } from "../variable/variable"
+import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from "../../provider"
+import { useVariableOptions } from "../../utils/node-options"
+import { processVariables } from "../../utils/variable"
+import { Editor } from "@tiptap/core"
+import { useMemo, useRef, useState } from "react"
+import { Button } from "@/components/ui/button"
 
 type ButtonLabelInputProps = {
-  value: string;
-  onValueChange?: (value: string, isVariable?: boolean) => void;
-  isVariable?: boolean;
+  value: string
+  onValueChange?: (value: string, isVariable?: boolean) => void
+  isVariable?: boolean
 
-  editor: Editor;
-};
+  editor: Editor
+}
 
 export function ButtonLabelInput(props: ButtonLabelInputProps) {
-  const { value, onValueChange, isVariable, editor } = props;
+  const { value, onValueChange, isVariable, editor } = props
 
-  const linkInputRef = useRef<HTMLInputElement>(null);
-  const [isEditing, setIsEditing] = useState(!isVariable);
+  const { schedule: scheduleTimeout } = useOwnedTimeout()
+  const linkInputRef = useRef<HTMLInputElement>(null)
+  const [isEditing, setIsEditing] = useState(!isVariable)
 
-  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL } = useMailyContext();
-  const otps = useVariableOptions(editor);
-  const variables = otps?.variables;
+  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL } = useMailyContext()
+  const otps = useVariableOptions(editor)
+  const variables = otps?.variables
   const variableTriggerCharacter =
-    otps?.suggestion?.char ?? DEFAULT_VARIABLE_TRIGGER_CHAR;
-  const renderVariable = otps?.renderVariable;
+    otps?.suggestion?.char ?? DEFAULT_VARIABLE_TRIGGER_CHAR
+  const renderVariable = otps?.renderVariable
 
   const autoCompleteOptions = useMemo(() => {
     const withoutTrigger = value.replace(
-      new RegExp(variableTriggerCharacter, 'g'),
-      ''
-    );
+      new RegExp(variableTriggerCharacter, "g"),
+      ""
+    )
 
     return processVariables(variables, {
-      query: withoutTrigger || '',
-      from: 'bubble-variable',
+      query: withoutTrigger || "",
+      from: "bubble-variable",
       editor,
-    }).map((variable) => variable.name);
-  }, [variables, value, editor]);
+    }).map((variable) => variable.name)
+  }, [variables, value, editor])
 
   return (
     <div className="isolate flex rounded-lg">
@@ -49,10 +51,10 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           variant="ghost"
           className="h-auto p-0"
           onClick={() => {
-            setIsEditing(true);
-            setTimeout(() => {
-              linkInputRef.current?.focus();
-            }, 0);
+            setIsEditing(true)
+            scheduleTimeout(() => {
+              linkInputRef.current?.focus()
+            }, 0)
           }}
         >
           {renderVariable({
@@ -60,8 +62,8 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
               name: value,
               valid: true,
             },
-            fallback: '',
-            from: 'bubble-variable',
+            fallback: "",
+            from: "bubble-variable",
             editor,
           })}
         </Button>
@@ -72,7 +74,7 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           editor={editor}
           value={value}
           onValueChange={(value) => {
-            onValueChange?.(value);
+            onValueChange?.(value)
           }}
           autoCompleteOptions={autoCompleteOptions}
           ref={linkInputRef}
@@ -80,14 +82,14 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           className="h-7 w-40"
           triggerChar={variableTriggerCharacter}
           onSelectOption={(value) => {
-            const isVariable = autoCompleteOptions.includes(value) ?? false;
+            const isVariable = autoCompleteOptions.includes(value) ?? false
             if (isVariable) {
-              setIsEditing(false);
+              setIsEditing(false)
             }
-            onValueChange?.(value, isVariable);
+            onValueChange?.(value, isVariable)
           }}
         />
       )}
     </div>
-  );
+  )
 }

@@ -30,8 +30,7 @@ mounted-lifetime and mutation exclusion apply to the new actions.
 
 Maily preserves its current split-pane shell and Bounced folder. Gmail's backend
 classification, sender learning, 30-day retention and arbitrary Move to folders
-are host responsibilities; Maily does not promise automatic expiration. Bulk selection now uses the optional runBulkMessageAction capability; Empty Trash
-and Delete all spam use the folder-wide emptyFolder capability. See
+are host responsibilities; Maily does not promise automatic expiration. Bulk selection uses the optional runBulkMessageAction capability. See
 [mailbox workflows](mailbox-workflows.md). Discarded drafts still use the separate discardDraft API.
 The playground is an in-memory consumer and loses changes on reload.
 

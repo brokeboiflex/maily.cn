@@ -1,38 +1,39 @@
-import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { useColumnsState } from './use-columns-state';
-import { Separator } from '@/components/ui/separator';
-import { TooltipProvider } from '@/components/ui/tooltip';
-import { VerticalAlignmentSwitch } from '../vertical-alignment-switch';
+import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
+import { useColumnsState } from "./use-columns-state"
+import { Separator } from "@/components/ui/separator"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { VerticalAlignmentSwitch } from "../vertical-alignment-switch"
 import {
+  getColumnCount,
   addColumnByIndex,
   removeColumnByIndex,
   updateColumnWidth,
-} from '../../utils/columns';
-import { ShowPopover } from '../show-popover';
-import { ColumnsWidthConfig } from './columns-width-config';
-import { Select } from '../ui/select';
-import { BubbleMenuButton } from '../bubble-menu-button';
-import { deleteNode } from '../../utils/delete-node';
-import { spacing } from '../../utils/spacing';
-import { useMailyContext } from '../../provider';
-import type { LabelKey } from '../../i18n';
-import { BUBBLE_MENU_CONTENT_CLASS } from '../ui/floating-menu';
-import { Space, Trash } from "lucide-react";
+} from "../../utils/columns"
+import { ShowPopover } from "../show-popover"
+import { ColumnsWidthConfig } from "./columns-width-config"
+import { Select } from "../ui/select"
+import { BubbleMenuButton } from "../bubble-menu-button"
+import { deleteNode } from "../../utils/delete-node"
+import { spacing } from "../../utils/spacing"
+import { useMailyContext } from "../../provider"
+import type { LabelKey } from "../../i18n"
+import { BUBBLE_MENU_CONTENT_CLASS } from "../ui/floating-menu"
+import { Space, Trash2 } from "lucide-react"
 
 type ColumnsBubbleMenuProps = {
-  editor: EditorBubbleMenuProps['editor'];
-};
+  editor: EditorBubbleMenuProps["editor"]
+}
 
 export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
-  const { editor } = props;
+  const { editor } = props
   if (!editor) {
-    return null;
+    return null
   }
 
-  const state = useColumnsState(editor);
-  const { t } = useMailyContext();
+  const state = useColumnsState(editor)
+  const { t } = useMailyContext()
 
-  const currentColumnCount = state.columnsCount;
+  const currentColumnCount = state.columnsCount
 
   return (
     <TooltipProvider>
@@ -43,14 +44,15 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               columnsCount={currentColumnCount}
               columnWidths={state.columnWidths}
               onColumnsCountChange={(count) => {
+                const currentColumnCount = getColumnCount(editor)
                 if (count > currentColumnCount) {
-                  addColumnByIndex(editor);
-                } else {
-                  removeColumnByIndex(editor);
+                  addColumnByIndex(editor)
+                } else if (count < currentColumnCount) {
+                  removeColumnByIndex(editor)
                 }
               }}
               onColumnWidthChange={(index, width) => {
-                updateColumnWidth(editor, index, width);
+                updateColumnWidth(editor, index, width)
               }}
             />
 
@@ -63,19 +65,18 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           onAlignmentChange={(value) => {
             editor.commands.updateColumn({
               verticalAlign: value,
-            });
+            })
           }}
         />
 
         <Separator orientation="vertical" />
 
         <Select
-          icon={<Space
-/>}
-          label={t('columnMenu.gap')}
+          icon={<Space />}
+          label={t("columnMenu.gap")}
           value={state.currentColumnsGap}
           options={[
-            { value: '0', label: t('columnMenu.gap.none') },
+            { value: "0", label: t("columnMenu.gap.none") },
             ...spacing.map((space) => ({
               label: t(`spacing.${space.short}` as LabelKey),
               value: String(space.value),
@@ -84,19 +85,18 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           onValueChange={(value) => {
             editor.commands.updateColumns({
               gap: +value,
-            });
+            })
           }}
-          tooltip={t('columnMenu.gap')}
+          tooltip={t("columnMenu.gap")}
         />
 
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={<Trash
-/>}
-          tooltip={t('columnMenu.delete')}
+          icon={<Trash2 />}
+          tooltip={t("columnMenu.delete")}
           command={() => {
-            deleteNode(editor, 'columns');
+            deleteNode(editor, "columns")
           }}
         />
 
@@ -107,11 +107,11 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
           onShowIfKeyValueChange={(value) => {
             editor.commands.updateColumns({
               showIfKey: value,
-            });
+            })
           }}
           editor={editor}
         />
       </div>
     </TooltipProvider>
-  );
+  )
 }

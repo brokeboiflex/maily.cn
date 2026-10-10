@@ -14,7 +14,7 @@ Reply all excludes the account's own address and deduplicates recipient email id
 
 Uploaded attachments are persisted host references in draft input. Acknowledged draft saves transfer ownership to the persisted draft; unsaved discarded uploads belong to the uploader cleanup capability. Save/send must not race pending uploads.
 
-Bulk actions operate on selected message IDs. Empty Trash and Delete all spam require the host's folder-wide emptyFolder callback, so messages beyond the loaded page are included. Label IDs identify labels independently of names.
+Bulk actions operate on selected message IDs. Label IDs identify labels independently of names.
 
 Undo requires a host-issued token and an undoMessageAction callback. The host defines reversibility and expiration; the UI must never manufacture a reversal from message fields.
 
@@ -29,13 +29,12 @@ Autosave must preserve the revision observed with editable content, mark only ac
 | Uploads        | `uploadAttachment(file)` returns an immutable `{ id, filename, contentType?, size? }` reference; draft writes receive `attachments`.                   |
 | Upload cleanup | `discardUploadedAttachment(reference)` handles unacknowledged removed/stale uploads; hosts clean removed persisted refs after draft/message mutations. |
 | Bulk           | `runBulkMessageAction({ messageIds, action, value? })` performs one selected-set mutation.                                                             |
-| Empty folder   | `emptyFolder('trash' \| 'spam')` permanently removes the entire folder after confirmation.                                                             |
 | Labels         | `listLabels`, `createLabel`, `renameLabel`, `deleteLabel`, `applyLabel` and `removeLabel` keep immutable label IDs separate from names.                |
 | Undo           | Single/bulk actions may return `{ undo: { token, expiresAt? } }`; `undoMessageAction(token)` reverses the host operation.                              |
 
 Autosave waits one second after edits; failures remain visible and require an explicit retry. New compose sessions show saved status only after an acknowledged write. The send pipeline prepares once and retains its receipt for unresolved sends.
 
-The header select-all Checkbox covers the current page, and each conversation Checkbox covers its visible members. Empty-folder callbacks cover unloaded messages as well. Structured search accepts text, sender, recipient, subject, date boundaries, unread, starred, attachment and label filters; the search-bar filter Popover stages common filters until Search is submitted; ordinary search uses All Mail.
+The header select-all Checkbox covers the current page, and each conversation Checkbox covers its visible members. Structured search accepts text, sender, recipient, subject, date boundaries, unread, starred, attachment and label filters; the search-bar filter Popover stages common filters until Search is submitted; ordinary search uses All Mail.
 
 ## Intentional adaptations
 

@@ -27,6 +27,20 @@
  */
 
 export const iconMap = {
+  Undo2: {
+    lucide: 'Undo2',
+    tabler: 'IconArrowBackUp',
+    phosphor: 'ArrowUUpLeft',
+    hugeicons: 'Undo02Icon',
+    remixicon: 'RiArrowGoBackLine',
+  },
+  Redo2: {
+    lucide: 'Redo2',
+    tabler: 'IconArrowForwardUp',
+    phosphor: 'ArrowUUpRight',
+    hugeicons: 'Redo02Icon',
+    remixicon: 'RiArrowGoForwardLine',
+  },
   ArrowLeft: {
     lucide: 'ArrowLeft',
     tabler: 'IconArrowLeft',
@@ -361,6 +375,13 @@ export const iconMap = {
     phosphor: 'TextT',
     hugeicons: 'TextFontIcon',
     remixicon: 'RiParagraph',
+  },
+  CaseSensitive: {
+    lucide: 'CaseSensitive',
+    tabler: 'IconLetterCase',
+    phosphor: 'TextAa',
+    hugeicons: 'TextFontIcon',
+    remixicon: 'RiFontSize',
   },
   Ban: {
     lucide: 'Ban',

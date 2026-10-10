@@ -3,7 +3,7 @@ import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { cn } from '@/lib/utils';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
-import { BubbleMenu } from '@tiptap/react/menus';
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';

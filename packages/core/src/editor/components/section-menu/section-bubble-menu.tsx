@@ -1,7 +1,7 @@
 import { deleteNode } from '@/editor/utils/delete-node';
 import { isTextSelected } from '@/editor/utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
-import { BubbleMenu } from '@tiptap/react/menus';
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 import { ChevronUp, Trash } from 'lucide-react';
 import { useCallback } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';

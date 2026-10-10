@@ -1,4 +1,4 @@
-import { BubbleMenu } from '@tiptap/react/menus';
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 import { ImageSize } from '../image-menu/image-size';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { TooltipProvider } from '../ui/tooltip';

@@ -14,6 +14,8 @@ import {
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
+import { MobileEditor } from './components/mobile-editor';
+import { useCompactEditor } from './components/mobile-editor-context';
 import { ContentMenu } from './components/content-menu';
 import { EditorMenuBar } from './components/editor-menu-bar';
 import { HTMLBubbleMenu } from './components/html-menu/html-menu';
@@ -198,7 +200,7 @@ export function Editor(props: EditorProps) {
     }),
     [contentClassName, scrollMargin, scrollThreshold, spellCheck]
   );
-  const menuContainerRef = useRef(null);
+  const menuContainerRef = useRef<HTMLDivElement>(null);
   const editor = useEditor({
     editorProps,
     immediatelyRender,
@@ -216,6 +218,8 @@ export function Editor(props: EditorProps) {
     editable,
   });
 
+  const compact = useCompactEditor(menuContainerRef, editor);
+
   if (!editor) {
     return null;
   }
@@ -229,60 +233,89 @@ export function Editor(props: EditorProps) {
       t={t}
     >
       <TooltipProvider>
-        <div
-          id="mly-editor"
-          className={cn(
-            'mly-editor antialiased',
-            editor.isEditable ? 'mly-editable' : 'mly-not-editable',
-            wrapClassName
-          )}
-          ref={menuContainerRef}
+        <MobileEditor
+          editor={editor}
+          compact={compact}
+          enabled={hasMenuBar && editor.isEditable && viewMode === 'design'}
+          allowBlockActions={!hideContextMenu}
+          root={menuContainerRef}
         >
-          {hasMenuBar && (
-            <EditorMenuBar
-              config={props.config}
-              editor={editor}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-            />
-          )}
           <div
+            id="mly-editor"
             className={cn(
-              'border-border bg-background mt-4 rounded-lg border py-4 pr-4',
-              bodyClassName
+              'mly-editor min-w-0 antialiased',
+              compact && 'pb-20',
+              editor.isEditable ? 'mly-editable' : 'mly-not-editable',
+              wrapClassName
             )}
+            data-maily-mobile={compact}
+            ref={menuContainerRef}
           >
-            <div
-              aria-hidden={viewMode !== 'design'}
-              className={cn(viewMode !== 'design' && 'hidden')}
-            >
-              <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <EditorContent editor={editor} />
-              <SectionBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <ColumnsBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              {!hideContextMenu && <ContentMenu editor={editor} />}
-              <VariableBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
-              <InlineImageBubbleMenu
-                editor={editor}
-                appendTo={menuContainerRef}
-              />
-            </div>
-            <div
-              aria-hidden={viewMode !== 'render'}
-              className={cn(viewMode !== 'render' && 'hidden')}
-            >
-              <RenderPreview
-                editor={editor}
+            {hasMenuBar && (
+              <EditorMenuBar
+                compact={compact}
                 config={props.config}
-                extensions={extensions}
+                editor={editor}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
               />
+            )}
+            <div
+              className={cn(
+                'border-border bg-background mt-4 rounded-lg border py-4 pr-4',
+                compact && 'mt-2 pr-3',
+                bodyClassName
+              )}
+            >
+              <div
+                aria-hidden={viewMode !== 'design'}
+                className={cn(
+                  viewMode !== 'design' && 'hidden',
+                  compact &&
+                    '[&_.tiptap]:pl-3! [&_.tiptap_[data-type=column]]:w-full! [&_.tiptap_[data-type=column]]:max-w-full! [&_.tiptap]:break-words [&_.tiptap]:text-base [&_.tiptap_[data-type=column]]:basis-auto [&_.tiptap_[data-type=columns]]:flex-col [&_.tiptap_p]:text-base'
+                )}
+              >
+                {!compact && (
+                  <TextBubbleMenu editor={editor} appendTo={menuContainerRef} />
+                )}
+                <ImageBubbleMenu editor={editor} appendTo={menuContainerRef} />
+                <SpacerBubbleMenu editor={editor} appendTo={menuContainerRef} />
+                <EditorContent editor={editor} />
+                <SectionBubbleMenu
+                  editor={editor}
+                  appendTo={menuContainerRef}
+                />
+                <ColumnsBubbleMenu
+                  editor={editor}
+                  appendTo={menuContainerRef}
+                />
+                {!hideContextMenu && !compact && (
+                  <ContentMenu editor={editor} />
+                )}
+                <VariableBubbleMenu
+                  editor={editor}
+                  appendTo={menuContainerRef}
+                />
+                <RepeatBubbleMenu editor={editor} appendTo={menuContainerRef} />
+                <HTMLBubbleMenu editor={editor} appendTo={menuContainerRef} />
+                <InlineImageBubbleMenu
+                  editor={editor}
+                  appendTo={menuContainerRef}
+                />
+              </div>
+              <div
+                aria-hidden={viewMode !== 'render'}
+                className={cn(viewMode !== 'render' && 'hidden')}
+              >
+                <RenderPreview
+                  editor={editor}
+                  config={props.config}
+                  extensions={extensions}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        </MobileEditor>
       </TooltipProvider>
     </MailyProvider>
   );

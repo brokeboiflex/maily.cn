@@ -1,10 +1,8 @@
+import { AdaptiveNodePopover } from "../components/adaptive-node-popover"
+import { useMobileEditor } from "../components/mobile-editor-context"
 import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react"
 import { Input } from "@/components/ui/input"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverTrigger } from "@/components/ui/popover"
 import { Textarea } from "@/components/ui/textarea"
 import { useMailyContext } from "../provider"
 import { cn } from "@/lib/utils"
@@ -19,6 +17,7 @@ import type { CSSProperties } from "react"
 
 export function LinkCardComponent(props: NodeViewProps) {
   const { t } = useMailyContext()
+  const { compact } = useMobileEditor()
   const {
     title,
     description,
@@ -56,7 +55,7 @@ export function LinkCardComponent(props: NodeViewProps) {
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
     >
-      <Popover open={props.selected}>
+      <Popover open={props.selected && editor.isEditable && !compact}>
         <PopoverTrigger asChild>
           <div
             tabIndex={-1}
@@ -124,7 +123,8 @@ export function LinkCardComponent(props: NodeViewProps) {
             </div>
           </div>
         </PopoverTrigger>
-        <PopoverContent
+        <AdaptiveNodePopover
+          active={props.selected && editor.isEditable}
           align="end"
           className="flex max-h-[calc(100vh-1rem)] w-[calc(100vw-1rem)] max-w-96 flex-col gap-2 overflow-y-auto"
           sideOffset={10}
@@ -273,7 +273,7 @@ export function LinkCardComponent(props: NodeViewProps) {
               />
             </label>
           </div>
-        </PopoverContent>
+        </AdaptiveNodePopover>
       </Popover>
     </NodeViewWrapper>
   )

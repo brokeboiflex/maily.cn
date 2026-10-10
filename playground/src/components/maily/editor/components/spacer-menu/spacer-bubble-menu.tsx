@@ -1,4 +1,4 @@
-import { BubbleMenu } from "@tiptap/react/menus"
+import { AdaptiveBubbleMenu as BubbleMenu } from "../adaptive-bubble-menu"
 
 import { BubbleMenuButton } from "../bubble-menu-button"
 import {

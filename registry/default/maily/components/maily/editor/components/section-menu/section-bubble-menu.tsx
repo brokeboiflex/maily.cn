@@ -2,7 +2,7 @@ import { IconPlaceholder } from "@/components/icon-placeholder"
 import { deleteNode } from '../../utils/delete-node';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
-import { BubbleMenu } from '@tiptap/react/menus';
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 import { useCallback } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { AlignmentSwitch } from '../alignment-switch';

@@ -1,51 +1,62 @@
-import { Editor } from '@tiptap/core';
-import { memo, useMemo, useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { useVariableOptions } from '../utils/node-options';
-import { processVariables } from '../utils/variable';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { InputAutocomplete } from './ui/input-autocomplete';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMailyContext } from '../provider';
-import { Button } from '@/components/ui/button';
-import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
-import { Eye, InfoIcon } from "lucide-react";
+import { useOwnedTimeout } from "../utils/use-owned-timeout"
+import { Editor } from "@tiptap/core"
+import { memo, useMemo, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
+import { useVariableOptions } from "../utils/node-options"
+import { processVariables } from "../utils/variable"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { InputAutocomplete } from "./ui/input-autocomplete"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { useMailyContext } from "../provider"
+import { Button } from "@/components/ui/button"
+import { BOTTOM_FLOATING_CONTENT_PROPS } from "./ui/floating-placement"
+import { Eye, InfoIcon } from "lucide-react"
 
 type ShowPopoverProps = {
-  showIfKey?: string;
-  onShowIfKeyValueChange?: (when: string) => void;
+  showIfKey?: string
+  onShowIfKeyValueChange?: (when: string) => void
 
-  editor: Editor;
-};
+  editor: Editor
+}
 
 function _ShowPopover(props: ShowPopoverProps) {
-  const { showIfKey = '', onShowIfKeyValueChange, editor } = props;
-  const { t } = useMailyContext();
+  const { showIfKey = "", onShowIfKeyValueChange, editor } = props
+  const { t } = useMailyContext()
 
-  const opts = useVariableOptions(editor);
-  const variables = opts?.variables;
-  const renderVariable = opts?.renderVariable;
-  const [isUpdatingKey, setIsUpdatingKey] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const opts = useVariableOptions(editor)
+  const variables = opts?.variables
+  const renderVariable = opts?.renderVariable
+  const [isUpdatingKey, setIsUpdatingKey] = useState(false)
+  const { schedule: scheduleTimeout, cancel: cancelTimeout } = useOwnedTimeout()
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const autoCompleteOptions = useMemo(() => {
     return processVariables(variables, {
-      query: showIfKey || '',
-      from: 'bubble-variable',
+      query: showIfKey || "",
+      from: "bubble-variable",
       editor,
-    }).map((variable) => variable.name);
-  }, [variables, showIfKey, editor]);
+    }).map((variable) => variable.name)
+  }, [variables, showIfKey, editor])
 
-  const isValidWhenKey = showIfKey || autoCompleteOptions.includes(showIfKey);
+  const isValidWhenKey = showIfKey || autoCompleteOptions.includes(showIfKey)
 
   return (
     <Popover
       onOpenChange={(open) => {
+        if (!open) cancelTimeout()
         if (open) {
-          return;
+          return
         }
 
-        setIsUpdatingKey(false);
+        setIsUpdatingKey(false)
       }}
     >
       <Tooltip>
@@ -57,11 +68,11 @@ function _ShowPopover(props: ShowPopoverProps) {
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  'size-7',
+                  "size-7",
                   showIfKey &&
-                    'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary'
+                    "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary"
                 )}
-                aria-label={t('showPopover.showConditionally')}
+                aria-label={t("showPopover.showConditionally")}
               >
                 <Eye className="h-3 w-3 stroke-[2.5]" />
               </Button>
@@ -69,30 +80,32 @@ function _ShowPopover(props: ShowPopoverProps) {
           </span>
         </TooltipTrigger>
         <TooltipContent sideOffset={8}>
-          {t('showPopover.showConditionally')}
+          {t("showPopover.showConditionally")}
         </TooltipContent>
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="p-0.5! flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg"
+        className="flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg p-0.5!"
         sideOffset={8}
         align="end"
       >
         <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">
-          {t('showPopover.showIf')}
+          {t("showPopover.showIf")}
           <Tooltip>
             <TooltipTrigger
               type="button"
-              aria-label={t('showPopover.showIfHint')}
+              aria-label={t("showPopover.showIfHint")}
             >
-              <InfoIcon className={cn('text-muted-foreground size-3 stroke-[2.5]')} />
+              <InfoIcon
+                className={cn("size-3 stroke-[2.5] text-muted-foreground")}
+              />
             </TooltipTrigger>
             <TooltipContent
               sideOffset={14}
               className="max-w-[285px]"
               align="start"
             >
-              {t('showPopover.showIfHint')}
+              {t("showPopover.showIfHint")}
             </TooltipContent>
           </Tooltip>
         </div>
@@ -103,10 +116,10 @@ function _ShowPopover(props: ShowPopoverProps) {
             variant="ghost"
             className="h-auto p-0"
             onClick={() => {
-              setIsUpdatingKey(true);
-              setTimeout(() => {
-                inputRef.current?.focus();
-              }, 0);
+              setIsUpdatingKey(true)
+              scheduleTimeout(() => {
+                inputRef.current?.focus()
+              }, 0)
             }}
           >
             {renderVariable({
@@ -114,8 +127,8 @@ function _ShowPopover(props: ShowPopoverProps) {
                 name: showIfKey,
                 valid: !!isValidWhenKey,
               },
-              fallback: '',
-              from: 'bubble-variable',
+              fallback: "",
+              from: "bubble-variable",
               editor,
             })}
           </Button>
@@ -123,27 +136,27 @@ function _ShowPopover(props: ShowPopoverProps) {
         {isUpdatingKey && (
           <form
             onSubmit={(e) => {
-              e.preventDefault();
-              setIsUpdatingKey(false);
+              e.preventDefault()
+              setIsUpdatingKey(false)
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setIsUpdatingKey(false);
+              if (e.key === "Escape") {
+                setIsUpdatingKey(false)
               }
             }}
           >
             <InputAutocomplete
               editor={editor}
-              value={showIfKey || ''}
+              value={showIfKey || ""}
               onValueChange={(value) => {
-                onShowIfKeyValueChange?.(value);
+                onShowIfKeyValueChange?.(value)
               }}
               onOutsideClick={() => {
-                setIsUpdatingKey(false);
+                setIsUpdatingKey(false)
               }}
               onSelectOption={(value) => {
-                onShowIfKeyValueChange?.(value);
-                setIsUpdatingKey(false);
+                onShowIfKeyValueChange?.(value)
+                setIsUpdatingKey(false)
               }}
               autoCompleteOptions={autoCompleteOptions}
               ref={inputRef}
@@ -152,7 +165,7 @@ function _ShowPopover(props: ShowPopoverProps) {
         )}
       </PopoverContent>
     </Popover>
-  );
+  )
 }
 
-export const ShowPopover = memo(_ShowPopover);
+export const ShowPopover = memo(_ShowPopover)

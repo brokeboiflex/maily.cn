@@ -502,6 +502,7 @@ export function getSlashCommandSuggestions(
       return filterSlashCommands({ query, editor, groups });
     },
     allow: ({ editor }) => {
+      if (editor.view.dom.closest('[data-maily-mobile=true]')) return false;
       const isInsideHTMLCodeBlock = editor.isActive('htmlCodeBlock');
       if (isInsideHTMLCodeBlock) {
         return false;

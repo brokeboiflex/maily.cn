@@ -179,3 +179,19 @@ Mailbox navigation uses the stock consumer Sheet on narrow containers. The
 mailbox no longer imports Resizable primitives; list and reader share one page
 area. The standalone Sheet fallback is official radix-nova registry source with
 package import/icon adaptations only.
+
+The compact editor uses the host Collapsible as a controlled, nonmodal bottom
+panel, with Button tiles, Toggle mode controls, Tooltip labels and native
+scrolling. Its block tree and formatting controls remain Maily composites;
+adaptive node menus reuse the existing controls inside the panel. No host-owned
+primitive source is patched. New undo/redo glyphs have verified mappings for all
+five supported icon libraries. See [responsive editor](docs/editor-mobile.md).
+
+The editor panel deliberately uses native overflow instead of adding the Base
+ScrollArea dependency: the current upstream Base item has an unused React import
+that fails the strict editor-only build. Do not patch the host primitive or widen
+the existing mailbox-only diagnostic exception for this panel.
+
+The mobile editor accessory uses host Collapsible (registry-externalized), with
+one persistent toolbar across collapsed and expanded states. Its transform
+transition belongs to the Maily container; host primitives are unchanged.
