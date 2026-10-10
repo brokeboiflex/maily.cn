@@ -389,3 +389,15 @@ acknowledged reader mutations overlay thread messages; a slower ordinary detail
 read must preserve a fresher thread. See
 [the 14 repairs and validation](docs/idempotence-reaudit-2026-10-10.md) and
 [mailbox ownership](docs/mailbox-workflows.md).
+
+Displayed defaults also require history no-ops: implicit button padding, default
+text alignment and unset font family/size must preserve Redo. Inspect the complete
+selected range and stored marks before skipping a reset; mixed selections must
+still receive the requested setting. Do not globally suppress active Maily Select
+callbacks because composite controls may project one attribute while updating
+several. Repeated text-block type commands must avoid TipTap's clear/rebuild
+fallback without suppressing deliberate wrapper conversion.
+
+TipTap unmount retains editor state. Cancelled paste placeholders must be removed
+from that current retained state before URL revocation, including queued plugin
+removal followed by unmount/remount; an obsolete view cannot own that cleanup.

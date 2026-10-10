@@ -5,9 +5,64 @@ import {
   getMarkType,
   getNodeType,
   getSchemaTypeNameByName,
+  commands as tiptapCommands,
 } from "@tiptap/core"
 import { type MarkType, type NodeType } from "@tiptap/pm/model"
 import { type Transaction } from "@tiptap/pm/state"
+
+/** TipTap's fallback clears unchanged blocks before restoring their type. */
+export const setSelectedNode: RawCommands["setNode"] =
+  (typeOrName, attributes = {}) =>
+  (props) => {
+    const { tr } = props
+    const type = getNodeType(typeOrName, tr.doc.type.schema)
+    if (type.isTextblock) {
+      const attrs = {
+        ...(tr.selection.$anchor.sameParent(tr.selection.$head)
+          ? tr.selection.$anchor.parent.attrs
+          : {}),
+        ...attributes,
+      }
+      let found = false
+      let changes = false
+      tr.selection.ranges.forEach(({ $from, $to }) => {
+        tr.doc.nodesBetween($from.pos, $to.pos, (node) => {
+          if (!node.isTextblock) return
+          found = true
+          if (
+            node.type !== type ||
+            !node.sameMarkup(type.create(attrs, node.content, node.marks))
+          )
+            changes = true
+        })
+      })
+      if (found && !changes) return true
+    }
+    return tiptapCommands.setNode(typeOrName, attributes)(props)
+  }
+
+export function hasSelectedMarkAttributes(
+  tr: Transaction,
+  type: string,
+  attributes: readonly string[]
+) {
+  const hasAttributes = (
+    marks: readonly { type: { name: string }; attrs: Record<string, any> }[]
+  ) =>
+    marks.some(
+      (mark) =>
+        mark.type.name === type && attributes.some((key) => !!mark.attrs[key])
+    )
+  if (tr.selection.empty)
+    return hasAttributes(tr.storedMarks ?? tr.selection.$head.marks())
+  let found = false
+  tr.selection.ranges.forEach(({ $from, $to }) => {
+    tr.doc.nodesBetween($from.pos, $to.pos, (node) => {
+      if (hasAttributes(node.marks)) found = true
+    })
+  })
+  return found
+}
 
 /** Write the schema-normalized desired attributes only when markup changes. */
 export function setNodeAttributes(

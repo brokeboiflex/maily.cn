@@ -1,44 +1,45 @@
-import { Extension } from '@tiptap/core';
+import { Extension } from "@tiptap/core"
+import { hasSelectedMarkAttributes } from "../utils/update-attribute"
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
   interface Commands<ReturnType> {
     fontSize: {
-      setFontSize: (fontSize: string) => ReturnType;
-      unsetFontSize: () => ReturnType;
-    };
+      setFontSize: (fontSize: string) => ReturnType
+      unsetFontSize: () => ReturnType
+    }
   }
 }
 
 function parseFontSize(value: string | null) {
-  return value && value.trim().length > 0 ? value.trim() : null;
+  return value && value.trim().length > 0 ? value.trim() : null
 }
 
 export const FontSizeExtension = Extension.create({
-  name: 'fontSize',
+  name: "fontSize",
 
   addGlobalAttributes() {
     return [
       {
-        types: ['textStyle'],
+        types: ["textStyle"],
         attributes: {
           fontSize: {
             default: null,
             parseHTML: (element) =>
               parseFontSize(
-                element.getAttribute('data-maily-font-size') ||
+                element.getAttribute("data-maily-font-size") ||
                   element.style.fontSize
               ),
             renderHTML: (attributes) =>
               attributes.fontSize
                 ? {
-                    'data-maily-font-size': attributes.fontSize,
+                    "data-maily-font-size": attributes.fontSize,
                     style: `font-size: ${attributes.fontSize}`,
                   }
                 : {},
           },
         },
       },
-    ];
+    ]
   },
 
   addCommands() {
@@ -46,14 +47,17 @@ export const FontSizeExtension = Extension.create({
       setFontSize:
         (fontSize: string) =>
         ({ chain }) =>
-          chain().setMark('textStyle', { fontSize }).run(),
+          chain().setMark("textStyle", { fontSize }).run(),
       unsetFontSize:
         () =>
-        ({ chain }) =>
-          chain()
-            .setMark('textStyle', { fontSize: null })
+        ({ tr, chain }) => {
+          if (!hasSelectedMarkAttributes(tr, "textStyle", ["fontSize"]))
+            return true
+          return chain()
+            .setMark("textStyle", { fontSize: null })
             .removeEmptyTextStyle()
-            .run(),
-    };
+            .run()
+        },
+    }
   },
-});
+})

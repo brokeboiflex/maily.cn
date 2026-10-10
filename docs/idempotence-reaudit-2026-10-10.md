@@ -357,3 +357,34 @@ The existing Base ScrollArea unused-React-import exception remains narrowly
 limited to that upstream file. Native physical-device drag cancellation and
 provider delivery/storage/CAS/deduplication remain outside the local acceptance
 evidence. The fresh post-push audit will record its own commit and findings.
+
+The first post-push audit of `a7ce4fe` caught residual F02 and F03 cases, so those
+findings were not declared closed on the initial regression results. F02 now
+removes cancelled placeholders from TipTap's retained editor state across
+unmount/remount and queued plugin removal; five additional real-engine cases
+cover these orderings, replacement protection and new-upload independence.
+
+F03 also covers implicit defaults and repeated node types: active Medium button
+size, Left text alignment, Email default font, Default font size and unchanged
+Heading/Footer/HTML type commands preserve history. Live range/stored-mark checks
+keep mixed selections working, and button preset matching accounts for all four
+sides. The independent review rejected a global Select suppression because
+composite controls still need to apply a selected top-side value to other sides;
+the button guard remains local. Retained evidence is in
+`editor/components/default-settings-history.test.tsx` and the attribute-command
+tests. Separate newly reproduced defects are recorded in the post-repair audit.
+
+Final repair validation: **193 core tests in 20 files plus the 28 unchanged
+render tests pass (221 total)**; core TypeScript and workspace production builds
+pass. A separate reviewer passed 34 focused checks, including ten independent
+counterexamples for mixed selections, stored marks, custom padding and composite
+spacing. These checks establish the repaired history semantics without changing
+consumer primitives. The final consumer/playground gates and post-push audit are
+reported separately below and in the post-repair report.
+
+Final clean Radix, Base and Bun consumer builds pass, as do all six consumer
+browser checks and all nine playground browser checks. The playground production
+build passes with the original 29 host-file hashes unchanged. The primitive
+audit, changed-file Prettier and generated-source consistency checks pass;
+ESLint adds no diagnostics relative to the prior source (existing diagnostics
+remain). Provider and physical-device limitations stated above still apply.

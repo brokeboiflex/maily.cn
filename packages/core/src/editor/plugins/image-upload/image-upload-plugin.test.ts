@@ -208,8 +208,120 @@ describe('paste/drop upload ownership', () => {
     paste(editor, plugin);
     await Promise.resolve();
     editor.unmount();
+    expect(images(editor)).toEqual([]);
+    expect(editor.getText().trim()).toBe('keep');
     expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
     upload.resolve('https://example.com/upload.png');
+    await vi.waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('removes a cancelled placeholder before revoking its URL across unmount/remount', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    vi.mocked(URL.revokeObjectURL).mockImplementation(() => {
+      expect(images(editor)).toEqual([]);
+    });
+    paste(editor, plugin);
+    await Promise.resolve();
+    const oldView = editor.view;
+    editor.unmount();
+    expect(oldView.isDestroyed).toBe(true);
+    editor.mount(document.createElement('div'));
+    expect(editor.isDestroyed).toBe(false);
+    expect(images(editor)).toEqual([]);
+    expect(editor.getText().trim()).toBe('keep');
+    upload.resolve('https://example.com/departed.png');
+    await vi.waitFor(() =>
+      expect(discard).toHaveBeenCalledExactlyOnceWith(
+        'https://example.com/departed.png'
+      )
+    );
+    expect(images(editor)).toEqual([]);
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('finishes queued removal after an intervening unmount/remount', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.unregisterPlugin('imageUpload');
+    editor.unmount();
+    editor.mount(document.createElement('div'));
+    await Promise.resolve();
+    expect(images(editor)).toEqual([]);
+    expect(editor.getText().trim()).toBe('keep');
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    upload.resolve('https://example.com/departed.png');
+    await vi.waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a new remounted upload independent of departed queued cleanup', async () => {
+    const oldUpload = pending();
+    const newUpload = pending();
+    const upload = vi
+      .fn()
+      .mockImplementationOnce(() => oldUpload.promise)
+      .mockImplementationOnce(() => newUpload.promise);
+    const { editor, plugin, discard } = setup(upload);
+    vi.mocked(URL.createObjectURL)
+      .mockReturnValueOnce('blob:departed')
+      .mockReturnValueOnce('blob:remounted');
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.unregisterPlugin('imageUpload');
+    editor.unmount();
+    editor.mount(document.createElement('div'));
+    editor.registerPlugin(plugin);
+    paste(editor, plugin);
+    await Promise.resolve();
+    expect(images(editor)[0]?.attrs?.src).toBe('blob:remounted');
+    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith(
+      'blob:departed'
+    );
+    newUpload.resolve('https://example.com/current.png');
+    oldUpload.resolve('https://example.com/departed.png');
+    await vi.waitFor(() =>
+      expect(URL.revokeObjectURL).toHaveBeenCalledTimes(2)
+    );
+    expect(images(editor)[0]?.attrs?.src).toBe(
+      'https://example.com/current.png'
+    );
+    expect(discard).toHaveBeenCalledExactlyOnceWith(
+      'https://example.com/departed.png'
+    );
+  });
+
+  it('does not delete an equal replacement when unmount cancels the old upload', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.commands.setContent(editor.getJSON());
+    const replacement = editor.state.doc;
+    editor.unmount();
+    editor.mount(document.createElement('div'));
+    expect(editor.state.doc).toBe(replacement);
+    upload.resolve('https://example.com/departed.png');
+    await vi.waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
+    expect(editor.state.doc).toBe(replacement);
+    expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not dispatch queued removal into a destroyed editor', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    paste(editor, plugin);
+    await Promise.resolve();
+    editor.unregisterPlugin('imageUpload');
+    const updates = vi.fn();
+    editor.on('update', updates);
+    editor.destroy();
+    await Promise.resolve();
+    expect(updates).not.toHaveBeenCalled();
+    upload.resolve('https://example.com/departed.png');
     await vi.waitFor(() => expect(discard).toHaveBeenCalledTimes(1));
     expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
   });

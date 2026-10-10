@@ -1,6 +1,7 @@
 import { Extension } from '@tiptap/core';
 import type { MailyFontSelection } from '../fonts/fontsource';
 import { fontStack } from '../fonts/fontsource';
+import { hasSelectedMarkAttributes } from '../utils/update-attribute';
 
 export const FONT_ATTRIBUTE_KEYS = [
   'fontFamily',
@@ -143,14 +144,22 @@ export const FontFamilyExtension = Extension.create({
           chain().setMark('textStyle', font).run(),
       unsetMailyFont:
         () =>
-        ({ chain }) =>
-          chain()
+        ({ tr, chain }) => {
+          if (!hasSelectedMarkAttributes(tr, 'textStyle', FONT_ATTRIBUTE_KEYS))
+            return true;
+          return chain()
             .setMark(
               'textStyle',
-              Object.fromEntries(FONT_ATTRIBUTE_KEYS.map((key) => [key, null]))
+              Object.fromEntries(
+                FONT_ATTRIBUTE_KEYS.map((key) => [
+                  key,
+                  key === 'fontHasItalic' ? false : null,
+                ])
+              )
             )
             .removeEmptyTextStyle()
-            .run(),
+            .run();
+        },
     };
   },
 });

@@ -1,4 +1,5 @@
 import { Extension } from '@tiptap/core';
+import { hasSelectedMarkAttributes } from '../utils/update-attribute';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -49,11 +50,14 @@ export const FontSizeExtension = Extension.create({
           chain().setMark('textStyle', { fontSize }).run(),
       unsetFontSize:
         () =>
-        ({ chain }) =>
-          chain()
+        ({ tr, chain }) => {
+          if (!hasSelectedMarkAttributes(tr, 'textStyle', ['fontSize']))
+            return true;
+          return chain()
             .setMark('textStyle', { fontSize: null })
             .removeEmptyTextStyle()
-            .run(),
+            .run();
+        },
     };
   },
 });

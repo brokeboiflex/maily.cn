@@ -3,6 +3,7 @@ import { SelectionRange, TextSelection } from '@tiptap/pm/state';
 import { redoDepth, undoDepth } from '@tiptap/pm/history';
 import { describe, expect, it } from 'vitest';
 import { MailyKit } from './maily-kit';
+import { extensions as defaultExtensions } from './index';
 import { updateNodeViewAttributes } from '../utils/update-attribute';
 
 function createEditor() {
@@ -214,6 +215,81 @@ describe('public Maily attribute commands', () => {
       editor.commands.undo();
       updateNodeViewAttributes(props, { textDirection: 'ltr' });
       expect(redoDepth(editor.state)).toBe(1);
+    } finally {
+      editor.destroy();
+    }
+  });
+});
+
+describe('desired block type commands preserve history', () => {
+  it.each(['paragraph', 'heading', 'footer', 'htmlCodeBlock'])(
+    'repeating the active %s type preserves Redo',
+    (type) => {
+      const editor = new Editor({
+        extensions: defaultExtensions({}),
+        content: {
+          type: 'doc',
+          content: [
+            {
+              type,
+              attrs: type === 'heading' ? { level: 2 } : {},
+              content: [{ type: 'text', text: 'abc' }],
+            },
+          ],
+        },
+      });
+      try {
+        editor.commands.setTextSelection({ from: 1, to: 4 });
+        editor.commands.setMark('bold');
+        editor.commands.undo();
+        const before = editor.getJSON();
+        const selection = editor.state.selection.toJSON();
+        expect(redoDepth(editor.state)).toBe(1);
+        expect(
+          editor.can().setNode(type, type === 'heading' ? { level: 2 } : {})
+        ).toBe(true);
+        expect(
+          editor.commands.setNode(type, type === 'heading' ? { level: 2 } : {})
+        ).toBe(true);
+        expect(editor.getJSON()).toEqual(before);
+        expect(editor.state.selection.toJSON()).toEqual(selection);
+        expect(redoDepth(editor.state)).toBe(1);
+        expect(editor.commands.redo()).toBe(true);
+      } finally {
+        editor.destroy();
+      }
+    }
+  );
+
+  it('uses live chained nodes and still changes attributes, mixed types and list hierarchy', () => {
+    const editor = createEditor();
+    try {
+      expect(
+        editor
+          .chain()
+          .setTextSelection(2)
+          .setHeading({ level: 2 })
+          .setHeading({ level: 2 })
+          .run()
+      ).toBe(true);
+      expect(editor.state.doc.firstChild?.type.name).toBe('heading');
+      expect(editor.state.doc.firstChild?.attrs.level).toBe(2);
+      expect(undoDepth(editor.state)).toBe(1);
+      editor.commands.setHeading({ level: 3 });
+      expect(editor.state.doc.firstChild?.attrs.level).toBe(3);
+      editor.commands.setTextSelection({ from: 1, to: 13 });
+      expect(editor.can().setParagraph()).toBe(true);
+      expect(editor.commands.setParagraph()).toBe(true);
+      expect(editor.state.doc.child(0).type.name).toBe('paragraph');
+      expect(editor.state.doc.child(1).type.name).toBe('paragraph');
+      editor.commands.setTextSelection(2);
+      editor.commands.toggleBulletList();
+      expect(editor.isActive('bulletList')).toBe(true);
+      expect(
+        editor.chain().liftListItem('listItem').setHeading({ level: 2 }).run()
+      ).toBe(true);
+      expect(editor.isActive('bulletList')).toBe(false);
+      expect(editor.state.doc.firstChild?.type.name).toBe('heading');
     } finally {
       editor.destroy();
     }

@@ -27,13 +27,14 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
   let generation = 0
   let active = false
   let subscribed = false
+  let destroyed = false
 
   const releasePlaceholder = (src: string) => {
     if (!placeholders.delete(src)) return
     editor.extensionStorage.imageUpload?.placeholderImages.delete(src)
     URL.revokeObjectURL(src)
   }
-  const endLifetime = (removeNodes = false) => {
+  const endLifetime = (removeNodes = false, deferRemoval = false) => {
     active = false
     generation += 1
     const ownedPlaceholders = [...placeholders]
@@ -43,18 +44,22 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
         if (removeNodes) remove()
         releasePlaceholder(src)
       }
+      if (!active && subscribed) {
+        editor.off("destroy", onEditorDestroy)
+        editor.off("unmount", onEditorUnmount)
+        subscribed = false
+      }
     }
     // A removal destructor runs inside PM's plugin-view reconfiguration. Finish
     // that stack before deleting live nodes; keep their blob URLs until then.
-    if (removeNodes) queueMicrotask(releaseOwned)
+    if (deferRemoval) queueMicrotask(releaseOwned)
     else releaseOwned()
-    if (subscribed) {
-      editor.off("destroy", onEditorEnd)
-      editor.off("unmount", onEditorEnd)
-      subscribed = false
-    }
   }
-  const onEditorEnd = () => endLifetime()
+  const onEditorDestroy = () => {
+    destroyed = true
+    endLifetime()
+  }
+  const onEditorUnmount = () => endLifetime(true)
 
   function handleImageUpload(view: EditorView, file: File, pos?: number) {
     const ownedGeneration = generation
@@ -87,7 +92,7 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
     const ownedPosition = () => {
       let position: number | null = null
       let matches = 0
-      view.state.doc.descendants((node, pos) => {
+      editor.state.doc.descendants((node, pos) => {
         if (node === imageNode) {
           position = pos
           matches += 1
@@ -97,12 +102,15 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       return matches === 1 ? position : null
     }
     const removeOwnedPlaceholder = () => {
-      if (view.isDestroyed || editor.isDestroyed) return
+      if (destroyed) return
+      // TipTap retains editable state across unmount. Its public commands also
+      // update that state, so cleanup must not target the departed EditorView.
       const position = ownedPosition()
       if (position !== null)
-        view.dispatch(
-          view.state.tr.delete(position, position + imageNode.nodeSize)
-        )
+        editor.commands.deleteRange({
+          from: position,
+          to: position + imageNode.nodeSize,
+        })
     }
     placeholders.set(placeholderSrc, removeOwnedPlaceholder)
     const transaction = tr.insert(resolvedPos.pos, imageNode)
@@ -140,15 +148,15 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
     view: (view) => {
       active = true
       if (!subscribed) {
-        editor.on("destroy", onEditorEnd)
-        editor.on("unmount", onEditorEnd)
+        editor.on("destroy", onEditorDestroy)
+        editor.on("unmount", onEditorUnmount)
         subscribed = true
       }
       return {
         destroy() {
           // ProseMirror recreates every plugin view when any plugin changes.
           // Uploads belong to the retained plugin, not its temporary view.
-          if (!view.state.plugins.includes(plugin)) endLifetime(true)
+          if (!view.state.plugins.includes(plugin)) endLifetime(true, true)
         },
       }
     },

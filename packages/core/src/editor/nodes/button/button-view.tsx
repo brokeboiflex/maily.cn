@@ -77,14 +77,23 @@ export function ButtonView(props: NodeViewProps) {
   );
 
   const size = useMemo(() => {
-    const currentPaddingRight = parsePaddingValue(paddingRight) ?? 32;
-    const currentPaddingTop = parsePaddingValue(paddingTop) ?? 10;
+    const currentPaddingRight =
+      paddingRight == null ? 32 : parsePaddingValue(paddingRight);
+    const currentPaddingTop =
+      paddingTop == null ? 10 : parsePaddingValue(paddingTop);
+    const currentPaddingLeft =
+      paddingLeft == null ? 32 : parsePaddingValue(paddingLeft);
+    const currentPaddingBottom =
+      paddingBottom == null ? 10 : parsePaddingValue(paddingBottom);
 
     return Object.entries(sizes).find(
       ([, { paddingX, paddingY }]) =>
-        currentPaddingRight === paddingX && currentPaddingTop === paddingY
+        currentPaddingRight === paddingX &&
+        currentPaddingLeft === paddingX &&
+        currentPaddingTop === paddingY &&
+        currentPaddingBottom === paddingY
     )?.[0] as 'small' | 'medium' | 'large';
-  }, [paddingRight, paddingTop, sizes]);
+  }, [paddingRight, paddingLeft, paddingTop, paddingBottom, sizes]);
 
   return (
     <NodeViewWrapper
@@ -259,6 +268,7 @@ export function ButtonView(props: NodeViewProps) {
                     { value: 'large', label: t('buttonMenu.size.large') },
                   ]}
                   onValueChange={(value) => {
+                    if (value === size) return;
                     const { paddingX, paddingY } =
                       sizes[value as 'small' | 'medium' | 'large'];
 
@@ -348,8 +358,8 @@ function parsePaddingValue(value: unknown) {
   }
 
   if (typeof value === 'string') {
-    const parsed = parseInt(value, 10);
-    return Number.isFinite(parsed) ? parsed : null;
+    const match = value.trim().match(/^([+-]?(?:\d+\.?\d*|\.\d+))(?:px)?$/i);
+    return match ? Number(match[1]) : null;
   }
 
   return null;

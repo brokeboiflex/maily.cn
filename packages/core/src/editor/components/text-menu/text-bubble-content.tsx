@@ -136,6 +136,20 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       <AlignmentSwitch
         alignment={state.textAlign}
         onAlignmentChange={(alignment) => {
+          const changesAlignment = editor.state.selection.ranges.some(
+            ({ $from, $to }) => {
+              let changes = false;
+              editor.state.doc.nodesBetween($from.pos, $to.pos, (node) => {
+                if (
+                  ['paragraph', 'heading', 'footer'].includes(node.type.name) &&
+                  (node.attrs.textAlign || 'left') !== alignment
+                )
+                  changes = true;
+              });
+              return changes;
+            }
+          );
+          if (!changesAlignment) return;
           editor?.chain().focus().setTextAlign(alignment).run();
         }}
       />
