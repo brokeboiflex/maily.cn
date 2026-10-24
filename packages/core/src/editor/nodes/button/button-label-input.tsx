@@ -1,7 +1,7 @@
 import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { InputAutocomplete } from '../../components/ui/input-autocomplete';
 import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../variable/variable';
-import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { useVariableOptions } from '../../utils/node-options';
 import { processVariables } from '../../utils/variable';
 import { Editor } from '@tiptap/core';
@@ -23,7 +23,7 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
   const linkInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState(!isVariable);
 
-  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL } = useMailyContext();
+  const { t } = useMailyContext();
   const otps = useVariableOptions(editor);
   const variables = otps?.variables;
   const variableTriggerCharacter =
@@ -31,17 +31,14 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
   const renderVariable = otps?.renderVariable;
 
   const autoCompleteOptions = useMemo(() => {
-    const withoutTrigger = value.replace(
-      new RegExp(variableTriggerCharacter, 'g'),
-      ''
-    );
+    const withoutTrigger = value.replaceAll(variableTriggerCharacter, '');
 
     return processVariables(variables, {
       query: withoutTrigger || '',
       from: 'bubble-variable',
       editor,
     }).map((variable) => variable.name);
-  }, [variables, value, editor]);
+  }, [variables, value, editor, variableTriggerCharacter]);
 
   return (
     <div className="isolate flex rounded-lg">
@@ -78,7 +75,8 @@ export function ButtonLabelInput(props: ButtonLabelInputProps) {
           }}
           autoCompleteOptions={autoCompleteOptions}
           ref={linkInputRef}
-          placeholder={placeholderUrl}
+          aria-label={t('buttonMenu.text')}
+          placeholder={t('buttonMenu.text')}
           className="h-7 w-40"
           triggerChar={variableTriggerCharacter}
           onSelectOption={(value) => {

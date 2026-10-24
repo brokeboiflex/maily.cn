@@ -1,57 +1,57 @@
-import { Extension } from "@tiptap/core"
-import type { MailyFontSelection } from "../fonts/fontsource"
-import { fontStack } from "../fonts/fontsource"
-import { hasSelectedMarkAttributes } from "../utils/update-attribute"
+import { Extension } from '@tiptap/core';
+import type { MailyFontSelection } from '../fonts/fontsource';
+import { fontStack } from '../fonts/fontsource';
+import { hasSelectedMarkAttributes } from '../utils/update-attribute';
 
 export const FONT_ATTRIBUTE_KEYS = [
-  "fontFamily",
-  "fontId",
-  "fontFallback",
-  "fontSubset",
-  "fontVersion",
-  "fontRegularWeight",
-  "fontBoldWeight",
-  "fontHasItalic",
-] as const
+  'fontFamily',
+  'fontId',
+  'fontFallback',
+  'fontSubset',
+  'fontVersion',
+  'fontRegularWeight',
+  'fontBoldWeight',
+  'fontHasItalic',
+] as const;
 
-declare module "@tiptap/core" {
+declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     mailyFontFamily: {
-      setMailyFont: (font: MailyFontSelection) => ReturnType
-      unsetMailyFont: () => ReturnType
-    }
+      setMailyFont: (font: MailyFontSelection) => ReturnType;
+      unsetMailyFont: () => ReturnType;
+    };
   }
 }
 
 function dataAttribute(name: string) {
-  return `data-maily-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`
+  return `data-maily-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`;
 }
 
 function parseNumber(value: string | null) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? parsed : null
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
 }
 
 export const FontFamilyExtension = Extension.create({
-  name: "fontFamily",
+  name: 'fontFamily',
 
   addGlobalAttributes() {
     return [
       {
-        types: ["textStyle"],
+        types: ['textStyle'],
         attributes: {
           fontFamily: {
             default: null,
             parseHTML: (element) =>
-              element.getAttribute(dataAttribute("fontFamily")) ||
+              element.getAttribute(dataAttribute('fontFamily')) ||
               element.style.fontFamily
-                .split(",")[0]
-                ?.replace(/^['"]|['"]$/g, "") ||
+                .split(',')[0]
+                ?.replace(/^['"]|['"]$/g, '') ||
               null,
             renderHTML: (attributes) =>
               attributes.fontFamily
                 ? {
-                    [dataAttribute("fontFamily")]: attributes.fontFamily,
+                    [dataAttribute('fontFamily')]: attributes.fontFamily,
                     style: `font-family: ${fontStack(attributes as MailyFontSelection)}`,
                   }
                 : {},
@@ -59,51 +59,51 @@ export const FontFamilyExtension = Extension.create({
           fontId: {
             default: null,
             parseHTML: (element) =>
-              element.getAttribute(dataAttribute("fontId")),
+              element.getAttribute(dataAttribute('fontId')),
             renderHTML: (attributes) =>
               attributes.fontId
-                ? { [dataAttribute("fontId")]: attributes.fontId }
+                ? { [dataAttribute('fontId')]: attributes.fontId }
                 : {},
           },
           fontFallback: {
             default: null,
             parseHTML: (element) =>
-              element.getAttribute(dataAttribute("fontFallback")),
+              element.getAttribute(dataAttribute('fontFallback')),
             renderHTML: (attributes) =>
               attributes.fontFallback
                 ? {
-                    [dataAttribute("fontFallback")]: attributes.fontFallback,
+                    [dataAttribute('fontFallback')]: attributes.fontFallback,
                   }
                 : {},
           },
           fontSubset: {
             default: null,
             parseHTML: (element) =>
-              element.getAttribute(dataAttribute("fontSubset")),
+              element.getAttribute(dataAttribute('fontSubset')),
             renderHTML: (attributes) =>
               attributes.fontSubset
-                ? { [dataAttribute("fontSubset")]: attributes.fontSubset }
+                ? { [dataAttribute('fontSubset')]: attributes.fontSubset }
                 : {},
           },
           fontVersion: {
             default: null,
             parseHTML: (element) =>
-              element.getAttribute(dataAttribute("fontVersion")),
+              element.getAttribute(dataAttribute('fontVersion')),
             renderHTML: (attributes) =>
               attributes.fontVersion
-                ? { [dataAttribute("fontVersion")]: attributes.fontVersion }
+                ? { [dataAttribute('fontVersion')]: attributes.fontVersion }
                 : {},
           },
           fontRegularWeight: {
             default: null,
             parseHTML: (element) =>
               parseNumber(
-                element.getAttribute(dataAttribute("fontRegularWeight"))
+                element.getAttribute(dataAttribute('fontRegularWeight'))
               ),
             renderHTML: (attributes) =>
               attributes.fontRegularWeight
                 ? {
-                    [dataAttribute("fontRegularWeight")]:
+                    [dataAttribute('fontRegularWeight')]:
                       attributes.fontRegularWeight,
                   }
                 : {},
@@ -112,12 +112,12 @@ export const FontFamilyExtension = Extension.create({
             default: null,
             parseHTML: (element) =>
               parseNumber(
-                element.getAttribute(dataAttribute("fontBoldWeight"))
+                element.getAttribute(dataAttribute('fontBoldWeight'))
               ),
             renderHTML: (attributes) =>
               attributes.fontBoldWeight
                 ? {
-                    [dataAttribute("fontBoldWeight")]:
+                    [dataAttribute('fontBoldWeight')]:
                       attributes.fontBoldWeight,
                   }
                 : {},
@@ -125,15 +125,15 @@ export const FontFamilyExtension = Extension.create({
           fontHasItalic: {
             default: false,
             parseHTML: (element) =>
-              element.getAttribute(dataAttribute("fontHasItalic")) === "true",
+              element.getAttribute(dataAttribute('fontHasItalic')) === 'true',
             renderHTML: (attributes) =>
               attributes.fontHasItalic
-                ? { [dataAttribute("fontHasItalic")]: "true" }
+                ? { [dataAttribute('fontHasItalic')]: 'true' }
                 : {},
           },
         },
       },
-    ]
+    ];
   },
 
   addCommands() {
@@ -141,25 +141,25 @@ export const FontFamilyExtension = Extension.create({
       setMailyFont:
         (font: MailyFontSelection) =>
         ({ chain }) =>
-          chain().setMark("textStyle", font).run(),
+          chain().setMark('textStyle', font).run(),
       unsetMailyFont:
         () =>
         ({ tr, chain }) => {
-          if (!hasSelectedMarkAttributes(tr, "textStyle", FONT_ATTRIBUTE_KEYS))
-            return true
+          if (!hasSelectedMarkAttributes(tr, 'textStyle', FONT_ATTRIBUTE_KEYS))
+            return true;
           return chain()
             .setMark(
-              "textStyle",
+              'textStyle',
               Object.fromEntries(
                 FONT_ATTRIBUTE_KEYS.map((key) => [
                   key,
-                  key === "fontHasItalic" ? false : null,
+                  key === 'fontHasItalic' ? false : null,
                 ])
               )
             )
             .removeEmptyTextStyle()
-            .run()
+            .run();
         },
-    }
+    };
   },
-})
+});

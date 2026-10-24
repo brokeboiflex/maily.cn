@@ -4,17 +4,16 @@ import { createPortal } from 'react-dom';
 import { Node } from '@tiptap/pm/model';
 import { type ReactNode } from 'react';
 import { Editor } from '@tiptap/core';
-import { type Props as TippyProps } from 'tippy.js';
 import {
   DragHandlePlugin,
   dragHandlePluginDefaultKey,
+  type DragHandleFloatingOptions,
 } from './drag-handle-plugin';
 
-export type DragHandleProps = {
+export type DragHandleProps = DragHandleFloatingOptions & {
   editor: Editor;
   pluginKey?: string;
   className?: string;
-  tippyOptions?: Partial<TippyProps>;
   onNodeChange?: (data: {
     node: Node | null;
     editor: Editor;
@@ -23,6 +22,12 @@ export type DragHandleProps = {
   children: ReactNode;
 };
 
+// The plugin reparents this element into its floating wrapper, so it is an
+// imperatively owned DOM node: React renders only the portal's children into it.
+function createHandleElement() {
+  return typeof document === 'undefined' ? null : document.createElement('div');
+}
+
 export function DragHandle(props: DragHandleProps) {
   const {
     className = 'drag-handle',
@@ -30,18 +35,16 @@ export function DragHandle(props: DragHandleProps) {
     editor,
     pluginKey = dragHandlePluginDefaultKey,
     onNodeChange,
-    tippyOptions = {},
+    placement,
+    offset,
+    zIndex,
   } = props;
 
-  const [element, setElement] = useState<HTMLDivElement | null>(null);
+  const [element] = useState(createHandleElement);
   const pluginRef = useRef<ReturnType<typeof DragHandlePlugin> | null>(null);
 
-  // The plugin reparents its element into Tippy's container. React must own
-  // only the portal's children, not a host div that the plugin moves elsewhere.
   useEffect(() => {
-    setElement(document.createElement('div'));
-  }, []);
-  useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- the element is a DOM node owned by the ProseMirror plugin, not React state
     if (element) element.className = className;
   }, [element, className]);
 
@@ -63,7 +66,9 @@ export function DragHandle(props: DragHandleProps) {
         editor,
         element,
         pluginKey,
-        tippyOptions,
+        placement,
+        offset,
+        zIndex,
         onNodeChange,
       });
 
@@ -74,7 +79,7 @@ export function DragHandle(props: DragHandleProps) {
       editor.unregisterPlugin(pluginKey);
       pluginRef.current = null;
     };
-  }, [element, editor, onNodeChange, pluginKey]);
+  }, [element, editor, onNodeChange, pluginKey, placement, offset, zIndex]);
 
   return element ? createPortal(children, element) : null;
 }

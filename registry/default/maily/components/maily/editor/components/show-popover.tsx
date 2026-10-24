@@ -2,7 +2,7 @@ import { IconPlaceholder } from "@/components/icon-placeholder"
 import { useOwnedTimeout } from '../utils/use-owned-timeout';
 import { Editor } from '@tiptap/core';
 import { memo, useMemo, useRef, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { useVariableOptions } from '../utils/node-options';
 import { processVariables } from '../utils/variable';
 import {
@@ -16,7 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useMailyContext } from '../provider';
+import { useMailyContext } from '../maily-context';
 import { Button } from '@/components/ui/button';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
 
@@ -27,7 +27,7 @@ type ShowPopoverProps = {
   editor: Editor;
 };
 
-function _ShowPopover(props: ShowPopoverProps) {
+function ShowPopoverControl(props: ShowPopoverProps) {
   const { showIfKey = '', onShowIfKeyValueChange, editor } = props;
   const { t } = useMailyContext();
 
@@ -93,7 +93,7 @@ function _ShowPopover(props: ShowPopoverProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="p-0.5! flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg"
+        className="flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg p-0.5!"
         sideOffset={8}
         align="end"
       >
@@ -173,6 +173,7 @@ function _ShowPopover(props: ShowPopoverProps) {
               }}
               autoCompleteOptions={autoCompleteOptions}
               ref={inputRef}
+              aria-label={t('showPopover.showIf')}
             />
           </form>
         )}
@@ -181,4 +182,4 @@ function _ShowPopover(props: ShowPopoverProps) {
   );
 }
 
-export const ShowPopover = memo(_ShowPopover);
+export const ShowPopover = memo(ShowPopoverControl);

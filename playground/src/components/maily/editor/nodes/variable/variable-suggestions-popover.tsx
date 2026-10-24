@@ -1,4 +1,4 @@
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import {
   forwardRef,
   useEffect,

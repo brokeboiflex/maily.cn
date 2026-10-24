@@ -1,5 +1,10 @@
 # Mailbox and upload ownership follow-up
 
+> **Superseded in part (2026-10-24):** Maily no longer keeps send-recovery
+> receipts, the `recoveryScope` prop or the pending-send lock described here.
+> Send recovery belongs to the host; see CHANGELOG.md and
+> [mailbox workflows](mailbox-workflows.md#async-ownership-and-sending).
+
 Canonical source review on 2026-10-08/09 found that a prepared draft could continue
 into sending after its mailbox session left, and a node upload could target a
 replacement image/logo with identical attributes at the same position.

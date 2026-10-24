@@ -1,8 +1,55 @@
 # Editor and mailbox post-repair audit, 2026-10-10
 
-**The original 14 reported findings are closed for their reported cases. The
-fresh audit is not clean: 14 additional defect groups remain, two P1 and twelve
-P2, plus one separate recovery-policy gap.** Some new findings concern ordinary
+> **Superseded in part (2026-10-24):** Maily no longer keeps send-recovery
+> receipts, the `recoveryScope` prop or the pending-send lock described here.
+> Send recovery belongs to the host; see CHANGELOG.md and
+> [mailbox workflows](mailbox-workflows.md#async-ownership-and-sending).
+
+## Resolution, 2026-10-23
+
+**All 14 additional defect groups and the recovery-policy gap are repaired.**
+Each repair has a regression test. Every test except N02's was confirmed to
+fail on the audited source before the repair. N02 was fixed upstream: the audit
+reproduced it on TipTap 3.30.5, and its test passes on 3.32. The findings below are kept as audited.
+Their source locations refer to the old single-file `mailbox/index.tsx`. That
+file is now split into `mailbox-view.tsx`, `types.ts`, `labels.ts`,
+`compose-draft.ts` and an `index.tsx` re-export barrel.
+
+| Finding    | Repair                                                                                                                                                                                                                                                                                                                                         | Regression                                                                                             |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| N01        | `saveDraft` reports an acknowledged write separately from the refresh that follows it; persisted attachment references are never discarded.                                                                                                                                                                                                    | `audit-regressions.test.tsx` N01                                                                       |
+| N02        | Resolved upstream in TipTap 3.32: Undo restores empty list and blockquote conversions without the nested Placeholder `RangeError`.                                                                                                                                                                                                             | `playground/tests/history.spec.ts` (Chromium, including slash menu + Cmd/Ctrl+Z)                       |
+| N03        | Upload completion and placeholder removal stay out of history, so Undo/Redo rebase over them; a redone placeholder whose upload was discarded or failed after Undo has a revoked `blob:` source and is removed by an `appendTransaction` that scans only changed ranges.                                                                       | `image-upload-plugin.test.ts` "paste upload history" (including Undo before the upload settles)        |
+| N04        | Image and logo NodeViews reset in-flight upload UI and the exclusion lock when a reused view receives a replacement node.                                                                                                                                                                                                                      | `image-view.test.tsx` "gives a reused … view to its replacement node"                                  |
+| N05        | Suggestion popups use TipTap 3.32's Floating UI `mount`; a popup survives plugin-view recreation while its suggestion is active and is rebuilt on the next update.                                                                                                                                                                             | `suggestion-popup.test.tsx` N05                                                                        |
+| N06        | Each font picker owns a `useId` action channel, like color pickers.                                                                                                                                                                                                                                                                            | `font-family-picker.test.tsx` N06                                                                      |
+| N07        | Undo clears the reader override and invalidates detail and thread reads.                                                                                                                                                                                                                                                                       | `audit-regressions.test.tsx` N07                                                                       |
+| N08        | The storage probe writes a unique random key, never a key derived from a recovery scope.                                                                                                                                                                                                                                                       | `audit-regressions.test.tsx` N08                                                                       |
+| N09        | Adapter calls outside a `try`/`catch` go through `callAdapter`, which turns a synchronous throw into a rejection; every failure reaches `onError`.                                                                                                                                                                                             | `audit-regressions.test.tsx` N09                                                                       |
+| N10        | `onError` is read through a ref, so a new identity no longer restarts the detail read that raced the mutation. A detail freshness stamp also advances when a reader mutation is acknowledged, as defense in depth: a new detail request now empties the reader during render, so no reader action can run while an ordinary read is in flight. | `audit-regressions.test.tsx` N10 and "does not re-read … when onError changes identity"                |
+| N11        | Recipient fields parse RFC 5322 address lists (quotes, angle brackets, comments) and quote display names containing specials.                                                                                                                                                                                                                  | `addresses.test.ts`                                                                                    |
+| N12        | A counts failure is reported as `onError(error, 'counts')` and no longer clears a successful list.                                                                                                                                                                                                                                             | `audit-regressions.test.tsx` N12 (throws and rejects)                                                  |
+| N13        | Spacer heights normalize to pixels in the preset, parser, commands and renderer; legacy named heights map to their pixel values.                                                                                                                                                                                                               | `node-regressions.test.tsx` N13, `render.test.ts` spacer heights                                       |
+| N14        | An empty HTML block shows a Code button; the preview renders authored HTML in a script-free sandboxed iframe instead of the editor document.                                                                                                                                                                                                   | `node-regressions.test.tsx` N14                                                                        |
+| Policy gap | A send whose receipt cannot be uniquely retained is blocked before dispatch; hosts reconcile with `readMailboxPendingSends` and `clearMailboxPendingSend`.                                                                                                                                                                                     | `ownership.test.tsx` "isolates a late old-source preparation and blocks a new send until … reconciled" |
+
+The same pass also fixed defects found outside this audit. Each has a
+regression test:
+
+- A Link popover applied the URL on every keystroke. Focus moved to the
+  document, so the rest of the typed URL replaced the selected text. It now
+  edits a draft and commits on Enter, on choosing a suggestion, or on close.
+- Autosave disabled the form fields, which dropped focus and keystrokes.
+- A saved draft whose attachments have no host ID opened editable, and saving
+  dropped those attachments. It now opens read-only.
+- `editable` changes after editor creation were ignored.
+- A `null` item in a render `repeat` payload crashed rendering.
+- The CommonJS build of `@maily-to/core` threw when loaded.
+
+**As audited on 2026-10-10:** the original 14 reported findings were closed for
+their reported cases. That audit was not clean: 14 additional defect groups
+remained, two P1 and twelve P2, plus one separate recovery-policy gap. All are
+repaired as of 2026-10-23; see the resolution above. Some new findings concern ordinary
 correctness rather than strict idempotence; they are included because the audit
 covers every editor and mailbox action family.
 

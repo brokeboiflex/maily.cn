@@ -115,7 +115,8 @@ export const headerLogoWithCoverImage = (t: TranslateFn): BlockItem => ({
   searchTerms: ['logo', 'cover', 'image'],
   icon: <LogoWithCoverImageIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
-    const todayFormatted = new Date().toLocaleDateString('en-US', {
+    // The runtime's locale, not a fixed one.
+    const todayFormatted = new Date().toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',

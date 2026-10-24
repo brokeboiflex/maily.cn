@@ -1,6 +1,6 @@
 import { Editor, useEditorState } from '@tiptap/react';
 import type { ReactNode } from 'react';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { PilcrowIcon, Heading1Icon, Heading2Icon, Heading3Icon, FootprintsIcon, ListIcon, ListOrderedIcon } from "lucide-react";
 
 export type TurnIntoBlockOptions = {

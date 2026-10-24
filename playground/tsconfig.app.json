@@ -25,6 +25,6 @@
     }
   },
   "include": ["src"],
-  // Unit tests run through the repository's Vitest setup, outside this app build.
+  // Unit tests run with `bun run test` (Vitest), outside this app build.
   "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

@@ -1,7 +1,7 @@
 import type { Editor } from '@tiptap/core';
 import { type BlockItem } from '../../../blocks';
 import { type CSSProperties } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { SlashCommandItem } from './slash-command-item';
 
 type SlashCommandSubmenuProps = {

@@ -1,5 +1,10 @@
 # Editor and mailbox idempotency repairs, 2026-10-08
 
+> **Superseded in part (2026-10-24):** Maily no longer keeps send-recovery
+> receipts in browser storage, the `recoveryScope` prop or the pending-send lock
+> described here. Send recovery belongs to the host; see CHANGELOG.md and
+> [mailbox workflows](mailbox-workflows.md#async-ownership-and-sending).
+
 Local canonical source repair. Executing model gpt-6.1-sol. No commit, push, npm publication or deployment.
 
 ## Canonical changes

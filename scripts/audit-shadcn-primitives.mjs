@@ -45,7 +45,6 @@ const dependencyNameByImport = new Map([
   ['input-group', 'input-group'],
   ['command', 'command'],
   ['badge', 'badge'],
-  ['resizable', 'resizable'],
   ['scroll-area', 'scroll-area'],
   ['attachment', 'attachment'],
   ['checkbox', 'checkbox'],
@@ -90,7 +89,7 @@ function auditFile(file) {
   const lines = content.split(/\r?\n/);
   const isPrimitiveImplementation = primitiveImplementationFiles.has(relative);
 
-  if (relative.endsWith('/mailbox/index.tsx')) {
+  if (relative.endsWith('/mailbox/mailbox-view.tsx')) {
     scanPattern(
       /<(?:label|fieldset)\b|\bfunction\s+senderHue\b|\bbackgroundColor:\s*`hsl/g,
       content,
@@ -183,8 +182,8 @@ function auditRegistryDependencies() {
   }
 
   // Dependencies follow emitted imports, checked per item above. An unused
-  // externalization mapping (for example the retired mailbox Resizable shell)
-  // must not force an unused primitive into every consumer install.
+  // externalization mapping must not force an unused primitive into every
+  // consumer install.
 }
 
 function scanPattern(pattern, content, lines, relative, rule, messageForMatch) {

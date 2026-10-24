@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react"
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react"
 import type { Editor as TiptapEditor, JSONContent } from "@tiptap/core"
 import { Braces, Code2, ExternalLink, Palette } from "lucide-react"
 
@@ -12,31 +19,41 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { Editor } from "@/components/maily"
+import { Editor, fontsourceFontProvider } from "@/components/maily"
 import {
   getVariableSuggestions,
   VariableExtension,
 } from "@/components/maily/extensions"
-import { render as renderEmail } from "@/lib/maily-render"
+import {
+  fontsourceFontFaceUrl,
+  render as renderEmail,
+} from "@/lib/maily-render"
 import {
   DEFAULT_RENDERER_THEME,
   loadFont,
   type RendererThemeOptions,
 } from "@/lib/maily-render/shared"
 import {
+  defaultMailboxMessageActionsFor,
   MailboxView,
   type MailyMailboxContactSuggestion,
   type MailyMailboxCounts,
   type MailyMailboxDataSource,
   type MailyMailboxDraftInput,
-  type MailyMailboxFolder,
   type MailyMailboxMessageAction,
+  type MailyMailboxMessageActionContext,
   type MailyMailboxMessageDetail,
   type MailyMailboxSearchQuery,
   type MailyMailboxLabel,
 } from "@/components/maily/mailbox"
 import { polishLabels, polishMailboxLabels } from "@/polish-labels"
 import { paginateMessages } from "@/lib/mailbox-pagination"
+import {
+  folderFor,
+  inFolder,
+  messageLeftView,
+  type PlaygroundMailboxView,
+} from "@/lib/mailbox-view"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL
 const attachmentContents: Record<string, string> = {
@@ -60,6 +77,11 @@ const playgroundMessageActions = [
   "reportIllegal",
   "react",
 ] as const satisfies readonly MailyMailboxMessageAction[]
+
+// The showcase applies Gmail-style folder rules; Maily itself applies none.
+const playgroundMessageActionsFor = (
+  context: MailyMailboxMessageActionContext
+) => defaultMailboxMessageActionsFor(context, playgroundMessageActions)
 
 const initialEditorContent: JSONContent = {
   type: "doc",
@@ -117,31 +139,37 @@ const playgroundVariableExtension = VariableExtension.configure({
 })
 
 function RenderedEmailPreview({ json }: { json: JSONContent }) {
-  const [html, setHtml] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const renderKey = useMemo(() => JSON.stringify(json), [json])
+  // Each result remembers the content it rendered, so new content shows the
+  // loading state instead of the previous email.
+  const [result, setResult] = useState<{
+    json: JSONContent
+    html?: string
+    error?: string
+  } | null>(null)
+  const html = result?.json === json ? (result.html ?? null) : null
+  const error = result?.json === json ? (result.error ?? null) : null
 
   useEffect(() => {
     let active = true
-
-    setHtml(null)
-    setError(null)
-
-    renderEmail(json, { theme: emailPreviewTheme })
+    renderEmail(json, {
+      theme: emailPreviewTheme,
+      fontFaceUrl: fontsourceFontFaceUrl,
+    })
       .then((nextHtml) => {
-        if (active) setHtml(nextHtml)
+        if (active) setResult({ json, html: nextHtml })
       })
       .catch((cause) => {
         if (!active) return
-        setError(
-          cause instanceof Error ? cause.message : "Unable to render email."
-        )
+        setResult({
+          json,
+          error:
+            cause instanceof Error ? cause.message : "Unable to render email.",
+        })
       })
-
     return () => {
       active = false
     }
-  }, [json, renderKey])
+  }, [json])
 
   if (error) {
     return (
@@ -473,15 +501,6 @@ const contactSuggestions: MailyMailboxContactSuggestion[] = [
   { address: "studio@maily.cn", displayName: "Maily Studio" },
 ]
 
-function folderFor(message: MailyMailboxMessageDetail): MailyMailboxFolder {
-  if (message.labels?.includes("Trash")) return "trash"
-  if (message.labels?.includes("Spam")) return "spam"
-  if (message.labels?.includes("Inbox")) return "inbox"
-  if (message.status === "draft") return "drafts"
-  if (message.direction === "in") return "allMail"
-  return "sent"
-}
-
 const playgroundLabels: MailyMailboxLabel[] = [
   { id: "label-promotions", name: "Promotions" },
   { id: "label-projects", name: "Projects" },
@@ -569,7 +588,9 @@ function createMessageFromDraft(
   }
 }
 
-function usePlaygroundMailbox(): MailyMailboxDataSource {
+function usePlaygroundMailbox(
+  view: RefObject<PlaygroundMailboxView>
+): MailyMailboxDataSource {
   const [messages, setMessages] =
     useState<MailyMailboxMessageDetail[]>(baseMessages)
   const messagesRef = useRef(messages)
@@ -589,7 +610,7 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
     >()
   )
 
-  const writeMessages = (next: MailyMailboxMessageDetail[]) => {
+  const writeMessages = useCallback((next: MailyMailboxMessageDetail[]) => {
     const previouslyOwned = new Set(
       messagesRef.current.flatMap((message) =>
         (message.attachments ?? []).map((attachment) => attachment.id)
@@ -605,104 +626,125 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
     }
     messagesRef.current = next
     setMessages(next)
-  }
+  }, [])
 
-  const applyMessageAction: NonNullable<
-    MailyMailboxDataSource["runMessageAction"]
-  > = async ({ messageId, action, value }) => {
-    const existing = messagesRef.current.find(
-      (message) => message.id === messageId
-    )
-    if (!existing) throw new Error("Message not found")
-    if (action === "deleteForever") {
-      writeMessages(
-        messagesRef.current.filter((message) => message.id !== messageId)
-      )
-      return { id: messageId }
-    }
-    if (action === "archive") {
-      const original = messagesRef.current.find(
+  // The reader closes when an action moves the message out of the folder or
+  // label in view; Maily leaves that decision to the host.
+  const leftView = useCallback(
+    (messageId: string) =>
+      messageLeftView(
+        messagesRef.current.find((message) => message.id === messageId),
+        view.current,
+        labelsRef.current
+      ),
+    [view]
+  )
+
+  const applyMessageAction = useCallback<
+    NonNullable<MailyMailboxDataSource["runMessageAction"]>
+  >(
+    async ({ messageId, action, value }) => {
+      const existing = messagesRef.current.find(
         (message) => message.id === messageId
       )
-      if (!original) throw new Error("Message not found")
-      const before = { ...original, labels: [...(original.labels ?? [])] }
-      const after = {
-        ...before,
-        labels: before.labels?.filter((label) => label !== "Inbox"),
+      if (!existing) throw new Error("Message not found")
+      if (action === "deleteForever") {
+        writeMessages(
+          messagesRef.current.filter((message) => message.id !== messageId)
+        )
+        // The showcase moves these messages out of the folder in view.
+        return { id: messageId, removedFromView: leftView(messageId) }
       }
-      const token = `undo-${crypto.randomUUID()}`
-      const expiresAt = Date.now() + 5000
-      undoSnapshots.current.set(token, {
-        entries: [{ before, after }],
-        expiresAt,
+      if (action === "archive") {
+        const original = messagesRef.current.find(
+          (message) => message.id === messageId
+        )
+        if (!original) throw new Error("Message not found")
+        const before = { ...original, labels: [...(original.labels ?? [])] }
+        const after = {
+          ...before,
+          labels: before.labels?.filter((label) => label !== "Inbox"),
+        }
+        const token = `undo-${crypto.randomUUID()}`
+        const expiresAt = Date.now() + 5000
+        undoSnapshots.current.set(token, {
+          entries: [{ before, after }],
+          expiresAt,
+        })
+        writeMessages(
+          messagesRef.current.map((message) =>
+            message.id === messageId ? after : message
+          )
+        )
+        return {
+          undo: { token, expiresAt },
+          removedFromView: leftView(messageId),
+        }
+      }
+      if (action === "delete" || action === "restore" || action === "notSpam") {
+        writeMessages(
+          messagesRef.current.map((message) =>
+            message.id === messageId
+              ? {
+                  ...message,
+                  labels: [
+                    ...(message.labels ?? []).filter(
+                      (label) =>
+                        label !== "Trash" &&
+                        label !== "Inbox" &&
+                        (action === "delete" || label !== "Spam")
+                    ),
+                    ...(action === "delete" ? ["Trash"] : ["Inbox"]),
+                  ],
+                }
+              : message
+          )
+        )
+        return { id: messageId, removedFromView: leftView(messageId) }
+      }
+      if (
+        action === "reportSpam" ||
+        action === "reportPhishing" ||
+        action === "reportIllegal"
+      ) {
+        writeMessages(
+          messagesRef.current.map((message) =>
+            message.id === messageId
+              ? {
+                  ...message,
+                  labels: [
+                    ...(message.labels ?? []).filter(
+                      (label) =>
+                        label !== "Inbox" &&
+                        label !== "Trash" &&
+                        label !== "Spam"
+                    ),
+                    "Spam",
+                  ],
+                }
+              : message
+          )
+        )
+        return { id: messageId, removedFromView: leftView(messageId) }
+      }
+      const next = messagesRef.current.map((message) => {
+        if (message.id !== messageId) return message
+        if (action === "favorite")
+          return { ...message, isFavorite: Boolean(value) }
+        if (action === "markUnread")
+          return { ...message, isUnread: Boolean(value) }
+        if (action === "markRead") return { ...message, isUnread: false }
+        if (action === "blockSender")
+          return { ...message, labels: [...(message.labels ?? []), "Blocked"] }
+        if (action === "react")
+          return { ...message, labels: [...(message.labels ?? []), "Reacted"] }
+        return message
       })
-      writeMessages(
-        messagesRef.current.map((message) =>
-          message.id === messageId ? after : message
-        )
-      )
-      return { undo: { token, expiresAt } }
-    }
-    if (action === "delete" || action === "restore" || action === "notSpam") {
-      writeMessages(
-        messagesRef.current.map((message) =>
-          message.id === messageId
-            ? {
-                ...message,
-                labels: [
-                  ...(message.labels ?? []).filter(
-                    (label) =>
-                      label !== "Trash" &&
-                      label !== "Inbox" &&
-                      (action === "delete" || label !== "Spam")
-                  ),
-                  ...(action === "delete" ? ["Trash"] : ["Inbox"]),
-                ],
-              }
-            : message
-        )
-      )
-      return { id: messageId }
-    }
-    if (
-      action === "reportSpam" ||
-      action === "reportPhishing" ||
-      action === "reportIllegal"
-    ) {
-      writeMessages(
-        messagesRef.current.map((message) =>
-          message.id === messageId
-            ? {
-                ...message,
-                labels: [
-                  ...(message.labels ?? []).filter(
-                    (label) =>
-                      label !== "Inbox" && label !== "Trash" && label !== "Spam"
-                  ),
-                  "Spam",
-                ],
-              }
-            : message
-        )
-      )
-      return { id: messageId }
-    }
-    const next = messagesRef.current.map((message) => {
-      if (message.id !== messageId) return message
-      if (action === "favorite")
-        return { ...message, isFavorite: Boolean(value) }
-      if (action === "markUnread")
-        return { ...message, isUnread: Boolean(value) }
-      if (action === "markRead") return { ...message, isUnread: false }
-      if (action === "blockSender")
-        return { ...message, labels: [...(message.labels ?? []), "Blocked"] }
-      if (action === "react")
-        return { ...message, labels: [...(message.labels ?? []), "Reacted"] }
-      return message
-    })
-    writeMessages(next)
-    return next.find((message) => message.id === messageId)
-  }
+      writeMessages(next)
+      return next.find((message) => message.id === messageId)
+    },
+    [leftView, writeMessages]
+  )
 
   return useMemo(
     () => ({
@@ -720,22 +762,7 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
           ...(labelId ? { labelId } : {}),
         }
         const all = messagesRef.current
-          .filter((message) => {
-            const location = folderFor(message)
-            if (folder === "allMail")
-              return (
-                location !== "spam" &&
-                location !== "trash" &&
-                message.status !== "draft"
-              )
-            if (folder === "starred")
-              return (
-                Boolean(message.isFavorite) &&
-                location !== "spam" &&
-                location !== "trash"
-              )
-            return location === folder
-          })
+          .filter((message) => inFolder(message, folder))
           .filter((message) => searchMatches(message, query, labelsRef.current))
 
         return paginateMessages(all, { folder, search: query }, cursor, limit)
@@ -1075,14 +1102,18 @@ function usePlaygroundMailbox(): MailyMailboxDataSource {
         )
       },
     }),
-    []
+    [applyMessageAction, writeMessages]
   )
 }
 
 export function App() {
   const [json, setJson] = useState<unknown>(null)
   const [polish, setPolish] = useState(false)
-  const mailboxDataSource = usePlaygroundMailbox()
+  const mailboxView = useRef<PlaygroundMailboxView>({
+    folder: "inbox",
+    labelId: null,
+  })
+  const mailboxDataSource = usePlaygroundMailbox(mailboxView)
 
   useEffect(() => {
     if (emailPreviewTheme.font) {
@@ -1176,6 +1207,9 @@ export function App() {
                 key={polish ? "pl" : "en"}
                 labels={polish ? polishLabels : undefined}
                 contentJson={initialEditorContent}
+                // The showcase opts into the Fontsource catalog; Maily calls no
+                // font service by default.
+                fontProvider={fontsourceFontProvider}
                 extensions={[playgroundVariableExtension]}
                 config={{
                   bodyClassName: "min-h-72",
@@ -1209,11 +1243,16 @@ export function App() {
                     address: "studio@maily.cn",
                     displayName: "Maily Studio",
                   }}
-                  recoveryScope="maily-playground:studio-account"
                   dataSource={mailboxDataSource}
-                  messageActions={playgroundMessageActions}
+                  onFolderChange={(folder) => {
+                    mailboxView.current.folder = folder
+                  }}
+                  onSelectedLabelIdChange={(labelId) => {
+                    mailboxView.current.labelId = labelId
+                  }}
+                  messageActions={playgroundMessageActionsFor}
                   pageSize={2}
-                  pollIntervalMs={0}
+                  autosaveDelayMs={1000}
                   labels={polish ? polishMailboxLabels : undefined}
                   className="max-h-none w-full rounded-none! border-0!"
                 />

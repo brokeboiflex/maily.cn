@@ -1,17 +1,17 @@
-import { type Command } from "@tiptap/core"
-import TiptapParagraph from "@tiptap/extension-paragraph"
-import { DEFAULT_SECTION_SHOW_IF_KEY } from "../section/section"
-import { updateSelectedAttributes } from "../../utils/update-attribute"
+import { type Command } from '@tiptap/core';
+import { Paragraph as TiptapParagraph } from '@tiptap/extension-paragraph';
+import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
+import { updateSelectedAttributes } from '../../utils/update-attribute';
 
-export const allowedTextDirection = ["ltr", "rtl"] as const
-export type AllowedTextDirection = (typeof allowedTextDirection)[number]
-export const DEFAULT_TEXT_DIRECTION: AllowedTextDirection = "ltr"
+export const allowedTextDirection = ['ltr', 'rtl'] as const;
+export type AllowedTextDirection = (typeof allowedTextDirection)[number];
+export const DEFAULT_TEXT_DIRECTION: AllowedTextDirection = 'ltr';
 
-declare module "@tiptap/core" {
+declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     mailyTextDirection: {
-      setMailyTextDirection: (direction: AllowedTextDirection) => ReturnType
-    }
+      setMailyTextDirection: (direction: AllowedTextDirection) => ReturnType;
+    };
   }
 }
 
@@ -23,44 +23,44 @@ export const ParagraphExtension = TiptapParagraph.extend({
         default: DEFAULT_TEXT_DIRECTION,
         parseHTML: (element) => {
           return (
-            element.getAttribute("data-text-direction") ||
-            element.getAttribute("dir") ||
+            element.getAttribute('data-text-direction') ||
+            element.getAttribute('dir') ||
             DEFAULT_TEXT_DIRECTION
-          )
+          );
         },
         renderHTML(attributes) {
           if (
             !attributes.textDirection ||
             attributes.textDirection === DEFAULT_TEXT_DIRECTION
           ) {
-            return {}
+            return {};
           }
 
           return {
-            "data-text-direction": attributes.textDirection,
+            'data-text-direction': attributes.textDirection,
             dir: attributes.textDirection,
-          }
+          };
         },
       },
       showIfKey: {
         default: DEFAULT_SECTION_SHOW_IF_KEY,
         parseHTML: (element) => {
           return (
-            element.getAttribute("data-show-if-key") ||
+            element.getAttribute('data-show-if-key') ||
             DEFAULT_SECTION_SHOW_IF_KEY
-          )
+          );
         },
         renderHTML(attributes) {
           if (!attributes.showIfKey) {
-            return {}
+            return {};
           }
 
           return {
-            "data-show-if-key": attributes.showIfKey,
-          }
+            'data-show-if-key': attributes.showIfKey,
+          };
         },
       },
-    }
+    };
   },
 
   addCommands() {
@@ -68,6 +68,6 @@ export const ParagraphExtension = TiptapParagraph.extend({
       ...this.parent?.(),
       setMailyTextDirection: (direction: AllowedTextDirection): Command =>
         updateSelectedAttributes(this.name, { textDirection: direction }),
-    }
+    };
   },
-})
+});

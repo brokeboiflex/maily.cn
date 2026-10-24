@@ -205,6 +205,7 @@ export const defaultLabels = {
   'buttonMenu.size.small': 'Small',
   'buttonMenu.size.medium': 'Medium',
   'buttonMenu.size.large': 'Large',
+  'buttonMenu.text': 'Button text',
   'buttonMenu.updateExternalLink': 'Update External Link',
   'buttonMenu.backgroundColor': 'Background Color',
   'buttonMenu.textColor': 'Text Color',

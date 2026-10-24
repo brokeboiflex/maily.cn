@@ -1,4 +1,4 @@
-import TiptapLink from '@tiptap/extension-link';
+import { Link as TiptapLink } from '@tiptap/extension-link';
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {

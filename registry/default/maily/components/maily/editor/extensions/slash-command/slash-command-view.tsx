@@ -1,8 +1,6 @@
 import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import { type BlockGroupItem, type BlockItem } from '../../../blocks/types';
 import { Editor, type Range } from '@tiptap/core';
-import { ReactRenderer } from '@tiptap/react';
-import { type SuggestionOptions } from '@tiptap/suggestion';
 import {
   forwardRef,
   Fragment,
@@ -11,15 +9,21 @@ import {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import tippy, { type GetReferenceClientRect, type Instance } from 'tippy.js';
-import { getDefaultBlocks } from './default-slash-commands';
+import { type SuggestionOptions } from '@tiptap/suggestion';
 import { englishTranslator, type TranslateFn } from '../../i18n';
+import {
+  createSuggestionPopup,
+  SUGGESTION_FLOATING_UI,
+} from '../../utils/suggestion-popup';
+import { getDefaultBlocks } from './default-slash-commands';
+import { SlashCommandPluginKey } from './slash-command';
+import { filterSlashCommands } from './slash-command-search';
 import { SlashCommandItem } from './slash-command-item';
 import { SlashCommandSubmenu } from './slash-command-submenu';
-import { filterSlashCommands } from './slash-command-search';
 import { Kbd } from '@/components/ui/kbd';
 
 const isSubCommandItem = (item: BlockItem | undefined): boolean =>
@@ -32,7 +36,7 @@ type SubmenuLayout = {
   side: 'left' | 'right' | 'overlay';
 };
 
-type CommandListProps = {
+export type SlashCommandListProps = {
   items: BlockGroupItem[];
   command: (item: BlockItem) => void;
   editor: Editor;
@@ -43,7 +47,7 @@ type CommandListProps = {
   enterLabel?: string;
 };
 
-const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
+const CommandList = forwardRef<unknown, SlashCommandListProps>((props, ref) => {
   const {
     items: groups,
     command,
@@ -77,12 +81,15 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   const openSubItem = submenu
     ? groups[submenu.groupIndex]?.commands[submenu.commandIndex]
     : undefined;
-  const submenuCommands: BlockItem[] =
-    openSubItem &&
-    'commands' in openSubItem &&
-    Array.isArray(openSubItem.commands)
-      ? openSubItem.commands
-      : [];
+  const submenuCommands = useMemo<BlockItem[]>(
+    () =>
+      openSubItem &&
+      'commands' in openSubItem &&
+      Array.isArray(openSubItem.commands)
+        ? openSubItem.commands
+        : [],
+    [openSubItem]
+  );
 
   const openSubmenu = useCallback(
     (groupIndex: number, commandIndex: number, focus: boolean) => {
@@ -201,9 +208,6 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
         }
       }
 
-      let newCommandIndex = selectedCommandIndex;
-      let newGroupIndex = selectedGroupIndex;
-
       switch (event.key) {
         case 'ArrowLeft': {
           event.preventDefault();
@@ -248,14 +252,14 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           prevSelectedGroupIndex.current = selectedGroupIndex;
           prevSelectedCommandIndex.current = selectedCommandIndex;
           return true;
-        case 'ArrowUp':
+        case 'ArrowUp': {
           if (!groups.length) {
             return false;
           }
           closeSubmenu();
           keyboardNav.current = true;
-          newCommandIndex = selectedCommandIndex - 1;
-          newGroupIndex = selectedGroupIndex;
+          let newCommandIndex = selectedCommandIndex - 1;
+          let newGroupIndex = selectedGroupIndex;
           if (newCommandIndex < 0) {
             newGroupIndex = selectedGroupIndex - 1;
             newCommandIndex = groups[newGroupIndex]?.commands.length - 1 || 0;
@@ -267,15 +271,16 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           setSelectedGroupIndex(newGroupIndex);
           setSelectedCommandIndex(newCommandIndex);
           return true;
-        case 'ArrowDown':
+        }
+        case 'ArrowDown': {
           if (!groups.length) {
             return false;
           }
           closeSubmenu();
           keyboardNav.current = true;
           const commands = groups[selectedGroupIndex].commands;
-          newCommandIndex = selectedCommandIndex + 1;
-          newGroupIndex = selectedGroupIndex;
+          let newCommandIndex = selectedCommandIndex + 1;
+          let newGroupIndex = selectedGroupIndex;
           if (commands.length - 1 < newCommandIndex) {
             newCommandIndex = 0;
             newGroupIndex = selectedGroupIndex + 1;
@@ -286,6 +291,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
           setSelectedGroupIndex(newGroupIndex);
           setSelectedCommandIndex(newCommandIndex);
           return true;
+        }
         default:
           return false;
       }
@@ -413,7 +419,7 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
         <div
           id="slash-command"
           ref={commandListContainer}
-          className="h-auto max-h-[330px] overflow-y-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="h-auto max-h-[330px] [scrollbar-width:none] overflow-y-auto p-1 [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((group, groupIndex) => (
             <Fragment key={groupIndex}>
@@ -477,32 +483,31 @@ const CommandList = forwardRef<unknown, CommandListProps>((props, ref) => {
   );
 });
 
+export { CommandList as SlashCommandList };
+
+type SlashCommandLabels = Pick<
+  SlashCommandListProps,
+  'navigateLabel' | 'selectLabel' | 'enterLabel'
+>;
+
 export function getSlashCommandSuggestions(
   groups: BlockGroupItem[] = getDefaultBlocks(englishTranslator),
   t: TranslateFn = englishTranslator
 ): Omit<SuggestionOptions, 'editor'> {
-  const navigateLabel = t('slashCommand.navigate');
-  const selectLabel = t('slashCommand.select');
-  const enterLabel = t('slashCommand.enter');
-
-  const BoundCommandList = forwardRef<unknown, CommandListProps>(
-    (props, ref) => (
-      <CommandList
-        {...props}
-        navigateLabel={navigateLabel}
-        selectLabel={selectLabel}
-        enterLabel={enterLabel}
-        ref={ref}
-      />
-    )
-  );
-
   return {
     items: ({ query, editor }) => {
       return filterSlashCommands({ query, editor, groups });
     },
     allow: ({ editor }) => {
-      if (editor.view.dom.closest('[data-maily-mobile=true]')) return false;
+      // TipTap keeps an unmounted editor's state, but its view throws on DOM
+      // access; an unmounted editor shows no suggestions.
+      let dom: HTMLElement;
+      try {
+        dom = editor.view.dom;
+      } catch {
+        return false;
+      }
+      if (dom.closest('[data-maily-mobile=true]')) return false;
       const isInsideHTMLCodeBlock = editor.isActive('htmlCodeBlock');
       if (isInsideHTMLCodeBlock) {
         return false;
@@ -510,64 +515,16 @@ export function getSlashCommandSuggestions(
 
       return true;
     },
-    render: () => {
-      let component: ReactRenderer<any>;
-      let popup: Instance<any>[] | null = null;
-
-      return {
-        onStart: (props) => {
-          component = new ReactRenderer(BoundCommandList, {
-            props,
-            editor: props.editor,
-          });
-
-          popup = tippy('body', {
-            getReferenceClientRect: props.clientRect as GetReferenceClientRect,
-            appendTo: () => document.body,
-            content: component.element,
-            showOnCreate: true,
-            interactive: true,
-            trigger: 'manual',
-            placement: 'top-start',
-          });
-        },
-        onUpdate: (props) => {
-          const currentPopup = popup?.[0];
-          if (!currentPopup || currentPopup?.state?.isDestroyed) {
-            return;
-          }
-
-          component?.updateProps(props);
-          currentPopup.setProps({
-            getReferenceClientRect: props.clientRect,
-          });
-        },
-        onKeyDown: (props) => {
-          if (props.event.key === 'Escape') {
-            const currentPopup = popup?.[0];
-            if (!currentPopup?.state?.isDestroyed) {
-              currentPopup?.destroy();
-            }
-
-            component?.destroy();
-            return true;
-          }
-
-          return component?.ref?.onKeyDown(props);
-        },
-        onExit: () => {
-          if (!popup || !popup?.[0] || !component) {
-            return;
-          }
-
-          const currentPopup = popup?.[0];
-          if (!currentPopup.state.isDestroyed) {
-            currentPopup.destroy();
-          }
-
-          component?.destroy();
-        },
-      };
-    },
+    placement: 'top-start',
+    floatingUi: SUGGESTION_FLOATING_UI,
+    render: createSuggestionPopup<SlashCommandLabels>(
+      CommandList,
+      SlashCommandPluginKey,
+      {
+        navigateLabel: t('slashCommand.navigate'),
+        selectLabel: t('slashCommand.select'),
+        enterLabel: t('slashCommand.enter'),
+      }
+    ),
   };
 }

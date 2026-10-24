@@ -15,8 +15,8 @@ import { useEditorState } from '@tiptap/react';
 import { closeHistory } from '@tiptap/pm/history';
 import { TextSelection } from '@tiptap/pm/state';
 import type { BlockItem } from '../../blocks';
-import { useMailyContext } from '../provider';
-import { cn } from '@/lib/utils';
+import { useMailyContext } from '../maily-context';
+import { cn } from 'cn';
 import { runMobileBlockAction } from '../utils/mobile-block-actions';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
@@ -30,6 +30,40 @@ type Panel = 'insert' | 'format' | 'block';
 // Local density adaptation of the existing Maily controls; host primitives stay untouched.
 const TOUCH_CONTROLS =
   '[&_button]:min-h-11! [&_button]:min-w-11! [&_input]:min-h-11 [&_input]:text-base [&_[role=separator]]:hidden [&_[data-slot=toggle-group]]:flex-wrap [&_svg]:size-5';
+
+function MobileToolbarButton({
+  label,
+  disabled = false,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex shrink-0">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-11! shrink-0 p-0"
+            aria-label={label}
+            disabled={disabled}
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={onClick}
+          >
+            {children}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 export function MobileEditor({
   editor,
@@ -82,12 +116,27 @@ export function MobileEditor({
     [editorActions, channel]
   );
 
-  useEffect(() => {
-    if (!compact || !enabled) {
-      editorActions?.cancel(channel);
+  const available = compact && enabled;
+  // Entering compact editing opens the dock for an already-focused editor;
+  // leaving it closes the dock and any panel.
+  const [availability, setAvailability] = useState<{
+    available: boolean;
+    editor: Editor;
+  } | null>(null);
+  if (availability?.available !== available || availability.editor !== editor) {
+    setAvailability({ available, editor });
+    if (!available) {
       setActive(false);
-      panelRef.current = null;
       setPanel(null);
+    } else if (editor.isFocused) {
+      setActive(true);
+    }
+  }
+
+  useEffect(() => {
+    if (!available) {
+      editorActions?.cancel(channel);
+      panelRef.current = null;
       return;
     }
     const element = root.current;
@@ -112,13 +161,12 @@ export function MobileEditor({
     editor.on('focus', onFocus);
     element?.addEventListener('pointerdown', onEditorPointer);
     document.addEventListener('pointerdown', outside);
-    if (editor.isFocused) setActive(true);
     return () => {
       editor.off('focus', onFocus);
       element?.removeEventListener('pointerdown', onEditorPointer);
       document.removeEventListener('pointerdown', outside);
     };
-  }, [compact, enabled, editor, root, panel, editorActions, channel]);
+  }, [available, editor, root, panel, editorActions, channel]);
 
   useEffect(() => {
     if (!compact) return;
@@ -229,32 +277,6 @@ export function MobileEditor({
     });
     close(true);
   };
-  const icon = (
-    label: string,
-    content: ReactNode,
-    onClick: () => void,
-    disabled = false
-  ) => (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span className="inline-flex shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-11! shrink-0 p-0"
-            aria-label={label}
-            disabled={disabled}
-            onPointerDown={(event) => event.preventDefault()}
-            onClick={onClick}
-          >
-            {content}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
   const toolbar = (
     <div
       role="toolbar"
@@ -299,8 +321,11 @@ export function MobileEditor({
   className="size-6"
 />
       </Toggle>
-      {icon(
-        t('mobile.undo'),
+      <MobileToolbarButton
+        label={t('mobile.undo')}
+        disabled={!state.undo}
+        onClick={() => editor.commands.undo()}
+      >
         <IconPlaceholder
   lucide="Undo2"
   tabler="IconArrowBackUp"
@@ -308,12 +333,13 @@ export function MobileEditor({
   phosphor="ArrowUUpLeft"
   remixicon="RiArrowGoBackLine"
   className="size-6"
-/>,
-        () => editor.commands.undo(),
-        !state.undo
-      )}
-      {icon(
-        t('mobile.redo'),
+/>
+      </MobileToolbarButton>
+      <MobileToolbarButton
+        label={t('mobile.redo')}
+        disabled={!state.redo}
+        onClick={() => editor.commands.redo()}
+      >
         <IconPlaceholder
   lucide="Redo2"
   tabler="IconArrowForwardUp"
@@ -321,10 +347,8 @@ export function MobileEditor({
   phosphor="ArrowUUpRight"
   remixicon="RiArrowGoForwardLine"
   className="size-6"
-/>,
-        () => editor.commands.redo(),
-        !state.redo
-      )}
+/>
+      </MobileToolbarButton>
       {allowBlockActions && (
         <Toggle
           data-maily-panel="block"
@@ -347,21 +371,26 @@ export function MobileEditor({
         </Toggle>
       )}
       <div className="ml-auto border-l pl-1">
-        {icon(t('mobile.close'), <IconPlaceholder
+        <MobileToolbarButton
+          label={t('mobile.close')}
+          onClick={() => {
+            if (panelRef.current) {
+              close(true);
+              return;
+            }
+            setActive(false);
+            editor.view.dom.blur();
+          }}
+        >
+          <IconPlaceholder
   lucide="X"
   tabler="IconX"
   hugeicons="Cancel01Icon"
   phosphor="X"
   remixicon="RiCloseLine"
   className="size-6"
-/>, () => {
-          if (panelRef.current) {
-            close(true);
-            return;
-          }
-          setActive(false);
-          editor.view.dom.blur();
-        })}
+/>
+        </MobileToolbarButton>
       </div>
     </div>
   );
@@ -422,9 +451,9 @@ export function MobileEditor({
                   id={panelId}
                   role="region"
                   aria-label={panelLabel}
-                  className="data-closed:animate-out data-closed:fade-out-0 h-full overflow-y-auto overscroll-contain duration-200 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin] motion-reduce:animate-none"
+                  className="data-closed:animate-out data-closed:fade-out-0 h-full [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] overflow-y-auto overscroll-contain duration-200 motion-reduce:animate-none"
                 >
-                  <div className="pb-2 pt-5">
+                  <div className="pt-5 pb-2">
                     {contentPanel === 'insert' && (
                       <>
                         {current && (
@@ -468,7 +497,7 @@ export function MobileEditor({
                                     key={index}
                                     type="button"
                                     variant="outline"
-                                    className="h-auto min-h-14 min-w-0 justify-start gap-2 whitespace-normal px-2.5 py-3 text-left text-sm font-medium shadow-none"
+                                    className="h-auto min-h-14 min-w-0 justify-start gap-2 px-2.5 py-3 text-left text-sm font-medium whitespace-normal shadow-none"
                                     onClick={() => insert(item)}
                                   >
                                     <span className="text-muted-foreground flex size-5 shrink-0 items-center justify-center [&_svg]:size-5">

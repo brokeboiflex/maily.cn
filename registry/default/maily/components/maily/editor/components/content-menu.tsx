@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import type { Editor } from '@tiptap/core';
 import {
   useCallback,
@@ -23,9 +23,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { DragHandle } from '../plugins/drag-handle/drag-handle';
-import { cn } from '@/lib/utils';
 import { captureNodeAction } from '../utils/node-action';
-import { useMailyContext } from '../provider';
+import { useMailyContext } from '../maily-context';
 
 export type ContentMenuProps = {
   editor: Editor;
@@ -106,13 +105,11 @@ export function ContentMenu(props: ContentMenuProps) {
     });
   }
 
+  // Dispatch only while the menu is open: any transaction lets TipTap's
+  // trailing-node plugin append a paragraph, even in a read-only editor.
   useEffect(() => {
-    if (menuOpen) {
-      editor.commands.setMeta('lockDragHandle', true);
-    } else {
-      editor.commands.setMeta('lockDragHandle', false);
-    }
-
+    if (!menuOpen) return;
+    editor.commands.setMeta('lockDragHandle', true);
     return () => {
       editor.commands.setMeta('lockDragHandle', false);
     };
@@ -122,13 +119,9 @@ export function ContentMenu(props: ContentMenuProps) {
     <DragHandle
       pluginKey="ContentMenu"
       editor={editor}
-      tippyOptions={{
-        placement: 'left',
-        offset: [0, 0],
-        zIndex: 99,
-      }}
+      placement="left"
+      zIndex={99}
       onNodeChange={handleNodeChange}
-      className={cn(editor.isEditable ? 'visible' : 'hidden')}
     >
       <TooltipProvider>
         <div className="flex items-center pr-1.5">
@@ -143,13 +136,13 @@ export function ContentMenu(props: ContentMenuProps) {
                 type="button"
               >
                 <IconPlaceholder
-                  lucide="Plus"
-                  tabler="IconPlus"
-                  hugeicons="Add01Icon"
-                  phosphor="Plus"
-                  remixicon="RiAddLine"
-                  className="size-4 shrink-0"
-                />
+  lucide="Plus"
+  tabler="IconPlus"
+  hugeicons="Add01Icon"
+  phosphor="Plus"
+  remixicon="RiAddLine"
+  className="size-4 shrink-0"
+/>
               </Button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
@@ -179,18 +172,18 @@ export function ContentMenu(props: ContentMenuProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-muted-foreground hover:text-foreground z-1 size-7! relative cursor-grab"
+                      className="text-muted-foreground hover:text-foreground relative z-1 size-7! cursor-grab"
                       aria-label={t('contentMenu.nodeActions')}
                       type="button"
                     >
                       <IconPlaceholder
-                        lucide="GripVertical"
-                        tabler="IconGripVertical"
-                        hugeicons="GripVerticalIcon"
-                        phosphor="DotsSixVertical"
-                        remixicon="RiDraggable"
-                        className="size-4 shrink-0"
-                      />
+  lucide="GripVertical"
+  tabler="IconGripVertical"
+  hugeicons="GripVerticalIcon"
+  phosphor="DotsSixVertical"
+  remixicon="RiDraggable"
+  className="size-4 shrink-0"
+/>
                     </Button>
                   </DropdownMenuTrigger>
                 </span>
@@ -208,12 +201,12 @@ export function ContentMenu(props: ContentMenuProps) {
             >
               <DropdownMenuItem onClick={duplicateNode}>
                 <IconPlaceholder
-                  lucide="Copy"
-                  tabler="IconCopy"
-                  hugeicons="Copy01Icon"
-                  phosphor="Copy"
-                  remixicon="RiFileCopyLine"
-                />
+  lucide="Copy"
+  tabler="IconCopy"
+  hugeicons="Copy01Icon"
+  phosphor="Copy"
+  remixicon="RiFileCopyLine"
+/>
                 {t('contentMenu.duplicate')}
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -221,12 +214,12 @@ export function ContentMenu(props: ContentMenuProps) {
                 onClick={deleteCurrentNode}
               >
                 <IconPlaceholder
-                  lucide="Trash2"
-                  tabler="IconTrash"
-                  hugeicons="Delete02Icon"
-                  phosphor="Trash"
-                  remixicon="RiDeleteBinLine"
-                />
+  lucide="Trash2"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+/>
                 {t('contentMenu.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>

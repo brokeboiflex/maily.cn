@@ -11,9 +11,8 @@ export function processVariables(
   const { query } = options;
   const queryLower = query.toLowerCase();
 
-  let filteredVariables: Array<Variable> = [];
   if (Array.isArray(variables)) {
-    filteredVariables = variables.filter((variable) =>
+    const filteredVariables = variables.filter((variable) =>
       variable.name.toLowerCase().startsWith(queryLower)
     );
 

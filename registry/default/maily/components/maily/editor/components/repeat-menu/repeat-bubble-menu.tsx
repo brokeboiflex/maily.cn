@@ -1,6 +1,6 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
 import { useOwnedTimeout } from '../../utils/use-owned-timeout';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { isTextSelected } from '../../utils/is-text-selected';
 import { findChildren } from '@tiptap/core';
 import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
@@ -20,7 +20,7 @@ import { useRepeatState } from './use-repeat-state';
 import { getClosestNodeByName } from '../../utils/columns';
 import { processVariables } from '../../utils/variable';
 import { useVariableOptions } from '../../utils/node-options';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { Button } from '@/components/ui/button';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
@@ -29,9 +29,6 @@ import {
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const { schedule: scheduleTimeout } = useOwnedTimeout();
   const state = useRepeatState(editor);
@@ -170,6 +167,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
           >
             <InputAutocomplete
               editor={editor}
+              aria-label={t('repeatMenu.label')}
               placeholder={t('repeatMenu.placeholder')}
               value={state?.each || ''}
               onValueChange={(value) => {

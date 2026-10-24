@@ -1,5 +1,10 @@
 # Editor and mailbox idempotence audit, 2026-10-10
 
+> **Superseded in part (2026-10-24):** Maily no longer keeps send-recovery
+> receipts in browser storage, the `recoveryScope` prop or the pending-send lock
+> described here. Send recovery belongs to the host; see CHANGELOG.md and
+> [mailbox workflows](mailbox-workflows.md#async-ownership-and-sending).
+
 Audited commit: `9af19d56e5776568142695292e9993cf150b7bb7`, pushed to `origin/main` before the audit. Three independent subagents inspected canonical document actions, editor async/resource actions, and mailbox actions. The original findings below describe that commit. The subsequently authorized repairs are recorded separately below.
 
 The bar distinguishes desired-state operations from intentionally repeated insertion, deletion, formatting toggles, history traversal and downloads. A pending UI state is not proof of durable host idempotency. The audit examines duplicate dispatch, stale document/selection/data-source ownership, response loss, lifecycle teardown and resource compensation.

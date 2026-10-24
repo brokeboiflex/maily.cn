@@ -15,7 +15,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useMailyContext } from '@/editor/provider';
+import { useMailyContext } from '@/editor/maily-context';
 import { InputGroup, InputGroupAddon, InputGroupInput } from './input-group';
 
 type InputAutocompleteProps = InputHTMLAttributes<HTMLInputElement> & {

@@ -1,7 +1,7 @@
 import { Editor } from '@tiptap/react';
 import { Fragment, Node } from '@tiptap/pm/model';
 import { TextSelection } from '@tiptap/pm/state';
-import { v4 as uuidv4 } from 'uuid';
+import { createId } from '@/editor/utils/create-id';
 import { findParentNode } from '@tiptap/core';
 import { DEFAULT_COLUMN_WIDTH } from '../nodes/columns/column';
 import { setNodeAttributes } from './update-attribute';
@@ -20,7 +20,7 @@ export function setColumnCount(editor: Editor, count: number) {
   if (count > node.childCount) {
     const added = Array.from({ length: count - node.childCount }, () =>
       state.schema.nodes.column.create(
-        { width: DEFAULT_COLUMN_WIDTH, columnId: uuidv4() },
+        { width: DEFAULT_COLUMN_WIDTH, columnId: createId() },
         state.schema.nodes.paragraph.create()
       )
     );
@@ -73,12 +73,12 @@ export function addColumn(editor: Editor) {
   const newColumn = state.schema.nodes.column.create(
     {
       width: calculatedWidth,
-      columnId: uuidv4(),
+      columnId: createId(),
     },
     state.schema.nodes.paragraph.create(null)
   );
 
-  let updatedContent: Node[] = [];
+  const updatedContent: Node[] = [];
   let activeColumnIndex = 0;
   columnsNode.content.forEach((child, _, index) => {
     if (
@@ -155,7 +155,7 @@ export function removeColumn(editor: Editor) {
     2
   );
 
-  let updatedContent: Node[] = [];
+  const updatedContent: Node[] = [];
   let activeColumnIndex = 0;
   let isRemoved = false;
   columnsNode.content.forEach((child, _, index) => {
@@ -291,7 +291,7 @@ export function addColumnByIndex(editor: Editor, index: number = -1) {
   const newColumn = state.schema.nodes.column.create(
     {
       width: DEFAULT_COLUMN_WIDTH,
-      columnId: uuidv4(),
+      columnId: createId(),
     },
     state.schema.nodes.paragraph.create(null)
   );

@@ -6,6 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 const root = process.cwd();
+// Keep in step with .github/workflows/registry-consumers.yml and the playground.
+const PLAYWRIGHT_VERSION = '1.64.1';
 const registryOutput = path.join(root, 'playground/public/r');
 const tempRoot = fs.mkdtempSync(
   path.join(os.tmpdir(), 'maily-shadcn-consumers-')
@@ -37,11 +39,13 @@ export default function App() {
 }
 `;
 
-const baseRuntimeFixture = `import { Editor } from "@/components/maily"
+const baseRuntimeFixture = `import { useEffect, useState } from "react"
+import { Editor, fontsourceFontProvider } from "@/components/maily"
 import { ImageUploadExtension } from "@/components/maily/extensions"
 import {
   MailboxView,
   type MailyMailboxDataSource,
+  type MailyMailboxDraftCapabilities,
   type MailyMailboxMessageDetail,
 } from "@/components/maily/mailbox"
 
@@ -51,11 +55,14 @@ declare global {
     mailyUploadCalls: number
     mailyDiscardCalls: number
     mailyFinishUpload: () => void
+    mailyDraftCalls: string[]
+    mailySetDraftCapabilities: (capabilities: MailyMailboxDraftCapabilities) => void
   }
 }
 
 window.mailyUploadCalls = 0
 window.mailyDiscardCalls = 0
+window.mailyDraftCalls = []
 const uploadedImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII="
 const uploadExtension = ImageUploadExtension.configure({
   onImageUpload: async () => {
@@ -117,12 +124,70 @@ const dataSource: MailyMailboxDataSource = {
   sendDraft: async () => undefined,
 }
 
+const savedDraft: MailyMailboxMessageDetail = {
+  id: "saved-draft",
+  direction: "out",
+  fromAddress: "studio@maily.cn",
+  toAddresses: ["client@example.com"],
+  subject: "Prepared draft",
+  status: "draft",
+  createdAt: "2026-10-22T10:00:00Z",
+  bodyText: "Prepared body",
+  _revision: "v1",
+}
+
+// A read-only adapter compiles without draft callbacks or casts.
+const readOnlySource: MailyMailboxDataSource = {
+  listMessages: async ({ folder }) => ({
+    items: folder === "drafts" ? [savedDraft] : [message],
+    nextCursor: null,
+  }),
+  getMessage: async (id) => (id === message.id ? message : { ...savedDraft, id }),
+}
+
+const capabilitySource: MailyMailboxDataSource = {
+  ...readOnlySource,
+  createDraft: async (draft) => {
+    window.mailyDraftCalls.push("create:" + (draft.subject ?? ""))
+    return { id: "created-draft", _revision: "c1" }
+  },
+  updateDraft: async (id, draft) => {
+    window.mailyDraftCalls.push(
+      "update:" + id + ":" + (draft.subject ?? "") + ":" + (draft.text ?? "")
+    )
+    return { id, _revision: "u1" }
+  },
+  sendDraft: async (id) => {
+    window.mailyDraftCalls.push("send:" + id)
+  },
+  discardDraft: async (id) => {
+    window.mailyDraftCalls.push("discard:" + id)
+  },
+}
+
+function CapabilityMailbox() {
+  const [draftCapabilities, setDraftCapabilities] =
+    useState<MailyMailboxDraftCapabilities>({ send: false, discard: false })
+  useEffect(() => {
+    window.mailySetDraftCapabilities = setDraftCapabilities
+  }, [])
+  return (
+    <MailboxView
+      account={{ id: "capability-account", address: "studio@maily.cn" }}
+      dataSource={capabilitySource}
+      draftCapabilities={draftCapabilities}
+      autosaveDelayMs={1000}
+    />
+  )
+}
+
 export default function App() {
   return (
     <main className="grid gap-8 p-6">
       <section data-testid="editor">
         <Editor
           config={{ immediatelyRender: true }}
+          fontProvider={fontsourceFontProvider}
           extensions={[uploadExtension]}
           onCreate={(editor) => { window.mailyTestEditor = editor }}
           contentJson={{
@@ -140,8 +205,13 @@ export default function App() {
         <MailboxView
           account={{ address: "studio@maily.cn", displayName: "Maily Studio" }}
           dataSource={dataSource}
-          pollIntervalMs={0}
         />
+      </section>
+      <section data-testid="readonly-mailbox">
+        <MailboxView dataSource={readOnlySource} />
+      </section>
+      <section data-testid="capability-mailbox">
+        <CapabilityMailbox />
       </section>
     </main>
   )
@@ -168,6 +238,7 @@ try {
   ]);
   await writeBaseRuntimeFixture(radixProject);
   await runProjectCommand(radixProject, ['run', 'build']);
+  await verifyConsumerLint(radixProject);
   await verifyConsumerRuntime(radixProject, 'radix');
   console.log('Radix full granular consumer passed');
 
@@ -175,6 +246,7 @@ try {
   await addRegistryItems(baseProject, ['@maily/maily-editor']);
   await writeEditorFixture(baseProject);
   await runProjectCommand(baseProject, ['run', 'build']);
+  await verifyConsumerLint(baseProject);
   console.log('Base editor consumer passed');
 
   await addRegistryItems(baseProject, [
@@ -183,6 +255,7 @@ try {
   ]);
   await writeBaseRuntimeFixture(baseProject);
   await verifyBaseFullConsumer(baseProject);
+  await verifyConsumerLint(baseProject);
   await verifyConsumerRuntime(baseProject, 'base');
   console.log('Base full granular consumer passed');
 
@@ -192,20 +265,24 @@ try {
     '@maily/maily-mailbox',
   ]);
   const installedMailbox = fs.readFileSync(
-    path.join(bunProject, 'src/components/maily/mailbox/index.tsx'),
+    path.join(bunProject, 'src/components/maily/mailbox/mailbox-view.tsx'),
     'utf8'
   );
   for (const expected of [
     '@/custom/ui/avatar',
     '@/custom/ui/field',
     '@/custom/ui/empty',
-    '@/shared/cn',
   ]) {
     if (!installedMailbox.includes(expected))
       throw new Error(`Consumer alias was not inherited: ${expected}`);
   }
+  // Like stock shadcn items, Maily imports cn from the `cn` package rather
+  // than through the consumer's utils alias.
+  if (!/from ["']cn["']/.test(installedMailbox))
+    throw new Error('Mailbox does not import cn from the cn package.');
   await writeBaseRuntimeFixture(bunProject);
   await runProjectCommand(bunProject, ['run', 'build']);
+  await verifyConsumerLint(bunProject);
   console.log('Bun isolated full granular consumer passed');
 } finally {
   if (server) {
@@ -282,12 +359,6 @@ async function createBunConsumer(name, base, registryTemplate) {
   const components = JSON.parse(fs.readFileSync(componentsPath, 'utf8'));
   // Exercise consumer alias rewriting instead of only the default @/components/ui.
   components.aliases.ui = '@/custom/ui';
-  components.aliases.utils = '@/shared/cn';
-  fs.mkdirSync(path.join(project, 'src/shared'), { recursive: true });
-  fs.copyFileSync(
-    path.join(project, 'src/lib/utils.ts'),
-    path.join(project, 'src/shared/cn.ts')
-  );
   components.registries = {
     ...(components.registries ?? {}),
     '@maily': registryTemplate,
@@ -361,7 +432,7 @@ async function verifyBaseFullConsumer(project) {
 }
 
 async function verifyConsumerRuntime(project, primitiveBase) {
-  await run('pnpm', ['add', '-D', '@playwright/test@1.55.0'], {
+  await run('pnpm', ['add', '-D', `@playwright/test@${PLAYWRIGHT_VERSION}`], {
     cwd: project,
   });
   await runProjectCommand(project, [
@@ -460,7 +531,7 @@ test("mobile editor uses real blocks and preserves content across breakpoints", 
   await expect(picker).toBeHidden()
   await page.emulateMedia({ reducedMotion: "no-preference" })
   await surface.fill("/heading")
-  await expect(page.locator('[data-tippy-root]')).toHaveCount(0)
+  await expect(page.locator('#slash-command')).toHaveCount(0)
   await page.getByRole("button", { name: "Format", exact: true }).click()
   const format = page.getByRole("region", { name: "Format", exact: true })
   await expect(format.getByRole("button", { name: "Font Family", exact: true })).toBeVisible()
@@ -582,6 +653,97 @@ test("inherits current host primitive behavior", async ({ page }) => {
   await expect(page.locator("button button")).toHaveCount(0)
   expect(errors).toEqual([])
 })
+
+test("draft capabilities hide unavailable controls and keep open content", async ({ page }) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text())
+  })
+  await page.goto("${baseUrl}")
+
+  const readOnly = page.getByTestId("readonly-mailbox")
+  const row = readOnly.getByRole("button", { name: /Attachment compatibility/ })
+  await expect(row).toBeVisible()
+  await expect(readOnly.getByRole("button", { name: "Compose", exact: true })).toHaveCount(0)
+  await row.click()
+  await expect(readOnly.getByRole("button", { name: "Back to list" })).toBeFocused()
+  for (const name of ["Reply", "Reply all", "Forward"])
+    await expect(readOnly.getByRole("button", { name, exact: true })).toHaveCount(0)
+  await readOnly.getByRole("button", { name: "Back to list" }).click()
+  await readOnly.getByRole("button", { name: "Drafts", exact: true }).click()
+  await readOnly.getByRole("button", { name: /Prepared draft/ }).click()
+  await expect(readOnly.getByRole("heading", { name: "Draft", exact: true })).toBeVisible()
+  // A draft the host cannot edit is shown as read-only text, not disabled fields.
+  await expect(readOnly.getByRole("definition").filter({ hasText: "Prepared draft" })).toBeVisible()
+  await expect(readOnly.getByRole("textbox", { name: "Subject", exact: true })).toHaveCount(0)
+  for (const name of ["Discard", "Save draft", "Send"])
+    await expect(readOnly.getByRole("button", { name, exact: true })).toHaveCount(0)
+  await readOnly.getByRole("button", { name: "Back to list" }).click()
+  await expect(readOnly.getByRole("button", { name: /Prepared draft/ })).toBeVisible()
+
+  const mailbox = page.getByTestId("capability-mailbox")
+  await mailbox.getByRole("button", { name: "Compose", exact: true }).click()
+  await expect(mailbox.getByRole("button", { name: "Save draft", exact: true })).toBeVisible()
+  await expect(mailbox.getByRole("button", { name: "Send", exact: true })).toHaveCount(0)
+  const subject = mailbox.getByRole("textbox", { name: "Subject", exact: true })
+  await subject.fill("Keep this text")
+  await page.evaluate(() => window.mailySetDraftCapabilities({ create: false, send: false, discard: false }))
+  await expect(mailbox.getByText("Changes cannot be saved. Your edits are still here.")).toBeVisible()
+  await expect(mailbox.getByRole("button", { name: "Save draft", exact: true })).toHaveCount(0)
+  await expect(mailbox.getByRole("button", { name: "Compose", exact: true })).toHaveCount(0)
+  await expect(subject).toBeEditable()
+  // Negative check: outlast the one-second autosave delay without a dispatch.
+  await page.waitForTimeout(1500)
+  expect(await page.evaluate(() => window.mailyDraftCalls)).toEqual([])
+  await mailbox.getByRole("button", { name: "Back to list" }).click()
+  const dialog = page.getByRole("dialog")
+  await expect(dialog.getByText("Discard unsaved changes?")).toBeVisible()
+  await dialog.getByRole("button", { name: "Keep editing", exact: true }).click()
+  await expect(dialog).toBeHidden()
+  await expect(subject).toHaveValue("Keep this text")
+
+  await page.evaluate(() => window.mailySetDraftCapabilities({ send: false, discard: false }))
+  await expect.poll(() => page.evaluate(() => window.mailyDraftCalls)).toEqual(["create:Keep this text"])
+  await expect(mailbox.getByText("Saved automatically")).toBeVisible()
+  await expect(mailbox.getByRole("button", { name: "Discard", exact: true })).toHaveCount(0)
+
+  const richMode = mailbox.getByRole("${primitiveBase === 'radix' ? 'radio' : 'button'}", { name: "Visual editor" })
+  await richMode.click()
+  // Target the compose body field, not any other editor on the page.
+  const surface = mailbox.getByRole("group", { name: "Body", exact: true }).getByRole("textbox")
+  const editorToolbar = mailbox.getByLabel("Editor view mode", { exact: true })
+  await expect(surface).toHaveAttribute("contenteditable", "true")
+  await expect(editorToolbar).toHaveCount(1)
+  await surface.click()
+  await page.keyboard.type("Rich body")
+  await expect.poll(() => page.evaluate(() => window.mailyDraftCalls.at(-1))).toBe("update:created-draft:Keep this text:Rich body")
+  await expect(mailbox.getByText("Saved automatically")).toBeVisible()
+  const settled = await page.evaluate(() => window.mailyDraftCalls.length)
+
+  // Locking shows the saved draft as read-only text; unlocking must not write.
+  await page.evaluate(() => window.mailySetDraftCapabilities({ edit: false, send: false, discard: false }))
+  await expect(mailbox.getByRole("heading", { name: "Draft", exact: true })).toBeVisible()
+  await expect(mailbox.getByRole("definition").filter({ hasText: "Keep this text" })).toBeVisible()
+  await expect(mailbox.getByRole("region", { name: "Body", exact: true }).locator("iframe").contentFrame().getByText("Rich body")).toBeVisible()
+  await expect(subject).toHaveCount(0)
+  await expect(surface).toHaveCount(0)
+  await expect(editorToolbar).toHaveCount(0)
+  await page.evaluate(() => window.mailySetDraftCapabilities({ send: false, discard: false }))
+  await expect(mailbox.getByRole("heading", { name: "Edit draft", exact: true })).toBeVisible()
+  await expect(surface).toHaveAttribute("contenteditable", "true")
+  await expect(surface).toContainText("Rich body")
+  await expect(editorToolbar).toHaveCount(1)
+  await expect(surface).not.toBeFocused()
+  await expect(subject).toBeEditable()
+  await page.waitForTimeout(1500)
+  const calls = await page.evaluate(() => window.mailyDraftCalls)
+  expect(calls).toHaveLength(settled)
+  expect(calls.some((call) => call.startsWith("send:") || call.startsWith("discard:"))).toBe(false)
+
+  await expect(page.locator("button button")).toHaveCount(0)
+  expect(errors).toEqual([])
+})
 `
   );
 
@@ -626,6 +788,21 @@ test("inherits current host primitive behavior", async ({ page }) => {
       preview.once('close', resolve);
     });
   }
+}
+
+// Installed Maily source must pass the host's own stock ESLint config (the
+// shadcn Vite template's, including the React Compiler rules) with no
+// warnings. Host-owned ui primitives are upstream code and are not linted.
+async function verifyConsumerLint(project) {
+  const sources = ['src/components/maily', 'src/lib/maily-render'].filter(
+    (source) => fs.existsSync(path.join(project, source))
+  );
+  const [command, ...prefix] = fs.existsSync(path.join(project, 'bun.lock'))
+    ? ['bunx']
+    : ['pnpm', 'exec'];
+  await run(command, [...prefix, 'eslint', ...sources, '--max-warnings', '0'], {
+    cwd: project,
+  });
 }
 
 async function runProjectCommand(project, args, options = {}) {

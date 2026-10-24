@@ -119,7 +119,9 @@ The custom HTML block uses the plain TipTap `CodeBlock` extension. Editing,
 variables, and code/preview tabs remain supported without shipping Lowlight,
 Highlight.js, or bundled syntax languages.
 
-Run `bun run test:e2e` for the committed Chromium regression suite. It covers
+Run `bun run test` for the playground's unit tests (the message adapter's
+cursor pagination and which actions move a message out of the view) and `bun run test:e2e` for the committed Chromium regression
+suite. It covers
 host-theme hover tokens, narrow-viewport overflow, real Tabs state, ToggleGroup
 roving focus, toolbar link composition, and invalid nested interactive DOM.
 

@@ -115,7 +115,9 @@ it('preserves the observed reply header and revision when paging while editing a
     inReplyTo: '<original@example.com>',
     _revision: 'observed-revision',
   };
-  let saved: Parameters<MailyMailboxDataSource['updateDraft']>[1] | undefined;
+  let saved:
+    | Parameters<NonNullable<MailyMailboxDataSource['updateDraft']>>[1]
+    | undefined;
   const dataSource: MailyMailboxDataSource = {
     listMessages: ({ cursor }) => ({
       items: cursor

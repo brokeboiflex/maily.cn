@@ -23,7 +23,7 @@ Bulk actions operate on selected message IDs. Label IDs identify labels independ
 
 Undo requires a host-issued token and an undoMessageAction callback. The host defines reversibility and expiration; the UI must never manufacture a reversal from message fields.
 
-Autosave must preserve the revision observed with editable content, mark only acknowledged captured values clean, and retain newer changes as dirty. Failed saves and unknown sends must preserve the existing recovery behavior. Navigation and unload protection must not silently discard unsaved content.
+Autosave, when the host enables it, must preserve the revision observed with editable content, mark only acknowledged captured values clean, and retain newer changes as dirty. A failed save or send keeps the composition open and editable for a retry; the host deduplicates retries. Navigation and unload protection must not silently discard unsaved content.
 
 ## Capabilities
 
@@ -36,10 +36,83 @@ Autosave must preserve the revision observed with editable content, mark only ac
 | Bulk           | `runBulkMessageAction({ messageIds, action, value? })` performs one selected-set mutation.                                                             |
 | Labels         | `listLabels`, `createLabel`, `renameLabel`, `deleteLabel`, `applyLabel` and `removeLabel` keep immutable label IDs separate from names.                |
 | Undo           | Single/bulk actions may return `{ undo: { token, expiresAt? } }`; `undoMessageAction(token)` reverses the host operation.                              |
+| Drafts         | Optional `createDraft`, `updateDraft`, `sendDraft`, `discardDraft` and `sendMessage`; `draftCapabilities` withholds any of them at runtime. See below. |
+| Refresh        | Maily does not poll unless `pollIntervalMs` is set; call `refresh()` on the mailbox ref (`MailyMailboxHandle`) when host data changes.                 |
+| Folder actions | `messageActions` as an array is offered everywhere; a function of `{ surface, folder, labelId, searchScope, searching, messageIds }` decides per view. |
+| Reply/forward  | `createComposeSeed(kind, message, context)` builds the composition; `defaultMailboxComposeSeed` is the conventional default.                           |
 
-Autosave waits one second after edits; failures remain visible and require an explicit retry. New compose sessions show saved status only after an acknowledged write. The send pipeline prepares once and retains its receipt for unresolved sends.
+Autosave is off unless the host sets `autosaveDelayMs`; it then waits that long after edits, and failures remain visible and require an explicit retry. New compose sessions show saved status only after an acknowledged write. Maily keeps no send receipts: a failed send stays open, and the host deduplicates by draft ID and revision, or by `idempotencyKey`. Attachments handed to `sendMessage` belong to the host from then on, even if the send fails. A composition handed to `sendMessage` never becomes a draft (no Save draft or autosave), so its retries go through `sendMessage` and the host can deduplicate them by key.
 
-The header select-all Checkbox covers the current page, and each conversation Checkbox covers its visible members. Structured search accepts text, sender, recipient, subject, date boundaries, unread, starred, attachment and label filters; the search-bar filter Popover stages common filters until Search is submitted; ordinary search uses All Mail.
+## Draft capabilities
+
+The draft callbacks are optional. An operation is available when its
+callback exists and `draftCapabilities` does not set it to `false`; `true`
+cannot enable a missing callback. Maily has no roles or permission names: the
+host maps its own authorization to these booleans and still enforces it on its
+backend.
+
+| Operation | Callback                     | Required by                                                                                                |
+| --------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `create`  | `createDraft`                | Saving a new composition, and sending one without `sendMessage`                                            |
+| `edit`    | `updateDraft`                | Saving a saved draft; every autosave after the first save of a new composition                             |
+| `send`    | `sendMessage` or `sendDraft` | Send: `sendMessage` for a new composition, otherwise `create` + `sendDraft`; `sendDraft` for a saved draft |
+| `discard` | `discardDraft`               | Discard on a saved draft. Discard on an unsaved composition only closes it and calls no callback           |
+
+Compose, Reply, Reply all and Forward appear when a new composition can be
+saved (`create`) or sent (`sendMessage`). A saved draft is written before
+`sendDraft` only when it has unsaved changes.
+
+Without `edit`, a saved draft opens read-only (heading “Draft”, with its
+recipients, subject and body shown as text) and Send delivers it unchanged, without
+`updateDraft`. With `create` but no `edit`, autosave never runs; Save draft
+creates once and the saved draft becomes read-only. Back always closes a
+composition: unsaved content still asks before it is dropped, and closing never
+calls `discardDraft`.
+
+```tsx
+// A read-only mailbox needs no draft callbacks.
+const readOnly: MailyMailboxDataSource = { listMessages, getMessage };
+
+// Host policy, mapped to Maily operations while mounted.
+<MailboxView
+  dataSource={dataSource}
+  draftCapabilities={{
+    create: canWrite,
+    edit: canWrite,
+    send: canSend,
+    discard: canWrite,
+  }}
+/>;
+```
+
+Change `draftCapabilities`, not `dataSource`, when access changes: a new data
+source starts a new mailbox lifetime and closes the composer. When an operation
+is withdrawn while a composition is open:
+
+- its controls disappear, and its callback is not dispatched afterwards,
+  including by a scheduled autosave, form submission or an unsaved-change
+  dialog that was already open; an operation already in flight completes;
+- unsaved content stays in the mounted form and remains editable, with “Changes
+  cannot be saved. Your edits are still here.”; navigation and unload stay
+  guarded, and the content is saved once the operation returns;
+- a clean composition that can no longer be saved shows its saved values as
+  read-only text, and the form returns when the operation does; the visual
+  editor that reappears neither moves focus nor writes normalized content;
+- if `send` is withdrawn while Send writes its draft, the written draft stays
+  open as a draft, `sendDraft` is not called, and the error banner reports that
+  the message was not sent.
+
+`sendDraft(messageId, { revision })` receives the revision it delivers: the last
+acknowledged write, or the revision observed when the draft was opened. A host
+that allows send without edit should reject the send on its backend when the
+stored draft no longer matches that revision.
+
+A saved draft whose attachments have no host `id` opens read-only, with “This
+draft has attachments that cannot be edited here.”: saving re-sends attachment
+references, so editing it would drop them. Read-only drafts render as text
+(recipients, subject and body), not as disabled fields.
+
+The header select-all Checkbox covers the current page, and each conversation Checkbox covers its visible members. Structured search accepts text, sender, recipient, subject, date boundaries, unread, starred, attachment and label filters; the search-bar filter Popover stages common filters until Search is submitted. A search stays in the folder in view unless the host sets an all-mail `searchScope`, and it keeps the selected label.
 
 ## Intentional adaptations
 
@@ -63,7 +136,8 @@ exception applies only to host-owned source.
 Chromium exercised paging, explicit two-message conversations, Reply all,
 autosave/reopen, sent attachment downloads with matching file bytes, bulk
 archive/undo, archive recovery, Starred, label creation/rename/delete, advanced
-global search and confirmed folder-wide spam deletion. All delivery/storage
+global search and confirmed folder-wide spam deletion (a control since removed:
+deletion now applies only to selected messages). All delivery/storage
 operations used the in-memory showcase adapter. No provider delivery, durable
 backend persistence, publication or deployment was performed.
 
@@ -124,15 +198,15 @@ Each value may be controlled independently by passing its value and change
 callback. Omit the value to use internal state and an optional initial default.
 Do not switch a mounted value between controlled and uncontrolled modes.
 
-| Value                | Change callback              | Uncontrolled default            |
-| -------------------- | ---------------------------- | ------------------------------- |
-| `folder`             | `onFolderChange`             | `initialFolder` (Inbox)         |
-| `search`             | `onSearchChange`             | `defaultSearch`                 |
-| `searchFilters`      | `onSearchFiltersChange`      | `defaultSearchFilters`          |
-| `searchScope`        | `onSearchScopeChange`        | `defaultSearchScope` (`folder`) |
-| `selectedLabelId`    | `onSelectedLabelIdChange`    | `defaultSelectedLabelId`        |
-| `selectedMessageId`  | `onSelectedMessageIdChange`  | `defaultSelectedMessageId`      |
-| `selectedMessageIds` | `onSelectedMessageIdsChange` | `defaultSelectedMessageIds`     |
+| Value                | Change callback              | Uncontrolled default        |
+| -------------------- | ---------------------------- | --------------------------- |
+| `folder`             | `onFolderChange`             | `initialFolder` (Inbox)     |
+| `search`             | `onSearchChange`             | `defaultSearch`             |
+| `searchFilters`      | `onSearchFiltersChange`      | `defaultSearchFilters`      |
+| `searchScope`        | none: Maily never changes it | `folder`                    |
+| `selectedLabelId`    | `onSelectedLabelIdChange`    | `defaultSelectedLabelId`    |
+| `selectedMessageId`  | `onSelectedMessageIdChange`  | `defaultSelectedMessageId`  |
+| `selectedMessageIds` | `onSelectedMessageIdsChange` | `defaultSelectedMessageIds` |
 
 `searchFilters` excludes text; `search` supplies text. Scope is `folder` or
 `allMail`. `null` explicitly clears a controlled reader or label selection, and
@@ -165,8 +239,8 @@ const [selectedMessageId, setSelectedMessageId] = React.useState<string | null>(
 ```
 
 External navigation never silently discards a live dirty composer. Compose and
-mutation ownership, revision checks and pending-send recovery remain internal;
-these props control navigation/query/selection, not provider persistence.
+mutation ownership and revision pass-through remain internal; these props
+control navigation/query/selection, not provider persistence.
 
 Immediate Escape also closes label/unsaved-change dialogs before the host's
 passive keyboard listener has registered. The compatible `onKeyDown` call site
@@ -193,7 +267,7 @@ mounted list, preserving its search, page, selection and scroll position, and
 restores keyboard focus to the opened row. The reader receives focus on entry.
 Controlled selectedMessageId remains authoritative, including when the host
 declines Back. Drafts and new compose occupy that same area; Back retains the
-existing unsaved-change confirmation and pending-send exclusion.
+existing unsaved-change confirmation.
 
 A ResizeObserver follows the mailbox's container, not the viewport. Below 768px,
 folder navigation uses the consumer's Sheet with the same folders and label
@@ -226,26 +300,44 @@ Button when composed with Dialog, Popover, Sheet or DropdownMenu. Folder counts
 are plain right-aligned tabular numbers. Label create/More controls share square
 44px targets and one sidebar scroller so their centers align.
 
-## Async ownership and recovery receipts
+## Adapter contract details
 
-Compose identity, observed revision, pending-send state and uploaded-reference
-ownership belong to the mounted data-source lifetime and the current compose
-intent. New Compose, Reply and Forward start without an unrelated draft revision.
-A departed preparation may still acknowledge a persisted draft and transfer its
-uploaded references to that draft, but cannot assign its ID to a newer composer
-or dispatch from the newer data source.
+- Adapter methods may return a value or a Promise, and may throw synchronously.
+  Every call is converted to a Promise, so a synchronous throw reaches
+  `onError(error, action)` instead of an error boundary. Methods are called on
+  the data source, so class-based adapters keep `this`.
+- `createDraft(draft)` and `sendMessage(draft)` receive `draft.idempotencyKey`,
+  which identifies that exact request. A retry with the same content reuses the
+  key, so a host can deduplicate a request whose response was lost; edited
+  content or a new composition gets a new key, so a host must never answer it
+  with an earlier result. The two operations use separate keys. Other methods do
+  not receive it.
+- An inline `onError` (a new function every render) never restarts reads or
+  polling.
+- Each error notice belongs to the action that failed. It clears only when that
+  action later succeeds, so an unrelated successful read does not hide it. A
+  failed `getCounts` reports `'counts'` and keeps a successfully loaded list.
+  A failed contact lookup reports `'contactSuggestions'`.
+- Recipient fields parse RFC 5322 address lists: commas inside quoted display
+  names, angle brackets or comments do not split recipients. A suggestion's
+  display name is quoted when it contains specials, for example
+  `"Doe, Jane" <jane@example.com>`.
 
-The backward-compatible scalar receipt remains at
-`maily:pending-send:${recoveryScope ?? account.id}`. Each acknowledged draft also
-has an independent session-storage entry at
-`maily:pending-send-receipts:${encodeURIComponent(primaryKey)}:${encodeURIComponent(draftId)}`.
-Encoding the complete primary key keeps opaque recovery scopes isolated. A late
-acknowledgment never overwrites an unrelated primary receipt; successful delivery
-clears only its own receipt. Multiple unresolved IDs remain retained and block
-compose/send until the host reconciles them. Hosts should remove only receipts
-whose status they have established; unknown delivery must not become a new draft
-or an arbitrary resend. Storage is local recovery evidence, not proof of remote
-delivery or server-side deduplication.
+## Async ownership and sending
+
+Compose identity, observed revision and uploaded-reference ownership belong to
+the mounted data-source lifetime and the current compose intent. New Compose,
+Reply and Forward start without an unrelated draft revision. A departed
+preparation may still acknowledge a persisted draft and transfer its uploaded
+references to that draft, but cannot assign its ID to a newer composer or
+dispatch from the newer data source.
+
+Maily keeps no record of sends in progress and uses no browser storage. Send
+recovery and deduplication belong to the host: `sendDraft` receives the draft ID
+and the revision it delivers, and `createDraft` and `sendMessage` receive an
+`idempotencyKey` that stays the same for retries of the same content. A failed
+send keeps the composition open for a retry, so the host must make a repeated
+`sendDraft` (same ID and revision) or `sendMessage` (same key) safe.
 
 Initial reads, refresh and cursor pages serialize the same complete filters into
 `q`. Their success, error and pending-state cleanup all own the current source,

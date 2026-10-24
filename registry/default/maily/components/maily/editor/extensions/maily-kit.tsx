@@ -1,13 +1,13 @@
 import { type AnyExtension, Extension } from '@tiptap/core';
 
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { ListItem } from '@tiptap/extension-list';
-import Paragraph from '@tiptap/extension-paragraph';
-import TextAlign from '@tiptap/extension-text-align';
+import { Paragraph } from '@tiptap/extension-paragraph';
+import { TextAlign } from '@tiptap/extension-text-align';
 import { TextStyle } from '@tiptap/extension-text-style';
-import Heading from '@tiptap/extension-heading';
-import Underline from '@tiptap/extension-underline';
-import Document from '@tiptap/extension-document';
+import { Heading } from '@tiptap/extension-heading';
+import { Underline } from '@tiptap/extension-underline';
+import { Document } from '@tiptap/extension-document';
 import { Dropcursor, Focus } from '@tiptap/extensions';
 
 import { Color } from './color';
@@ -32,14 +32,14 @@ import { AttributeCommands } from './attribute-commands';
 
 export type MailyKitOptions = {
   linkCard?: Partial<LinkCardOptions> | false;
-  repeat?: Partial<{}> | false;
-  section?: Partial<{}> | false;
-  columns?: Partial<{}> | false;
-  column?: Partial<{}> | false;
-  button?: Partial<{}> | false;
-  spacer?: Partial<{}> | false;
-  logo?: Partial<{}> | false;
-  image?: Partial<{}> | false;
+  repeat?: Partial<(typeof RepeatExtension)['options']> | false;
+  section?: Partial<(typeof SectionExtension)['options']> | false;
+  columns?: Partial<(typeof ColumnsExtension)['options']> | false;
+  column?: Partial<(typeof ColumnExtension)['options']> | false;
+  button?: Partial<(typeof ButtonExtension)['options']> | false;
+  spacer?: Partial<(typeof Spacer)['options']> | false;
+  logo?: Partial<(typeof LogoExtension)['options']> | false;
+  image?: Partial<(typeof ImageExtension)['options']> | false;
   link?: Partial<LinkOptions> | false;
 };
 
@@ -51,7 +51,7 @@ export const MailyKit = Extension.create<MailyKitOptions>({
       link: {
         HTMLAttributes: {
           target: '_blank',
-          rel: 'noopener noreferrer nofollow',
+          rel: 'noopener noreferrer',
           class: 'no-underline',
         },
         openOnClick: false,
@@ -129,35 +129,35 @@ export const MailyKit = Extension.create<MailyKitOptions>({
     }
 
     if (this.options.repeat !== false) {
-      extensions.push(RepeatExtension);
+      extensions.push(RepeatExtension.configure(this.options.repeat));
     }
 
     if (this.options.section !== false) {
-      extensions.push(SectionExtension);
+      extensions.push(SectionExtension.configure(this.options.section));
     }
 
     if (this.options.columns !== false) {
-      extensions.push(ColumnsExtension);
+      extensions.push(ColumnsExtension.configure(this.options.columns));
     }
 
     if (this.options.column !== false) {
-      extensions.push(ColumnExtension);
+      extensions.push(ColumnExtension.configure(this.options.column));
     }
 
     if (this.options.button !== false) {
-      extensions.push(ButtonExtension);
+      extensions.push(ButtonExtension.configure(this.options.button));
     }
 
     if (this.options.spacer !== false) {
-      extensions.push(Spacer);
+      extensions.push(Spacer.configure(this.options.spacer));
     }
 
     if (this.options.logo !== false) {
-      extensions.push(LogoExtension);
+      extensions.push(LogoExtension.configure(this.options.logo));
     }
 
     if (this.options.image !== false) {
-      extensions.push(ImageExtension);
+      extensions.push(ImageExtension.configure(this.options.image));
     }
 
     if (this.options.link !== false) {

@@ -4,12 +4,12 @@ import { createRoot } from 'react-dom/client';
 import { Editor as TiptapEditor } from '@tiptap/core';
 import { type NodeViewProps } from '@tiptap/react';
 import { Plugin } from '@tiptap/pm/state';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Editor } from '../../index';
 import { ImageUploadExtension } from '../../extensions/image-upload/image-upload';
 import { defaultLabels, createTranslator } from '../../i18n';
-import { MailyContext } from '../../provider';
+import { MailyContext } from '../../maily-context';
 import { ImageExtension } from './image';
 import { ImageView } from './image-view';
 import { LogoExtension } from '../logo/logo';
@@ -25,9 +25,13 @@ vi.mock('@tiptap/react', async () => {
     NodeViewWrapper: React.forwardRef<
       HTMLDivElement,
       React.HTMLAttributes<HTMLDivElement> & { as?: string }
-    >(({ as: _as, ...props }, ref) => (
-      <div {...props} ref={ref} data-node-view-wrapper="" />
-    )),
+    >((props, ref) => {
+      const divProps: React.HTMLAttributes<HTMLDivElement> & { as?: string } = {
+        ...props,
+      };
+      delete divProps.as;
+      return <div {...divProps} ref={ref} data-node-view-wrapper="" />;
+    }),
   };
 });
 
@@ -180,6 +184,51 @@ describe('image and logo owned async UI', () => {
     }
   );
 
+  it.each(['image', 'logo'] as const)(
+    'gives a reused %s view to its replacement node without the departed upload UI',
+    async (kind) => {
+      const first = deferred();
+      const onUpload = vi
+        .fn()
+        .mockImplementationOnce(() => first.promise)
+        .mockResolvedValueOnce('https://example.com/replacement.png');
+      const { container, editor } = await mountNode(
+        kind,
+        { src: '' },
+        onUpload
+      );
+      await chooseFile(container);
+      expect(container.querySelector('input[type=file]')).toBeNull();
+      // Equal JSON creates a replacement immutable node in the same view.
+      await act(async () => {
+        editor.commands.setContent(editor.getJSON());
+      });
+      expect(container.querySelector('input[type=file]')).not.toBeNull();
+      await act(async () => first.reject(new Error('departed upload failed')));
+      expect(container.textContent).not.toContain('Translated error');
+      await chooseFile(container);
+      expect(onUpload).toHaveBeenCalledTimes(2);
+      expect(editor.state.doc.firstChild?.attrs.src).toBe(
+        'https://example.com/replacement.png'
+      );
+    }
+  );
+
+  it.each(['image', 'logo'] as const)(
+    'offers only the allowed MIME types in the %s file picker',
+    async (kind) => {
+      const { container, editor } = await mountNode(kind, { src: '' });
+      const allowed: string[] =
+        editor.extensionManager.extensions.find(
+          (extension) => extension.name === 'imageUpload'
+        )?.options.allowedMimeTypes ?? [];
+      const picker =
+        container.querySelector<HTMLInputElement>('input[type="file"]');
+      expect(allowed.length).toBeGreaterThan(0);
+      expect(picker?.accept).toBe(allowed.join(','));
+    }
+  );
+
   it('preserves dimensions selected after same-source intrinsic loading began', async () => {
     const { container, editor } = await mountNode('image', {
       src: 'https://example.com/image.png',
@@ -205,22 +254,50 @@ describe('image and logo owned async UI', () => {
     });
   });
 
-  it('still applies intrinsic dimensions to a current automatic-size image', async () => {
-    const { container, editor } = await mountNode('image', {
-      src: 'https://example.com/image.png',
-    });
-    Object.defineProperty(container.firstElementChild, 'offsetWidth', {
-      value: 300,
-    });
-    await act(async () => loads.at(-1)!.onload?.());
-    expect(editor.state.doc.firstChild?.attrs).toMatchObject({
-      width: 300,
-      height: 150,
-      aspectRatio: 2,
-    });
-  });
+  it.each([true, false])(
+    'never writes dimensions when an image loads (editable: %s)',
+    async (editable) => {
+      const { container, editor, writes } = await mountNode('image', {
+        src: 'https://example.com/image.png',
+      });
+      Object.defineProperty(container.firstElementChild, 'offsetWidth', {
+        value: 300,
+      });
+      await act(async () => {
+        editor.setEditable(editable, false);
+        editor.view.dispatch(editor.state.tr);
+      });
+      await act(async () => loads.at(-1)!.onload?.());
+      expect(writes).not.toHaveBeenCalled();
+      expect(editor.state.doc.firstChild?.attrs).toMatchObject({
+        width: 'auto',
+        height: 'auto',
+      });
+    }
+  );
 
-  it('rejects an old intrinsic callback after equal node replacement and loads the current node', async () => {
+  it.each(['image', 'logo'] as const)(
+    'offers and accepts only the host image types when picking a %s',
+    async (kind) => {
+      const onImageUpload = vi.fn(async () => 'https://example.com/upload.png');
+      const { container } = await mountNode(kind, { src: '' }, onImageUpload);
+      const input =
+        container.querySelector<HTMLInputElement>('input[type="file"]')!;
+      expect(input.accept).toBe(
+        'image/jpeg,image/png,image/gif,image/webp,image/svg+xml'
+      );
+      Object.defineProperty(input, 'files', {
+        configurable: true,
+        value: [new File(['x'], 'x.bmp', { type: 'image/bmp' })],
+      });
+      await act(async () =>
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+      );
+      expect(onImageUpload).not.toHaveBeenCalled();
+    }
+  );
+
+  it('ignores an old load callback after equal node replacement', async () => {
     const { container, editor, writes } = await mountNode('image', {
       src: 'https://example.com/image.png',
     });
@@ -234,7 +311,8 @@ describe('image and logo owned async UI', () => {
     expect(writes).toHaveBeenCalledTimes(replacementWrites);
     expect(editor.state.doc.firstChild?.attrs.width).toBe('auto');
     await act(async () => loads.at(-1)!.onload?.());
-    expect(editor.state.doc.firstChild?.attrs.width).toBe(300);
+    expect(writes).toHaveBeenCalledTimes(replacementWrites);
+    expect(editor.state.doc.firstChild?.attrs.width).toBe('auto');
   });
 
   it('loads a current image after an unrelated same-source attribute edit', async () => {
@@ -255,7 +333,7 @@ describe('image and logo owned async UI', () => {
     });
     await act(async () => loads.at(-1)!.onload?.());
     expect(editor.state.doc.firstChild?.attrs).toMatchObject({
-      width: 300,
+      width: 'auto',
       alignment: 'right',
     });
   });
@@ -272,6 +350,21 @@ describe('image and logo owned async UI', () => {
     const replacementWrites = writes.mock.calls.length;
     await act(async () => window.dispatchEvent(new MouseEvent('mouseup')));
     expect(writes).toHaveBeenCalledTimes(replacementWrites);
+    expect(editor.state.doc.firstChild?.attrs.width).toBe(120);
+  });
+
+  // captureNodeAction rejects commits from a read-only editor.
+  it('drops a resize released after the editor became read-only', async () => {
+    const { container, editor, writes } = await mountNode('image', {
+      src: 'https://example.com/image.png',
+      width: 120,
+      height: 60,
+      aspectRatio: 2,
+    });
+    await beginResize(container);
+    await act(async () => editor.setEditable(false, false));
+    await act(async () => window.dispatchEvent(new MouseEvent('mouseup')));
+    expect(writes).not.toHaveBeenCalled();
     expect(editor.state.doc.firstChild?.attrs.width).toBe(120);
   });
 

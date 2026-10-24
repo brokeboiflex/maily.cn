@@ -5,7 +5,7 @@ import {
 } from '@tiptap/react';
 import { Repeat2 } from 'lucide-react';
 import { Button } from '@/editor/components/base-button';
-import { useMailyContext } from '@/editor/provider';
+import { useMailyContext } from '@/editor/maily-context';
 
 export function RepeatView(props: NodeViewProps) {
   const { editor, getPos } = props;
@@ -16,7 +16,7 @@ export function RepeatView(props: NodeViewProps) {
       data-type="repeat"
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
-      className="relative [&.has-focus_[data-repeat-indicator]]:opacity-100 [&_[data-node-view-content]>div>*:first-child]:mt-0 [&_[data-node-view-content]>div>*:last-child]:mb-0"
+      className="relative [&_[data-node-view-content]>div>*:first-child]:mt-0 [&_[data-node-view-content]>div>*:last-child]:mb-0 [&.has-focus_[data-repeat-indicator]]:opacity-100"
     >
       <NodeViewContent className="is-editable" />
 

@@ -124,6 +124,17 @@ maily.setPayloadValue('items', ['Alice', 'Bob', 'Charlie']);
 const html = await maily.render();
 ```
 
+`Repeat` renders its content once per array item, whatever the item's type:
+
+- An object item is the scope for variables, URL variables, `Show If` keys and
+  nested `Repeat` lists inside it.
+- A string or number item is the value a variable renders; `Show If` keys and
+  nested lists find nothing in it. A boolean item renders nothing, as React does
+  with booleans.
+- A `null` or `undefined` item renders with an empty scope. Variables fall back
+  to the global variable value, then the node's fallback, then its placeholder,
+  while `Show If` content stays hidden and nested lists render nothing.
+
 ## Contributions
 
 Feel free to submit pull requests, create issues, or spread the word through the

@@ -1,6 +1,6 @@
-import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import Document from '@tiptap/extension-document';
+import { Editor, type JSONContent } from '@tiptap/core';
+import { StarterKit } from '@tiptap/starter-kit';
+import { Document } from '@tiptap/extension-document';
 import { redoDepth, undoDepth } from '@tiptap/pm/history';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SectionExtension } from '../nodes/section/section';
@@ -16,7 +16,7 @@ import { updateAttribute } from './update-attribute';
 
 afterEach(() => vi.useRealTimers());
 
-function createEditor(content: Record<string, any>) {
+function createEditor(content: JSONContent) {
   return new Editor({
     extensions: [
       StarterKit.configure({ document: false, trailingNode: false }),

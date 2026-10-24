@@ -77,7 +77,6 @@ export const hardBreak = (t: TranslateFn): BlockItem => ({
   searchTerms: ['break', 'line'],
   icon: <DivideIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setHardBreak().run();
   },
 });
@@ -88,7 +87,6 @@ export const blockquote = (t: TranslateFn): BlockItem => ({
   searchTerms: ['quote', 'blockquote'],
   icon: <TextQuote className="h-4 w-4" />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).toggleBlockquote().run();
   },
 });
@@ -99,7 +97,6 @@ export const footer = (t: TranslateFn): BlockItem => ({
   searchTerms: ['footer', 'text'],
   icon: <FootprintsIcon className="h-4 w-4" />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setFooter().run();
   },
 });
@@ -110,7 +107,6 @@ export const clearLine = (t: TranslateFn): BlockItem => ({
   searchTerms: ['clear', 'line'],
   icon: <EraserIcon className="h-4 w-4" />,
   command: ({ editor }) => {
-    // @ts-ignore
     editor.chain().focus().selectParentNode().deleteSelection().run();
   },
 });

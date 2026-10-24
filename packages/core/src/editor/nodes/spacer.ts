@@ -1,11 +1,12 @@
 import { mergeAttributes, Node } from '@tiptap/core';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from './section/section';
 import { updateSelectedAttributes } from '../utils/update-attribute';
+import { normalizeSpacerHeight } from '../utils/spacing';
 
 export interface SpacerOptions {
   height: number;
   showIfKey: string;
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
 declare module '@tiptap/core' {
@@ -31,7 +32,11 @@ export const Spacer = Node.create<SpacerOptions>({
     return {
       height: {
         default: DEFAULT_SPACER_HEIGHT,
-        parseHTML: (element) => Number(element.getAttribute('data-height')),
+        parseHTML: (element) =>
+          normalizeSpacerHeight(
+            element.getAttribute('data-height'),
+            DEFAULT_SPACER_HEIGHT
+          ),
         renderHTML: (attributes) => {
           return {
             'data-height': attributes.height,
@@ -67,12 +72,18 @@ export const Spacer = Node.create<SpacerOptions>({
           return commands.insertContent({
             type: this.name,
             attrs: {
-              height: options.height,
+              height: normalizeSpacerHeight(
+                options.height,
+                DEFAULT_SPACER_HEIGHT
+              ),
             },
           });
         },
 
-      setSpacerSize: (height) => updateSelectedAttributes('spacer', { height }),
+      setSpacerSize: (height) =>
+        updateSelectedAttributes('spacer', {
+          height: normalizeSpacerHeight(height, DEFAULT_SPACER_HEIGHT),
+        }),
 
       setSpacerShowIfKey: (showIfKey) =>
         updateSelectedAttributes('spacer', { showIfKey }),
@@ -85,7 +96,10 @@ export const Spacer = Node.create<SpacerOptions>({
     };
   },
   renderHTML({ HTMLAttributes, node }) {
-    const { height } = node.attrs as SpacerOptions;
+    const height = normalizeSpacerHeight(
+      (node.attrs as SpacerOptions).height,
+      DEFAULT_SPACER_HEIGHT
+    );
 
     return [
       'div',

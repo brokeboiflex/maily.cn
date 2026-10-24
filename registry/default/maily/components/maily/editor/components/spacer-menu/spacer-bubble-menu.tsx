@@ -18,9 +18,6 @@ import {
 
 export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const items: BubbleMenuItem[] = useMemo(
     () =>

@@ -1,38 +1,39 @@
-import { updateNodeViewAttributes } from "../../utils/update-attribute"
-import { AdaptiveNodePopover } from "../../components/adaptive-node-popover"
-import { useMobileEditor } from "../../components/mobile-editor-context"
-import { AlignmentSwitch } from "../../components/alignment-switch"
-import { Popover, PopoverTrigger } from "@/components/ui/popover"
-import { ShowPopover } from "../../components/show-popover"
-import { ColorPicker } from "../../components/ui/color-picker"
-import { Separator } from "@/components/ui/separator"
-import { BUBBLE_MENU_CONTENT_CLASS } from "../../components/ui/floating-menu"
-import { LinkInputPopover } from "../../components/ui/link-input-popover"
-import { Select } from "../../components/ui/select"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { FontFamilyPicker } from "../../components/text-menu/font-family-picker"
-import { FontSizePicker } from "../../components/text-menu/font-size-picker"
-import { FONT_ATTRIBUTE_KEYS } from "../../extensions/font-family"
-import { fontSelectionFromAttrs, fontStack } from "../../fonts/fontsource"
-import { useMailyContext } from "../../provider"
-import { cn } from "@/lib/utils"
-import { useVariableOptions } from "../../utils/node-options"
-import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react"
-import { type CSSProperties, useMemo } from "react"
+import { updateNodeViewAttributes } from '../../utils/update-attribute';
+import { AdaptiveNodePopover } from '../../components/adaptive-node-popover';
+import { useMobileEditor } from '../../components/mobile-editor-context';
+import { AlignmentSwitch } from '../../components/alignment-switch';
+import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { ShowPopover } from '../../components/show-popover';
+import { ColorPicker } from '../../components/ui/color-picker';
+import { Separator } from '@/components/ui/separator';
+import { BUBBLE_MENU_CONTENT_CLASS } from '../../components/ui/floating-menu';
+import { LinkInputPopover } from '../../components/ui/link-input-popover';
+import { Select } from '../../components/ui/select';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { FontFamilyPicker } from '../../components/text-menu/font-family-picker';
+import { FontSizePicker } from '../../components/text-menu/font-size-picker';
+import { FONT_ATTRIBUTE_KEYS } from '../../extensions/font-family';
+import { fontSelectionFromAttrs, fontStack } from '../../fonts/fontsource';
+import { useMailyContext } from '../../maily-context';
+import { cn } from 'cn';
+import { useVariableOptions } from '../../utils/node-options';
+import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { type Attrs } from '@tiptap/pm/model';
+import { type CSSProperties, useMemo } from 'react';
 import {
   allowedButtonBorderRadius,
   type AllowedButtonVariant,
   allowedButtonVariant,
   type ButtonAttributes,
-} from "./button"
-import { ButtonLabelInput } from "./button-label-input"
+} from './button';
+import { ButtonLabelInput } from './button-label-input';
 
 export function ButtonView(props: NodeViewProps) {
-  const { t } = useMailyContext()
-  const { compact } = useMobileEditor()
-  const { node, editor, getPos } = props
-  const updateAttributes = (attrs: Record<string, any>) =>
-    updateNodeViewAttributes(props, attrs)
+  const { t, fontProvider } = useMailyContext();
+  const { compact } = useMobileEditor();
+  const { node, editor, getPos } = props;
+  const updateAttributes = (attrs: Attrs) =>
+    updateNodeViewAttributes(props, attrs);
   const {
     text,
     isTextVariable,
@@ -42,21 +43,21 @@ export function ButtonView(props: NodeViewProps) {
     buttonColor,
     textColor,
     url: externalLink,
-    showIfKey = "",
+    showIfKey = '',
     isUrlVariable,
     paddingTop,
     paddingRight,
     paddingBottom,
     paddingLeft,
     fontSize,
-  } = node.attrs as ButtonAttributes
+  } = node.attrs as ButtonAttributes;
 
-  const opts = useVariableOptions(editor)
-  const renderVariable = opts?.renderVariable
-  const currentFont = fontSelectionFromAttrs(node.attrs)
-  const currentFontStack = currentFont ? fontStack(currentFont) : undefined
+  const opts = useVariableOptions(editor);
+  const renderVariable = opts?.renderVariable;
+  const currentFont = fontSelectionFromAttrs(node.attrs);
+  const currentFontStack = currentFont ? fontStack(currentFont) : undefined;
   const popoverAlign =
-    alignment === "right" ? "end" : alignment === "center" ? "center" : "start"
+    alignment === 'right' ? 'end' : alignment === 'center' ? 'center' : 'start';
 
   const sizes = useMemo(
     () => ({
@@ -74,17 +75,17 @@ export function ButtonView(props: NodeViewProps) {
       },
     }),
     []
-  )
+  );
 
   const size = useMemo(() => {
     const currentPaddingRight =
-      paddingRight == null ? 32 : parsePaddingValue(paddingRight)
+      paddingRight == null ? 32 : parsePaddingValue(paddingRight);
     const currentPaddingTop =
-      paddingTop == null ? 10 : parsePaddingValue(paddingTop)
+      paddingTop == null ? 10 : parsePaddingValue(paddingTop);
     const currentPaddingLeft =
-      paddingLeft == null ? 32 : parsePaddingValue(paddingLeft)
+      paddingLeft == null ? 32 : parsePaddingValue(paddingLeft);
     const currentPaddingBottom =
-      paddingBottom == null ? 10 : parsePaddingValue(paddingBottom)
+      paddingBottom == null ? 10 : parsePaddingValue(paddingBottom);
 
     return Object.entries(sizes).find(
       ([, { paddingX, paddingY }]) =>
@@ -92,8 +93,8 @@ export function ButtonView(props: NodeViewProps) {
         currentPaddingLeft === paddingX &&
         currentPaddingTop === paddingY &&
         currentPaddingBottom === paddingY
-    )?.[0] as "small" | "medium" | "large"
-  }, [paddingRight, paddingLeft, paddingTop, paddingBottom, sizes])
+    )?.[0] as 'small' | 'medium' | 'large';
+  }, [paddingRight, paddingLeft, paddingTop, paddingBottom, sizes]);
 
   return (
     <NodeViewWrapper
@@ -110,49 +111,49 @@ export function ButtonView(props: NodeViewProps) {
             {/* shadcn-audit-ignore-next-line email content preview renders the actual message button */}
             <button
               className={cn(
-                "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors disabled:pointer-events-none disabled:opacity-50",
-                "font-semibold no-underline",
+                'ring-offset-background inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50',
+                'font-semibold no-underline',
                 {
-                  "rounded-full!": _radius === "round",
-                  "rounded-md!": _radius === "smooth",
-                  "rounded-none!": _radius === "sharp",
+                  'rounded-full!': _radius === 'round',
+                  'rounded-md!': _radius === 'smooth',
+                  'rounded-none!': _radius === 'sharp',
                 }
               )}
               tabIndex={-1}
               style={
                 {
                   backgroundColor:
-                    variant === "filled"
-                      ? buttonColor || "#000000"
-                      : "transparent",
-                  color: textColor || "#ffffff",
+                    variant === 'filled'
+                      ? buttonColor || '#000000'
+                      : 'transparent',
+                  color: textColor || '#ffffff',
 
                   borderWidth: 2,
-                  borderStyle: "solid",
-                  borderColor: buttonColor || "#000000",
+                  borderStyle: 'solid',
+                  borderColor: buttonColor || '#000000',
                   // decrease the border color opacity to 80%
                   // so that it's not too prominent
-                  "--button-var-border-color": textColor
+                  '--button-var-border-color': textColor
                     ? `${textColor}80`
-                    : "color-mix(in srgb, #ffffff 80%, transparent)",
+                    : 'color-mix(in srgb, #ffffff 80%, transparent)',
 
-                  paddingTop: paddingTop || "10px",
-                  paddingRight: paddingRight || "32px",
-                  paddingBottom: paddingBottom || "10px",
-                  paddingLeft: paddingLeft || "32px",
+                  paddingTop: paddingTop || '10px',
+                  paddingRight: paddingRight || '32px',
+                  paddingBottom: paddingBottom || '10px',
+                  paddingLeft: paddingLeft || '32px',
                   ...(fontSize ? { fontSize } : {}),
                   ...(currentFontStack ? { fontFamily: currentFontStack } : {}),
                 } as CSSProperties
               }
               onClick={(e) => {
-                e.preventDefault()
+                e.preventDefault();
                 if (!editor.isEditable) {
-                  return
+                  return;
                 }
 
-                const pos = getPos()
+                const pos = getPos();
                 if (pos !== undefined) {
-                  editor.commands.setNodeSelection(pos)
+                  editor.commands.setNodeSelection(pos);
                 }
               }}
             >
@@ -160,7 +161,7 @@ export function ButtonView(props: NodeViewProps) {
                 ? renderVariable({
                     variable: { name: text, valid: true },
                     fallback: text,
-                    from: "button-variable",
+                    from: 'button-variable',
                     editor,
                   })
                 : text}
@@ -175,14 +176,14 @@ export function ButtonView(props: NodeViewProps) {
           sideOffset={8}
         >
           <TooltipProvider>
-            <div className={cn("text-foreground", BUBBLE_MENU_CONTENT_CLASS)}>
+            <div className={cn('text-foreground', BUBBLE_MENU_CONTENT_CLASS)}>
               <ButtonLabelInput
                 value={text}
                 onValueChange={(value, isVariable) => {
                   updateAttributes({
                     text: value,
                     isTextVariable: isVariable ?? false,
-                  })
+                  });
                 }}
                 isVariable={isTextVariable}
                 editor={editor}
@@ -191,30 +192,33 @@ export function ButtonView(props: NodeViewProps) {
               <Separator orientation="vertical" />
 
               <div className="flex gap-x-0.5">
-                <FontFamilyPicker
-                  editor={editor}
-                  currentFont={currentFont}
-                  onFontChange={(font) => {
-                    updateAttributes(font)
-                  }}
-                  onFontUnset={() => {
-                    updateAttributes(
-                      Object.fromEntries(
-                        FONT_ATTRIBUTE_KEYS.map((key) => [
-                          key,
-                          key === "fontHasItalic" ? false : null,
-                        ])
-                      ) as Partial<ButtonAttributes>
-                    )
-                  }}
-                />
+                {fontProvider && (
+                  <FontFamilyPicker
+                    provider={fontProvider}
+                    editor={editor}
+                    currentFont={currentFont}
+                    onFontChange={(font) => {
+                      updateAttributes(font);
+                    }}
+                    onFontUnset={() => {
+                      updateAttributes(
+                        Object.fromEntries(
+                          FONT_ATTRIBUTE_KEYS.map((key) => [
+                            key,
+                            key === 'fontHasItalic' ? false : null,
+                          ])
+                        ) as Partial<ButtonAttributes>
+                      );
+                    }}
+                  />
+                )}
 
                 <FontSizePicker
-                  value={fontSize || ""}
+                  value={fontSize || ''}
                   onValueChange={(value) => {
                     updateAttributes({
                       fontSize: value || null,
-                    })
+                    });
                   }}
                 />
               </div>
@@ -223,64 +227,61 @@ export function ButtonView(props: NodeViewProps) {
 
               <div className="flex gap-x-0.5">
                 <Select
-                  label={t("buttonMenu.borderRadius")}
+                  label={t('buttonMenu.borderRadius')}
                   value={_radius}
                   options={allowedButtonBorderRadius.map((value) => ({
                     value,
                     label: {
-                      sharp: t("buttonMenu.radius.sharp"),
-                      smooth: t("buttonMenu.radius.smooth"),
-                      round: t("buttonMenu.radius.round"),
+                      sharp: t('buttonMenu.radius.sharp'),
+                      smooth: t('buttonMenu.radius.smooth'),
+                      round: t('buttonMenu.radius.round'),
                     }[value],
                   }))}
                   onValueChange={(value) => {
                     updateAttributes({
                       borderRadius: value,
-                    })
+                    });
                   }}
-                  tooltip={t("buttonMenu.borderRadius")}
                 />
 
                 <Select
-                  label={t("buttonMenu.style")}
+                  label={t('buttonMenu.style')}
                   value={variant}
                   options={allowedButtonVariant.map((value) => ({
                     value,
                     label: {
-                      filled: t("buttonMenu.style.filled"),
-                      outline: t("buttonMenu.style.outline"),
+                      filled: t('buttonMenu.style.filled'),
+                      outline: t('buttonMenu.style.outline'),
                     }[value],
                   }))}
                   onValueChange={(value) => {
                     updateAttributes({
                       variant: value,
-                    })
+                    });
                   }}
-                  tooltip={t("buttonMenu.style")}
                 />
 
                 <Select
-                  label={t("buttonMenu.size")}
+                  label={t('buttonMenu.size')}
                   value={size}
                   options={[
-                    { value: "small", label: t("buttonMenu.size.small") },
-                    { value: "medium", label: t("buttonMenu.size.medium") },
-                    { value: "large", label: t("buttonMenu.size.large") },
+                    { value: 'small', label: t('buttonMenu.size.small') },
+                    { value: 'medium', label: t('buttonMenu.size.medium') },
+                    { value: 'large', label: t('buttonMenu.size.large') },
                   ]}
                   onValueChange={(value) => {
-                    if (value === size) return
+                    if (value === size) return;
                     const { paddingX, paddingY } =
-                      sizes[value as "small" | "medium" | "large"]
+                      sizes[value as 'small' | 'medium' | 'large'];
 
                     updateAttributes({
                       paddingTop: paddingY,
                       paddingRight: paddingX,
                       paddingBottom: paddingY,
                       paddingLeft: paddingX,
-                    })
+                    });
                   }}
-                  tooltip={t("buttonMenu.size")}
-                  placeholder={t("buttonMenu.size")}
+                  placeholder={t('buttonMenu.size')}
                 />
               </div>
 
@@ -292,19 +293,19 @@ export function ButtonView(props: NodeViewProps) {
                   onAlignmentChange={(alignment) => {
                     updateAttributes({
                       alignment,
-                    })
+                    });
                   }}
                 />
 
                 <LinkInputPopover
-                  defaultValue={externalLink || ""}
+                  defaultValue={externalLink || ''}
                   onValueChange={(value, isVariable) => {
                     updateAttributes({
                       url: value,
                       isUrlVariable: isVariable ?? false,
-                    })
+                    });
                   }}
-                  tooltip={t("buttonMenu.updateExternalLink")}
+                  tooltip={t('buttonMenu.updateExternalLink')}
                   editor={editor}
                   isVariable={isUrlVariable}
                 />
@@ -315,20 +316,20 @@ export function ButtonView(props: NodeViewProps) {
               <div className="flex gap-x-0.5">
                 <BackgroundColorPickerPopup
                   variant={variant}
-                  color={buttonColor || "transparent"}
+                  color={buttonColor || 'transparent'}
                   onChange={(color) => {
                     updateAttributes({
                       buttonColor: color,
-                    })
+                    });
                   }}
                 />
 
                 <TextColorPickerPopup
-                  color={textColor || "transparent"}
+                  color={textColor || 'transparent'}
                   onChange={(color) => {
                     updateAttributes({
                       textColor: color,
-                    })
+                    });
                   }}
                 />
               </div>
@@ -340,7 +341,7 @@ export function ButtonView(props: NodeViewProps) {
                 onShowIfKeyValueChange={(value) => {
                   updateAttributes({
                     showIfKey: value,
-                  })
+                  });
                 }}
                 editor={editor}
               />
@@ -349,68 +350,68 @@ export function ButtonView(props: NodeViewProps) {
         </AdaptiveNodePopover>
       </Popover>
     </NodeViewWrapper>
-  )
+  );
 }
 
 function parsePaddingValue(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
   }
 
-  if (typeof value === "string") {
-    const match = value.trim().match(/^([+-]?(?:\d+\.?\d*|\.\d+))(?:px)?$/i)
-    return match ? Number(match[1]) : null
+  if (typeof value === 'string') {
+    const match = value.trim().match(/^([+-]?(?:\d+\.?\d*|\.\d+))(?:px)?$/i);
+    return match ? Number(match[1]) : null;
   }
 
-  return null
+  return null;
 }
 
 type ColorPickerProps = {
-  variant?: AllowedButtonVariant
-  color: string
-  onChange: (color: string) => void
-}
+  variant?: AllowedButtonVariant;
+  color: string;
+  onChange: (color: string) => void;
+};
 
 function BackgroundColorPickerPopup(props: ColorPickerProps) {
-  const { color, onChange, variant } = props
-  const { t } = useMailyContext()
+  const { color, onChange, variant } = props;
+  const { t } = useMailyContext();
 
   return (
     <ColorPicker
       color={color}
       onColorChange={onChange}
-      tooltip={t("buttonMenu.backgroundColor")}
+      tooltip={t('buttonMenu.backgroundColor')}
     >
       <div
         className="h-4 w-4 shrink-0 rounded-full shadow"
         style={{
-          backgroundColor: variant === "filled" ? color : "transparent",
-          borderStyle: "solid",
+          backgroundColor: variant === 'filled' ? color : 'transparent',
+          borderStyle: 'solid',
           borderWidth: 2,
-          borderColor: variant === "filled" ? "var(--background)" : color,
+          borderColor: variant === 'filled' ? 'var(--background)' : color,
         }}
       />
     </ColorPicker>
-  )
+  );
 }
 
 function TextColorPickerPopup(props: ColorPickerProps) {
-  const { color, onChange } = props
-  const { t } = useMailyContext()
+  const { color, onChange } = props;
+  const { t } = useMailyContext();
 
   return (
     <ColorPicker
       color={color}
       onColorChange={onChange}
-      tooltip={t("buttonMenu.textColor")}
+      tooltip={t('buttonMenu.textColor')}
     >
       <div className="flex flex-col items-center justify-center gap-px">
-        <span className="font-bolder font-mono text-xs text-foreground">A</span>
+        <span className="font-bolder text-foreground font-mono text-xs">A</span>
         <div
           className="h-[2px] w-3 shrink-0 rounded-md shadow"
           style={{ backgroundColor: color }}
         />
       </div>
     </ColorPicker>
-  )
+  );
 }

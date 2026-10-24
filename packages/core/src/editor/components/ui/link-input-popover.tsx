@@ -5,22 +5,24 @@ import {
   PopoverTrigger,
 } from '@/editor/components/popover';
 import { Button } from '@/editor/components/base-button';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/editor/components/ui/tooltip';
-import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../provider';
+import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../maily-context';
 import { InputAutocomplete } from './input-autocomplete';
 import { processVariables } from '../../utils/variable';
 import { useMemo } from 'react';
 import { Editor } from '@tiptap/core';
+import type { Selection } from '@tiptap/pm/state';
+import { useLatestRef } from '../../utils/state-hooks';
 import { useVariableOptions } from '../../utils/node-options';
 import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../../nodes/variable/variable';
 import { Toggle } from '@/editor/components/ui/toggle';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
-import { Link, LinkIcon } from 'lucide-react';
+import { Link } from 'lucide-react';
 
 type LinkInputPopoverProps = {
   defaultValue?: string;
@@ -46,6 +48,34 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
 
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(!isVariable);
+  // Typing edits a local draft. The editor receives one change when the
+  // popover commits it (Enter, a suggestion, or closing), so typing never
+  // moves focus into the document or adds a history step per keystroke.
+  const [draft, setDraft] = useState(defaultValue);
+  const [openSelection, setOpenSelection] = useState<Selection | null>(null);
+  // If the host surface unmounts while a typed URL is pending (a compact-layout
+  // switch, for example), commit it only onto the selection it was typed for.
+  const pendingRef = useLatestRef({
+    isOpen,
+    draft,
+    defaultValue,
+    openSelection,
+    onValueChange,
+  });
+  useEffect(
+    () => () => {
+      const pending = pendingRef.current;
+      if (
+        pending.isOpen &&
+        pending.draft !== pending.defaultValue &&
+        !editor.isDestroyed &&
+        editor.isEditable &&
+        pending.openSelection?.eq(editor.state.selection)
+      )
+        pending.onValueChange?.(pending.draft);
+    },
+    [editor, pendingRef]
+  );
 
   const { schedule: scheduleTimeout, cancel: cancelTimeout } =
     useOwnedTimeout();
@@ -60,25 +90,27 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
     options?.suggestion?.char ?? DEFAULT_VARIABLE_TRIGGER_CHAR;
 
   const autoCompleteOptions = useMemo(() => {
-    const withoutTrigger = defaultValue.replace(
-      new RegExp(variableTriggerCharacter, 'g'),
-      ''
-    );
+    const withoutTrigger = draft.replaceAll(variableTriggerCharacter, '');
 
     return processVariables(variables, {
       query: withoutTrigger || '',
       from: 'bubble-variable',
       editor,
     }).map((variable) => variable.name);
-  }, [variables, variableTriggerCharacter, defaultValue, editor]);
+  }, [variables, variableTriggerCharacter, draft, editor]);
 
   return (
     <Popover
       open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
-        if (!open) cancelTimeout();
+        if (!open) {
+          cancelTimeout();
+          if (draft !== defaultValue) onValueChange?.(draft);
+        }
         if (open) {
+          setDraft(defaultValue);
+          setOpenSelection(editor.state.selection);
           scheduleTimeout(() => {
             linkInputRef.current?.focus();
           }, 0);
@@ -136,7 +168,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
               return;
             }
 
-            onValueChange?.(input.value);
+            if (input.value !== defaultValue) onValueChange?.(input.value);
             setIsOpen(false);
           }}
         >
@@ -175,14 +207,13 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
 
                 <InputAutocomplete
                   editor={editor}
-                  value={defaultValue}
-                  onValueChange={(value) => {
-                    onValueChange?.(value);
-                  }}
+                  value={draft}
+                  onValueChange={setDraft}
                   autoCompleteOptions={autoCompleteOptions}
                   ref={linkInputRef}
+                  aria-label={tooltip ?? t('toolbar.link')}
                   placeholder={placeholderUrl}
-                  className="placeholder:text-muted-foreground h-8 w-56 pl-6 pr-6"
+                  className="placeholder:text-muted-foreground h-8 w-56 pr-6 pl-6"
                   triggerChar={variableTriggerCharacter}
                   onSelectOption={(value) => {
                     const isVariable =
@@ -191,6 +222,7 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                       setIsEditing(false);
                     }
 
+                    setDraft(value);
                     onValueChange?.(value, isVariable);
                     setIsOpen(false);
                   }}

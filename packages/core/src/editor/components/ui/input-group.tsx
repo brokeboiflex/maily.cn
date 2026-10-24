@@ -9,7 +9,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="input-group"
       role="group"
       className={cn(
-        'group/input-group border-input has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 has-[[data-slot=input-group-control]:focus-visible]:ring-3 relative flex h-8 w-full min-w-0 items-center rounded-lg border outline-none transition-colors',
+        'group/input-group border-input has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50 relative flex h-8 w-full min-w-0 items-center rounded-lg border transition-colors outline-none has-[[data-slot=input-group-control]:focus-visible]:ring-3',
         className
       )}
       {...props}
@@ -30,7 +30,7 @@ function InputGroupAddon({
       data-slot="input-group-addon"
       data-align={align}
       className={cn(
-        'text-muted-foreground flex h-auto cursor-text select-none items-center justify-center gap-2 py-1.5 text-sm font-medium [&>svg:not([class*="size-"])]:size-4',
+        'text-muted-foreground flex h-auto cursor-text items-center justify-center gap-2 py-1.5 text-sm font-medium select-none [&>svg:not([class*="size-"])]:size-4',
         align === 'inline-end' ? 'order-last pr-2' : 'order-first pl-2',
         className
       )}

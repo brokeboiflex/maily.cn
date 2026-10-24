@@ -16,12 +16,12 @@ export const useMobileEditor = () => useContext(MobileEditorContext);
 
 // Container width also covers editors embedded in a narrow compose panel.
 export function useCompactEditor(
-  root: RefObject<HTMLDivElement | null>,
+  rootRef: RefObject<HTMLDivElement | null>,
   editor: Editor | null
 ) {
   const [compact, setCompact] = useState(false);
   useEffect(() => {
-    const element = root.current;
+    const element = rootRef.current;
     if (!element || !editor) return;
     const touch = window.matchMedia('(pointer: coarse)');
     const update = () => {
@@ -41,6 +41,6 @@ export function useCompactEditor(
       observer.disconnect();
       touch.removeEventListener('change', update);
     };
-  }, [editor, root]);
+  }, [editor, rootRef]);
   return compact;
 }

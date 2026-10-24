@@ -3,7 +3,7 @@ import { Editor, mergeAttributes, Node } from '@tiptap/core';
 import { Node as TNode } from '@tiptap/pm/model';
 import { PluginKey } from '@tiptap/pm/state';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import Suggestion, { type SuggestionOptions } from '@tiptap/suggestion';
+import { Suggestion, type SuggestionOptions } from '@tiptap/suggestion';
 import {
   VariableSuggestionsPopover,
   type VariableSuggestionsPopoverType,

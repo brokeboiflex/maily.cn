@@ -1,16 +1,13 @@
-import { useCallback, useLayoutEffect, useRef } from 'react';
+import { useCallback } from 'react';
+import { useLatestRef } from './state-hooks';
 
-export const useEvent = <T extends (...args: any[]) => any>(handler: T): T => {
-  const handlerRef = useRef<T | null>(null);
-
-  useLayoutEffect(() => {
-    handlerRef.current = handler;
-  }, [handler]);
-
-  return useCallback((...args: Parameters<T>): ReturnType<T> => {
-    if (handlerRef.current === null) {
-      throw new Error('Handler is not assigned');
-    }
-    return handlerRef.current(...args);
-  }, []) as T;
+/** A stable function that always calls the latest committed `handler`. */
+export const useEvent = <T extends (...args: never[]) => unknown>(
+  handler: T
+): T => {
+  const handlerRef = useLatestRef(handler);
+  return useCallback(
+    (...args: Parameters<T>) => handlerRef.current(...args),
+    [handlerRef]
+  ) as T;
 };

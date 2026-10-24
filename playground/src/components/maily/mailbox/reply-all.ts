@@ -1,3 +1,6 @@
+import { mailboxAddressOf } from './addresses';
+
+/** Minimal recipient shape accepted by reply-all calculation. Bcc is deliberately absent. */
 export type MailyMailboxReplyAllInput = {
   fromAddress: string;
   toAddresses?: readonly string[] | null;
@@ -37,9 +40,7 @@ export function getMailboxReplyAllRecipients(
 }
 
 function normalizeAddress(address: string): string {
-  const trimmed = address.trim();
-  const mailbox = trimmed.match(/<\s*([^<>]+?)\s*>/);
-  return (mailbox?.[1] ?? trimmed).trim().toLocaleLowerCase('en-US');
+  return mailboxAddressOf(address).toLocaleLowerCase('en-US');
 }
 
 function appendUnique(

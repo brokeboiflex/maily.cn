@@ -3,7 +3,7 @@ import { DEFAULT_FONT, type EditorThemeOptions } from './theme';
 
 declare module 'csstype' {
   interface Properties {
-    [index: `--mly-${string}`]: any;
+    [index: `--mly-${string}`]: string | number;
   }
 }
 
@@ -16,7 +16,7 @@ declare module 'csstype' {
  */
 export function getVariableValue(
   name: `--mly-${string}`,
-  value: any
+  value: string | number | null | undefined
 ): CSS.Properties {
   if (value === undefined || value === null || value === '') {
     return {};

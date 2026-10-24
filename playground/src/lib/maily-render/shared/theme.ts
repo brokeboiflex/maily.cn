@@ -94,7 +94,7 @@ export interface BaseThemeOptions {
  * currently, we don't allow any customizations for the colors in the editor.
  * that's why we have a separate theme for the editor.
  */
-export interface EditorThemeOptions extends BaseThemeOptions {}
+export type EditorThemeOptions = BaseThemeOptions;
 
 /**
  * The theme options for the renderer.
@@ -128,15 +128,15 @@ export interface RendererThemeOptions extends BaseThemeOptions {
   }>;
 }
 
+/**
+ * An email-safe system font that every client has. Pass a `theme.font` with a
+ * `webFont` to load a web font instead, or `null` for no font rule at all.
+ */
 export const DEFAULT_FONT: FontProps = {
   fallbackFontFamily: 'sans-serif',
-  fontFamily: 'Inter',
+  fontFamily: 'Arial',
   fontStyle: 'normal',
-  fontWeight: '100 900',
-  webFont: {
-    url: 'https://rsms.me/inter/font-files/InterVariable.woff2?v=4.1',
-    format: 'woff2',
-  },
+  fontWeight: 400,
 };
 
 export const DEFAULT_LINK_TEXT_COLOR = '#111827';

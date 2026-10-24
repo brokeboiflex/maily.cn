@@ -202,6 +202,7 @@ export const polishLabels: MailyLabels = {
   "buttonMenu.size.small": "Mały",
   "buttonMenu.size.medium": "Średni",
   "buttonMenu.size.large": "Duży",
+  "buttonMenu.text": "Tekst przycisku",
   "buttonMenu.updateExternalLink": "Zmień zewnętrzny link",
   "buttonMenu.backgroundColor": "Kolor tła",
   "buttonMenu.textColor": "Kolor tekstu",
@@ -301,6 +302,7 @@ export const polishLabels: MailyLabels = {
 export const polishMailboxLabels: MailyMailboxLabels = {
   "compose.new": "Nowa wiadomość",
   "compose.editDraft": "Edytuj szkic",
+  "compose.viewDraft": "Szkic",
   "compose.discard": "Odrzuć",
   "compose.saveDraft": "Zapisz szkic",
   "compose.send": "Wyślij",
@@ -309,6 +311,9 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "compose.discarded": "Szkic odrzucony.",
   "compose.wrote": "W dniu {date} {sender} napisał(a):",
   "compose.forwardedHeader": "Przekazana wiadomość",
+  "compose.forwardFrom": "Od",
+  "compose.forwardTo": "Do",
+  "compose.forwardSubject": "Temat",
   "compose.mode.plainText": "Zwykły tekst",
   "compose.mode.mailyEditor": "Edytor wizualny",
   "compose.stay": "Kontynuuj edycję",
@@ -318,6 +323,10 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "compose.saving": "Zapisywanie…",
   "compose.saveError":
     "Nie udało się zapisać zmian. Twoje zmiany są zachowane.",
+  "compose.saveUnavailable":
+    "Nie można zapisać zmian. Twoje zmiany są zachowane.",
+  "compose.attachmentsReadOnly":
+    "Ten szkic ma załączniki, których nie można tutaj edytować.",
   "compose.unsavedConfirm": "Odrzucić niezapisane zmiany?",
   "compose.attachmentUploadError":
     "Nie udało się wysłać pliku {filename}. Spróbuj ponownie.",
@@ -418,6 +427,7 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "contacts.noSuggestions": "Nie znaleziono kontaktów.",
   "message.subject": "Temat",
   "message.body": "Treść",
+  "message.htmlBody": "Treść wiadomości",
   "message.bounced": "Odbita",
   "message.queued": "W kolejce",
   "thread.messages": "Wątek zawiera {count} wiadomości",
@@ -437,4 +447,8 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "errors.send": "Nie udało się wysłać wiadomości.",
   "errors.discard": "Nie udało się odrzucić szkicu.",
   "errors.messageAction": "Nie udało się zaktualizować wiadomości.",
+  "errors.bulkAction": "Nie udało się zaktualizować zaznaczonych wiadomości.",
+  "errors.undo": "Nie udało się cofnąć działania.",
+  "errors.labels": "Nie udało się wczytać etykiet.",
+  "errors.labelMutation": "Nie udało się zaktualizować etykiet.",
 }

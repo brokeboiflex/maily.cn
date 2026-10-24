@@ -1,4 +1,5 @@
 import { Editor, type NodeViewProps } from '@tiptap/core';
+import { type Attrs } from '@tiptap/pm/model';
 import { SelectionRange, TextSelection } from '@tiptap/pm/state';
 import { redoDepth, undoDepth } from '@tiptap/pm/history';
 import { describe, expect, it } from 'vitest';
@@ -149,7 +150,7 @@ describe('public Maily attribute commands', () => {
         expect(
           editor.commands.updateAttributes(editor.schema.marks[type], desired)
         ).toBe(true);
-        const marks: Array<{ text: string; attrs: Record<string, any> }> = [];
+        const marks: Array<{ text: string; attrs: Attrs }> = [];
         editor.state.doc.firstChild?.forEach((node) =>
           marks.push({
             text: node.textContent,

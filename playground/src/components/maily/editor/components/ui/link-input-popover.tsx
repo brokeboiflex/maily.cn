@@ -1,86 +1,119 @@
-import { useOwnedTimeout } from "../../utils/use-owned-timeout"
+import { useOwnedTimeout } from '../../utils/use-owned-timeout';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
-import { Button } from "@/components/ui/button"
-import { useRef, useState, type ReactNode } from "react"
+} from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
-} from "@/components/ui/tooltip"
-import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from "../../provider"
-import { InputAutocomplete } from "./input-autocomplete"
-import { processVariables } from "../../utils/variable"
-import { useMemo } from "react"
-import { Editor } from "@tiptap/core"
-import { useVariableOptions } from "../../utils/node-options"
-import { DEFAULT_VARIABLE_TRIGGER_CHAR } from "../../nodes/variable/variable"
-import { Toggle } from "@/components/ui/toggle"
-import { BOTTOM_FLOATING_CONTENT_PROPS } from "./floating-placement"
-import { Link } from "lucide-react"
+} from '@/components/ui/tooltip';
+import { DEFAULT_PLACEHOLDER_URL, useMailyContext } from '../../maily-context';
+import { InputAutocomplete } from './input-autocomplete';
+import { processVariables } from '../../utils/variable';
+import { useMemo } from 'react';
+import { Editor } from '@tiptap/core';
+import type { Selection } from '@tiptap/pm/state';
+import { useLatestRef } from '../../utils/state-hooks';
+import { useVariableOptions } from '../../utils/node-options';
+import { DEFAULT_VARIABLE_TRIGGER_CHAR } from '../../nodes/variable/variable';
+import { Toggle } from '@/components/ui/toggle';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
+import { Link } from "lucide-react";
 
 type LinkInputPopoverProps = {
-  defaultValue?: string
-  isVariable?: boolean
-  onValueChange?: (value: string, isVariable?: boolean) => void
+  defaultValue?: string;
+  isVariable?: boolean;
+  onValueChange?: (value: string, isVariable?: boolean) => void;
 
-  icon?: ReactNode
-  tooltip?: string
+  icon?: ReactNode;
+  tooltip?: string;
 
-  editor: Editor
-}
+  editor: Editor;
+};
 
 export function LinkInputPopover(props: LinkInputPopoverProps) {
   const {
-    defaultValue = "",
+    defaultValue = '',
     onValueChange,
     tooltip,
     icon,
     editor,
 
     isVariable,
-  } = props
+  } = props;
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [isEditing, setIsEditing] = useState(!isVariable)
+  const [isOpen, setIsOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(!isVariable);
+  // Typing edits a local draft. The editor receives one change when the
+  // popover commits it (Enter, a suggestion, or closing), so typing never
+  // moves focus into the document or adds a history step per keystroke.
+  const [draft, setDraft] = useState(defaultValue);
+  const [openSelection, setOpenSelection] = useState<Selection | null>(null);
+  // If the host surface unmounts while a typed URL is pending (a compact-layout
+  // switch, for example), commit it only onto the selection it was typed for.
+  const pendingRef = useLatestRef({
+    isOpen,
+    draft,
+    defaultValue,
+    openSelection,
+    onValueChange,
+  });
+  useEffect(
+    () => () => {
+      const pending = pendingRef.current;
+      if (
+        pending.isOpen &&
+        pending.draft !== pending.defaultValue &&
+        !editor.isDestroyed &&
+        editor.isEditable &&
+        pending.openSelection?.eq(editor.state.selection)
+      )
+        pending.onValueChange?.(pending.draft);
+    },
+    [editor, pendingRef]
+  );
 
-  const { schedule: scheduleTimeout, cancel: cancelTimeout } = useOwnedTimeout()
-  const linkInputRef = useRef<HTMLInputElement>(null)
+  const { schedule: scheduleTimeout, cancel: cancelTimeout } =
+    useOwnedTimeout();
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
-  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL, t } = useMailyContext()
-  const options = useVariableOptions(editor)
+  const { placeholderUrl = DEFAULT_PLACEHOLDER_URL, t } = useMailyContext();
+  const options = useVariableOptions(editor);
 
-  const renderVariable = options?.renderVariable
-  const variables = options?.variables
+  const renderVariable = options?.renderVariable;
+  const variables = options?.variables;
   const variableTriggerCharacter =
-    options?.suggestion?.char ?? DEFAULT_VARIABLE_TRIGGER_CHAR
+    options?.suggestion?.char ?? DEFAULT_VARIABLE_TRIGGER_CHAR;
 
   const autoCompleteOptions = useMemo(() => {
-    const withoutTrigger = defaultValue.replace(
-      new RegExp(variableTriggerCharacter, "g"),
-      ""
-    )
+    const withoutTrigger = draft.replaceAll(variableTriggerCharacter, '');
 
     return processVariables(variables, {
-      query: withoutTrigger || "",
-      from: "bubble-variable",
+      query: withoutTrigger || '',
+      from: 'bubble-variable',
       editor,
-    }).map((variable) => variable.name)
-  }, [variables, variableTriggerCharacter, defaultValue, editor])
+    }).map((variable) => variable.name);
+  }, [variables, variableTriggerCharacter, draft, editor]);
 
   return (
     <Popover
       open={isOpen}
       onOpenChange={(open) => {
-        setIsOpen(open)
-        if (!open) cancelTimeout()
+        setIsOpen(open);
+        if (!open) {
+          cancelTimeout();
+          if (draft !== defaultValue) onValueChange?.(draft);
+        }
         if (open) {
+          setDraft(defaultValue);
+          setOpenSelection(editor.state.selection);
           scheduleTimeout(() => {
-            linkInputRef.current?.focus()
-          }, 0)
+            linkInputRef.current?.focus();
+          }, 0);
         }
       }}
     >
@@ -96,8 +129,9 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                   className="h-7! w-7! px-0"
                   aria-label={tooltip}
                 >
-                  <span className="flex size-3 shrink-0 items-center justify-center text-foreground [&_svg]:size-3 [&_svg]:stroke-[2.5]">
-                    {icon ?? <Link />}
+                  <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
+                    {icon ?? <Link
+/>}
                   </span>
                 </Toggle>
               </PopoverTrigger>
@@ -112,10 +146,11 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
             onPressedChange={() => undefined}
             type="button"
             className="h-7! w-7! px-0"
-            aria-label={t("toolbar.link")}
+            aria-label={t('toolbar.link')}
           >
-            <span className="flex size-3 shrink-0 items-center justify-center text-foreground [&_svg]:size-3 [&_svg]:stroke-[2.5]">
-              {icon ?? <Link />}
+            <span className="text-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3 [&_svg]:stroke-[2.5]">
+              {icon ?? <Link
+/>}
             </span>
           </Toggle>
         </PopoverTrigger>
@@ -129,14 +164,14 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
       >
         <form
           onSubmit={(e) => {
-            e.preventDefault()
-            const input = linkInputRef.current
+            e.preventDefault();
+            const input = linkInputRef.current;
             if (!input) {
-              return
+              return;
             }
 
-            onValueChange?.(input.value)
-            setIsOpen(false)
+            if (input.value !== defaultValue) onValueChange?.(input.value);
+            setIsOpen(false);
           }}
         >
           <div className="isolate flex">
@@ -147,10 +182,10 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                   variant="ghost"
                   className="h-auto p-0"
                   onClick={() => {
-                    setIsEditing(true)
+                    setIsEditing(true);
                     scheduleTimeout(() => {
-                      linkInputRef.current?.focus()
-                    }, 0)
+                      linkInputRef.current?.focus();
+                    }, 0);
                   }}
                 >
                   {renderVariable({
@@ -158,8 +193,8 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
                       name: defaultValue,
                       valid: true,
                     },
-                    fallback: "",
-                    from: "bubble-variable",
+                    fallback: '',
+                    from: 'bubble-variable',
                     editor,
                   })}
                 </Button>
@@ -169,29 +204,29 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
             {isEditing && (
               <div className="relative">
                 <div className="absolute inset-y-0 left-1.5 z-10 flex items-center">
-                  <Link className="h-3 w-3 stroke-[2.5] text-foreground" />
+                  <Link className="text-foreground h-3 w-3 stroke-[2.5]" />
                 </div>
 
                 <InputAutocomplete
                   editor={editor}
-                  value={defaultValue}
-                  onValueChange={(value) => {
-                    onValueChange?.(value)
-                  }}
+                  value={draft}
+                  onValueChange={setDraft}
                   autoCompleteOptions={autoCompleteOptions}
                   ref={linkInputRef}
+                  aria-label={tooltip ?? t('toolbar.link')}
                   placeholder={placeholderUrl}
-                  className="h-8 w-56 pr-6 pl-6 placeholder:text-muted-foreground"
+                  className="placeholder:text-muted-foreground h-8 w-56 pr-6 pl-6"
                   triggerChar={variableTriggerCharacter}
                   onSelectOption={(value) => {
                     const isVariable =
-                      autoCompleteOptions.includes(value) ?? false
+                      autoCompleteOptions.includes(value) ?? false;
                     if (isVariable) {
-                      setIsEditing(false)
+                      setIsEditing(false);
                     }
 
-                    onValueChange?.(value, isVariable)
-                    setIsOpen(false)
+                    setDraft(value);
+                    onValueChange?.(value, isVariable);
+                    setIsOpen(false);
                   }}
                 />
               </div>
@@ -200,5 +235,5 @@ export function LinkInputPopover(props: LinkInputPopoverProps) {
         </form>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

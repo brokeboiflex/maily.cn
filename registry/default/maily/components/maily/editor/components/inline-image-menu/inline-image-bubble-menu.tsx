@@ -9,7 +9,7 @@ import {
   DEFAULT_INLINE_IMAGE_HEIGHT,
   DEFAULT_INLINE_IMAGE_WIDTH,
 } from '../../nodes/inline-image/inline-image';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
   useStableBubbleMenuProps,
@@ -17,9 +17,6 @@ import {
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const state = useInlineImageState(editor);
   const { t } = useMailyContext();

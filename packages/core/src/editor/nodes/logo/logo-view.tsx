@@ -6,7 +6,8 @@ import { type LogoAttributes, logoSizes } from './logo';
 import { type ImageStatus, ImageStatusLabel } from '../image/image-view';
 import { useImageUploadOptions } from '@/editor/extensions/image-upload/image-upload';
 import { cn } from '@/editor/utils/classname';
-import { useMailyContext } from '@/editor/provider';
+import { useMailyContext } from '@/editor/maily-context';
+import { useResettableState } from '../../utils/state-hooks';
 import { updateNodeViewAttributes } from '../../utils/update-attribute';
 
 export function LogoView(props: NodeViewProps) {
@@ -21,8 +22,29 @@ export function LogoView(props: NodeViewProps) {
     },
     []
   );
-  const [status, setStatus] = useState<ImageStatus>('idle');
-  const [, setIsPlaceholderImage] = useState(false);
+  const {
+    alignment = 'center',
+    src: logoSrc,
+    isSrcVariable,
+    size = 'sm',
+  } = (node.attrs || {}) as LogoAttributes;
+
+  // A new source restarts loading.
+  const [status, setStatus] = useResettableState<ImageStatus>(
+    () => (logoSrc ? 'loading' : 'idle'),
+    [logoSrc]
+  );
+  // React reuses this view for a replacement node (for example after
+  // setContent). An in-flight upload belongs to the node that started it.
+  const uploadNode = useRef(node);
+  useLayoutEffect(() => {
+    if (uploadNode.current === node) return;
+    uploadNode.current = node;
+    if (!uploadLock.current) return;
+    uploadGeneration.current += 1;
+    uploadLock.current = false;
+    setStatus('idle');
+  }, [node, setStatus]);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const {
@@ -30,13 +52,6 @@ export function LogoView(props: NodeViewProps) {
     onImageUploadDiscard,
     allowedMimeTypes = [],
   } = useImageUploadOptions(editor);
-
-  let {
-    alignment = 'center',
-    src: logoSrc,
-    isSrcVariable,
-    size = 'sm',
-  } = (node.attrs || {}) as LogoAttributes;
 
   const hasImageSrc = !!logoSrc;
   const isDroppable =
@@ -52,6 +67,8 @@ export function LogoView(props: NodeViewProps) {
 
     const file = e.target.files[0];
     e.target.value = '';
+    // Picked files obey the host's types, as dropped files do.
+    if (!allowedMimeTypes.includes(file.type)) return;
     await handleImageUpload(file);
   };
 
@@ -90,17 +107,18 @@ export function LogoView(props: NodeViewProps) {
           return;
         }
         updateNodeViewAttributes(props, { src: imageUrl });
-        setIsPlaceholderImage(false);
         setStatus('loaded');
       } catch (error) {
         console.error('Error uploading image:', error);
         if (generation === uploadGeneration.current) setStatus('error');
       } finally {
-        uploadLock.current = false;
+        // A replaced node already released the lock; a newer upload owns it.
+        if (generation === uploadGeneration.current) uploadLock.current = false;
       }
     },
     [
       onImageUpload,
+      setStatus,
       onImageUploadDiscard,
       props,
       isDroppable,
@@ -163,16 +181,8 @@ export function LogoView(props: NodeViewProps) {
   // load the image using new Image() to avoid layout shift
   // then if the image is loaded, set the status to loaded
   useEffect(() => {
-    if (!logoSrc) {
-      setStatus('idle');
-      return;
-    }
+    if (!logoSrc) return;
 
-    setStatus('loading');
-    const isPlaceHolder =
-      editor?.extensionStorage?.imageUpload?.placeholderImages?.has(logoSrc) ??
-      false;
-    setIsPlaceholderImage(isPlaceHolder);
     const img = new Image();
     img.src = logoSrc;
     img.onload = () => {
@@ -187,7 +197,7 @@ export function LogoView(props: NodeViewProps) {
       img.onload = null;
       img.onerror = null;
     };
-  }, [logoSrc]);
+  }, [logoSrc, setStatus]);
 
   const logoSize = logoSizes[size];
 
@@ -241,7 +251,7 @@ export function LogoView(props: NodeViewProps) {
         /* shadcn-audit-ignore-next-line invisible native file input overlay */
         <input
           type="file"
-          accept="image/*"
+          accept={allowedMimeTypes.join(',')}
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0"
           multiple={false}

@@ -11,7 +11,7 @@ declare module '@tiptap/core' {
   }
 }
 
-export type LinkCardOptions = {};
+export type LinkCardOptions = Record<string, never>;
 
 export type LinkCardAttributes = {
   mailyComponent: string;

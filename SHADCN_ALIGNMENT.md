@@ -50,13 +50,17 @@ Base UI implementation, radius, variants, focus treatment, motion, and theme
 tokens.
 
 The optional `MailboxView` uses the same host-owned `button`, `input`,
-`textarea`, `badge`, `separator`, `dropdown-menu`, `popover`, `command`,
-`resizable`, `scroll-area`, `attachment`, `checkbox`, and `dialog` primitives. It is a data-adapter component:
+`textarea`, `tooltip`, `toggle-group`, `badge`, `dropdown-menu`, `popover`, `input-group`,
+`command`, `scroll-area`, `attachment`, `checkbox`, `dialog`, `sheet`, `avatar`,
+`field`, `label`, and `empty` primitives. It is a data-adapter component:
 mailbox state and layout live in Maily source, while accounts, messages, drafts,
 delivery, polling data, recipient contact suggestions, and optional message
 actions come from the consumer's backend adapter. Optional message action chrome
 is rendered only for ids explicitly passed through `messageActions` and backed by
-`dataSource.runMessageAction`.
+`dataSource.runMessageAction`. Compose, Reply, Forward, Save draft, Send and
+Discard follow the same rule through the optional draft callbacks and
+`draftCapabilities`; read-only drafts render their recipients, subject and body
+as text.
 
 Attachment rows follow the official shadcn Attachment composition: media icon,
 title, description, and independent action. The mailbox uses a vertical list

@@ -1,131 +1,136 @@
-import { SelectionRange, Selection, PluginKey, Plugin } from "@tiptap/pm/state"
-import tippy, { type Instance } from "tippy.js"
-import { NodeRange } from "@tiptap/pm/model"
-import { ResolvedPos, Node as TNode } from "@tiptap/pm/model"
-import { Mapping } from "@tiptap/pm/transform"
-import { Editor } from "@tiptap/core"
-import { type Props as TippyProps } from "tippy.js"
+import { SelectionRange, Selection, PluginKey, Plugin } from '@tiptap/pm/state';
+import { NodeRange } from '@tiptap/pm/model';
+import { ResolvedPos, Node as TNode } from '@tiptap/pm/model';
+import type { Mappable } from '@tiptap/pm/transform';
+import { Editor } from '@tiptap/core';
+import type { EditorView } from '@tiptap/pm/view';
+import {
+  autoUpdate,
+  computePosition,
+  offset,
+  type Placement,
+  type VirtualElement,
+} from '@floating-ui/dom';
 
 function getSelectionRanges(
   state: ResolvedPos,
   range: ResolvedPos,
   depth?: number
 ): SelectionRange[] {
-  const ranges: SelectionRange[] = []
-  const root = state.node(0)
+  const ranges: SelectionRange[] = [];
+  const root = state.node(0);
   depth =
-    typeof depth === "number" && depth >= 0
+    typeof depth === 'number' && depth >= 0
       ? depth
       : state.sameParent(range)
         ? Math.max(0, state.sharedDepth(range.pos) - 1)
-        : state.sharedDepth(range.pos)
-  const nodeRange = new NodeRange(state, range, depth)
+        : state.sharedDepth(range.pos);
+  const nodeRange = new NodeRange(state, range, depth);
   const startIndex =
-    nodeRange.depth === 0 ? 0 : root.resolve(nodeRange.start).posAtIndex(0)
+    nodeRange.depth === 0 ? 0 : root.resolve(nodeRange.start).posAtIndex(0);
   nodeRange.parent.forEach((size, offset) => {
-    const from = startIndex + offset
-    const to = from + size.nodeSize
-    if (from < nodeRange.start || from >= nodeRange.end) return
+    const from = startIndex + offset;
+    const to = from + size.nodeSize;
+    if (from < nodeRange.start || from >= nodeRange.end) return;
     const selectionRange = new SelectionRange(
       root.resolve(from),
       root.resolve(to)
-    )
-    ranges.push(selectionRange)
-  })
-  return ranges
+    );
+    ranges.push(selectionRange);
+  });
+  return ranges;
 }
 
 class NodeRangeBookmark {
-  anchor: number
-  head: number
+  anchor: number;
+  head: number;
   constructor(anchor: number, head: number) {
-    this.anchor = anchor
-    this.head = head
+    this.anchor = anchor;
+    this.head = head;
   }
-  map(mapping: Mapping) {
+  map(mapping: Mappable) {
     return new NodeRangeBookmark(
       mapping.map(this.anchor),
       mapping.map(this.head)
-    )
+    );
   }
   resolve(doc: TNode) {
-    const e = doc.resolve(this.anchor)
-    const o = doc.resolve(this.head)
-    return new NodeRangeSelection(e, o)
+    const e = doc.resolve(this.anchor);
+    const o = doc.resolve(this.head);
+    return new NodeRangeSelection(e, o);
   }
 }
 
 class NodeRangeSelection extends Selection {
-  depth: number | undefined
+  depth: number | undefined;
 
   constructor(t: ResolvedPos, e: ResolvedPos, o?: number, s: number = 1) {
-    const { doc: r } = t
-    const n = t === e
-    const i = t.pos === r.content.size && e.pos === r.content.size
-    const a = n && !i ? r.resolve(e.pos + (s > 0 ? 1 : -1)) : e
-    const c = n && i ? r.resolve(t.pos - (s > 0 ? 1 : -1)) : t
-    const d = getSelectionRanges(c.min(a), c.max(a), o)
+    const { doc: r } = t;
+    const n = t === e;
+    const i = t.pos === r.content.size && e.pos === r.content.size;
+    const a = n && !i ? r.resolve(e.pos + (s > 0 ? 1 : -1)) : e;
+    const c = n && i ? r.resolve(t.pos - (s > 0 ? 1 : -1)) : t;
+    const d = getSelectionRanges(c.min(a), c.max(a), o);
     super(
       a.pos >= t.pos ? d[0].$from : d[d.length - 1].$to,
       a.pos >= t.pos ? d[d.length - 1].$to : d[0].$from,
       d
-    )
-    this.depth = o
+    );
+    this.depth = o;
   }
   get $to() {
-    return this.ranges[this.ranges.length - 1].$to
+    return this.ranges[this.ranges.length - 1].$to;
   }
   eq(other: Selection): boolean {
     return (
       other instanceof NodeRangeSelection &&
       other.$from.pos === this.$from.pos &&
       other.$to.pos === this.$to.pos
-    )
+    );
   }
-  // @ts-ignore
-  map(doc: TNode, mapping: Mapping) {
-    const o = doc.resolve(mapping.map(this.anchor))
-    const s = doc.resolve(mapping.map(this.head))
-    return new NodeRangeSelection(o, s)
+  map(doc: TNode, mapping: Mappable) {
+    const o = doc.resolve(mapping.map(this.anchor));
+    const s = doc.resolve(mapping.map(this.head));
+    return new NodeRangeSelection(o, s);
   }
   toJSON() {
-    return { type: "nodeRange", anchor: this.anchor, head: this.head }
+    return { type: 'nodeRange', anchor: this.anchor, head: this.head };
   }
   get isForwards() {
-    return this.head >= this.anchor
+    return this.head >= this.anchor;
   }
   get isBackwards() {
-    return !this.isForwards
+    return !this.isForwards;
   }
   extendBackwards() {
-    const { doc: t } = this.$from
+    const { doc: t } = this.$from;
     if (this.isForwards && this.ranges.length > 1) {
-      const t = this.ranges.slice(0, -1)
-      const e = t[0].$from
-      const o = t[t.length - 1].$to
-      return new NodeRangeSelection(e, o, this.depth)
+      const t = this.ranges.slice(0, -1);
+      const e = t[0].$from;
+      const o = t[t.length - 1].$to;
+      return new NodeRangeSelection(e, o, this.depth);
     }
-    const e = this.ranges[0]
-    const o = t.resolve(Math.max(0, e.$from.pos - 1))
-    return new NodeRangeSelection(this.$anchor, o, this.depth)
+    const e = this.ranges[0];
+    const o = t.resolve(Math.max(0, e.$from.pos - 1));
+    return new NodeRangeSelection(this.$anchor, o, this.depth);
   }
   extendForwards() {
-    const { doc: t } = this.$from
+    const { doc: t } = this.$from;
     if (this.isBackwards && this.ranges.length > 1) {
-      const t = this.ranges.slice(1)
-      const e = t[0].$from
-      const o = t[t.length - 1].$to
-      return new NodeRangeSelection(o, e, this.depth)
+      const t = this.ranges.slice(1);
+      const e = t[0].$from;
+      const o = t[t.length - 1].$to;
+      return new NodeRangeSelection(o, e, this.depth);
     }
-    const e = this.ranges[this.ranges.length - 1]
-    const o = t.resolve(Math.min(t.content.size, e.$to.pos + 1))
-    return new NodeRangeSelection(this.$anchor, o, this.depth)
+    const e = this.ranges[this.ranges.length - 1];
+    const o = t.resolve(Math.min(t.content.size, e.$to.pos + 1));
+    return new NodeRangeSelection(this.$anchor, o, this.depth);
   }
-  static fromJSON(doc: TNode, json: any) {
+  static fromJSON(doc: TNode, json: { anchor: number; head: number }) {
     return new NodeRangeSelection(
       doc.resolve(json.anchor),
       doc.resolve(json.head)
-    )
+    );
   }
   static create(
     doc: TNode,
@@ -134,97 +139,102 @@ class NodeRangeSelection extends Selection {
     depth?: number,
     bias: number = 1
   ) {
-    return new this(doc.resolve(anchor), doc.resolve(head), depth, bias)
+    return new this(doc.resolve(anchor), doc.resolve(head), depth, bias);
   }
-  // @ts-ignore
   getBookmark(): NodeRangeBookmark {
-    return new NodeRangeBookmark(this.anchor, this.head)
+    return new NodeRangeBookmark(this.anchor, this.head);
   }
 }
 
 function cloneElement(node: HTMLElement) {
-  const clonedNode = node.cloneNode(true) as HTMLElement
-  const originalElements = [node, ...Array.from(node.getElementsByTagName("*"))]
+  const clonedNode = node.cloneNode(true) as HTMLElement;
+  const originalElements = [
+    node,
+    ...Array.from(node.getElementsByTagName('*')),
+  ];
   const clonedElements = [
     clonedNode,
-    ...Array.from(clonedNode.getElementsByTagName("*")),
-  ]
+    ...Array.from(clonedNode.getElementsByTagName('*')),
+  ];
 
   originalElements.forEach((element, index) => {
-    const clonedElement = clonedElements[index]
+    const clonedElement = clonedElements[index];
 
     if (
       clonedElement instanceof HTMLElement &&
       element instanceof HTMLElement
     ) {
       clonedElement.style.cssText = (function (element: HTMLElement) {
-        let styles = ""
-        const computedStyles = getComputedStyle(element)
+        let styles = '';
+        const computedStyles = getComputedStyle(element);
         for (let i = 0; i < computedStyles.length; i += 1) {
-          styles += `${computedStyles[i]}:${computedStyles.getPropertyValue(computedStyles[i])};`
+          styles += `${computedStyles[i]}:${computedStyles.getPropertyValue(computedStyles[i])};`;
         }
-        return styles
-      })(element)
+        return styles;
+      })(element);
     }
-  })
+  });
 
-  return clonedNode
+  return clonedNode;
 }
 
-function getComputedStyles(node: Element, property: any) {
-  return window.getComputedStyle(node)[property]
+function getComputedStyles(
+  node: Element,
+  property: 'paddingLeft' | 'paddingRight' | 'borderLeftWidth'
+) {
+  return window.getComputedStyle(node)[property];
 }
 function minMax(value = 0, min = 0, max = 0) {
-  return Math.min(Math.max(value, min), max)
+  return Math.min(Math.max(value, min), max);
 }
 function removeNode(node: HTMLElement) {
   if (node.parentNode !== null && node.parentNode !== undefined) {
-    node.parentNode.removeChild(node)
+    node.parentNode.removeChild(node);
   }
 }
 
 export type FindElementNextToCoords = {
-  x: number
-  y: number
-  direction?: "left" | "right"
-  editor: Editor
-}
+  x: number;
+  y: number;
+  direction?: 'left' | 'right';
+  editor: Editor;
+};
 
 const findElementNextToCoords = (options: FindElementNextToCoords) => {
-  const { x, y, direction, editor } = options
-  let resultElement = null
-  let resultNode = null
-  let d = null
-  let l = x
-  for (; null === resultNode && l < window.innerWidth && l > 0; ) {
-    const elements = document.elementsFromPoint(l, y)
+  const { x, y, direction, editor } = options;
+  let resultElement = null;
+  let resultNode = null;
+  let d = null;
+  let l = x;
+  for (; null === resultNode && l < window.innerWidth && l > 0;) {
+    const elements = document.elementsFromPoint(l, y);
     const index = elements.findIndex((el) =>
-      el.classList.contains("ProseMirror")
-    )
-    const filteredElements = elements.slice(0, index)
+      el.classList.contains('ProseMirror')
+    );
+    const filteredElements = elements.slice(0, index);
     if (filteredElements.length > 0) {
-      const element = filteredElements[0]
-      resultElement = element
-      d = editor.view.posAtDOM(element, 0)
+      const element = filteredElements[0];
+      resultElement = element;
+      d = editor.view.posAtDOM(element, 0);
       if (d >= 0) {
-        resultNode = editor.state.doc.nodeAt(Math.max(d - 1, 0))
+        resultNode = editor.state.doc.nodeAt(Math.max(d - 1, 0));
         if (resultNode === null || resultNode.isText) {
-          resultNode = editor.state.doc.nodeAt(Math.max(d - 1, 0))
+          resultNode = editor.state.doc.nodeAt(Math.max(d - 1, 0));
         }
         if (!resultNode) {
-          resultNode = editor.state.doc.nodeAt(Math.max(d, 0))
+          resultNode = editor.state.doc.nodeAt(Math.max(d, 0));
         }
-        break
+        break;
       }
     }
-    if (direction === "left") {
-      l -= 1
+    if (direction === 'left') {
+      l -= 1;
     } else {
-      l += 1
+      l += 1;
     }
   }
-  return { resultElement, resultNode, pos: d !== null ? d : null }
-}
+  return { resultElement, resultNode, pos: d !== null ? d : null };
+};
 
 function getSelectionRangesNearCursor(e: MouseEvent, t: Editor) {
   const { doc: n } = t.view.state,
@@ -232,292 +242,290 @@ function getSelectionRangesNearCursor(e: MouseEvent, t: Editor) {
       editor: t,
       x: e.clientX,
       y: e.clientY,
-      direction: "right",
-    })
-  if (!o.resultNode || null === o.pos) return []
+      direction: 'right',
+    });
+  if (!o.resultNode || null === o.pos) return [];
   const r = e.clientX,
     i = (function (e, t, n) {
-      const o = parseInt(getComputedStyles(e.dom, "paddingLeft"), 10),
-        r = parseInt(getComputedStyles(e.dom, "paddingRight"), 10),
-        i = parseInt(getComputedStyles(e.dom, "borderLeftWidth"), 10),
-        s = parseInt(getComputedStyles(e.dom, "borderLeftWidth"), 10),
-        d = e.dom.getBoundingClientRect()
-      return { left: minMax(t, d.left + o + i, d.right - r - s), top: n }
+      const o = parseInt(getComputedStyles(e.dom, 'paddingLeft'), 10),
+        r = parseInt(getComputedStyles(e.dom, 'paddingRight'), 10),
+        i = parseInt(getComputedStyles(e.dom, 'borderLeftWidth'), 10),
+        s = parseInt(getComputedStyles(e.dom, 'borderLeftWidth'), 10),
+        d = e.dom.getBoundingClientRect();
+      return { left: minMax(t, d.left + o + i, d.right - r - s), top: n };
     })(t.view, r, e.clientY),
-    s = t.view.posAtCoords(i)
-  if (!s) return []
-  const { pos: d } = s
-  if (!n.resolve(d).parent) return []
+    s = t.view.posAtCoords(i);
+  if (!s) return [];
+  const { pos: d } = s;
+  if (!n.resolve(d).parent) return [];
   const a = n.resolve(o.pos),
-    p = n.resolve(o.pos + 1)
-  return getSelectionRanges(a, p, 0)
+    p = n.resolve(o.pos + 1);
+  return getSelectionRanges(a, p, 0);
 }
-const getPreviousNodeStartPosition = (e: TNode, t: number) => {
-  const n = e.resolve(t),
-    { depth: o } = n
-  if (0 === o) return t
-  return n.pos - n.parentOffset - 1
-}
-const getAncestorNodeAtDepth = (e: TNode, t: number) => {
-  const n = e.nodeAt(t),
-    o = e.resolve(t)
-  let { depth: r } = o,
-    i = n
-  for (; r > 0; ) {
-    const e = o.node(r)
-    ;((r -= 1), 0 === r && (i = e))
+const getPreviousNodeStartPosition = (doc: TNode, pos: number) => {
+  const resolved = doc.resolve(pos);
+  if (resolved.depth === 0) return pos;
+  return resolved.pos - resolved.parentOffset - 1;
+};
+
+const getAncestorNodeAtDepth = (doc: TNode, pos: number) => {
+  const resolved = doc.resolve(pos);
+  let depth = resolved.depth;
+  let ancestor = doc.nodeAt(pos);
+  while (depth > 0) {
+    const node = resolved.node(depth);
+    depth -= 1;
+    if (depth === 0) ancestor = node;
   }
-  return i
-}
-// @ts-ignore
-const getOuterNodePos = (e, t) => {
-  let n = t
-  for (; n && n.parentNode && n.parentNode !== e.dom; ) n = n.parentNode
-  return n
-}
+  return ancestor;
+};
 
-type DragHandlePluginOptions = {
-  pluginKey?: PluginKey | string
-  element: HTMLElement
-  editor: Editor
-  tippyOptions?: Partial<TippyProps>
+/** The direct child of the editor root that contains `node`. */
+const getOuterNodePos = (view: EditorView, node: Node | null) => {
+  let outer = node;
+  while (outer?.parentNode && outer.parentNode !== view.dom)
+    outer = outer.parentNode;
+  return outer;
+};
+
+export type DragHandleFloatingOptions = {
+  placement?: Placement;
+  offset?: number;
+  zIndex?: number;
+};
+
+type DragHandlePluginOptions = DragHandleFloatingOptions & {
+  pluginKey?: PluginKey | string;
+  element: HTMLElement;
+  editor: Editor;
   onNodeChange?: (data: {
-    editor: Editor
-    node: TNode | null
-    pos: number
-  }) => void
-}
+    editor: Editor;
+    node: TNode | null;
+    pos: number;
+  }) => void;
+};
 
-export const dragHandlePluginDefaultKey = new PluginKey("dragHandle")
+export const dragHandlePluginDefaultKey = new PluginKey('dragHandle');
 export function DragHandlePlugin(
   options: DragHandlePluginOptions
 ): Plugin<{ locked: boolean }> {
   const {
-    pluginKey: e = dragHandlePluginDefaultKey,
+    pluginKey = dragHandlePluginDefaultKey,
     element,
     editor,
-    tippyOptions,
+    placement = 'left-start',
+    offset: offsetDistance = 0,
+    zIndex = 10,
     onNodeChange,
-  } = options
+  } = options;
 
-  const container = document.createElement("div")
-  let tippyInstance: Instance | null = null
-  let x = false
-  let currentNode: TNode | null = null
-  let lastNodePos = -1
+  const container = document.createElement('div');
+  // Floating UI positions this wrapper next to the hovered block.
+  const floating = document.createElement('div');
+  Object.assign(floating.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    zIndex: String(zIndex),
+    visibility: 'hidden',
+    opacity: '0',
+  });
+  let viewActive = false;
+  let locked = false;
+  let currentNode: TNode | null = null;
+  let lastNodePos = -1;
+  let shownReference: Element | null = null;
+  let stopAutoUpdate: (() => void) | null = null;
 
+  const reducedMotion = () =>
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function showFloating(reference: Element) {
+    if (shownReference === reference && stopAutoUpdate) return;
+    stopAutoUpdate?.();
+    shownReference = reference;
+    const anchor: VirtualElement = {
+      getBoundingClientRect: () => reference.getBoundingClientRect(),
+      contextElement: reference,
+    };
+    floating.style.transition = reducedMotion()
+      ? ''
+      : 'opacity 100ms, visibility 100ms';
+    const update = () =>
+      computePosition(anchor, floating, {
+        placement,
+        strategy: 'absolute',
+        middleware: [offset(offsetDistance)],
+      }).then(({ x, y }) => {
+        if (shownReference !== reference) return;
+        Object.assign(floating.style, {
+          left: `${x}px`,
+          top: `${y}px`,
+          visibility: 'visible',
+          opacity: '1',
+        });
+      });
+    stopAutoUpdate = autoUpdate(anchor, floating, update);
+  }
+  function hideFloating() {
+    stopAutoUpdate?.();
+    stopAutoUpdate = null;
+    shownReference = null;
+    floating.style.visibility = 'hidden';
+    floating.style.opacity = '0';
+  }
+  function setCurrentNode(node: TNode | null, pos: number) {
+    currentNode = node;
+    lastNodePos = pos;
+    onNodeChange?.({ editor, node, pos });
+  }
   function hideDragHandle() {
-    tippyInstance?.hide()
-
-    if (currentNode || lastNodePos !== -1) {
-      currentNode = null
-      lastNodePos = -1
-      onNodeChange?.({ editor: editor, node: null, pos: -1 })
-    }
+    hideFloating();
+    if (currentNode || lastNodePos !== -1) setCurrentNode(null, -1);
+  }
+  /** Shows the handle for the top-level block rendered by `dom`. */
+  function trackBlock(view: EditorView, dom: Node | null) {
+    const outer = getOuterNodePos(view, dom);
+    if (!outer || outer === view.dom || outer.nodeType !== 1) return;
+    const pos = view.posAtDOM(outer, 0);
+    const node = getAncestorNodeAtDepth(editor.state.doc, pos);
+    if (node === currentNode) return;
+    setCurrentNode(node, getPreviousNodeStartPosition(editor.state.doc, pos));
+    showFloating(outer as Element);
   }
 
-  let dragImage: HTMLElement | null = null
-  let dragTimer: ReturnType<typeof setTimeout> | null = null
-  let ownedDragging: typeof editor.view.dragging = null
+  let dragImage: HTMLElement | null = null;
+  let dragTimer: ReturnType<typeof setTimeout> | null = null;
+  let ownedDragging: typeof editor.view.dragging = null;
   const cleanupDrag = () => {
-    if (dragTimer) clearTimeout(dragTimer)
-    dragTimer = null
-    dragImage?.remove()
-    dragImage = null
-    document.removeEventListener("drop", cleanupDrag)
+    if (dragTimer) clearTimeout(dragTimer);
+    dragTimer = null;
+    dragImage?.remove();
+    dragImage = null;
+    document.removeEventListener('drop', cleanupDrag);
     if (ownedDragging && editor.view.dragging === ownedDragging)
-      editor.view.dragging = null
-    ownedDragging = null
-    element.style.pointerEvents = "auto"
-  }
-  const onDragStart = (e: DragEvent) => {
-    cleanupDrag()
-    const { view } = editor
-    if (!e.dataTransfer) return
-    const { empty, $from, $to } = view.state.selection
-    const s = getSelectionRangesNearCursor(e, editor)
-    const d = getSelectionRanges($from, $to, 0)
-    const c = d.some((e) =>
-      s.find((t) => t.$from === e.$from && t.$to === e.$to)
-    )
-    const u = empty || !c ? s : d
-    if (!u.length) return
-    const { tr: g } = view.state
-    const h = document.createElement("div")
-    const y = u[0].$from.pos
-    const v = u[u.length - 1].$to.pos
-    const C = NodeRangeSelection.create(view.state.doc, y, v)
-    const E = C.content()
-    u.forEach((e) => {
-      const t = cloneElement(view?.nodeDOM(e.$from.pos) as HTMLElement)
-      h.append(t)
-    })
-    h.style.position = "absolute"
-    h.style.top = "-10000px"
-    document.body.append(h)
-    dragImage = h
-    e.dataTransfer.clearData()
-    e.dataTransfer.setDragImage(h, 0, 0)
-    view.dragging = { slice: E, move: true }
-    ownedDragging = view.dragging
-    g.setSelection(C as unknown as Selection)
-    view.dispatch(g)
-    document.addEventListener("drop", cleanupDrag, { once: true })
+      editor.view.dragging = null;
+    ownedDragging = null;
+    element.style.pointerEvents = 'auto';
+  };
+  const onDragStart = (event: DragEvent) => {
+    cleanupDrag();
+    const { view } = editor;
+    if (!event.dataTransfer) return;
+    const { empty, $from, $to } = view.state.selection;
+    const nearCursor = getSelectionRangesNearCursor(event, editor);
+    const selected = getSelectionRanges($from, $to, 0);
+    const dragsSelection = selected.some((range) =>
+      nearCursor.find(
+        (near) => near.$from === range.$from && near.$to === range.$to
+      )
+    );
+    const ranges = empty || !dragsSelection ? nearCursor : selected;
+    if (!ranges.length) return;
+    const { tr } = view.state;
+    const image = document.createElement('div');
+    const from = ranges[0].$from.pos;
+    const to = ranges[ranges.length - 1].$to.pos;
+    const selection = NodeRangeSelection.create(view.state.doc, from, to);
+    const slice = selection.content();
+    ranges.forEach((range) => {
+      image.append(cloneElement(view.nodeDOM(range.$from.pos) as HTMLElement));
+    });
+    image.style.position = 'absolute';
+    image.style.top = '-10000px';
+    document.body.append(image);
+    dragImage = image;
+    event.dataTransfer.clearData();
+    event.dataTransfer.setDragImage(image, 0, 0);
+    view.dragging = { slice, move: true };
+    ownedDragging = view.dragging;
+    tr.setSelection(selection as unknown as Selection);
+    view.dispatch(tr);
+    document.addEventListener('drop', cleanupDrag, { once: true });
     dragTimer = setTimeout(() => {
-      element && (element.style.pointerEvents = "none")
-    }, 0)
-  }
-  return new Plugin({
-    key: typeof e === "string" ? new PluginKey(e) : e,
+      element.style.pointerEvents = 'none';
+    }, 0);
+  };
+
+  return new Plugin<{ locked: boolean }>({
+    key: typeof pluginKey === 'string' ? new PluginKey(pluginKey) : pluginKey,
     state: {
-      init: () => ({ locked: false }) as { locked: boolean },
-      apply(e, t) {
-        const l = e.getMeta("lockDragHandle")
-        const a = e.getMeta("hideDragHandle")
-        if ((undefined !== l && (x = l), a && tippyInstance)) {
-          return (
-            tippyInstance?.hide(),
-            (x = false),
-            (currentNode = null),
-            (lastNodePos = -1),
-            null == onNodeChange ||
-              onNodeChange({ editor: editor, node: null, pos: -1 }),
-            t
-          )
+      init: () => ({ locked: false }),
+      apply(tr, value) {
+        const lock = tr.getMeta('lockDragHandle');
+        if (lock !== undefined) locked = lock;
+        if (tr.getMeta('hideDragHandle') && viewActive) {
+          hideFloating();
+          locked = false;
+          setCurrentNode(null, -1);
+          return value;
         }
-        if (e.docChanged && -1 !== lastNodePos && element && tippyInstance) {
-          const t = e.mapping.map(lastNodePos)
-          if (t !== lastNodePos) {
-            lastNodePos = t
-          }
-        }
-        return t
+        if (tr.docChanged && lastNodePos !== -1 && viewActive)
+          lastNodePos = tr.mapping.map(lastNodePos);
+        return value;
       },
     },
-    view: (e) => {
-      var t
-      element.addEventListener("dragstart", onDragStart)
-      element.addEventListener("dragend", cleanupDrag)
-      return (
-        (element.draggable = true),
-        (element.style.pointerEvents = "auto"),
-        null === (t = editor.view.dom.parentElement) ||
-          undefined === t ||
-          t.appendChild(container),
-        container.appendChild(element),
-        (container.style.pointerEvents = "none"),
-        (container.style.position = "absolute"),
-        (container.style.top = "0"),
-        (container.style.left = "0"),
-        (tippyInstance = tippy(e.dom, {
-          getReferenceClientRect: null,
-          interactive: true,
-          trigger: "manual",
-          placement: "left-start",
-          hideOnClick: false,
-          duration: 100,
-          zIndex: 10,
-          popperOptions: {
-            modifiers: [
-              { name: "flip", enabled: false },
-              {
-                name: "preventOverflow",
-                options: { rootBoundary: "document", mainAxis: false },
-              },
-            ],
-          },
-          ...tippyOptions,
-          appendTo: container,
-          content: element,
-        })),
-        {
-          update(_t, n) {
-            if (!element || !tippyInstance) return
-            if (
-              ((element.draggable = !x),
-              e.state.doc.eq(n.doc) || -1 === lastNodePos)
-            )
-              return
-            let o = e.nodeDOM(lastNodePos) as HTMLElement
-            if (((o = getOuterNodePos(e, o)), o === e.dom)) return
-            if (1 !== (null == o ? undefined : o.nodeType)) return
-            const r = e.posAtDOM(o, 0),
-              s = getAncestorNodeAtDepth(editor.state.doc, r)
-            if (s !== currentNode) {
-              const t = getPreviousNodeStartPosition(editor.state.doc, r)
-              ;((currentNode = s),
-                (lastNodePos = t),
-                null == onNodeChange ||
-                  onNodeChange({
-                    editor: editor,
-                    node: currentNode as TNode,
-                    pos: lastNodePos,
-                  }),
-                tippyInstance.setProps({
-                  getReferenceClientRect: () => o?.getBoundingClientRect(),
-                }),
-                tippyInstance.show())
-            }
-          },
-          destroy() {
-            cleanupDrag()
-            element.removeEventListener("dragstart", onDragStart)
-            element.removeEventListener("dragend", cleanupDrag)
-            ;(null == tippyInstance || tippyInstance.destroy(),
-              element && removeNode(container))
-            tippyInstance = null
-            currentNode = null
-            lastNodePos = -1
-          },
-        }
-      )
+    view: (view) => {
+      element.addEventListener('dragstart', onDragStart);
+      element.addEventListener('dragend', cleanupDrag);
+      element.draggable = true;
+      element.style.pointerEvents = 'auto';
+      editor.view.dom.parentElement?.appendChild(container);
+      container.appendChild(floating);
+      floating.appendChild(element);
+      Object.assign(container.style, {
+        pointerEvents: 'none',
+        position: 'absolute',
+        top: '0',
+        left: '0',
+      });
+      viewActive = true;
+      return {
+        update(_view, prevState) {
+          if (!viewActive) return;
+          element.draggable = !locked;
+          if (view.state.doc.eq(prevState.doc) || lastNodePos === -1) return;
+          trackBlock(view, view.nodeDOM(lastNodePos));
+        },
+        destroy() {
+          cleanupDrag();
+          element.removeEventListener('dragstart', onDragStart);
+          element.removeEventListener('dragend', cleanupDrag);
+          hideFloating();
+          removeNode(container);
+          viewActive = false;
+          currentNode = null;
+          lastNodePos = -1;
+        },
+      };
     },
     props: {
       handleDOMEvents: {
-        mouseleave: (_e, event) => (
-          x ||
-            (event.target &&
-              !container.contains(event?.relatedTarget as Node) &&
-              hideDragHandle()),
-          false
-        ),
-        mousemove(e, t) {
-          if (!element || !tippyInstance || x) return false
-          if (t.buttons === 1) {
-            hideDragHandle()
-            return false
+        mouseleave: (_view, event) => {
+          if (
+            !locked &&
+            event.target &&
+            !container.contains(event.relatedTarget as Node | null)
+          )
+            hideDragHandle();
+          return false;
+        },
+        mousemove(view, event) {
+          if (!viewActive || locked) return false;
+          if (event.buttons === 1) {
+            hideDragHandle();
+            return false;
           }
-
-          const n = findElementNextToCoords({
-            x: t.clientX,
-            y: t.clientY,
-            direction: "right",
-            editor: editor,
-          })
-          if (!n.resultElement) return false
-          let o = n.resultElement
-          if (((o = getOuterNodePos(e, o)), o === e.dom)) return false
-          if (1 !== (null == o ? undefined : o.nodeType)) return false
-          const r = e.posAtDOM(o, 0),
-            s = getAncestorNodeAtDepth(editor.state.doc, r)
-          if (s !== currentNode) {
-            const t = getPreviousNodeStartPosition(editor.state.doc, r)
-            ;((currentNode = s),
-              (lastNodePos = t),
-              null == onNodeChange ||
-                onNodeChange({
-                  editor: editor,
-                  node: currentNode,
-                  pos: lastNodePos,
-                }),
-              tippyInstance.setProps({
-                getReferenceClientRect: () => o.getBoundingClientRect(),
-              }),
-              tippyInstance.show())
-          }
-          return false
+          const { resultElement } = findElementNextToCoords({
+            x: event.clientX,
+            y: event.clientY,
+            direction: 'right',
+            editor,
+          });
+          if (resultElement) trackBlock(view, resultElement);
+          return false;
         },
       },
     },
-  })
+  });
 }

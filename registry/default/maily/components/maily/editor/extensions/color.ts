@@ -1,4 +1,7 @@
-import TiptapColor, { type ColorOptions } from '@tiptap/extension-color';
+import {
+  Color as TiptapColor,
+  type ColorOptions,
+} from '@tiptap/extension-color';
 
 type ColorStorage = {
   /**

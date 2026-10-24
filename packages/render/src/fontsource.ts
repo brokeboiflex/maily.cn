@@ -16,7 +16,8 @@ const FALLBACK_FONTS = new Set([
   'fantasy',
 ]);
 
-type EmailFontSelection = {
+/** A granular font saved on a text style, button or link card. */
+export type EmailFontSelection = {
   fontFamily: string;
   fontId: string;
   fontFallback: string;
@@ -98,23 +99,36 @@ export function selectionFromAttrs(
   };
 }
 
-function fileUrl(
+/**
+ * Where the email loads one face of a granular font. Without one, granular
+ * fonts render with their fallback stacks only.
+ */
+export type FontFaceUrl = (
   font: EmailFontSelection,
   weight: number,
   style: 'normal' | 'italic'
-) {
-  return `https://cdn.jsdelivr.net/fontsource/fonts/${font.fontId}@${font.fontVersion}/${font.fontSubset}-${weight}-${style}.woff2`;
-}
+) => string | null | undefined;
+
+/** Fontsource's version-pinned WOFF2 files on jsDelivr; opt in through `fontFaceUrl`. */
+export const fontsourceFontFaceUrl: FontFaceUrl = (font, weight, style) =>
+  `https://cdn.jsdelivr.net/fontsource/fonts/${font.fontId}@${font.fontVersion}/${font.fontSubset}-${weight}-${style}.woff2`;
 
 function faceStyle(
   font: EmailFontSelection,
   weight: number,
-  style: 'normal' | 'italic'
+  style: 'normal' | 'italic',
+  fontFaceUrl: FontFaceUrl
 ) {
-  return `@font-face{font-family:'${escapeCssString(font.fontFamily)}';font-style:${style};font-weight:${weight};mso-font-alt:'${font.fontFallback}';font-display:swap;src:url(${fileUrl(font, weight, style)}) format('woff2')}`;
+  const url = fontFaceUrl(font, weight, style);
+  if (!url) return '';
+  return `@font-face{font-family:'${escapeCssString(font.fontFamily)}';font-style:${style};font-weight:${weight};mso-font-alt:'${font.fontFallback}';font-display:swap;src:url(${JSON.stringify(url)}) format('woff2')}`;
 }
 
-export function fontsourceStyles(content: JSONContent): string {
+export function fontFaceStyles(
+  content: JSONContent,
+  fontFaceUrl?: FontFaceUrl
+): string {
+  if (!fontFaceUrl) return '';
   const selections = new Map<string, EmailFontSelection>();
 
   const visit = (node: JSONContent) => {
@@ -149,16 +163,18 @@ export function fontsourceStyles(content: JSONContent): string {
 
   return [...selections.values()]
     .flatMap((font) => {
-      const faces = [faceStyle(font, font.fontRegularWeight, 'normal')];
+      const face = (weight: number, style: 'normal' | 'italic') =>
+        faceStyle(font, weight, style, fontFaceUrl);
+      const faces = [face(font.fontRegularWeight, 'normal')];
 
       if (font.fontBoldWeight !== font.fontRegularWeight) {
-        faces.push(faceStyle(font, font.fontBoldWeight, 'normal'));
+        faces.push(face(font.fontBoldWeight, 'normal'));
       }
 
       if (font.fontHasItalic) {
-        faces.push(faceStyle(font, font.fontRegularWeight, 'italic'));
+        faces.push(face(font.fontRegularWeight, 'italic'));
         if (font.fontBoldWeight !== font.fontRegularWeight) {
-          faces.push(faceStyle(font, font.fontBoldWeight, 'italic'));
+          faces.push(face(font.fontBoldWeight, 'italic'));
         }
       }
 

@@ -1,4 +1,4 @@
-import TiptapHeading from '@tiptap/extension-heading';
+import { Heading as TiptapHeading } from '@tiptap/extension-heading';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
 import { DEFAULT_TEXT_DIRECTION } from '../paragraph/paragraph';
 

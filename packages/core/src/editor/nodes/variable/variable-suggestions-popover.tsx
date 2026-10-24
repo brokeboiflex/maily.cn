@@ -1,4 +1,4 @@
-import { useMailyContext } from '@/editor/provider';
+import { useMailyContext } from '@/editor/maily-context';
 import {
   ArrowDownIcon,
   ArrowUpIcon,

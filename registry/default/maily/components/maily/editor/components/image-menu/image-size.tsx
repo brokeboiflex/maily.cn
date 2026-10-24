@@ -1,5 +1,5 @@
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import {
   InputGroup,
   InputGroupAddon,
@@ -30,7 +30,7 @@ export function ImageSize(props: ImageSizeProps) {
             <InputGroupInput
               {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
               aria-label={label}
-              className="h-full min-w-0 appearance-none px-1 text-sm uppercase tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              className="h-full min-w-0 [appearance:textfield] appearance-none px-1 text-sm uppercase tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               type="number"
               value={value}
               onChange={(e) => onValueChange(e.target.value)}

@@ -3,7 +3,7 @@ import { updateAttributes } from '../../utils/update-attribute';
 import { mergeAttributes } from '@tiptap/core';
 import { Node } from '@tiptap/core';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
-import { v4 as uuidv4 } from 'uuid';
+import { createId } from '../../utils/create-id';
 
 export const DEFAULT_COLUMNS_GAP = 8;
 
@@ -78,7 +78,7 @@ export const ColumnsExtension = Node.create({
               {
                 type: 'column',
                 attrs: {
-                  columnId: uuidv4(),
+                  columnId: createId(),
                 },
                 content: [
                   {
@@ -89,7 +89,7 @@ export const ColumnsExtension = Node.create({
               {
                 type: 'column',
                 attrs: {
-                  columnId: uuidv4(),
+                  columnId: createId(),
                 },
                 content: [
                   {

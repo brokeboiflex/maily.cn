@@ -10,11 +10,6 @@ import {
   type MailyMailboxMessageDetail,
   type MailyMailboxViewProps,
 } from './index';
-import {
-  clearPendingSendReceipt,
-  readPendingSendReceipts,
-  retainPendingSendReceipt,
-} from './send-recovery';
 
 (
   globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -70,7 +65,7 @@ async function mount(
   document.body.append(container);
   const root = createRoot(container);
   const account = { id: crypto.randomUUID(), address: 'me@example.com' };
-  let props = { dataSource, pollIntervalMs: 0, account, ...initial };
+  let props = { dataSource, account, ...initial };
   const render = async (next: Partial<MailyMailboxViewProps> = {}) => {
     props = { ...props, ...next };
     await act(async () => {
@@ -152,9 +147,8 @@ async function mount(
   };
 }
 
-it('isolates a late old-source preparation from new compose content and retains both uncertain receipts', async () => {
+it('isolates a late old-source preparation from the new source', async () => {
   const oldPreparation = deferred<{ id: string; _revision: string }>();
-  const currentSend = deferred<void>();
   const oldSend = vi.fn();
   const discardUploadedAttachment = vi.fn();
   const attachment = { id: 'old-upload', filename: 'old.txt', size: 4 };
@@ -162,7 +156,7 @@ it('isolates a late old-source preparation from new compose content and retains 
     id: 'current-draft',
     _revision: 'current-v1',
   }));
-  const sendDraft = vi.fn(() => currentSend.promise);
+  const sendDraft = vi.fn();
   const view = await mount(
     source({
       createDraft: () => oldPreparation.promise,
@@ -171,8 +165,6 @@ it('isolates a late old-source preparation from new compose content and retains 
       discardUploadedAttachment,
     })
   );
-  const recoveryKey = `maily:pending-send:${view.account.id}`;
-  const journalPrefix = `maily:pending-send-receipts:${encodeURIComponent(recoveryKey)}:`;
   try {
     await view.click('[aria-label="Compose"]');
     await view.edit('input[name="subject"]', 'Old intent');
@@ -192,64 +184,18 @@ it('isolates a late old-source preparation from new compose content and retains 
     oldPreparation.resolve({ id: 'old-draft', _revision: 'old-v1' });
     await flush();
     await view.text('Send');
+    // The departed source's preparation never sends, and the host it was
+    // handed to owns its upload.
     expect(oldSend).not.toHaveBeenCalled();
     expect(discardUploadedAttachment).not.toHaveBeenCalled();
     expect(createDraft).toHaveBeenCalledWith(
       expect.objectContaining({ subject: 'New intent', revision: undefined })
     );
-    expect(sendDraft).toHaveBeenCalledWith('current-draft');
-    const receipts = Array.from(
-      { length: window.sessionStorage.length },
-      (_, index) => window.sessionStorage.key(index)!
-    )
-      .filter((key) => key === recoveryKey || key.startsWith(journalPrefix))
-      .map((key) => window.sessionStorage.getItem(key));
-    expect(receipts).toContain('old-draft');
-    expect(receipts).toContain('current-draft');
-    currentSend.reject(Error('response lost'));
-    await flush();
-    await view.close();
-    const resumedSend = vi.fn();
-    const resumed = await mount(source({ sendDraft: resumedSend }), {
-      account: view.account,
+    expect(sendDraft).toHaveBeenCalledWith('current-draft', {
+      revision: 'current-v1',
     });
-    try {
-      await resumed.click('[aria-label="Compose"]');
-      expect(
-        resumed.container.querySelector('input[name="subject"]')
-      ).toBeNull();
-      expect(resumed.container.textContent).toContain(
-        'Could not send the message.'
-      );
-      expect(resumedSend).not.toHaveBeenCalled();
-    } finally {
-      await resumed.close();
-    }
   } finally {
-    if (view.container.isConnected) await view.close();
-    for (const key of Array.from(
-      { length: window.sessionStorage.length },
-      (_, index) => window.sessionStorage.key(index)!
-    ))
-      if (key === recoveryKey || key.startsWith(journalPrefix))
-        window.sessionStorage.removeItem(key);
-  }
-});
-
-it('isolates journals for opaque recovery scopes containing another scope and the draft delimiter', () => {
-  const key = `maily:pending-send:${crypto.randomUUID()}:actor`;
-  const overlapping = `${key}:draft:tenant`;
-  try {
-    retainPendingSendReceipt(key, 'first');
-    expect(readPendingSendReceipts(overlapping)).toEqual([]);
-    retainPendingSendReceipt(overlapping, 'second');
-    expect(readPendingSendReceipts(key)).toEqual(['first']);
-    expect(readPendingSendReceipts(overlapping)).toEqual(['second']);
-    clearPendingSendReceipt(key, 'first');
-    expect(readPendingSendReceipts(overlapping)).toEqual(['second']);
-  } finally {
-    clearPendingSendReceipt(key, 'first');
-    clearPendingSendReceipt(overlapping, 'second');
+    await view.close();
   }
 });
 
@@ -268,7 +214,8 @@ it('lets a newer same-query read own progress after superseding a manual refresh
   const view = await mount(source({ listMessages }), { onError });
   try {
     await view.click('button[aria-label="Refresh"]');
-    await view.render({ onError: newerOnError });
+    // A page-size change re-reads the same query while the refresh is pending.
+    await view.render({ onError: newerOnError, pageSize: 25 });
     oldRead.reject(Error('Superseded refresh failed'));
     await flush();
     expect(onError).not.toHaveBeenCalled();

@@ -5,3 +5,9 @@ pnpm-lock.yaml
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+
+# Installed by the shadcn CLI; keep its original formatting.
+src/components/ui/
+src/components/maily/
+src/lib/maily-render/
+public/r/

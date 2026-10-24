@@ -16,9 +16,9 @@ import {
   Row,
   Column,
   Section,
+  render as reactEmailRender,
   type HtmlProps,
-} from '@react-email/components';
-import { renderAsync as reactEmailRenderAsync } from '@react-email/render';
+} from 'react-email';
 import type { JSONContent } from '@tiptap/core';
 import { deepMerge } from '@antfu/utils';
 import { generateKey } from './utils';
@@ -36,29 +36,25 @@ import {
   DEFAULT_LINK_TEXT_COLOR,
 } from '@maily-to/shared';
 import { Preheader } from './preheader';
-import { emailFontStack, fontsourceStyles } from './fontsource';
+import { emailFontStack, fontFaceStyles, type FontFaceUrl } from './fontsource';
 
 interface NodeOptions {
   parent?: JSONContent;
   prev?: JSONContent;
   next?: JSONContent;
 
-  payloadValue?: PayloadValue;
+  // Repeated items may be primitives, which then stand for themselves.
+  payloadValue?: unknown;
 }
 
-export interface MarkType {
-  [key: string]: any;
-  type: string;
-  attrs?: Record<string, any> | undefined;
-}
+export type MarkType = NonNullable<JSONContent['marks']>[number];
 
 const antialiased: CSSProperties = {
   WebkitFontSmoothing: 'antialiased',
   MozOsxFontSmoothing: 'grayscale',
 };
 
-const allowedHeadings = ['h1', 'h2', 'h3'] as const;
-type AllowedHeadings = (typeof allowedHeadings)[number];
+type AllowedHeadings = 'h1' | 'h2' | 'h3';
 
 const headings: Record<AllowedHeadings, CSSProperties> = {
   h1: {
@@ -78,13 +74,45 @@ const headings: Record<AllowedHeadings, CSSProperties> = {
   },
 };
 
-const allowedLogoSizes = ['sm', 'md', 'lg'] as const;
-type AllowedLogoSizes = (typeof allowedLogoSizes)[number];
+// Spacer heights are pixels. Documents from older editors stored named sizes
+// from the editor's spacing scale (core `editor/utils/spacing.ts`).
+const LEGACY_SPACER_HEIGHTS = new Map([
+  ['xs', 4],
+  ['sm', 8],
+  ['md', 16],
+  ['lg', 32],
+  ['xl', 64],
+]);
+const DEFAULT_SPACER_HEIGHT = 8;
+
+function spacerHeight(value: unknown): number {
+  if (typeof value === 'number')
+    return Number.isFinite(value) && value >= 0 ? value : DEFAULT_SPACER_HEIGHT;
+  if (typeof value !== 'string' || !value.trim()) return DEFAULT_SPACER_HEIGHT;
+  const named = LEGACY_SPACER_HEIGHTS.get(value);
+  if (named !== undefined) return named;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0
+    ? parsed
+    : DEFAULT_SPACER_HEIGHT;
+}
+type AllowedLogoSizes = 'sm' | 'md' | 'lg';
 
 const logoSizes: Record<AllowedLogoSizes, string> = {
   sm: '40px',
   md: '48px',
   lg: '64px',
+};
+
+/** Attributes of every link the email renders. */
+export type LinkAttributes = {
+  target?: string;
+  rel?: string;
+};
+
+export const DEFAULT_LINK_ATTRIBUTES: LinkAttributes = {
+  target: '_blank',
+  rel: 'noopener noreferrer',
 };
 
 export interface MailyConfig {
@@ -95,6 +123,16 @@ export interface MailyConfig {
    * Default: `undefined`
    */
   preview?: string | JSONContent;
+  /**
+   * Where the email loads granular fonts chosen in the editor. Without it,
+   * those fonts render with their fallback stacks only. Pass
+   * `fontsourceFontFaceUrl` to load Fontsource files from jsDelivr.
+   */
+  fontFaceUrl?: FontFaceUrl;
+  /**
+   * `target` and `rel` of every link. Default: `DEFAULT_LINK_ATTRIBUTES`.
+   */
+  linkAttributes?: LinkAttributes;
   /**
    * The theme object allows you to customize the colors and font sizes of the
    * rendered email.
@@ -183,9 +221,6 @@ export const DEFAULT_META_TAGS: MetaDescriptors = [
     content: 'IE=edge',
   },
   {
-    name: 'x-apple-disable-message-reformatting',
-  },
-  {
     // http://www.html-5.com/metatags/format-detection-meta-tag.html
     // It will prevent iOS from automatically detecting possible phone numbers in a block of text
     name: 'format-detection',
@@ -233,8 +268,71 @@ export type VariableFormatter = (options: {
 export type VariableValues = Map<string, string>;
 export type LinkValues = Map<string, string>;
 
-export type PayloadValue = Record<string, any> | boolean;
+/** Caller data addressed by variables, `repeat` blocks and `showIfKey`. */
+export type PayloadValue = object | boolean;
 export type PayloadValues = Map<string, PayloadValue>;
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+// Themes merge into a copy: neither the shared defaults nor the caller's theme
+// is mutated. A font replaces the current one as a whole (or `null` removes
+// it), so a host font never inherits the default's web font.
+function mergeTheme(
+  base: ThemeOptions,
+  theme: Partial<ThemeOptions>
+): ThemeOptions {
+  const { font, ...rest } = theme;
+  const merged = deepMerge(structuredClone(base), rest) as ThemeOptions;
+  if ('font' in theme) merged.font = font ? { ...font } : font;
+  return merged;
+}
+
+// Meta tags with the same identity replace each other.
+function metaKey(tag: MetaDescriptors[number]): string | null {
+  for (const key of ['name', 'httpEquiv', 'property', 'charSet', 'title'])
+    if (key in tag)
+      return `${key}:${String((tag as Record<string, unknown>)[key]).toLowerCase()}`;
+  return null;
+}
+
+// Repeat items may be objects, primitives, `null` or `undefined`. A null item
+// has no fields, so it renders with an empty item scope like `undefined`.
+function isPayloadRecord(payload: unknown): payload is Record<string, unknown> {
+  return typeof payload === 'object' && payload !== null;
+}
+
+// An image renders only a usable source: a non-blank string, a number or a
+// URL (payload variables may hold any of these). Anything else, such as an
+// unset source, a boolean or a plain object, renders no image.
+function imageSource(src: unknown): string | null {
+  const value =
+    typeof src === 'string'
+      ? src
+      : typeof src === 'number' || src instanceof URL
+        ? String(src)
+        : '';
+  return value.trim() ? value : null;
+}
+
+// A variable reads a key of an object payload; any other payload is the value.
+function payloadVariable(payload: unknown, key: string): unknown {
+  return isPayloadRecord(payload) ? payload[key] : payload;
+}
+
+// `repeat` and `showIfKey` read a key of an object payload, else of `{}`.
+function payloadField(payload: unknown, key: string): unknown {
+  const scope: Record<string, unknown> = isPayloadRecord(payload)
+    ? payload
+    : {};
+  return scope[key];
+}
 
 export class Maily {
   readonly preheader = new Preheader(this);
@@ -257,7 +355,11 @@ export class Maily {
   private payloadValues: PayloadValues = new Map();
   private marksOrder = ['underline', 'bold', 'italic', 'textStyle', 'link'];
   private meta: MetaDescriptors = DEFAULT_META_TAGS.map((tag) => ({ ...tag }));
-  private htmlProps: HtmlProps = DEFAULT_HTML_PROPS;
+  private htmlProps: HtmlProps = { ...DEFAULT_HTML_PROPS };
+
+  private get linkAttributes(): LinkAttributes {
+    return this.config.linkAttributes ?? DEFAULT_LINK_ATTRIBUTES;
+  }
 
   constructor(content: JSONContent = { type: 'doc', content: [] }) {
     this.content = content;
@@ -268,10 +370,17 @@ export class Maily {
   }
 
   setTheme(theme: Partial<ThemeOptions>) {
-    this.config.theme = deepMerge(
-      this.config.theme || DEFAULT_THEME,
-      theme
-    ) as ThemeOptions;
+    this.config.theme = mergeTheme(this.config.theme || DEFAULT_THEME, theme);
+  }
+
+  /** See `MailyConfig.fontFaceUrl`. */
+  setFontFaceUrl(fontFaceUrl?: FontFaceUrl) {
+    this.config.fontFaceUrl = fontFaceUrl;
+  }
+
+  /** See `MailyConfig.linkAttributes`. */
+  setLinkAttributes(attributes?: LinkAttributes) {
+    this.config.linkAttributes = attributes && { ...attributes };
   }
 
   setVariableFormatter(formatter: VariableFormatter) {
@@ -362,28 +471,30 @@ export class Maily {
   }
 
   /**
-   * `setMetaTags` will add the meta tags.
+   * `setMetaTags` adds meta tags. A tag with the same `name`, `httpEquiv`,
+   * `property`, `charSet` or `title` as an existing one replaces it.
    *
    * @param meta - The meta tags
    */
   setMetaTags(meta: MetaDescriptors) {
     for (const tag of meta) {
+      const key = metaKey(tag);
       const fingerprint = JSON.stringify(
         Object.keys(tag)
           .sort()
-          .map((key) => [key, tag[key as keyof typeof tag]])
+          .map((name) => [name, tag[name as keyof typeof tag]])
       );
-      if (
-        !this.meta.some(
-          (existing) =>
-            JSON.stringify(
+      const index = this.meta.findIndex((existing) =>
+        key
+          ? metaKey(existing) === key
+          : JSON.stringify(
               Object.keys(existing)
                 .sort()
-                .map((key) => [key, existing[key as keyof typeof existing]])
+                .map((name) => [name, existing[name as keyof typeof existing]])
             ) === fingerprint
-        )
-      )
-        this.meta.push({ ...tag });
+      );
+      if (index >= 0) this.meta[index] = { ...tag };
+      else this.meta.push({ ...tag });
     }
   }
 
@@ -399,48 +510,41 @@ export class Maily {
     };
   }
 
+  /**
+   * Every literal link in the document: link marks, buttons, image and inline
+   * image links and link cards, at any depth. Variable links are skipped.
+   */
   getAllLinks() {
-    const nodes = this.content.content || [];
     const links = new Set<string>();
 
-    const isValidLink = (href: string) => {
-      return (
+    const add = (href: unknown) => {
+      if (
+        typeof href === 'string' &&
         href &&
         this.isValidUrl(href) &&
         !href.startsWith('#') &&
         !href.startsWith('mailto:') &&
-        !href.startsWith('tel:') &&
-        typeof href === 'string'
-      );
+        !href.startsWith('tel:')
+      )
+        links.add(href);
     };
 
-    const extractLinksFromNode = (node: JSONContent) => {
-      if (node.type === 'button') {
-        const originalLink = node.attrs?.url;
-        if (isValidLink(originalLink) && originalLink) {
-          links.add(originalLink);
-        }
-      } else if (node.content) {
-        node.content.forEach((childNode) => {
-          if (childNode.marks) {
-            childNode.marks.forEach((mark) => {
-              const originalLink = mark.attrs?.href;
-              if (mark.type === 'link' && isValidLink(originalLink)) {
-                links.add(originalLink);
-              }
-            });
-          }
-          if (childNode.content) {
-            extractLinksFromNode(childNode);
-          }
-        });
-      }
+    const visit = (node: JSONContent) => {
+      const attrs = node.attrs ?? {};
+      if (node.type === 'button' && !attrs.isUrlVariable) add(attrs.url);
+      if (
+        (node.type === 'image' || node.type === 'inlineImage') &&
+        !attrs.isExternalLinkVariable
+      )
+        add(attrs.externalLink);
+      if (node.type === 'linkCard') add(attrs.link);
+      for (const mark of node.marks ?? [])
+        if (mark.type === 'link' && !mark.attrs?.isUrlVariable)
+          add(mark.attrs?.href);
+      node.content?.forEach(visit);
     };
 
-    nodes.forEach((childNode) => {
-      extractLinksFromNode(childNode);
-    });
-
+    this.content.content?.forEach(visit);
     return links;
   }
 
@@ -448,7 +552,7 @@ export class Maily {
     try {
       new URL(href);
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
   }
@@ -458,7 +562,13 @@ export class Maily {
   ): Promise<string> {
     const markup = this.markup();
 
-    return reactEmailRenderAsync(markup, options);
+    // react-email's options are a union discriminated by `plainText`.
+    return reactEmailRender(
+      markup,
+      options.plainText
+        ? { pretty: options.pretty, plainText: true }
+        : { pretty: options.pretty, plainText: false }
+    );
   }
 
   /**
@@ -498,13 +608,20 @@ export class Maily {
     const tags = meta(this.meta);
     const htmlProps = this.htmlProps;
     const containerStyles = this.config.theme?.container;
-    const configuredFont = this.config.theme?.font || DEFAULT_FONT;
-    const fontOptions: FontProps = {
+    // `null` removes the default font; a web font is loaded only when given.
+    const configuredFont =
+      this.config.theme?.font === null
+        ? null
+        : (this.config.theme?.font ?? DEFAULT_FONT);
+    const fontOptions: FontProps | null = configuredFont && {
       ...configuredFont,
       fontStyle: configuredFont.fontStyle ?? 'normal',
       fontWeight: configuredFont.fontWeight ?? 400,
     };
-    const selectedFontStyles = fontsourceStyles(this.content);
+    const selectedFontStyles = fontFaceStyles(
+      this.content,
+      this.config.fontFaceUrl
+    );
 
     const bodyStyles: CSSProperties = {
       margin: '0px',
@@ -516,11 +633,19 @@ export class Maily {
     const markup = (
       <Html {...htmlProps}>
         <Head>
-          <Font {...fontOptions} />
+          {fontOptions?.webFont ? (
+            <Font {...fontOptions} />
+          ) : fontOptions ? (
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `*{font-family:${emailFontStack(fontOptions.fontFamily, fontOptions.fallbackFontFamily)}}`,
+              }}
+            />
+          ) : null}
 
           {selectedFontStyles ? (
             <style
-              data-maily-fonts="fontsource"
+              data-maily-fonts=""
               dangerouslySetInnerHTML={{ __html: selectedFontStyles }}
             />
           ) : null}
@@ -656,10 +781,9 @@ export class Maily {
   private renderMark(node: JSONContent, options?: NodeOptions): JSX.Element {
     // It will wrap the text with the corresponding mark type
     const text = node?.text || <>&nbsp;</>;
-    let marks = node?.marks || [];
-    // sort the marks by uderline, bold, italic, textStyle, link
-    // so that the text will be wrapped in the correct order
-    marks.sort((a, b) => {
+    // Wrap in underline, bold, italic, textStyle, link order, without
+    // reordering the caller's marks.
+    const marks = [...(node?.marks || [])].sort((a, b) => {
       return this.marksOrder.indexOf(a.type) - this.marksOrder.indexOf(b.type);
     });
 
@@ -790,8 +914,7 @@ export class Maily {
     const linkTheme = this.config.theme?.link;
 
     let href = attrs?.href || '#';
-    const target = attrs?.target || '_blank';
-    const rel = attrs?.rel || 'noopener noreferrer nofollow';
+    const { target, rel } = this.linkAttributes;
     const isUrlVariable = attrs?.isUrlVariable ?? false;
 
     if (isUrlVariable) {
@@ -831,13 +954,10 @@ export class Maily {
       });
     }
 
-    return (
-      (typeof payloadValue === 'object'
-        ? payloadValue[linkWithoutProtocol]
-        : payloadValue) ??
+    // Payload values are rendered as the caller provided them.
+    return (payloadVariable(payloadValue, linkWithoutProtocol) ??
       this.variableValues.get(linkWithoutProtocol) ??
-      href
-    );
+      href) as string;
   }
 
   protected heading(node: JSONContent, options?: NodeOptions): JSX.Element {
@@ -922,19 +1042,23 @@ export class Maily {
     // If `shouldReplaceVariableValues` is true, replace the variable values
     // Otherwise, just return the formatted variable
     if (this.shouldReplaceVariableValues) {
-      formattedVariable =
-        (typeof payloadValue === 'object'
-          ? payloadValue[variable]
-          : payloadValue) ??
+      // Payload values are rendered as the caller provided them.
+      formattedVariable = (payloadVariable(payloadValue, variable) ??
         this.variableValues.get(variable) ??
         fallback ??
-        formattedVariable;
+        formattedVariable) as string;
     }
 
     return formattedVariable;
   }
 
-  protected horizontalRule(_: JSONContent, __?: NodeOptions): JSX.Element {
+  // Renderers share the dispatcher's signature so subclasses can override
+  // them; these two ignore their inputs.
+  protected horizontalRule(
+    node: JSONContent,
+    options?: NodeOptions
+  ): JSX.Element;
+  protected horizontalRule(): JSX.Element {
     return (
       <Hr
         style={{
@@ -1026,7 +1150,7 @@ export class Maily {
 
     const buttonTheme = this.config.theme?.button;
 
-    let {
+    const {
       text: _text,
       isTextVariable,
       url,
@@ -1095,6 +1219,8 @@ export class Maily {
       >
         <Button
           href={href}
+          target={this.linkAttributes.target}
+          rel={this.linkAttributes.rel}
           style={{
             color: String(textColor),
             backgroundColor:
@@ -1118,8 +1244,7 @@ export class Maily {
   }
 
   protected spacer(node: JSONContent, options?: NodeOptions): JSX.Element {
-    const { attrs } = node;
-    const { height } = attrs || {};
+    const height = spacerHeight(node.attrs?.height);
 
     const shouldShow = this.shouldShow(node, options);
     if (!shouldShow) {
@@ -1135,14 +1260,15 @@ export class Maily {
     );
   }
 
-  protected hardBreak(_: JSONContent, __?: NodeOptions): JSX.Element {
+  protected hardBreak(node: JSONContent, options?: NodeOptions): JSX.Element;
+  protected hardBreak(): JSX.Element {
     return <br />;
   }
 
   protected logo(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
-    let {
-      src,
+    const {
+      src: rawSrc,
       isSrcVariable,
       alt,
       title,
@@ -1156,7 +1282,10 @@ export class Maily {
       return <></>;
     }
 
-    src = isSrcVariable ? this.variableUrlValue(src, options) : src;
+    const src = imageSource(
+      isSrcVariable ? this.variableUrlValue(rawSrc, options) : rawSrc
+    );
+    if (!src) return <></>;
 
     const { shouldRemoveBottomMargin } = this.getMarginOverrideConditions(
       node,
@@ -1172,13 +1301,13 @@ export class Maily {
       >
         <Column align={alignment}>
           <Img
-            alt={alt || title || 'Logo'}
+            alt={alt || title || ''}
             src={src}
             style={{
               width: logoSizes[size as AllowedLogoSizes] || size,
               height: logoSizes[size as AllowedLogoSizes] || size,
             }}
-            title={title || alt || 'Logo'}
+            title={title || undefined}
           />
         </Column>
       </Row>
@@ -1187,15 +1316,15 @@ export class Maily {
 
   protected image(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
-    let {
-      src,
+    const {
+      src: rawSrc,
       isSrcVariable,
       alt,
       title,
       width = 'auto',
       height = 'auto',
       alignment = 'center',
-      externalLink = '',
+      externalLink: rawExternalLink = '',
       isExternalLinkVariable,
       borderRadius = 0,
     } = attrs || {};
@@ -1210,10 +1339,13 @@ export class Maily {
       options
     );
 
-    src = isSrcVariable ? this.variableUrlValue(src, options) : src;
-    externalLink = isExternalLinkVariable
-      ? this.variableUrlValue(externalLink, options)
-      : externalLink;
+    const src = imageSource(
+      isSrcVariable ? this.variableUrlValue(rawSrc, options) : rawSrc
+    );
+    if (!src) return <></>;
+    const externalLink = isExternalLinkVariable
+      ? this.variableUrlValue(rawExternalLink, options)
+      : this.linkValues.get(rawExternalLink) || rawExternalLink;
 
     // Handle width value
     const imageWidth = width === 'auto' ? 'auto' : Number(width);
@@ -1225,7 +1357,7 @@ export class Maily {
 
     const mainImage = (
       <Img
-        alt={alt || title || 'Image'}
+        alt={alt || title || ''}
         src={src}
         style={{
           width: widthStyle, // Use the calculated width
@@ -1237,7 +1369,7 @@ export class Maily {
           display: 'block', // Prevent unwanted spacing
           borderRadius,
         }}
-        title={title || alt || 'Image'}
+        title={title || undefined}
       />
     );
 
@@ -1252,13 +1384,13 @@ export class Maily {
           {externalLink ? (
             <a
               href={externalLink}
-              rel="noopener noreferrer"
+              rel={this.linkAttributes.rel}
               style={{
                 display: 'block',
                 maxWidth: '100%',
                 textDecoration: 'none',
               }}
-              target="_blank"
+              target={this.linkAttributes.target}
             >
               {mainImage}
             </a>
@@ -1371,7 +1503,7 @@ export class Maily {
     return (
       <a
         href={href}
-        rel="noopener noreferrer"
+        rel={this.linkAttributes.rel}
         style={{
           border: '1px solid #eaeaea',
           borderRadius: '10px',
@@ -1380,7 +1512,7 @@ export class Maily {
           display: 'block',
           marginBottom: shouldRemoveBottomMargin ? '0px' : '20px',
         }}
-        target="_blank"
+        target={this.linkAttributes.target}
       >
         {image ? (
           <Row
@@ -1395,7 +1527,7 @@ export class Maily {
               }}
             >
               <Img
-                alt={title || 'Link Card'}
+                alt={title || ''}
                 src={image}
                 style={{
                   borderRadius: '10px 10px 0 0',
@@ -1403,7 +1535,7 @@ export class Maily {
                   height: '100%',
                   objectFit: 'cover',
                 }}
-                title={title || 'Link Card'}
+                title={title || undefined}
               />
             </Column>
           </Row>
@@ -1497,7 +1629,8 @@ export class Maily {
               {linkTitle ? (
                 <a
                   href={href}
-                  rel="noopener noreferrer"
+                  rel={this.linkAttributes.rel}
+                  target={this.linkAttributes.target}
                   style={{
                     color: this.config.theme?.colors?.linkCardTitle,
                     fontSize: '14px',
@@ -1633,8 +1766,8 @@ export class Maily {
           const isMiddleColumn = index > 0 && index < columnCount - 1;
           const isLastColumn = index === content.length - 1;
 
-          let paddingLeft = 0;
-          let paddingRight = 0;
+          let paddingLeft: number;
+          let paddingRight: number;
 
           // For 2 columns, apply a simple gap logic
           if (columnCount < 3) {
@@ -1729,10 +1862,10 @@ export class Maily {
       return <></>;
     }
 
-    let { payloadValue } = options || {};
-    payloadValue = typeof payloadValue === 'object' ? payloadValue : {};
-
-    const values = this.payloadValues.get(each) ?? payloadValue[each] ?? [];
+    const values =
+      this.payloadValues.get(each) ??
+      payloadField(options?.payloadValue, each) ??
+      [];
     if (!Array.isArray(values)) {
       throw new Error(`Payload value for each "${each}" is not an array`);
     }
@@ -1772,9 +1905,10 @@ export class Maily {
       return true;
     }
 
-    let { payloadValue } = options || {};
-    payloadValue = typeof payloadValue === 'object' ? payloadValue : {};
-    return !!(this.payloadValues.get(showIfKey) ?? payloadValue[showIfKey]);
+    return !!(
+      this.payloadValues.get(showIfKey) ??
+      payloadField(options?.payloadValue, showIfKey)
+    );
   }
 
   htmlCodeBlock(node: JSONContent, options?: NodeOptions): JSX.Element {
@@ -1791,12 +1925,13 @@ export class Maily {
         if (n?.type === 'text') {
           return acc + n?.text;
         } else if (n?.type === 'variable') {
+          // Values are text inside the authored markup, not markup.
           const value = this.getVariableValue(
             n?.attrs?.id,
             n?.attrs?.fallback,
             options
           );
-          return acc + value;
+          return acc + escapeHtml(String(value ?? ''));
         }
 
         return acc;
@@ -1835,27 +1970,30 @@ export class Maily {
 
   protected inlineImage(node: JSONContent, options?: NodeOptions): JSX.Element {
     const { attrs } = node;
-    let {
-      src,
+    const {
+      src: rawSrc,
       isSrcVariable,
       alt = '',
       title = '',
       height = DEFAULT_INLINE_IMAGE_HEIGHT,
       width = DEFAULT_INLINE_IMAGE_WIDTH,
-      externalLink = '',
+      externalLink: rawExternalLink = '',
       isExternalLinkVariable,
     } = attrs || {};
 
-    src = isSrcVariable ? this.variableUrlValue(src, options) : src;
-    externalLink = isExternalLinkVariable
-      ? this.variableUrlValue(externalLink, options)
-      : externalLink;
+    const src = imageSource(
+      isSrcVariable ? this.variableUrlValue(rawSrc, options) : rawSrc
+    );
+    if (!src) return <></>;
+    const externalLink = isExternalLinkVariable
+      ? this.variableUrlValue(rawExternalLink, options)
+      : this.linkValues.get(rawExternalLink) || rawExternalLink;
 
     const image = (
       <img
         src={src}
         alt={alt}
-        title={title}
+        title={title || undefined}
         width={width}
         height={height}
         style={{
@@ -1877,12 +2015,12 @@ export class Maily {
     return (
       <a
         href={externalLink}
-        rel="noopener noreferrer"
+        rel={this.linkAttributes.rel}
         style={{
           display: 'inline',
           textDecoration: 'none',
         }}
-        target="_blank"
+        target={this.linkAttributes.target}
       >
         {image}
       </a>

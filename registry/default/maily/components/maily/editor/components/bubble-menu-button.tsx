@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { forwardRef, type ComponentPropsWithoutRef } from 'react';

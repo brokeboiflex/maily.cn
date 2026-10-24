@@ -1,27 +1,23 @@
-import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from "../../utils/constants"
-import { useMailyContext } from "../../provider"
+import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
+import { useMailyContext } from '../../maily-context';
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from "@/components/ui/input-group"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from '@/components/ui/input-group';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ImageSizeProps = {
-  value: string
-  onValueChange: (value: string) => void
-  dimension: "width" | "height"
-}
+  value: string;
+  onValueChange: (value: string) => void;
+  dimension: 'width' | 'height';
+};
 
 export function ImageSize(props: ImageSizeProps) {
-  const { value, onValueChange, dimension } = props
-  const { t } = useMailyContext()
+  const { value, onValueChange, dimension } = props;
+  const { t } = useMailyContext();
   const label =
-    dimension === "width" ? t("imageMenu.width") : t("imageMenu.height")
+    dimension === 'width' ? t('imageMenu.width') : t('imageMenu.height');
 
   return (
     <Tooltip>
@@ -43,12 +39,12 @@ export function ImageSize(props: ImageSizeProps) {
               align="inline-end"
               className="pr-1.5 text-xs leading-none"
             >
-              {t("imageMenu.unitPx")}
+              {t('imageMenu.unitPx')}
             </InputGroupAddon>
           </InputGroup>
         </span>
       </TooltipTrigger>
       <TooltipContent sideOffset={8}>{label}</TooltipContent>
     </Tooltip>
-  )
+  );
 }

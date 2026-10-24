@@ -2,13 +2,19 @@ import {
   getVariableOptions,
   useVariableOptions,
 } from '../../utils/node-options';
+import {
+  type SuggestionOptions,
+  type SuggestionProps,
+} from '@tiptap/suggestion';
+import {
+  createSuggestionPopup,
+  SUGGESTION_FLOATING_UI,
+} from '../../utils/suggestion-popup';
 import { processVariables } from '../../utils/variable';
-import { ReactRenderer } from '@tiptap/react';
-import { type SuggestionOptions } from '@tiptap/suggestion';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
-import tippy, { type GetReferenceClientRect } from 'tippy.js';
 import {
   DEFAULT_VARIABLE_TRIGGER_CHAR,
+  VariablePluginKey,
   type Variable as VariableType,
 } from './variable';
 import { type VariableSuggestionsPopoverRef } from './variable-suggestions-popover';
@@ -21,7 +27,7 @@ export type VariableListProps = {
     label?: string;
   }) => void;
   items: VariableType[];
-} & SuggestionOptions;
+} & Pick<SuggestionProps, 'editor'>;
 
 export const VariableList = forwardRef((props: VariableListProps, ref) => {
   const { items = [], editor } = props;
@@ -91,59 +97,8 @@ export function getVariableSuggestions(
       });
     },
 
-    render: () => {
-      let component: ReactRenderer<any>;
-      let popup: InstanceType<any> | null = null;
-
-      return {
-        onStart: (props) => {
-          component = new ReactRenderer(VariableList, {
-            props,
-            editor: props.editor,
-          });
-
-          if (!props.clientRect) {
-            return;
-          }
-
-          popup = tippy('body', {
-            getReferenceClientRect: props.clientRect as GetReferenceClientRect,
-            appendTo: () => document.body,
-            content: component.element,
-            showOnCreate: true,
-            interactive: true,
-            trigger: 'manual',
-            placement: 'bottom-start',
-          });
-        },
-
-        onUpdate(props) {
-          component.updateProps(props);
-
-          if (!props.clientRect) {
-            return;
-          }
-
-          popup?.[0]?.setProps({
-            getReferenceClientRect: props.clientRect as GetReferenceClientRect,
-          });
-        },
-
-        onKeyDown(props) {
-          if (props.event.key === 'Escape') {
-            popup?.[0].hide();
-            return true;
-          }
-
-          return component.ref?.onKeyDown(props);
-        },
-
-        onExit() {
-          popup?.[0]?.destroy();
-          popup = null;
-          component?.destroy();
-        },
-      };
-    },
+    placement: 'bottom-start',
+    floatingUi: SUGGESTION_FLOATING_UI,
+    render: createSuggestionPopup(VariableList, VariablePluginKey, {}),
   };
 }

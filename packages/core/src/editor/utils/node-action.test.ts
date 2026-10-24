@@ -1,5 +1,5 @@
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { describe, expect, it } from 'vitest';
 import { captureNodeAction } from './node-action';
 import { Spacer } from '../nodes/spacer';

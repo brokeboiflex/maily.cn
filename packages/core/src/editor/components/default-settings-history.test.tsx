@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Editor } from '@tiptap/core';
+import { Editor, type JSONContent, type NodeViewProps } from '@tiptap/core';
 import { redoDepth, undoDepth } from '@tiptap/pm/history';
 import { afterEach, expect, it, vi } from 'vitest';
 import { extensions } from '../extensions';
@@ -9,24 +9,32 @@ import { ButtonView } from '../nodes/button/button-view';
 import { TextBubbleContent } from './text-menu/text-bubble-content';
 import { EditorMenuBar } from './editor-menu-bar';
 import { TooltipProvider } from './ui/tooltip';
+import { MailyContext } from '../maily-context';
+import { defaultLabels, englishTranslator } from '../i18n';
+import { fontsourceFontProvider } from '../fonts/fontsource';
 
 // Only the NodeView host and outer settings surface are adapted for HappyDOM.
 // The settings controls, Select/Popover/ToggleGroup/Command and TipTap are real.
 vi.mock('@tiptap/react', async (importOriginal) => ({
-  ...(await importOriginal<any>()),
-  NodeViewWrapper: ({ children, ...rest }: any) => (
-    <div {...rest}>{children}</div>
-  ),
+  ...(await importOriginal<typeof import('@tiptap/react')>()),
+  NodeViewWrapper: ({
+    children,
+    ...rest
+  }: React.HTMLAttributes<HTMLDivElement>) => <div {...rest}>{children}</div>,
   NodeViewContent: () => <div />,
 }));
 vi.mock('./adaptive-node-popover', () => ({
-  AdaptiveNodePopover: ({ children }: any) => <>{children}</>,
+  AdaptiveNodePopover: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
-(globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 afterEach(() => vi.unstubAllGlobals());
 
-function make(content: any[]) {
+function make(content: JSONContent[]) {
   return new Editor({
     extensions: extensions({}),
     content: { type: 'doc', content },
@@ -64,7 +72,7 @@ it('choosing the active implicit Medium button size preserves JSON and Redo', as
         node: editor.state.doc.firstChild,
         getPos: () => 0,
         selected: true,
-      } as any)}
+      } as unknown as NodeViewProps)}
     />
   );
   try {
@@ -114,7 +122,7 @@ it.each([
           node: editor.state.doc.firstChild,
           getPos: () => 0,
           selected: true,
-        } as any)}
+        } as unknown as NodeViewProps)}
       />
     );
     try {
@@ -313,9 +321,17 @@ it.each([
     editor.commands.undo();
     const before = editor.getJSON();
     const view = await mount(
-      <TooltipProvider>
-        <TextBubbleContent editor={editor} />
-      </TooltipProvider>
+      <MailyContext.Provider
+        value={{
+          labels: defaultLabels,
+          t: englishTranslator,
+          fontProvider: fontsourceFontProvider,
+        }}
+      >
+        <TooltipProvider>
+          <TextBubbleContent editor={editor} />
+        </TooltipProvider>
+      </MailyContext.Provider>
     );
     try {
       const trigger = view.container.querySelector<HTMLButtonElement>(
@@ -452,15 +468,15 @@ it('font resets use live chained and stored marks without losing other typograph
     const before = editor.getJSON();
     editor.commands.setTextSelection({ from: 2, to: 5 });
     editor.commands.unsetFontSize();
-    const parts: any[] = [];
+    const parts: JSONContent[] = [];
     editor.state.doc.firstChild?.forEach((node) => parts.push(node.toJSON()));
     expect(parts.map((node) => node.text)).toEqual(['a', 'bcd', 'ef']);
-    expect(parts[0].marks[0].attrs.fontSize).toBe('18px');
-    expect(parts[1].marks[0].attrs).toMatchObject({
+    expect(parts[0].marks?.[0].attrs?.fontSize).toBe('18px');
+    expect(parts[1].marks?.[0].attrs).toMatchObject({
       color: '#123456',
       fontSize: null,
     });
-    expect(parts[2].marks[0].attrs.fontSize).toBe('18px');
+    expect(parts[2].marks?.[0].attrs?.fontSize).toBe('18px');
     editor.commands.undo();
     expect(editor.getJSON()).toEqual(before);
     editor.commands.setTextSelection(3);

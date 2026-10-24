@@ -1,16 +1,14 @@
 import { expect, test } from "@playwright/test"
 
+import { isExpectedConsoleError } from "./console-errors"
+
 test("virtualizes Fontsource and persists a granular font mark", async ({
   page,
 }) => {
   const consoleErrors: string[] = []
   page.on("console", (message) => {
     const text = message.text()
-    const isSandboxedPreviewScript =
-      text.startsWith("Blocked script execution in 'about:srcdoc'") &&
-      text.includes("'allow-scripts' permission is not set")
-
-    if (message.type() === "error" && !isSandboxedPreviewScript) {
+    if (message.type() === "error" && !isExpectedConsoleError(text)) {
       consoleErrors.push(text)
     }
   })

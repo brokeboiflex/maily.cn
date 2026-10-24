@@ -346,10 +346,29 @@ describe('MailboxView feature contracts', () => {
     }
   });
 
-  it('resets global search before showing a specific destructive-action folder', async () => {
+  it('searches the folder in view unless the host scopes search to all mail', async () => {
     const listMessages = vi.fn(() => ({ items: [], nextCursor: null }));
     const rendered = await renderMailbox(createDataSource({ listMessages }));
     try {
+      await rendered.edit('[aria-label="Search mail"]', 'invoice');
+      await flush();
+      expect(listMessages).toHaveBeenLastCalledWith(
+        expect.objectContaining({ folder: 'inbox', q: 'invoice' })
+      );
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('applies an all-mail search scope only while searching', async () => {
+    const listMessages = vi.fn(() => ({ items: [], nextCursor: null }));
+    const rendered = await renderMailbox(createDataSource({ listMessages }), {
+      searchScope: 'allMail',
+    });
+    try {
+      expect(listMessages).toHaveBeenLastCalledWith(
+        expect.objectContaining({ folder: 'inbox' })
+      );
       await rendered.edit('[aria-label="Search mail"]', 'invoice');
       await flush();
       expect(listMessages).toHaveBeenLastCalledWith(
@@ -463,6 +482,32 @@ describe('MailboxView feature contracts', () => {
     }
   });
 
+  it('leaves uploads handed to a failed sendMessage to the host', async () => {
+    const attachment = { id: 'sent-upload', filename: 'sent.txt' };
+    const sendMessage = vi.fn().mockRejectedValue(new Error('timeout'));
+    const discardUploadedAttachment = vi.fn();
+    const rendered = await renderMailbox(
+      createDataSource({
+        uploadAttachment: () => attachment,
+        discardUploadedAttachment,
+        sendMessage,
+      }),
+      { defaultComposeBodyMode: 'plainText' }
+    );
+    try {
+      await rendered.click('[aria-label="Compose"]');
+      await rendered.upload(new File(['file'], 'sent.txt'));
+      await rendered.clickButtonText('Send');
+      expect(sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ attachments: [attachment] })
+      );
+    } finally {
+      rendered.unmount();
+    }
+    // The host may have delivered it: the outcome of a failed send is unknown.
+    expect(discardUploadedAttachment).not.toHaveBeenCalled();
+  });
+
   it('does not carry an undo receipt into another host lifetime', async () => {
     const oldUndo = vi.fn();
     const newUndo = vi.fn();
@@ -531,11 +576,51 @@ describe('MailboxView feature contracts', () => {
     expect(discardUploadedAttachment).not.toHaveBeenCalled();
   });
 
+  it('never turns a composition handed to sendMessage into a draft', async () => {
+    vi.useFakeTimers();
+    const sendMessage = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('timeout'))
+      .mockResolvedValue(undefined);
+    const createDraft = vi.fn(() => ({ id: 'draft-1' }));
+    const rendered = await renderMailbox(
+      createDataSource({ sendMessage, createDraft }),
+      { defaultComposeBodyMode: 'plainText', autosaveDelayMs: 1000 }
+    );
+    try {
+      await rendered.click('[aria-label="Compose"]');
+      await rendered.edit('input[name="subject"]', 'Maybe delivered');
+      await rendered.clickButtonText('Send');
+      // The host may have delivered it. Even an edit that changes nothing it
+      // receives (a trailing space) must not let autosave make it a draft,
+      // whose send would carry no key and could deliver it again.
+      await rendered.edit('input[name="subject"]', 'Maybe delivered ');
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5000);
+      });
+      expect(createDraft).not.toHaveBeenCalled();
+      expect(
+        Array.from(rendered.container.querySelectorAll('button')).some(
+          (button) => button.textContent?.trim() === 'Save draft'
+        )
+      ).toBe(false);
+      await rendered.clickButtonText('Send');
+      expect(sendMessage).toHaveBeenCalledTimes(2);
+      expect(sendMessage.mock.calls[1][0].idempotencyKey).toBe(
+        sendMessage.mock.calls[0][0].idempotencyKey
+      );
+    } finally {
+      rendered.unmount();
+      vi.useRealTimers();
+    }
+  });
+
   it('retains editable content after autosave failure without retrying indefinitely', async () => {
     vi.useFakeTimers();
     const createDraft = vi.fn().mockRejectedValue(new Error('Host rejected'));
     const rendered = await renderMailbox(createDataSource({ createDraft }), {
       defaultComposeBodyMode: 'plainText',
+      autosaveDelayMs: 1000,
     });
     try {
       await rendered.click('[aria-label="Compose"]');
@@ -946,7 +1031,7 @@ describe('MailboxView feature contracts', () => {
       .fn()
       .mockReturnValueOnce({ items: [original], nextCursor: 'cursor-1' })
       .mockReturnValue({ items: [], nextCursor: null });
-    const runMessageAction = vi.fn();
+    const runMessageAction = vi.fn(() => ({ removedFromView: true }));
     const rendered = await renderMailbox(
       createDataSource({
         listMessages,
@@ -968,6 +1053,49 @@ describe('MailboxView feature contracts', () => {
       expect(rendered.container.textContent).not.toContain(
         'Moved out of Inbox'
       );
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('keeps the reader open after an action unless the host says the message left the view', async () => {
+    const message = detail(row('kept-1', 'Still in All Mail'));
+    const getMessage = vi.fn(() => message);
+    const rendered = await renderMailbox(
+      createDataSource({
+        listMessages: () => ({ items: [message], nextCursor: null }),
+        getMessage,
+        runMessageAction: vi.fn(() => undefined),
+      }),
+      { initialFolder: 'allMail', messageActions: ['archive'] }
+    );
+    try {
+      await rendered.clickButtonContaining('Still in All Mail');
+      await flush();
+      const reads = getMessage.mock.calls.length;
+      await rendered.click('button[aria-label="Archive"]');
+      await flush();
+      // Archive in All Mail keeps the message in view: the reader re-reads it.
+      expect(getMessage.mock.calls.length).toBeGreaterThan(reads);
+      expect(
+        rendered.container.querySelector('button[aria-label="Archive"]')
+      ).toBeTruthy();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('shows only the folders the host lists', async () => {
+    const rendered = await renderMailbox(createDataSource(), {
+      folders: ['inbox', 'sent', 'drafts'],
+    });
+    try {
+      const nav = rendered.container.querySelector('nav')!;
+      expect(nav.textContent).toContain('Inbox');
+      expect(nav.textContent).toContain('Sent');
+      expect(nav.textContent).not.toContain('Spam');
+      expect(nav.textContent).not.toContain('Trash');
+      expect(nav.textContent).not.toContain('Starred');
     } finally {
       rendered.unmount();
     }
@@ -1185,7 +1313,7 @@ it('keeps a pending initial label read valid when label creation rejects', async
   }
 });
 
-it('returns a newly prepared draft to the Sent list after its pending send succeeds', async () => {
+it('closes a sent composition back to the folder in view', async () => {
   const pending = deferred<void>();
   const sendDraft = vi.fn(() => pending.promise);
   const draft = detail(
@@ -1199,7 +1327,7 @@ it('returns a newly prepared draft to the Sent list after its pending send succe
     await rendered.click('[aria-label="Compose"]');
     await rendered.clickButtonText('Send');
     await flush();
-    expect(sendDraft).toHaveBeenCalledWith('draft-1');
+    expect(sendDraft).toHaveBeenCalledWith('draft-1', { revision: undefined });
     pending.resolve();
     await flush();
     expect(
@@ -1210,7 +1338,7 @@ it('returns a newly prepared draft to the Sent list after its pending send succe
     ).toBeNull();
     expect(
       rendered.container
-        .querySelector('[aria-label="Sent"]')
+        .querySelector('[aria-label="Inbox"]')
         ?.getAttribute('aria-current')
     ).toBe('page');
   } finally {

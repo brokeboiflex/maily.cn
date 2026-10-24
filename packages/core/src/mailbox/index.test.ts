@@ -6,9 +6,13 @@ import { createRoot, type Root } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  defaultMailboxComposeSeed,
   defaultMailboxLabels,
+  defaultMailboxMessageActionsFor,
   MailboxView,
   type MailyMailboxDataSource,
+  type MailyMailboxHandle,
+  type MailyMailboxMessageAction,
   type MailyMailboxMessageDetail,
 } from './index';
 import { filterMailboxContactSuggestions } from './contacts';
@@ -54,7 +58,6 @@ async function renderSelectedMailbox(
     root.render(
       React.createElement(MailboxView, {
         dataSource: createDataSource(),
-        pollIntervalMs: 0,
         account: { id: crypto.randomUUID() },
         ...props,
       })
@@ -78,6 +81,19 @@ async function renderSelectedMailbox(
 
   return {
     container,
+    /** Edits the open composition's subject, making it unsaved work. */
+    editSubject: async (value: string) => {
+      const input = container.querySelector<HTMLInputElement>(
+        'input[name="subject"]'
+      )!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, value);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    },
     unmount: () => {
       let mountedRoot: Root | null = root;
       act(() => {
@@ -184,6 +200,8 @@ describe('MailboxView message actions', () => {
         }),
       });
       try {
+        // A changed draft is written before it is sent; a clean one is not.
+        await rendered.editSubject('Edited reply');
         await act(async () => {
           Array.from(rendered.container.querySelectorAll('button'))
             .find((button) => button.textContent === action)!
@@ -545,12 +563,12 @@ describe('MailboxView mutation recovery', () => {
       status: 'draft' as const,
       _revision: 'observed-v1',
     };
-    const updateDraft = vi.fn(
-      (..._args: Parameters<MailyMailboxDataSource['updateDraft']>) => ({
-        id: draft.id,
-        _revision: 'saved-v2',
-      })
-    );
+    const updateDraft = vi.fn<
+      NonNullable<MailyMailboxDataSource['updateDraft']>
+    >(() => ({
+      id: draft.id,
+      _revision: 'saved-v2',
+    }));
     const rendered = await renderSelectedMailbox({
       dataSource: createDataSource({
         listMessages: () => ({ items: [draft] }),
@@ -573,46 +591,46 @@ describe('MailboxView mutation recovery', () => {
     }
   });
 
-  it('recovers an unknown send after remount without creating or rewriting its draft', async () => {
+  it('retries a failed send with the same draft and revision', async () => {
     const draft = {
       ...messageDetail,
       direction: 'out' as const,
       status: 'draft' as const,
       _revision: 'v1',
     };
-    const account = { id: crypto.randomUUID() };
     const createDraft = vi.fn(() => ({ id: 'unexpected' }));
     const updateDraft = vi.fn(() => ({ id: draft.id, _revision: 'v2' }));
     const sendDraft = vi
       .fn()
       .mockRejectedValueOnce(Error('response lost'))
       .mockResolvedValue({ id: draft.id });
-    const dataSource = createDataSource({
-      listMessages: () => ({ items: [draft] }),
-      getMessage: () => draft,
-      createDraft,
-      updateDraft,
-      sendDraft,
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({
+        listMessages: () => ({ items: [draft] }),
+        getMessage: () => draft,
+        createDraft,
+        updateDraft,
+        sendDraft,
+      }),
     });
-    const first = await renderSelectedMailbox({ dataSource, account });
-    await act(async () => {
-      Array.from(first.container.querySelectorAll('button'))
-        .find((button) => button.textContent === 'Send')!
-        .click();
-    });
-    first.unmount();
-    const resumed = await renderSelectedMailbox({ dataSource, account });
-    try {
-      await act(async () => {
-        Array.from(resumed.container.querySelectorAll('button'))
+    const send = () =>
+      act(async () => {
+        Array.from(rendered.container.querySelectorAll('button'))
           .find((button) => button.textContent === 'Send')!
           .click();
       });
+    try {
+      await send();
+      // The composition stays open for the retry; the host deduplicates it.
+      await send();
       expect(createDraft).not.toHaveBeenCalled();
-      expect(updateDraft).toHaveBeenCalledTimes(1);
-      expect(sendDraft.mock.calls).toEqual([[draft.id], [draft.id]]);
+      expect(updateDraft).not.toHaveBeenCalled();
+      expect(sendDraft.mock.calls).toEqual([
+        [draft.id, { revision: 'v1' }],
+        [draft.id, { revision: 'v1' }],
+      ]);
     } finally {
-      resumed.unmount();
+      rendered.unmount();
     }
   });
 });
@@ -654,8 +672,8 @@ describe('compose hydration ownership', () => {
   });
 });
 
-describe('mailbox lifetime and actor recovery scope', () => {
-  it('retains the prepared draft but never sends after the owning mailbox leaves', async () => {
+describe('mailbox lifetime', () => {
+  it('never sends a prepared draft after the owning mailbox leaves', async () => {
     let resolve!: (value: { id: string; _revision: string }) => void;
     const prepared = new Promise<{ id: string; _revision: string }>((done) => {
       resolve = done;
@@ -666,13 +684,9 @@ describe('mailbox lifetime and actor recovery scope', () => {
       status: 'draft' as const,
       _revision: 'v1',
     };
-    const account = { id: crypto.randomUUID() };
-    const recoveryScope = `${account.id}:actor-A`;
     const sendDraft = vi.fn();
     const onSent = vi.fn();
     const view = await renderSelectedMailbox({
-      account,
-      recoveryScope,
       onSent,
       dataSource: createDataSource({
         listMessages: () => ({ items: [draft] }),
@@ -681,6 +695,7 @@ describe('mailbox lifetime and actor recovery scope', () => {
         sendDraft,
       }),
     });
+    await view.editSubject('Changed');
     await act(async () => {
       Array.from(view.container.querySelectorAll('button'))
         .find((button) => button.textContent === 'Send')!
@@ -693,45 +708,69 @@ describe('mailbox lifetime and actor recovery scope', () => {
     });
     expect(sendDraft).not.toHaveBeenCalled();
     expect(onSent).not.toHaveBeenCalled();
-    expect(
-      window.sessionStorage.getItem(`maily:pending-send:${recoveryScope}`)
-    ).toBe(draft.id);
-    window.sessionStorage.removeItem(`maily:pending-send:${recoveryScope}`);
-  });
-
-  it('keeps an unscoped legacy send blocked instead of adopting another actor intent', async () => {
-    const account = { id: crypto.randomUUID() };
-    const legacyKey = `maily:pending-send:${account.id}`;
-    window.sessionStorage.setItem(legacyKey, 'legacy-draft');
-    const createDraft = vi.fn();
-    const sendDraft = vi.fn();
-    const view = await renderSelectedMailbox({
-      account,
-      recoveryScope: `${account.id}:actor-B`,
-      dataSource: createDataSource({ createDraft, sendDraft }),
-    });
-    try {
-      await act(async () => {
-        view.container
-          .querySelector<HTMLButtonElement>(
-            `button[aria-label="${defaultMailboxLabels['compose.new']}"]`
-          )!
-          .click();
-      });
-      expect(createDraft).not.toHaveBeenCalled();
-      expect(sendDraft).not.toHaveBeenCalled();
-      expect(window.sessionStorage.getItem(legacyKey)).toBe('legacy-draft');
-      expect(view.container.textContent).toContain(
-        defaultMailboxLabels['errors.send']
-      );
-    } finally {
-      view.unmount();
-      window.sessionStorage.removeItem(legacyKey);
-    }
   });
 });
 
 describe('Spam and Trash folder actions', () => {
+  const folderActions: MailyMailboxMessageAction[] = [
+    'delete',
+    'reportSpam',
+    'archive',
+    'restore',
+    'notSpam',
+    'deleteForever',
+  ];
+
+  it('offers an action array in every folder, gated only by the host', async () => {
+    const rendered = await renderSelectedMailbox({
+      initialFolder: 'trash',
+      dataSource: createDataSource({ runMessageAction: vi.fn() }),
+      messageActions: folderActions,
+    });
+    try {
+      for (const label of [
+        'Delete',
+        'Report spam',
+        'Archive',
+        'Move to Inbox',
+        'Not spam',
+        'Delete forever',
+      ])
+        expect(
+          rendered.container.querySelector(`[aria-label="${label}"]`),
+          label
+        ).toBeTruthy();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('passes the folder, label, search and surface to a messageActions function', async () => {
+    const messageActions = vi.fn((): MailyMailboxMessageAction[] => [
+      'archive',
+    ]);
+    const rendered = await renderSelectedMailbox({
+      initialFolder: 'spam',
+      dataSource: createDataSource({ runMessageAction: vi.fn() }),
+      messageActions,
+    });
+    try {
+      expect(messageActions).toHaveBeenCalledWith({
+        surface: 'reader',
+        folder: 'spam',
+        labelId: null,
+        searchScope: 'folder',
+        searching: false,
+        messageIds: ['msg-1'],
+      });
+      expect(
+        rendered.container.querySelector('[aria-label="Archive"]')
+      ).toBeTruthy();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
   it.each([
     ['spam', 'Not spam', 'notSpam'],
     ['trash', 'Move to Inbox', 'restore'],
@@ -740,7 +779,7 @@ describe('Spam and Trash folder actions', () => {
   ] as const)(
     'dispatches %s recovery/deletion through the host: %s',
     async (folder, label, action) => {
-      const runner = vi.fn(async () => undefined);
+      const runner = vi.fn(async () => ({ removedFromView: true }));
       const list = vi.fn(() => ({ items: [messageDetail] }));
       const rendered = await renderSelectedMailbox({
         initialFolder: folder,
@@ -748,14 +787,9 @@ describe('Spam and Trash folder actions', () => {
           listMessages: list,
           runMessageAction: runner,
         }),
-        messageActions: [
-          'delete',
-          'reportSpam',
-          'archive',
-          'restore',
-          'notSpam',
-          'deleteForever',
-        ],
+        // Maily has no folder rules; the opt-in helper supplies Gmail's.
+        messageActions: (context) =>
+          defaultMailboxMessageActionsFor(context, folderActions),
       });
       try {
         expect(list).toHaveBeenCalledWith(expect.objectContaining({ folder }));
@@ -803,6 +837,212 @@ describe('Spam and Trash folder actions', () => {
       expect(
         rendered.container.querySelector('[aria-label="Spam"]')
       ).toBeTruthy();
+    } finally {
+      rendered.unmount();
+    }
+  });
+});
+
+describe('host-owned behaviour', () => {
+  const button = (container: HTMLElement, label: string) =>
+    container.querySelector<HTMLElement>(`[aria-label="${label}"]`);
+  const buttonByText = (root: ParentNode, text: string) =>
+    Array.from(root.querySelectorAll<HTMLElement>('button')).find(
+      (element) => element.textContent?.trim() === text
+    );
+
+  it('keeps the undo token the host returns for Delete forever', async () => {
+    const runMessageAction = vi.fn(async () => ({ undo: { token: 'undo-1' } }));
+    const undoMessageAction = vi.fn();
+    const rendered = await renderSelectedMailbox({
+      initialFolder: 'trash',
+      dataSource: createDataSource({ runMessageAction, undoMessageAction }),
+      messageActions: ['deleteForever'],
+    });
+    try {
+      await act(async () =>
+        button(rendered.container, 'Delete forever')!.click()
+      );
+      await act(async () => buttonByText(rendered.container, 'Undo')!.click());
+      expect(undoMessageAction).toHaveBeenCalledWith('undo-1');
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('sends a reaction without choosing its value', async () => {
+    const runMessageAction = vi.fn(async () => undefined);
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({ runMessageAction }),
+      messageActions: ['react'],
+    });
+    try {
+      await act(async () =>
+        button(rendered.container, 'Add reaction')!.click()
+      );
+      expect(runMessageAction).toHaveBeenCalledWith({
+        messageId: 'msg-1',
+        action: 'react',
+        value: undefined,
+      });
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('seeds replies and forwards through createComposeSeed', async () => {
+    const createDraft = vi.fn(() => ({ id: 'draft-1' }));
+    const createComposeSeed = vi.fn(
+      (kind: string, message: MailyMailboxMessageDetail) => ({
+        to: kind === 'forward' ? '' : message.fromAddress,
+        cc: '',
+        bcc: '',
+        subject: `AW: ${message.subject}`,
+        text: 'Host body',
+        inReplyTo: '<host-thread@example.com>',
+      })
+    );
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({ createDraft }),
+      createComposeSeed,
+    });
+    try {
+      await act(async () => button(rendered.container, 'Reply')!.click());
+      expect(createComposeSeed).toHaveBeenCalledWith(
+        'reply',
+        expect.objectContaining({ id: 'msg-1' }),
+        expect.objectContaining({ labels: defaultMailboxLabels })
+      );
+      expect(
+        rendered.container.querySelector<HTMLInputElement>(
+          'input[name="subject"]'
+        )?.value
+      ).toBe('AW: Capability check');
+      await act(async () =>
+        buttonByText(rendered.container, 'Save draft')!.click()
+      );
+      expect(createDraft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subject: 'AW: Capability check',
+          text: 'Host body',
+          inReplyTo: '<host-thread@example.com>',
+        })
+      );
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('builds the default forward header from the mailbox labels', () => {
+    const seed = defaultMailboxComposeSeed('forward', messageDetail, {
+      labels: {
+        ...defaultMailboxLabels,
+        'compose.forwardedHeader': 'Weitergeleitet',
+        'compose.forwardFrom': 'Von',
+        'compose.forwardTo': 'An',
+        'compose.forwardSubject': 'Betreff',
+      },
+      formatDate: () => '',
+    });
+    expect(seed.text).toContain('---------- Weitergeleitet ----------');
+    expect(seed.text).toContain('Von: sender@example.com');
+    expect(seed.text).toContain('An: studio@maily.cn');
+    expect(seed.text).toContain('Betreff: Capability check');
+    expect(seed.subject).toBe('Fwd: Capability check');
+    expect(seed.inReplyTo).toBeNull();
+  });
+
+  it('reads counts, labels and the list again on refresh()', async () => {
+    const listMessages = vi.fn(() => ({ items: [messageDetail] }));
+    const getCounts = vi.fn(() => ({ inbox: 1 }));
+    const listLabels = vi.fn(() => []);
+    const handle = React.createRef<MailyMailboxHandle>();
+    const rendered = await renderSelectedMailbox({
+      ref: handle,
+      dataSource: createDataSource({ listMessages, getCounts, listLabels }),
+    });
+    try {
+      const reads = [listMessages, getCounts, listLabels].map(
+        (read) => read.mock.calls.length
+      );
+      await act(async () => {
+        await handle.current!.refresh();
+      });
+      [listMessages, getCounts, listLabels].forEach((read, index) =>
+        expect(read.mock.calls.length).toBe(reads[index] + 1)
+      );
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('does not reach the host from a refresh() kept after unmount', async () => {
+    const listMessages = vi.fn(() => ({ items: [messageDetail] }));
+    const getCounts = vi.fn(() => ({ inbox: 1 }));
+    const listLabels = vi.fn(() => []);
+    const handle = React.createRef<MailyMailboxHandle>();
+    const rendered = await renderSelectedMailbox({
+      ref: handle,
+      dataSource: createDataSource({ listMessages, getCounts, listLabels }),
+    });
+    const api = handle.current!;
+    rendered.unmount();
+    const reads = [listMessages, getCounts, listLabels].map(
+      (read) => read.mock.calls.length
+    );
+    await act(async () => {
+      await api.refresh();
+    });
+    [listMessages, getCounts, listLabels].forEach((read, index) =>
+      expect(read.mock.calls.length).toBe(reads[index])
+    );
+  });
+
+  it('polls only when the host sets pollIntervalMs', async () => {
+    vi.useFakeTimers();
+    try {
+      const listMessages = vi.fn(() => ({ items: [messageDetail] }));
+      const rendered = await renderSelectedMailbox({
+        dataSource: createDataSource({ listMessages }),
+      });
+      const reads = listMessages.mock.calls.length;
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10 * 60_000);
+      });
+      expect(listMessages.mock.calls.length).toBe(reads);
+      rendered.unmount();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('leaves label names to the host', async () => {
+    const createLabel = vi.fn((name: string) => ({ id: 'l1', name }));
+    const rendered = await renderSelectedMailbox({
+      dataSource: createDataSource({ listLabels: () => [], createLabel }),
+    });
+    const name = 'L'.repeat(200);
+    try {
+      await act(async () =>
+        button(rendered.container, 'Create label')!.click()
+      );
+      const input = document.querySelector<HTMLInputElement>(
+        '[data-slot="dialog-content"] input'
+      )!;
+      expect(input.maxLength).toBe(-1);
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          'value'
+        )!.set!.call(input, name);
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      await act(async () => {
+        input.form!.dispatchEvent(
+          new Event('submit', { bubbles: true, cancelable: true })
+        );
+      });
+      expect(createLabel).toHaveBeenCalledWith(name);
     } finally {
       rendered.unmount();
     }

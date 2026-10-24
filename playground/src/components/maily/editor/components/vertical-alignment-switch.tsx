@@ -1,5 +1,5 @@
 import { type AllowedColumnVerticalAlign } from '../nodes/columns/column';
-import { useMailyContext } from '../provider';
+import { useMailyContext } from '../maily-context';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -61,7 +61,7 @@ export function VerticalAlignmentSwitch(props: VerticalAlignmentSwitchProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="p-0.5! flex w-max gap-0.5 rounded-lg"
+        className="flex w-max gap-0.5 rounded-lg p-0.5!"
         sideOffset={8}
         align="center"
       >

@@ -1,0 +1,475 @@
+'use client';
+
+import {
+  type AnyExtension,
+  type FocusPosition,
+  Editor as TiptapEditor,
+} from '@tiptap/core';
+import {
+  EditorContent,
+  type JSONContent,
+  useEditor,
+  useEditorState,
+} from '@tiptap/react';
+
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { ColumnsBubbleMenu } from './components/column-menu/columns-bubble-menu';
+import { MobileEditor } from './components/mobile-editor';
+import { useCompactEditor } from './components/mobile-editor-context';
+import { ContentMenu } from './components/content-menu';
+import { EditorMenuBar } from './components/editor-menu-bar';
+import { HTMLBubbleMenu } from './components/html-menu/html-menu';
+import { ImageBubbleMenu } from './components/image-menu/image-bubble-menu';
+import { InlineImageBubbleMenu } from './components/inline-image-menu/inline-image-bubble-menu';
+import { RepeatBubbleMenu } from './components/repeat-menu/repeat-bubble-menu';
+import { SectionBubbleMenu } from './components/section-menu/section-bubble-menu';
+import { SpacerBubbleMenu } from './components/spacer-menu/spacer-bubble-menu';
+import { TextBubbleMenu } from './components/text-menu/text-bubble-menu';
+import { VariableBubbleMenu } from './components/variable-menu/variable-bubble-menu';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { extensions as defaultExtensions } from './extensions';
+import { getDefaultBlocks } from './extensions/slash-command/default-slash-commands';
+import {
+  DEFAULT_PLACEHOLDER_URL,
+  type MailyContextType,
+  MailyContext,
+  useMailyContext,
+} from './maily-context';
+import { MailyProvider } from './provider';
+import { createTranslator, defaultLabels, type MailyLabels } from './i18n';
+import { cn } from 'cn';
+import { replaceDeprecatedNode } from './utils/replace-deprecated';
+import { loadDocumentFonts } from './fonts/font-provider';
+import { useLatestRef } from './utils/state-hooks';
+
+type ParitialMailContextType = Partial<MailyContextType>;
+export type EditorViewMode = 'design' | 'render';
+
+function useShallowStableArray<T>(values: T[] | undefined) {
+  const [stable, setStable] = useState(values);
+
+  if (
+    stable !== values &&
+    (stable?.length !== values?.length ||
+      stable?.some((value, index) => value !== values?.[index]))
+  ) {
+    setStable(values);
+    return values;
+  }
+
+  return stable;
+}
+
+export type EditorRenderPreviewContext = {
+  editor: TiptapEditor;
+  json: JSONContent;
+  html: string;
+};
+
+// Everything the editor's content area used to get from a dedicated stylesheet,
+// expressed as token-based Tailwind so the writing surface follows the host's
+// shadcn theme. `prose` comes from the consumer's @tailwindcss/typography plugin.
+const EDITOR_CONTENT_CLASS = [
+  // pl-16 is the left gutter the hover drag-handle floats in. It lives on the
+  // content element (not the body wrapper) so the whole gutter is part of the
+  // ProseMirror hover surface — moving the mouse there fires the plugin's
+  // mousemove and reveals the handle, instead of only over the text.
+  'prose w-full max-w-none pl-16 focus:outline-none',
+  // prose colors -> shadcn tokens (keeps the canvas readable in light & dark)
+  '[--tw-prose-body:var(--foreground)] [--tw-prose-headings:var(--foreground)] [--tw-prose-bold:var(--foreground)] [--tw-prose-links:var(--foreground)] [--tw-prose-quotes:var(--foreground)] [--tw-prose-code:var(--foreground)] [--tw-prose-bullets:var(--muted-foreground)] [--tw-prose-counters:var(--muted-foreground)] [--tw-prose-hr:var(--border)] [--tw-prose-quote-borders:var(--border)] text-foreground',
+  // email-content typography sizing / spacing
+  'prose-strong:text-current prose-headings:mt-0 prose-headings:mb-3 prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-p:text-[15px] prose-p:mb-5 prose-ol:mt-0 prose-ol:mb-5 prose-ul:mt-0 prose-ul:mb-5 prose-li:mb-2 prose-img:mt-0 prose-img:mb-8 prose-hr:my-8 prose-code:before:content-none prose-code:after:content-none',
+  '[&_p.text-sm]:text-base [&_:is(h1,h2,h3,hr,table)+p]:mt-0',
+  // ProseMirror text rendering
+  "[font-variant-ligatures:none] [font-feature-settings:'liga'_0]",
+  // variable-pill icon scales with heading level
+  '[--variable-icon-size:12px] [--variable-icon-gap:4px] [&_h1]:[--variable-icon-size:28px] [&_h2]:[--variable-icon-size:24px] [&_h3]:[--variable-icon-size:20px] [&_:is(h1,h2,h3)]:[--variable-icon-gap:8px]',
+  // block-node spacing
+  '[&_.node-button]:mt-0 [&_.node-button]:mb-5 [&_.node-linkCard]:mt-0 [&_.node-linkCard]:mb-5 [&_.node-image]:mt-0 [&_.node-image]:mb-8 [&_.node-image]:leading-none [&_.node-image]:outline-none [&_.node-logo]:mt-0 [&_.node-logo]:mb-8',
+  // spacer collapses surrounding margins
+  '[&_.spacer+*]:mt-0 [&_*:has(+.spacer)]:mb-0!',
+  // selected-node ring (literal accent blue, not theme-driven)
+  "[&_.ProseMirror-selectednode]:after:content-[''] [&_.ProseMirror-selectednode]:after:absolute [&_.ProseMirror-selectednode]:after:-inset-0.5 [&_.ProseMirror-selectednode]:after:pointer-events-none [&_.ProseMirror-selectednode]:after:rounded-md [&_.ProseMirror-selectednode]:after:bg-[rgba(35,131,226,0.14)]",
+  '[&_.node-variable.ProseMirror-selectednode]:after:-inset-px [&_.node-variable.ProseMirror-selectednode]:after:rounded-md [&_.node-variable.ProseMirror-selectednode]:after:bg-transparent [&_.node-variable.ProseMirror-selectednode]:after:ring-1 [&_.node-variable.ProseMirror-selectednode]:after:ring-ring/35',
+  // gap cursor
+  '[&_.ProseMirror-gapcursor]:after:w-6 [&_.ProseMirror-gapcursor]:after:border-[1.5px] [&_.ProseMirror-gapcursor]:after:border-solid [&_.ProseMirror-gapcursor]:after:border-foreground',
+].join(' ');
+
+export type EditorProps = {
+  contentHtml?: string;
+  contentJson?: JSONContent;
+  onUpdate?: (editor: TiptapEditor) => void;
+  onCreate?: (editor: TiptapEditor) => void;
+  extensions?: AnyExtension[];
+  config?: {
+    hasMenuBar?: boolean;
+    hideContextMenu?: boolean;
+    spellCheck?: boolean;
+    wrapClassName?: string;
+    toolbarClassName?: string;
+    contentClassName?: string;
+    bodyClassName?: string;
+    renderPreviewClassName?: string;
+    initialViewMode?: EditorViewMode;
+    renderPreview?: (context: EditorRenderPreviewContext) => ReactNode;
+    autofocus?: FocusPosition;
+    immediatelyRender?: boolean;
+  };
+  editable?: boolean;
+  scrollThreshold?: number;
+  scrollMargin?: number;
+  labels?: MailyLabels;
+} & ParitialMailContextType;
+
+export function Editor(props: EditorProps) {
+  const {
+    config: {
+      wrapClassName = '',
+      contentClassName = '',
+      bodyClassName = '',
+      hasMenuBar = true,
+      hideContextMenu = false,
+      initialViewMode = 'design',
+      spellCheck = false,
+      autofocus = 'end',
+      immediatelyRender = false,
+    } = {},
+    onCreate,
+    onUpdate,
+    extensions,
+    contentHtml,
+    contentJson,
+    blocks,
+    labels,
+    editable = true,
+    placeholderUrl = DEFAULT_PLACEHOLDER_URL,
+    fontProvider,
+    scrollThreshold = 40,
+    scrollMargin = 40,
+  } = props;
+
+  const stableBlocks = useShallowStableArray(blocks);
+  const stableExtensions = useShallowStableArray(extensions);
+  const resolvedLabels: MailyLabels = labels ?? defaultLabels;
+  const t = useMemo(() => createTranslator(resolvedLabels), [resolvedLabels]);
+  const [viewMode, setViewMode] = useState<EditorViewMode>(initialViewMode);
+  const resolvedBlocks = useMemo(
+    () => stableBlocks ?? getDefaultBlocks(t),
+    [stableBlocks, t]
+  );
+  const resolvedExtensions = useMemo(
+    () =>
+      defaultExtensions({
+        extensions: stableExtensions,
+        blocks: resolvedBlocks,
+        t,
+      }),
+    [stableExtensions, resolvedBlocks, t]
+  );
+
+  const formattedContent = useMemo(() => {
+    if (contentJson) {
+      const json =
+        contentJson?.type === 'doc'
+          ? contentJson
+          : ({
+              type: 'doc',
+              content: contentJson,
+            } as JSONContent);
+
+      return replaceDeprecatedNode(json);
+    } else if (contentHtml) {
+      return contentHtml;
+    } else {
+      return {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [],
+          },
+        ],
+      };
+    }
+  }, [contentHtml, contentJson]);
+
+  const editorProps = useMemo(
+    () => ({
+      scrollThreshold,
+      scrollMargin,
+      attributes: {
+        class: cn(EDITOR_CONTENT_CLASS, contentClassName),
+        spellCheck: spellCheck ? 'true' : 'false',
+      },
+    }),
+    [contentClassName, scrollMargin, scrollThreshold, spellCheck]
+  );
+  const menuContainerRef = useRef<HTMLDivElement>(null);
+  const fontProviderRef = useLatestRef(fontProvider);
+  const editor = useEditor({
+    editorProps,
+    immediatelyRender,
+    onCreate: ({ editor }) => {
+      onCreate?.(editor);
+    },
+    onUpdate: ({ editor }) => {
+      loadDocumentFonts(editor.getJSON(), fontProviderRef.current);
+      onUpdate?.(editor);
+    },
+    extensions: resolvedExtensions,
+    content: formattedContent,
+    autofocus,
+    editable,
+  });
+
+  const compact = useCompactEditor(menuContainerRef, editor);
+
+  // Fonts load only through the host's provider; without one, nothing loads.
+  useEffect(() => {
+    if (editor && !editor.isDestroyed)
+      loadDocumentFonts(editor.getJSON(), fontProvider);
+  }, [editor, fontProvider]);
+
+  // TipTap reads `editable` only at creation; later prop changes apply here.
+  useEffect(() => {
+    if (!editor || editor.isDestroyed || editor.isEditable === editable) return;
+    editor.setEditable(editable, false);
+    // An empty transaction refreshes state subscribers without a content
+    // update; it must not let TipTap's trailing-node plugin append a paragraph.
+    editor.view.dispatch(
+      editor.state.tr
+        .setMeta('addToHistory', false)
+        .setMeta('skipTrailingNode', true)
+    );
+  }, [editor, editable]);
+  const isEditable =
+    useEditorState({
+      editor,
+      selector: ({ editor: current }) => current?.isEditable,
+    }) ?? editable;
+
+  if (!editor) {
+    return null;
+  }
+
+  return (
+    <MailyProvider
+      editor={editor}
+      editable={isEditable}
+      placeholderUrl={placeholderUrl}
+      fontProvider={fontProvider}
+      blocks={resolvedBlocks}
+      labels={resolvedLabels}
+      t={t}
+    >
+      <TooltipProvider>
+        <MobileEditor
+          editor={editor}
+          compact={compact}
+          enabled={hasMenuBar && isEditable && viewMode === 'design'}
+          allowBlockActions={!hideContextMenu}
+          root={menuContainerRef}
+        >
+          <div
+            id="mly-editor"
+            className={cn(
+              'mly-editor min-w-0 antialiased',
+              compact && 'pb-20',
+              isEditable ? 'mly-editable' : 'mly-not-editable',
+              wrapClassName
+            )}
+            data-maily-mobile={compact}
+            ref={menuContainerRef}
+          >
+            {hasMenuBar && (
+              <EditorMenuBar
+                compact={compact}
+                editable={isEditable}
+                config={props.config}
+                editor={editor}
+                viewMode={viewMode}
+                onViewModeChange={setViewMode}
+              />
+            )}
+            <div
+              className={cn(
+                'border-border bg-background mt-4 rounded-lg border py-4 pr-4',
+                compact && 'mt-2 pr-3',
+                bodyClassName
+              )}
+            >
+              <div
+                aria-hidden={viewMode !== 'design'}
+                className={cn(
+                  viewMode !== 'design' && 'hidden',
+                  compact &&
+                    '[&_.tiptap]:pl-3! [&_.tiptap]:text-base [&_.tiptap]:break-words [&_.tiptap_[data-type=column]]:w-full! [&_.tiptap_[data-type=column]]:max-w-full! [&_.tiptap_[data-type=column]]:basis-auto [&_.tiptap_[data-type=columns]]:flex-col [&_.tiptap_p]:text-base'
+                )}
+              >
+                {/* Menus mount only while editable: TipTap re-checks a shown
+                    bubble menu only when the selection or document changes,
+                    so a read-only switch would leave it open. */}
+                {isEditable && (
+                  <>
+                    {!compact && (
+                      <TextBubbleMenu
+                        editor={editor}
+                        appendTo={menuContainerRef}
+                      />
+                    )}
+                    <ImageBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                    <SpacerBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                  </>
+                )}
+                <EditorContent editor={editor} />
+                {isEditable && (
+                  <>
+                    <SectionBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                    <ColumnsBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                    {!hideContextMenu && !compact && (
+                      <ContentMenu editor={editor} />
+                    )}
+                    <VariableBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                    <RepeatBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                    <HTMLBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                    <InlineImageBubbleMenu
+                      editor={editor}
+                      appendTo={menuContainerRef}
+                    />
+                  </>
+                )}
+              </div>
+              <div
+                aria-hidden={viewMode !== 'render'}
+                className={cn(viewMode !== 'render' && 'hidden')}
+              >
+                {/* Mounted only while shown: it renders the whole document on
+                    every change. */}
+                {viewMode === 'render' && (
+                  <RenderPreview
+                    editor={editor}
+                    config={props.config}
+                    extensions={extensions}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        </MobileEditor>
+      </TooltipProvider>
+    </MailyProvider>
+  );
+}
+
+function RenderPreview({
+  editor,
+  config,
+  extensions,
+}: {
+  editor: TiptapEditor;
+  config: EditorProps['config'];
+  extensions: EditorProps['extensions'];
+}) {
+  const context = useMailyContext();
+  const { blocks, t } = context;
+  // The preview's node views see a read-only editor.
+  const previewContext = useMemo(
+    () => ({ ...context, editable: false }),
+    [context]
+  );
+  const renderedState = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      html: editor.getHTML(),
+      json: editor.getJSON(),
+    }),
+    equalityFn: (previous, next) => previous?.html === next?.html,
+  });
+
+  const html = renderedState?.html ?? editor.getHTML();
+  const json = renderedState?.json ?? editor.getJSON();
+  const renderedPreview = config?.renderPreview?.({ editor, html, json });
+  const previewExtensions = useMemo(
+    () => defaultExtensions({ extensions, blocks, t }),
+    [extensions, blocks, t]
+  );
+  const previewEditorProps = useMemo(
+    () => ({
+      attributes: {
+        class: cn(
+          EDITOR_CONTENT_CLASS,
+          'pl-4! pr-4 caret-transparent [&_.ProseMirror-selectednode]:outline-none [&_.ProseMirror-selectednode]:after:hidden'
+        ),
+      },
+    }),
+    []
+  );
+  const previewEditor = useEditor({
+    editorProps: previewEditorProps,
+    extensions: previewExtensions,
+    content: json,
+    editable: false,
+    immediatelyRender: config?.immediatelyRender,
+  });
+
+  useEffect(() => {
+    if (!previewEditor || previewEditor.isDestroyed) {
+      return;
+    }
+
+    previewEditor.commands.setContent(json, { emitUpdate: false });
+  }, [previewEditor, json]);
+
+  if (renderedPreview) {
+    return (
+      <div
+        className={cn(
+          'mly-render-preview min-h-[320px] pl-4',
+          config?.renderPreviewClassName
+        )}
+      >
+        {renderedPreview}
+      </div>
+    );
+  }
+
+  if (!previewEditor) {
+    return null;
+  }
+
+  return (
+    <div
+      role="region"
+      aria-label={t('toolbar.viewMode.previewTitle')}
+      className={cn(
+        'mly-render-preview min-h-[320px]',
+        config?.renderPreviewClassName
+      )}
+    >
+      <MailyContext.Provider value={previewContext}>
+        <EditorContent editor={previewEditor} />
+      </MailyContext.Provider>
+    </div>
+  );
+}

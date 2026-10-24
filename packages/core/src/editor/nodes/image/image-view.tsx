@@ -13,14 +13,31 @@ import { useEvent } from '../../utils/use-event';
 import { captureNodeAction } from '../../utils/node-action';
 import { updateNodeViewAttributes } from '../../utils/update-attribute';
 import { getAspectRatio, getNewHeight } from '../../utils/aspect-ratio';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
+import { useResettableState } from '../../utils/state-hooks';
 import { Ban, BracesIcon, GrabIcon, ImageOffIcon, Loader2 } from 'lucide-react';
 
 const MIN_WIDTH = 20;
+// Node settings that are not <img> attributes.
+const NODE_ONLY_ATTRIBUTES = new Set([
+  'externalLink',
+  'isExternalLinkVariable',
+  'isSrcVariable',
+  'showIfKey',
+  'aspectRatio',
+  'borderRadius',
+  'lockAspectRatio',
+]);
 export const IMAGE_MAX_WIDTH = 600;
 export const IMAGE_MAX_HEIGHT = 400;
 
 export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+function isUploadPlaceholder(editor: NodeViewProps['editor'], src: string) {
+  return (
+    editor?.extensionStorage?.imageUpload?.placeholderImages?.has(src) ?? false
+  );
+}
 
 export function ImageView(props: NodeViewProps) {
   const { t } = useMailyContext();
@@ -36,8 +53,28 @@ export function ImageView(props: NodeViewProps) {
     },
     []
   );
-  const [status, setStatus] = useState<ImageStatus>('idle');
-  const [isPlaceholderImage, setIsPlaceholderImage] = useState(false);
+  const { src, isSrcVariable } = node.attrs || {};
+  // Every node revision reloads its image source, so its status starts over.
+  const loadKeys = [node, src, isSrcVariable];
+  const [status, setStatus] = useResettableState<ImageStatus>(
+    () => (!src || isSrcVariable ? 'idle' : 'loading'),
+    loadKeys
+  );
+  // React reuses this view for a replacement node (for example after
+  // setContent). An in-flight upload belongs to the node that started it.
+  const uploadNode = useRef(node);
+  useLayoutEffect(() => {
+    if (uploadNode.current === node) return;
+    uploadNode.current = node;
+    if (!uploadLock.current) return;
+    uploadGeneration.current += 1;
+    uploadLock.current = false;
+    setStatus('idle');
+  }, [node, setStatus]);
+  const [isPlaceholderImage, setIsPlaceholderImage] = useResettableState(
+    () => !!src && !isSrcVariable && isUploadPlaceholder(editor, src),
+    loadKeys
+  );
 
   const {
     onImageUpload,
@@ -188,26 +225,20 @@ export function ImageView(props: NodeViewProps) {
     [handleMouseDown, isPlaceholderImage]
   );
 
-  let {
+  const {
     alignment = 'center',
     width,
     height,
-    src,
     borderRadius,
   } = node.attrs || {};
 
-  const {
-    externalLink,
-    isExternalLinkVariable,
-    isSrcVariable,
-    showIfKey,
-    aspectRatio: defaultAspectRatio,
-    borderRadius: _,
-    lockAspectRatio,
-    ...attrs
-  } = node.attrs || {};
+  const attrs = Object.fromEntries(
+    Object.entries(node.attrs || {}).filter(
+      ([key]) => !NODE_ONLY_ATTRIBUTES.has(key)
+    )
+  );
 
-  const hasImageSrc = !!attrs.src;
+  const hasImageSrc = !!src;
   const isDroppable =
     !!onImageUpload &&
     editor.isEditable &&
@@ -222,6 +253,8 @@ export function ImageView(props: NodeViewProps) {
 
     const file = e.target.files[0];
     e.target.value = '';
+    // Picked files obey the host's types, as dropped files do.
+    if (!allowedMimeTypes.includes(file.type)) return;
     await handleImageUpload(file);
   };
 
@@ -266,11 +299,14 @@ export function ImageView(props: NodeViewProps) {
         console.error('Error uploading image:', error);
         if (generation === uploadGeneration.current) setStatus('error');
       } finally {
-        uploadLock.current = false;
+        // A replaced node already released the lock; a newer upload owns it.
+        if (generation === uploadGeneration.current) uploadLock.current = false;
       }
     },
     [
       onImageUpload,
+      setStatus,
+      setIsPlaceholderImage,
       onImageUploadDiscard,
       props,
       isDroppable,
@@ -281,27 +317,17 @@ export function ImageView(props: NodeViewProps) {
   );
 
   // load the image using new Image() to avoid layout shift
-  // then if the image is loaded, set the status to loaded
+  // Loading an image only reports its status. The document keeps the size the
+  // user chose: `auto` renders at the image's own size in the editor and in
+  // the email, so the saved width never depends on the editing device.
   useEffect(() => {
-    if (!src || isSrcVariable) {
-      setStatus('idle');
-      return;
-    }
+    if (!src || isSrcVariable) return;
 
-    setStatus('loading');
-    const isPlaceHolder =
-      editor?.extensionStorage?.imageUpload?.placeholderImages?.has(src) ??
-      false;
-    setIsPlaceholderImage(isPlaceHolder);
     let active = true;
     const img = new Image();
     img.src = src;
     img.onload = () => {
       if (!active) return;
-      // for some reason Apple Mail doesn't respect the width and height attributes
-      // update the dimensions to ensure that the image is not stretched
-      const { naturalWidth, naturalHeight } = img;
-      const wrapper = wrapperRef?.current;
       let currentNode;
       if (!editor.isDestroyed) {
         try {
@@ -314,35 +340,7 @@ export function ImageView(props: NodeViewProps) {
           /* Removed node views have no position. */
         }
       }
-
-      if (
-        !wrapper ||
-        !currentNode ||
-        currentNode !== node ||
-        currentNode.attrs.src !== src ||
-        currentNode.attrs.isSrcVariable ||
-        isPlaceHolder ||
-        currentNode.attrs.width !== 'auto' ||
-        currentNode.attrs.height !== 'auto' ||
-        !naturalWidth
-      ) {
-        if (currentNode === node) setStatus('loaded');
-        return;
-      }
-      setStatus('loaded');
-
-      const wrapperWidth = wrapper.offsetWidth;
-      const aspectRatio = getAspectRatio(naturalWidth, naturalHeight);
-      const calculatedHeight = Math.min(
-        getNewHeight(wrapperWidth, aspectRatio),
-        naturalHeight
-      );
-
-      updateNodeViewAttributes(props, {
-        width: Math.min(wrapperWidth, naturalWidth),
-        height: Math.min(calculatedHeight, naturalHeight),
-        aspectRatio,
-      });
+      if (currentNode === node) setStatus('loaded');
     };
     img.onerror = () => {
       if (active) setStatus('error');
@@ -354,7 +352,7 @@ export function ImageView(props: NodeViewProps) {
       img.onload = null;
       img.onerror = null;
     };
-  }, [node, src, isSrcVariable]);
+  }, [editor, getPos, node, src, isSrcVariable, setStatus]);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
@@ -471,7 +469,7 @@ export function ImageView(props: NodeViewProps) {
         /* shadcn-audit-ignore-next-line invisible native file input overlay */
         <input
           type="file"
-          accept="image/*"
+          accept={allowedMimeTypes.join(',')}
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0"
           multiple={false}

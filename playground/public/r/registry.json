@@ -26,31 +26,33 @@
         "collapsible"
       ],
       "dependencies": [
-        "@tanstack/react-virtual@^3.14.6",
-        "@tiptap/core@^3.30.5",
-        "@tiptap/extension-code-block@^3.30.5",
-        "@tiptap/extension-color@^3.30.5",
-        "@tiptap/extension-document@^3.30.5",
-        "@tiptap/extension-heading@^3.30.5",
-        "@tiptap/extension-horizontal-rule@^3.30.5",
-        "@tiptap/extension-image@^3.30.5",
-        "@tiptap/extension-link@^3.30.5",
-        "@tiptap/extension-list@^3.30.5",
-        "@tiptap/extension-paragraph@^3.30.5",
-        "@tiptap/extension-text-align@^3.30.5",
-        "@tiptap/extension-text-style@^3.30.5",
-        "@tiptap/extension-underline@^3.30.5",
-        "@tiptap/extensions@^3.30.5",
-        "@tiptap/pm@^3.30.5",
-        "@tiptap/react@^3.30.5",
-        "@tiptap/starter-kit@^3.30.5",
-        "@tiptap/suggestion@^3.30.5",
+        "@floating-ui/dom@^1.8.0",
+        "@tanstack/react-virtual@^3.14.22",
+        "@tiptap/core@^3.32.0",
+        "@tiptap/extension-code-block@^3.32.0",
+        "@tiptap/extension-color@^3.32.0",
+        "@tiptap/extension-document@^3.32.0",
+        "@tiptap/extension-heading@^3.32.0",
+        "@tiptap/extension-horizontal-rule@^3.32.0",
+        "@tiptap/extension-image@^3.32.0",
+        "@tiptap/extension-link@^3.32.0",
+        "@tiptap/extension-list@^3.32.0",
+        "@tiptap/extension-paragraph@^3.32.0",
+        "@tiptap/extension-text-align@^3.32.0",
+        "@tiptap/extension-text-style@^3.32.0",
+        "@tiptap/extension-underline@^3.32.0",
+        "@tiptap/extensions@^3.32.0",
+        "@tiptap/pm@^3.32.0",
+        "@tiptap/react@^3.32.0",
+        "@tiptap/starter-kit@^3.32.0",
+        "@tiptap/suggestion@^3.32.0",
+        "cn",
         "fast-deep-equal@^3.1.3",
-        "react-colorful@^5.6.1",
-        "tippy.js@^6.3.7",
-        "uuid@^11.1.0"
+        "react-colorful@^5.8.1"
       ],
-      "devDependencies": ["@tailwindcss/typography@^0.5.16"],
+      "devDependencies": [
+        "@tailwindcss/typography@^0.5.20"
+      ],
       "files": [
         {
           "path": "registry/default/maily/components/maily/blocks/button.tsx",
@@ -343,6 +345,11 @@
           "target": "@components/maily/editor/components/vertical-alignment-switch.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/editor.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/editor.tsx"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/extensions/attribute-commands.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/attribute-commands.ts"
@@ -428,9 +435,9 @@
           "target": "@components/maily/editor/extensions/slash-command/slash-command.ts"
         },
         {
-          "path": "registry/default/maily/components/maily/editor/extensions/tailing-node/tailing-node.ts",
+          "path": "registry/default/maily/components/maily/editor/fonts/font-provider.ts",
           "type": "registry:component",
-          "target": "@components/maily/editor/extensions/tailing-node/tailing-node.ts"
+          "target": "@components/maily/editor/fonts/font-provider.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/fonts/fontsource.ts",
@@ -456,6 +463,11 @@
           "path": "registry/default/maily/components/maily/editor/index.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/maily-context.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/maily-context.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/nodes/button/button-label-input.tsx",
@@ -623,6 +635,11 @@
           "target": "@components/maily/editor/utils/constants.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/utils/create-id.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/create-id.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/utils/deferred-editor-action.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/deferred-editor-action.ts"
@@ -676,6 +693,16 @@
           "path": "registry/default/maily/components/maily/editor/utils/spacing.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/spacing.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/state-hooks.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/state-hooks.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/suggestion-popup.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/suggestion-popup.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/utils/update-attribute.ts",
@@ -749,8 +776,25 @@
         "label",
         "empty"
       ],
-      "dependencies": [],
+      "dependencies": [
+        "cn"
+      ],
       "files": [
+        {
+          "path": "registry/default/maily/components/maily/mailbox/addresses.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/addresses.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/compose-draft.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/compose-draft.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/compose-seed.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/compose-seed.ts"
+        },
         {
           "path": "registry/default/maily/components/maily/mailbox/contacts.ts",
           "type": "registry:component",
@@ -762,9 +806,29 @@
           "target": "@components/maily/mailbox/conversations.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/mailbox/draft-capabilities.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/draft-capabilities.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/mailbox/index.tsx",
           "type": "registry:component",
           "target": "@components/maily/mailbox/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/labels.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/labels.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/mailbox-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/mailbox-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/message-actions.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/message-actions.ts"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/reply-all.ts",
@@ -777,9 +841,9 @@
           "target": "@components/maily/mailbox/search.ts"
         },
         {
-          "path": "registry/default/maily/components/maily/mailbox/send-recovery.ts",
+          "path": "registry/default/maily/components/maily/mailbox/types.ts",
           "type": "registry:component",
-          "target": "@components/maily/mailbox/send-recovery.ts"
+          "target": "@components/maily/mailbox/types.ts"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/use-controllable-state.ts",
@@ -795,13 +859,12 @@
       "title": "Maily Renderer",
       "description": "Server-side Maily JSON to email-safe HTML rendering source.",
       "dependencies": [
-        "@antfu/utils@^9.2.0",
-        "@react-email/components@^0.5.1",
-        "@react-email/render@^1.2.1",
-        "@tiptap/core@^3.30.5",
-        "csstype@^3.1.3",
-        "juice@^11.0.1",
-        "node-html-parser@^7.0.1"
+        "@antfu/utils@^9.3.0",
+        "@tiptap/core@^3.32.0",
+        "csstype@^3.2.3",
+        "juice@^12.2.0",
+        "node-html-parser@^9.0.5",
+        "react-email@^6.11.3"
       ],
       "files": [
         {
@@ -894,37 +957,38 @@
         "empty"
       ],
       "dependencies": [
-        "@antfu/utils@^9.2.0",
-        "@react-email/components@^0.5.1",
-        "@react-email/render@^1.2.1",
-        "@tanstack/react-virtual@^3.14.6",
-        "@tiptap/core@^3.30.5",
-        "@tiptap/extension-code-block@^3.30.5",
-        "@tiptap/extension-color@^3.30.5",
-        "@tiptap/extension-document@^3.30.5",
-        "@tiptap/extension-heading@^3.30.5",
-        "@tiptap/extension-horizontal-rule@^3.30.5",
-        "@tiptap/extension-image@^3.30.5",
-        "@tiptap/extension-link@^3.30.5",
-        "@tiptap/extension-list@^3.30.5",
-        "@tiptap/extension-paragraph@^3.30.5",
-        "@tiptap/extension-text-align@^3.30.5",
-        "@tiptap/extension-text-style@^3.30.5",
-        "@tiptap/extension-underline@^3.30.5",
-        "@tiptap/extensions@^3.30.5",
-        "@tiptap/pm@^3.30.5",
-        "@tiptap/react@^3.30.5",
-        "@tiptap/starter-kit@^3.30.5",
-        "@tiptap/suggestion@^3.30.5",
-        "csstype@^3.1.3",
+        "@antfu/utils@^9.3.0",
+        "@floating-ui/dom@^1.8.0",
+        "@tanstack/react-virtual@^3.14.22",
+        "@tiptap/core@^3.32.0",
+        "@tiptap/extension-code-block@^3.32.0",
+        "@tiptap/extension-color@^3.32.0",
+        "@tiptap/extension-document@^3.32.0",
+        "@tiptap/extension-heading@^3.32.0",
+        "@tiptap/extension-horizontal-rule@^3.32.0",
+        "@tiptap/extension-image@^3.32.0",
+        "@tiptap/extension-link@^3.32.0",
+        "@tiptap/extension-list@^3.32.0",
+        "@tiptap/extension-paragraph@^3.32.0",
+        "@tiptap/extension-text-align@^3.32.0",
+        "@tiptap/extension-text-style@^3.32.0",
+        "@tiptap/extension-underline@^3.32.0",
+        "@tiptap/extensions@^3.32.0",
+        "@tiptap/pm@^3.32.0",
+        "@tiptap/react@^3.32.0",
+        "@tiptap/starter-kit@^3.32.0",
+        "@tiptap/suggestion@^3.32.0",
+        "cn",
+        "csstype@^3.2.3",
         "fast-deep-equal@^3.1.3",
-        "juice@^11.0.1",
-        "node-html-parser@^7.0.1",
-        "react-colorful@^5.6.1",
-        "tippy.js@^6.3.7",
-        "uuid@^11.1.0"
+        "juice@^12.2.0",
+        "node-html-parser@^9.0.5",
+        "react-colorful@^5.8.1",
+        "react-email@^6.11.3"
       ],
-      "devDependencies": ["@tailwindcss/typography@^0.5.16"],
+      "devDependencies": [
+        "@tailwindcss/typography@^0.5.20"
+      ],
       "files": [
         {
           "path": "registry/default/maily/components/maily/blocks/button.tsx",
@@ -1217,6 +1281,11 @@
           "target": "@components/maily/editor/components/vertical-alignment-switch.tsx"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/editor.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/editor/editor.tsx"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/extensions/attribute-commands.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/extensions/attribute-commands.ts"
@@ -1302,9 +1371,9 @@
           "target": "@components/maily/editor/extensions/slash-command/slash-command.ts"
         },
         {
-          "path": "registry/default/maily/components/maily/editor/extensions/tailing-node/tailing-node.ts",
+          "path": "registry/default/maily/components/maily/editor/fonts/font-provider.ts",
           "type": "registry:component",
-          "target": "@components/maily/editor/extensions/tailing-node/tailing-node.ts"
+          "target": "@components/maily/editor/fonts/font-provider.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/fonts/fontsource.ts",
@@ -1330,6 +1399,11 @@
           "path": "registry/default/maily/components/maily/editor/index.tsx",
           "type": "registry:component",
           "target": "@components/maily/editor/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/maily-context.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/maily-context.ts"
         },
         {
           "path": "registry/default/maily/components/maily/editor/nodes/button/button-label-input.tsx",
@@ -1497,6 +1571,11 @@
           "target": "@components/maily/editor/utils/constants.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/utils/create-id.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/create-id.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/utils/deferred-editor-action.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/deferred-editor-action.ts"
@@ -1552,6 +1631,16 @@
           "target": "@components/maily/editor/utils/spacing.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/editor/utils/state-hooks.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/state-hooks.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/editor/utils/suggestion-popup.ts",
+          "type": "registry:component",
+          "target": "@components/maily/editor/utils/suggestion-popup.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/editor/utils/update-attribute.ts",
           "type": "registry:component",
           "target": "@components/maily/editor/utils/update-attribute.ts"
@@ -1592,6 +1681,21 @@
           "target": "@components/maily/index.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/mailbox/addresses.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/addresses.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/compose-draft.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/compose-draft.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/compose-seed.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/compose-seed.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/mailbox/contacts.ts",
           "type": "registry:component",
           "target": "@components/maily/mailbox/contacts.ts"
@@ -1602,9 +1706,29 @@
           "target": "@components/maily/mailbox/conversations.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/mailbox/draft-capabilities.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/draft-capabilities.ts"
+        },
+        {
           "path": "registry/default/maily/components/maily/mailbox/index.tsx",
           "type": "registry:component",
           "target": "@components/maily/mailbox/index.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/labels.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/labels.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/mailbox-view.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/mailbox-view.tsx"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/message-actions.ts",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/message-actions.ts"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/reply-all.ts",
@@ -1617,9 +1741,9 @@
           "target": "@components/maily/mailbox/search.ts"
         },
         {
-          "path": "registry/default/maily/components/maily/mailbox/send-recovery.ts",
+          "path": "registry/default/maily/components/maily/mailbox/types.ts",
           "type": "registry:component",
-          "target": "@components/maily/mailbox/send-recovery.ts"
+          "target": "@components/maily/mailbox/types.ts"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/use-controllable-state.ts",

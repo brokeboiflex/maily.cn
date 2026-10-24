@@ -16,7 +16,6 @@ export const image = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setImage({ src: '' }).run();
   },
 });
@@ -34,7 +33,6 @@ export const logo = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setLogoImage({ src: '' }).run();
   },
 });
@@ -52,18 +50,14 @@ export const inlineImage = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor
       .chain()
       .focus()
       .deleteRange(range)
-      // @ts-ignore
-      .setInlineImage({
-        src: 'https://raw.githubusercontent.com/brokeboiflex/maily.cn/main/assets/branding/maily-cn-avatar.png',
-      })
-      // @ts-ignore
+      // Inserted empty, like image and logo: the user picks the source.
+      .setInlineImage({ src: '' })
       .command((props) => {
-        const { tr, state, view: _view, editor: _editor } = props;
+        const { tr, state } = props;
         const { from } = range;
 
         const node = state.doc.nodeAt(from);

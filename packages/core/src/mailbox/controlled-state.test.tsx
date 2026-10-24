@@ -24,13 +24,11 @@ function fixture() {
     createdAt: '2026-10-09',
     bodyText: 'First body',
   };
-  const listMessages = vi.fn(
-    (_params: Parameters<MailyMailboxDataSource['listMessages']>[0]) => ({
-      items: [row],
-      nextCursor: 'page-two',
-      total: 2,
-    })
-  );
+  const listMessages = vi.fn<MailyMailboxDataSource['listMessages']>(() => ({
+    items: [row],
+    nextCursor: 'page-two',
+    total: 2,
+  }));
   const getMessage = vi.fn((id: string) => ({
     ...row,
     id,
@@ -127,7 +125,7 @@ it('honors default state and does not clear an off-page controlled selection dur
     await f.render({
       initialFolder: 'sent',
       defaultSearch: 'invoice',
-      defaultSearchScope: 'allMail',
+      searchScope: 'allMail',
       searchFilters: { from: 'sender@example.com' },
       selectedMessageId: 'off-page',
       selectedMessageIds: ['off-page'],
@@ -147,7 +145,7 @@ it('honors default state and does not clear an off-page controlled selection dur
     await f.render({
       initialFolder: 'sent',
       defaultSearch: 'invoice',
-      defaultSearchScope: 'allMail',
+      searchScope: 'allMail',
       searchFilters: { from: 'sender@example.com' },
       selectedMessageId: 'off-page',
       selectedMessageIds: ['off-page'],
@@ -268,7 +266,7 @@ it('completes label navigation after the parent accepts a controlled folder requ
     await f.render({
       folder: 'inbox',
       defaultSearch: 'invoice',
-      defaultSearchScope: 'allMail',
+      searchScope: 'allMail',
       onFolderChange,
     });
     await f.click('Projects');
@@ -336,14 +334,14 @@ it('opens a draft only after the parent accepts the reader selection', async () 
   }
 });
 
-it('keeps a controlled folder authoritative after saving a new draft', async () => {
+it('requests no folder change when a new draft is saved', async () => {
   const f = fixture();
   const onFolderChange = vi.fn();
   try {
     await f.render({ folder: 'inbox', onFolderChange });
     await f.click('Compose');
     await f.click('Save draft');
-    expect(onFolderChange).toHaveBeenCalledWith('drafts');
+    expect(onFolderChange).not.toHaveBeenCalled();
     expect(f.listMessages).toHaveBeenLastCalledWith(
       expect.objectContaining({ folder: 'inbox' })
     );
@@ -355,7 +353,9 @@ it('keeps a controlled folder authoritative after saving a new draft', async () 
 it('revalidates a controlled reader when its parent keeps selection after archive', async () => {
   const f = fixture();
   const onSelectedMessageIdChange = vi.fn();
-  f.dataSource.runMessageAction = vi.fn(async () => undefined);
+  f.dataSource.runMessageAction = vi.fn(async () => ({
+    removedFromView: true,
+  }));
   try {
     await f.render({
       selectedMessageId: 'first',

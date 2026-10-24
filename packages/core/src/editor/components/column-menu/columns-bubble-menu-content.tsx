@@ -10,7 +10,7 @@ import { Select } from '../ui/select';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { deleteNode } from '../../utils/delete-node';
 import { spacing } from '../../utils/spacing';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import type { LabelKey } from '../../i18n';
 import { BUBBLE_MENU_CONTENT_CLASS } from '../ui/floating-menu';
 import { Space, Trash2 } from 'lucide-react';
@@ -21,9 +21,6 @@ type ColumnsBubbleMenuProps = {
 
 export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
   const { editor } = props;
-  if (!editor) {
-    return null;
-  }
 
   const state = useColumnsState(editor);
   const { t } = useMailyContext();
@@ -77,7 +74,6 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               gap: +value,
             });
           }}
-          tooltip={t('columnMenu.gap')}
         />
 
         <Separator orientation="vertical" />

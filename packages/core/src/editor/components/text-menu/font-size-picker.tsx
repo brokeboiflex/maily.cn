@@ -6,7 +6,7 @@ import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from '../ui/toggle-group-compat';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 import { FLOATING_MENU_TRIGGER_CLASS } from '../ui/floating-menu';
 import { cn } from '../../utils/classname';

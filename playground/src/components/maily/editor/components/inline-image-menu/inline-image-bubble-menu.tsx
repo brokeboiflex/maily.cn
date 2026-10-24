@@ -1,28 +1,25 @@
-import { AdaptiveBubbleMenu as BubbleMenu } from "../adaptive-bubble-menu"
-import { ImageSize } from "../image-menu/image-size"
-import { type EditorBubbleMenuProps } from "../text-menu/text-bubble-menu"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { useInlineImageState } from "./use-inline-image-state"
-import { LinkInputPopover } from "../ui/link-input-popover"
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
+import { ImageSize } from '../image-menu/image-size';
+import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { useInlineImageState } from './use-inline-image-state';
+import { LinkInputPopover } from '../ui/link-input-popover';
 import {
   DEFAULT_INLINE_IMAGE_HEIGHT,
   DEFAULT_INLINE_IMAGE_WIDTH,
-} from "../../nodes/inline-image/inline-image"
-import { useMailyContext } from "../../provider"
+} from '../../nodes/inline-image/inline-image';
+import { useMailyContext } from '../../maily-context';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
   useStableBubbleMenuProps,
-} from "../ui/floating-menu"
-import { ImageDownIcon } from "lucide-react"
+} from '../ui/floating-menu';
+import { ImageDownIcon } from "lucide-react";
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo, ...menuProps } = props
-  if (!editor) {
-    return null
-  }
+  const { editor, appendTo, ...menuProps } = props;
 
-  const state = useInlineImageState(editor)
-  const { t } = useMailyContext()
+  const state = useInlineImageState(editor);
+  const { t } = useMailyContext();
 
   const bubbleMenuProps = useStableBubbleMenuProps({
     ...menuProps,
@@ -37,50 +34,51 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
       : {}),
     shouldShow: ({ editor }) => {
       if (!editor.isEditable) {
-        return false
+        return false;
       }
 
-      return editor.isActive("inlineImage")
+      return editor.isActive('inlineImage');
     },
     options: {
-      placement: "top" as const,
+      placement: 'top' as const,
       flip: false,
     },
-  })
+  });
 
   return (
     <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
       <TooltipProvider>
         <div className="flex gap-x-0.5">
           <LinkInputPopover
-            defaultValue={state?.src ?? ""}
+            defaultValue={state?.src ?? ''}
             onValueChange={(value, isVariable) => {
               editor
                 ?.chain()
-                .updateAttributes("inlineImage", {
+                .updateAttributes('inlineImage', {
                   src: value,
                   isSrcVariable: isVariable ?? false,
                 })
-                .run()
+                .run();
             }}
-            tooltip={t("inlineImageMenu.sourceUrl")}
-            icon={<ImageDownIcon />}
+            tooltip={t('inlineImageMenu.sourceUrl')}
+            icon={<ImageDownIcon
+/>}
             editor={editor}
             isVariable={state.isSrcVariable}
           />
 
           <LinkInputPopover
-            defaultValue={state?.imageExternalLink ?? ""}
+            defaultValue={state?.imageExternalLink ?? ''}
             onValueChange={(value, isVariable) => {
               editor
                 ?.chain()
-                .updateAttributes("inlineImage", {
+                .updateAttributes('inlineImage', {
                   externalLink: value,
                   isExternalLinkVariable: isVariable ?? false,
                 })
-                .run()
+                .run();
             }}
-            tooltip={t("inlineImageMenu.externalUrl")}
+            tooltip={t('inlineImageMenu.externalUrl')}
             editor={editor}
             isVariable={state.isExternalLinkVariable}
           />
@@ -91,15 +89,15 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
             onValueChange={(value) => {
               editor
                 ?.chain()
-                .updateAttributes("inlineImage", {
+                .updateAttributes('inlineImage', {
                   width: value || DEFAULT_INLINE_IMAGE_WIDTH,
                   height: value || DEFAULT_INLINE_IMAGE_HEIGHT,
                 })
-                .run()
+                .run();
             }}
           />
         </div>
       </TooltipProvider>
     </BubbleMenu>
-  )
+  );
 }

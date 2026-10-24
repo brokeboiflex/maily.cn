@@ -10,7 +10,7 @@ type SlashCommandFilterOptions = {
 export function filterSlashCommands(options: SlashCommandFilterOptions) {
   const { groups, query, editor } = options;
   const newGroups = [...groups];
-  let searchQuery = query?.toLowerCase();
+  const searchQuery = query?.toLowerCase();
 
   const subCommandMatch = searchQuery.match(/^([^.]+)\./);
 
@@ -109,7 +109,8 @@ function processCommand(options: ProcessCommandOptions): BlockItem[] {
     // if we are not searching, we want to return a navigable command
     // that will navigate to the group so that we can navigate into it
     // using the arrow keys / enter key
-    // @ts-expect-error
+    // @ts-expect-error A navigable group keeps `commands` for its submenu and adds
+    // the `command` that enters it, a shape the BlockItem union does not model.
     const navigableCommand: BlockItem = {
       ...item,
       command: (options) => {

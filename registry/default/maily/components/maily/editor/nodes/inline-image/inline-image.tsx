@@ -7,7 +7,7 @@ export interface InlineImageOptions {
    * @default {}
    * @example { class: 'foo' }
    */
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
 export interface InlineImageAttributes {

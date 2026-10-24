@@ -26,7 +26,7 @@ import { setTextAlignment } from '../utils/set-text-alignment';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { useMailyContext } from '../provider';
+import { useMailyContext } from '../maily-context';
 import { Toggle } from './ui/toggle';
 import {
   ToggleGroupCompat,
@@ -41,6 +41,8 @@ interface EditorMenuItem extends BubbleMenuItem {
 
 type EditorMenuBarProps = {
   compact?: boolean;
+  /** Formatting controls would mutate a read-only document; only the view mode remains. */
+  editable?: boolean;
   config: EditorProps['config'];
   editor: EditorType;
   viewMode: EditorViewMode;
@@ -176,7 +178,14 @@ const ToggleItemControl = forwardRef<HTMLButtonElement, ToggleItemControlProps>(
 ToggleItemControl.displayName = 'ToggleItemControl';
 
 export const EditorMenuBar = (props: EditorMenuBarProps) => {
-  const { editor, config, viewMode, onViewModeChange, compact = false } = props;
+  const {
+    editor,
+    config,
+    viewMode,
+    onViewModeChange,
+    compact = false,
+    editable = true,
+  } = props;
   const { t } = useMailyContext();
   const editorState = useEditorState({
     editor,
@@ -303,7 +312,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         config?.toolbarClassName
       )}
     >
-      {!compact && (
+      {!compact && editable && (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {groups.map((group) => {
             const groupItems = items.filter((item) => item.group === group);

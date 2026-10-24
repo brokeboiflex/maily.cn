@@ -7,7 +7,12 @@ import {
   getSchemaTypeNameByName,
   commands as tiptapCommands,
 } from '@tiptap/core';
-import { type MarkType, type NodeType } from '@tiptap/pm/model';
+import {
+  type Attrs,
+  type Mark,
+  type MarkType,
+  type NodeType,
+} from '@tiptap/pm/model';
 import { type Transaction } from '@tiptap/pm/state';
 
 /** TipTap's fallback clears unchanged blocks before restoring their type. */
@@ -46,9 +51,7 @@ export function hasSelectedMarkAttributes(
   type: string,
   attributes: readonly string[]
 ) {
-  const hasAttributes = (
-    marks: readonly { type: { name: string }; attrs: Record<string, any> }[]
-  ) =>
+  const hasAttributes = (marks: readonly Mark[]) =>
     marks.some(
       (mark) =>
         mark.type.name === type && attributes.some((key) => !!mark.attrs[key])
@@ -65,11 +68,7 @@ export function hasSelectedMarkAttributes(
 }
 
 /** Write the schema-normalized desired attributes only when markup changes. */
-export function setNodeAttributes(
-  tr: Transaction,
-  pos: number,
-  attrs: Record<string, any>
-) {
+export function setNodeAttributes(tr: Transaction, pos: number, attrs: Attrs) {
   const node = tr.doc.nodeAt(pos);
   if (!node) return false;
   const desired = node.type.create(attrs, node.content, node.marks);
@@ -81,7 +80,7 @@ export function setNodeAttributes(
 /** NodeView writes bypass TipTap's updateAttributes command. Read the live node. */
 export function updateNodeViewAttributes(
   { editor, node, getPos }: Pick<NodeViewProps, 'editor' | 'node' | 'getPos'>,
-  attrs: Record<string, any>
+  attrs: Attrs
 ) {
   if (editor.isDestroyed) return false;
   return editor.commands.command(({ tr, dispatch }) => {
@@ -98,16 +97,13 @@ export function updateNodeViewAttributes(
 export function updateAttribute(
   type: string,
   attr: string,
-  value: any
+  value: unknown
 ): Command {
   return updateAttributes(type, { [attr]: value });
 }
 
 /** Maily composites update the innermost matching selected node. */
-export function updateAttributes(
-  type: string,
-  attrs: Record<string, any>
-): Command {
+export function updateAttributes(type: string, attrs: Attrs): Command {
   return ({ tr, dispatch }) => {
     let lastPos: number | undefined;
     tr.selection.ranges.forEach((range) => {
@@ -194,7 +190,7 @@ export const resetSelectedAttributes: RawCommands['resetAttributes'] =
         : undefined;
     if (!nodeType && !markType) return false;
     const keys = Array.isArray(attributes) ? attributes : [attributes];
-    const reset = (attrs: Record<string, any>) =>
+    const reset = (attrs: Attrs) =>
       Object.fromEntries(
         Object.entries(attrs).filter(([key]) => !keys.includes(key))
       );

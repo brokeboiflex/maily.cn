@@ -5,10 +5,10 @@ import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
 } from '../ui/toggle-group-compat';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 import { FLOATING_MENU_TRIGGER_CLASS } from '../ui/floating-menu';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { ChevronDownIcon } from "lucide-react";
 
 const DEFAULT_FONT_SIZE_VALUE = '__maily-default-font-size__';

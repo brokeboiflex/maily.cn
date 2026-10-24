@@ -19,7 +19,7 @@ import { useRepeatState } from './use-repeat-state';
 import { getClosestNodeByName } from '../../utils/columns';
 import { processVariables } from '../../utils/variable';
 import { useVariableOptions } from '../../utils/node-options';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { Button } from '@/editor/components/base-button';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
@@ -29,9 +29,6 @@ import { InfoIcon } from 'lucide-react';
 
 export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const { schedule: scheduleTimeout } = useOwnedTimeout();
   const state = useRepeatState(editor);
@@ -165,6 +162,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
           >
             <InputAutocomplete
               editor={editor}
+              aria-label={t('repeatMenu.label')}
               placeholder={t('repeatMenu.placeholder')}
               value={state?.each || ''}
               onValueChange={(value) => {

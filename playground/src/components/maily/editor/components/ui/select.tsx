@@ -1,49 +1,42 @@
-import { useId, useRef, useState, type ReactNode } from "react"
+import { useId, useRef, useState, type ReactNode } from 'react';
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from 'cn';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
-import { ToggleGroupCompat, ToggleGroupCompatItem } from "./toggle-group-compat"
-import { BOTTOM_FLOATING_CONTENT_PROPS } from "./floating-placement"
-import { FLOATING_MENU_TRIGGER_CLASS } from "./floating-menu"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { ChevronDownIcon } from "lucide-react"
+  ToggleGroupCompat,
+  ToggleGroupCompatItem,
+} from './toggle-group-compat';
+import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
+import { FLOATING_MENU_TRIGGER_CLASS } from './floating-menu';
+import { ChevronDownIcon } from "lucide-react";
 
-const EMPTY_SELECT_VALUE = "__maily-empty-value__"
+const EMPTY_SELECT_VALUE = '__maily-empty-value__';
 
 type SelectProps = {
-  label: string
+  label: string;
   options: {
-    value: string
-    label: string
-  }[]
+    value: string;
+    label: string;
+  }[];
 
-  value: string
-  onValueChange: (value: string) => void
+  value: string;
+  onValueChange: (value: string) => void;
 
-  tooltip?: string
-  className?: string
-  onCloseAutoFocus?: () => void
+  className?: string;
+  onCloseAutoFocus?: () => void;
 
-  icon?: ReactNode
+  icon?: ReactNode;
 
-  placeholder?: string
-}
+  placeholder?: string;
+};
 
 function toPrimitiveValue(value: string) {
-  return value === "" ? EMPTY_SELECT_VALUE : value
+  return value === '' ? EMPTY_SELECT_VALUE : value;
 }
 
 function fromPrimitiveValue(value: string) {
-  return value === EMPTY_SELECT_VALUE ? "" : value
+  return value === EMPTY_SELECT_VALUE ? '' : value;
 }
 
 export function Select(props: SelectProps) {
@@ -56,10 +49,9 @@ export function Select(props: SelectProps) {
     icon,
     placeholder,
     onCloseAutoFocus,
-    tooltip,
-  } = props
+  } = props;
 
-  const selectId = `mly${useId()}`
+  const selectId = `mly${useId()}`;
 
   return (
     <SelectControl
@@ -72,14 +64,13 @@ export function Select(props: SelectProps) {
       icon={icon}
       placeholder={placeholder}
       onCloseAutoFocus={onCloseAutoFocus}
-      tooltip={tooltip}
     />
-  )
+  );
 }
 
 type SelectControlProps = SelectProps & {
-  selectId: string
-}
+  selectId: string;
+};
 
 function SelectControl({
   selectId,
@@ -91,25 +82,24 @@ function SelectControl({
   icon,
   placeholder,
   onCloseAutoFocus,
-  tooltip,
 }: SelectControlProps) {
-  const [open, setOpen] = useState(false)
-  const wasOpenRef = useRef(false)
-  const selectedValue = toPrimitiveValue(value || "")
+  const [open, setOpen] = useState(false);
+  const wasOpenRef = useRef(false);
+  const selectedValue = toPrimitiveValue(value || '');
   const activeLabel =
-    options.find((option) => option.value === (value || ""))?.label ||
+    options.find((option) => option.value === (value || ''))?.label ||
     placeholder ||
-    label
+    label;
 
   const handleOpenChange = (nextOpen: boolean) => {
-    const wasOpen = wasOpenRef.current
-    wasOpenRef.current = nextOpen
-    setOpen(nextOpen)
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = nextOpen;
+    setOpen(nextOpen);
 
     if (wasOpen && !nextOpen && onCloseAutoFocus) {
-      window.requestAnimationFrame(onCloseAutoFocus)
+      window.requestAnimationFrame(onCloseAutoFocus);
     }
-  }
+  };
 
   return (
     <div className="relative inline-flex">
@@ -118,66 +108,26 @@ function SelectControl({
       </label>
 
       <Popover open={open} onOpenChange={handleOpenChange}>
-        {tooltip ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex shrink-0">
-                <PopoverTrigger asChild>
-                  <Button
-                    id={selectId}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-label={label}
-                    aria-expanded={open}
-                    className={cn(
-                      FLOATING_MENU_TRIGGER_CLASS,
-                      "max-w-max",
-                      className
-                    )}
-                  >
-                    {icon && (
-                      <span className="flex size-3 shrink-0 items-center justify-center text-muted-foreground [&_svg]:size-3">
-                        {icon}
-                      </span>
-                    )}
-                    <span className="truncate text-xs font-medium">
-                      {activeLabel}
-                    </span>
-                    <ChevronDownIcon className="size-3 shrink-0 text-muted-foreground" />
-                  </Button>
-                </PopoverTrigger>
+        {/* No Tooltip: floating editor surfaces can detach it from the trigger. */}
+        <PopoverTrigger asChild>
+          <Button
+            id={selectId}
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label={label}
+            aria-expanded={open}
+            className={cn(FLOATING_MENU_TRIGGER_CLASS, 'max-w-max', className)}
+          >
+            {icon && (
+              <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
+                {icon}
               </span>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <PopoverTrigger asChild>
-            <Button
-              id={selectId}
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label={label}
-              aria-expanded={open}
-              className={cn(
-                FLOATING_MENU_TRIGGER_CLASS,
-                "max-w-max",
-                className
-              )}
-            >
-              {icon && (
-                <span className="flex size-3 shrink-0 items-center justify-center text-muted-foreground [&_svg]:size-3">
-                  {icon}
-                </span>
-              )}
-              <span className="truncate text-xs font-medium">
-                {activeLabel}
-              </span>
-              <ChevronDownIcon className="size-3 shrink-0 text-muted-foreground" />
-            </Button>
-          </PopoverTrigger>
-        )}
+            )}
+            <span className="truncate text-xs font-medium">{activeLabel}</span>
+            <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
+          </Button>
+        </PopoverTrigger>
         <PopoverContent
           {...BOTTOM_FLOATING_CONTENT_PROPS}
           align="start"
@@ -190,7 +140,7 @@ function SelectControl({
             className="flex-col items-stretch gap-0.5"
           >
             {options.map((option) => {
-              const optionValue = toPrimitiveValue(option.value)
+              const optionValue = toPrimitiveValue(option.value);
 
               return (
                 <ToggleGroupCompatItem
@@ -198,8 +148,8 @@ function SelectControl({
                   value={optionValue}
                   pressed={selectedValue === optionValue}
                   onClick={() => {
-                    onValueChange(fromPrimitiveValue(optionValue))
-                    handleOpenChange(false)
+                    onValueChange(fromPrimitiveValue(optionValue));
+                    handleOpenChange(false);
                   }}
                   aria-label={option.label}
                   className="h-7! justify-start px-2 text-sm whitespace-nowrap"
@@ -207,11 +157,11 @@ function SelectControl({
                 >
                   {option.label}
                 </ToggleGroupCompatItem>
-              )
+              );
             })}
           </ToggleGroupCompat>
         </PopoverContent>
       </Popover>
     </div>
-  )
+  );
 }

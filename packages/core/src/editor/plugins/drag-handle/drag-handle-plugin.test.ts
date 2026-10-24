@@ -1,5 +1,5 @@
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { Plugin } from '@tiptap/pm/state';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DragHandlePlugin } from './drag-handle-plugin';
@@ -90,5 +90,46 @@ describe('native drag-handle lifecycle', () => {
     expect(editor.view.dragging).toBeNull();
     expect(element.isConnected).toBe(false);
     expect(document.querySelector('[style*="-10000px"]')).toBeNull();
+  });
+});
+
+describe('drag-handle positioning', () => {
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+  const hover = (editor: Editor) =>
+    editor.view.dom.dispatchEvent(
+      new MouseEvent('mousemove', { bubbles: true, clientX: 40, clientY: 20 })
+    );
+
+  it('shows the handle beside the hovered block and hides it on leave', async () => {
+    const { editor, element } = setup();
+    const floating = element.parentElement!;
+    expect(floating.style.visibility).toBe('hidden');
+    hover(editor);
+    await settle();
+    expect(floating.style.visibility).toBe('visible');
+    expect(floating.style.left).toMatch(/px$/);
+    editor.view.dom.dispatchEvent(
+      new MouseEvent('mouseleave', { bubbles: true, relatedTarget: null })
+    );
+    expect(floating.style.visibility).toBe('hidden');
+  });
+
+  it('stays hidden while the primary button is pressed and when locked', async () => {
+    const { editor, element } = setup();
+    const floating = element.parentElement!;
+    editor.view.dom.dispatchEvent(
+      new MouseEvent('mousemove', {
+        bubbles: true,
+        buttons: 1,
+        clientX: 40,
+        clientY: 20,
+      })
+    );
+    await settle();
+    expect(floating.style.visibility).toBe('hidden');
+    editor.commands.setMeta('lockDragHandle', true);
+    hover(editor);
+    await settle();
+    expect(floating.style.visibility).toBe('hidden');
   });
 });

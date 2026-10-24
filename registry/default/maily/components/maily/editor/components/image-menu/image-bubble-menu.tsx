@@ -17,7 +17,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { ImageSize } from './image-size';
 import { useImageState } from './use-image-state';
 import { IMAGE_MAX_WIDTH } from '../../nodes/image/image-view';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import type { LabelKey } from '../../i18n';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
@@ -34,9 +34,6 @@ const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
 
 export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const state = useImageState(editor);
   const { t } = useMailyContext();
@@ -74,7 +71,6 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
           <>
             <Select
               label={t('imageMenu.size')}
-              tooltip={t('imageMenu.size')}
               value={state.logoSize}
               options={allowedLogoSize.map((size) => ({
                 value: size,
@@ -181,7 +177,6 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   })
                   .run();
               }}
-              tooltip={t('imageMenu.borderRadius')}
               className="capitalize"
             />
 

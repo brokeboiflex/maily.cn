@@ -1,5 +1,10 @@
 # Editor and mailbox idempotence re-audit, 2026-10-10
 
+> **Superseded in part (2026-10-24):** Maily no longer keeps send-recovery
+> receipts in browser storage, the `recoveryScope` prop or the pending-send lock
+> described here. Send recovery belongs to the host; see CHANGELOG.md and
+> [mailbox workflows](mailbox-workflows.md#async-ownership-and-sending).
+
 Audited commit: `442aa7cd11828ae68356445c5e265f27b4a9a07c`, pushed to
 `origin/main` before this audit. Three fresh-context subagents independently
 inspected synchronous editor actions, editor async/resource actions, and mailbox

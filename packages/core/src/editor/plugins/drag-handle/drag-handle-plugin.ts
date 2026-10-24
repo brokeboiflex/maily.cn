@@ -1,10 +1,16 @@
 import { SelectionRange, Selection, PluginKey, Plugin } from '@tiptap/pm/state';
-import tippy, { type Instance } from 'tippy.js';
 import { NodeRange } from '@tiptap/pm/model';
 import { ResolvedPos, Node as TNode } from '@tiptap/pm/model';
-import { Mapping } from '@tiptap/pm/transform';
+import type { Mappable } from '@tiptap/pm/transform';
 import { Editor } from '@tiptap/core';
-import { type Props as TippyProps } from 'tippy.js';
+import type { EditorView } from '@tiptap/pm/view';
+import {
+  autoUpdate,
+  computePosition,
+  offset,
+  type Placement,
+  type VirtualElement,
+} from '@floating-ui/dom';
 
 function getSelectionRanges(
   state: ResolvedPos,
@@ -42,7 +48,7 @@ class NodeRangeBookmark {
     this.anchor = anchor;
     this.head = head;
   }
-  map(mapping: Mapping) {
+  map(mapping: Mappable) {
     return new NodeRangeBookmark(
       mapping.map(this.anchor),
       mapping.map(this.head)
@@ -82,8 +88,7 @@ class NodeRangeSelection extends Selection {
       other.$to.pos === this.$to.pos
     );
   }
-  // @ts-ignore
-  map(doc: TNode, mapping: Mapping) {
+  map(doc: TNode, mapping: Mappable) {
     const o = doc.resolve(mapping.map(this.anchor));
     const s = doc.resolve(mapping.map(this.head));
     return new NodeRangeSelection(o, s);
@@ -121,7 +126,7 @@ class NodeRangeSelection extends Selection {
     const o = t.resolve(Math.min(t.content.size, e.$to.pos + 1));
     return new NodeRangeSelection(this.$anchor, o, this.depth);
   }
-  static fromJSON(doc: TNode, json: any) {
+  static fromJSON(doc: TNode, json: { anchor: number; head: number }) {
     return new NodeRangeSelection(
       doc.resolve(json.anchor),
       doc.resolve(json.head)
@@ -136,7 +141,6 @@ class NodeRangeSelection extends Selection {
   ) {
     return new this(doc.resolve(anchor), doc.resolve(head), depth, bias);
   }
-  // @ts-ignore
   getBookmark(): NodeRangeBookmark {
     return new NodeRangeBookmark(this.anchor, this.head);
   }
@@ -174,7 +178,10 @@ function cloneElement(node: HTMLElement) {
   return clonedNode;
 }
 
-function getComputedStyles(node: Element, property: any) {
+function getComputedStyles(
+  node: Element,
+  property: 'paddingLeft' | 'paddingRight' | 'borderLeftWidth'
+) {
   return window.getComputedStyle(node)[property];
 }
 function minMax(value = 0, min = 0, max = 0) {
@@ -199,7 +206,7 @@ const findElementNextToCoords = (options: FindElementNextToCoords) => {
   let resultNode = null;
   let d = null;
   let l = x;
-  for (; null === resultNode && l < window.innerWidth && l > 0; ) {
+  for (; null === resultNode && l < window.innerWidth && l > 0;) {
     const elements = document.elementsFromPoint(l, y);
     const index = elements.findIndex((el) =>
       el.classList.contains('ProseMirror')
@@ -255,35 +262,42 @@ function getSelectionRangesNearCursor(e: MouseEvent, t: Editor) {
     p = n.resolve(o.pos + 1);
   return getSelectionRanges(a, p, 0);
 }
-const getPreviousNodeStartPosition = (e: TNode, t: number) => {
-  const n = e.resolve(t),
-    { depth: o } = n;
-  if (0 === o) return t;
-  return n.pos - n.parentOffset - 1;
-};
-const getAncestorNodeAtDepth = (e: TNode, t: number) => {
-  const n = e.nodeAt(t),
-    o = e.resolve(t);
-  let { depth: r } = o,
-    i = n;
-  for (; r > 0; ) {
-    const e = o.node(r);
-    ((r -= 1), 0 === r && (i = e));
-  }
-  return i;
-};
-// @ts-ignore
-const getOuterNodePos = (e, t) => {
-  let n = t;
-  for (; n && n.parentNode && n.parentNode !== e.dom; ) n = n.parentNode;
-  return n;
+const getPreviousNodeStartPosition = (doc: TNode, pos: number) => {
+  const resolved = doc.resolve(pos);
+  if (resolved.depth === 0) return pos;
+  return resolved.pos - resolved.parentOffset - 1;
 };
 
-type DragHandlePluginOptions = {
+const getAncestorNodeAtDepth = (doc: TNode, pos: number) => {
+  const resolved = doc.resolve(pos);
+  let depth = resolved.depth;
+  let ancestor = doc.nodeAt(pos);
+  while (depth > 0) {
+    const node = resolved.node(depth);
+    depth -= 1;
+    if (depth === 0) ancestor = node;
+  }
+  return ancestor;
+};
+
+/** The direct child of the editor root that contains `node`. */
+const getOuterNodePos = (view: EditorView, node: Node | null) => {
+  let outer = node;
+  while (outer?.parentNode && outer.parentNode !== view.dom)
+    outer = outer.parentNode;
+  return outer;
+};
+
+export type DragHandleFloatingOptions = {
+  placement?: Placement;
+  offset?: number;
+  zIndex?: number;
+};
+
+type DragHandlePluginOptions = DragHandleFloatingOptions & {
   pluginKey?: PluginKey | string;
   element: HTMLElement;
   editor: Editor;
-  tippyOptions?: Partial<TippyProps>;
   onNodeChange?: (data: {
     editor: Editor;
     node: TNode | null;
@@ -296,27 +310,88 @@ export function DragHandlePlugin(
   options: DragHandlePluginOptions
 ): Plugin<{ locked: boolean }> {
   const {
-    pluginKey: e = dragHandlePluginDefaultKey,
+    pluginKey = dragHandlePluginDefaultKey,
     element,
     editor,
-    tippyOptions,
+    placement = 'left-start',
+    offset: offsetDistance = 0,
+    zIndex = 10,
     onNodeChange,
   } = options;
 
   const container = document.createElement('div');
-  let tippyInstance: Instance | null = null;
-  let x = false;
+  // Floating UI positions this wrapper next to the hovered block.
+  const floating = document.createElement('div');
+  Object.assign(floating.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    zIndex: String(zIndex),
+    visibility: 'hidden',
+    opacity: '0',
+  });
+  let viewActive = false;
+  let locked = false;
   let currentNode: TNode | null = null;
   let lastNodePos = -1;
+  let shownReference: Element | null = null;
+  let stopAutoUpdate: (() => void) | null = null;
 
+  const reducedMotion = () =>
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function showFloating(reference: Element) {
+    if (shownReference === reference && stopAutoUpdate) return;
+    stopAutoUpdate?.();
+    shownReference = reference;
+    const anchor: VirtualElement = {
+      getBoundingClientRect: () => reference.getBoundingClientRect(),
+      contextElement: reference,
+    };
+    floating.style.transition = reducedMotion()
+      ? ''
+      : 'opacity 100ms, visibility 100ms';
+    const update = () =>
+      computePosition(anchor, floating, {
+        placement,
+        strategy: 'absolute',
+        middleware: [offset(offsetDistance)],
+      }).then(({ x, y }) => {
+        if (shownReference !== reference) return;
+        Object.assign(floating.style, {
+          left: `${x}px`,
+          top: `${y}px`,
+          visibility: 'visible',
+          opacity: '1',
+        });
+      });
+    stopAutoUpdate = autoUpdate(anchor, floating, update);
+  }
+  function hideFloating() {
+    stopAutoUpdate?.();
+    stopAutoUpdate = null;
+    shownReference = null;
+    floating.style.visibility = 'hidden';
+    floating.style.opacity = '0';
+  }
+  function setCurrentNode(node: TNode | null, pos: number) {
+    currentNode = node;
+    lastNodePos = pos;
+    onNodeChange?.({ editor, node, pos });
+  }
   function hideDragHandle() {
-    tippyInstance?.hide();
-
-    if (currentNode || lastNodePos !== -1) {
-      currentNode = null;
-      lastNodePos = -1;
-      onNodeChange?.({ editor: editor, node: null, pos: -1 });
-    }
+    hideFloating();
+    if (currentNode || lastNodePos !== -1) setCurrentNode(null, -1);
+  }
+  /** Shows the handle for the top-level block rendered by `dom`. */
+  function trackBlock(view: EditorView, dom: Node | null) {
+    const outer = getOuterNodePos(view, dom);
+    if (!outer || outer === view.dom || outer.nodeType !== 1) return;
+    const pos = view.posAtDOM(outer, 0);
+    const node = getAncestorNodeAtDepth(editor.state.doc, pos);
+    if (node === currentNode) return;
+    setCurrentNode(node, getPreviousNodeStartPosition(editor.state.doc, pos));
+    showFloating(outer as Element);
   }
 
   let dragImage: HTMLElement | null = null;
@@ -333,191 +408,121 @@ export function DragHandlePlugin(
     ownedDragging = null;
     element.style.pointerEvents = 'auto';
   };
-  const onDragStart = (e: DragEvent) => {
+  const onDragStart = (event: DragEvent) => {
     cleanupDrag();
     const { view } = editor;
-    if (!e.dataTransfer) return;
+    if (!event.dataTransfer) return;
     const { empty, $from, $to } = view.state.selection;
-    const s = getSelectionRangesNearCursor(e, editor);
-    const d = getSelectionRanges($from, $to, 0);
-    const c = d.some((e) =>
-      s.find((t) => t.$from === e.$from && t.$to === e.$to)
+    const nearCursor = getSelectionRangesNearCursor(event, editor);
+    const selected = getSelectionRanges($from, $to, 0);
+    const dragsSelection = selected.some((range) =>
+      nearCursor.find(
+        (near) => near.$from === range.$from && near.$to === range.$to
+      )
     );
-    const u = empty || !c ? s : d;
-    if (!u.length) return;
-    const { tr: g } = view.state;
-    const h = document.createElement('div');
-    const y = u[0].$from.pos;
-    const v = u[u.length - 1].$to.pos;
-    const C = NodeRangeSelection.create(view.state.doc, y, v);
-    const E = C.content();
-    u.forEach((e) => {
-      const t = cloneElement(view?.nodeDOM(e.$from.pos) as HTMLElement);
-      h.append(t);
+    const ranges = empty || !dragsSelection ? nearCursor : selected;
+    if (!ranges.length) return;
+    const { tr } = view.state;
+    const image = document.createElement('div');
+    const from = ranges[0].$from.pos;
+    const to = ranges[ranges.length - 1].$to.pos;
+    const selection = NodeRangeSelection.create(view.state.doc, from, to);
+    const slice = selection.content();
+    ranges.forEach((range) => {
+      image.append(cloneElement(view.nodeDOM(range.$from.pos) as HTMLElement));
     });
-    h.style.position = 'absolute';
-    h.style.top = '-10000px';
-    document.body.append(h);
-    dragImage = h;
-    e.dataTransfer.clearData();
-    e.dataTransfer.setDragImage(h, 0, 0);
-    view.dragging = { slice: E, move: true };
+    image.style.position = 'absolute';
+    image.style.top = '-10000px';
+    document.body.append(image);
+    dragImage = image;
+    event.dataTransfer.clearData();
+    event.dataTransfer.setDragImage(image, 0, 0);
+    view.dragging = { slice, move: true };
     ownedDragging = view.dragging;
-    g.setSelection(C as unknown as Selection);
-    view.dispatch(g);
+    tr.setSelection(selection as unknown as Selection);
+    view.dispatch(tr);
     document.addEventListener('drop', cleanupDrag, { once: true });
     dragTimer = setTimeout(() => {
-      element && (element.style.pointerEvents = 'none');
+      element.style.pointerEvents = 'none';
     }, 0);
   };
-  return new Plugin({
-    key: typeof e === 'string' ? new PluginKey(e) : e,
+
+  return new Plugin<{ locked: boolean }>({
+    key: typeof pluginKey === 'string' ? new PluginKey(pluginKey) : pluginKey,
     state: {
-      init: () => ({ locked: false }) as { locked: boolean },
-      apply(e, t) {
-        const l = e.getMeta('lockDragHandle');
-        const a = e.getMeta('hideDragHandle');
-        if ((undefined !== l && (x = l), a && tippyInstance)) {
-          return (
-            tippyInstance?.hide(),
-            (x = false),
-            (currentNode = null),
-            (lastNodePos = -1),
-            null == onNodeChange ||
-              onNodeChange({ editor: editor, node: null, pos: -1 }),
-            t
-          );
+      init: () => ({ locked: false }),
+      apply(tr, value) {
+        const lock = tr.getMeta('lockDragHandle');
+        if (lock !== undefined) locked = lock;
+        if (tr.getMeta('hideDragHandle') && viewActive) {
+          hideFloating();
+          locked = false;
+          setCurrentNode(null, -1);
+          return value;
         }
-        if (e.docChanged && -1 !== lastNodePos && element && tippyInstance) {
-          const t = e.mapping.map(lastNodePos);
-          if (t !== lastNodePos) {
-            lastNodePos = t;
-          }
-        }
-        return t;
+        if (tr.docChanged && lastNodePos !== -1 && viewActive)
+          lastNodePos = tr.mapping.map(lastNodePos);
+        return value;
       },
     },
-    view: (e) => {
-      var t;
+    view: (view) => {
       element.addEventListener('dragstart', onDragStart);
       element.addEventListener('dragend', cleanupDrag);
-      return (
-        (element.draggable = true),
-        (element.style.pointerEvents = 'auto'),
-        null === (t = editor.view.dom.parentElement) ||
-          undefined === t ||
-          t.appendChild(container),
-        container.appendChild(element),
-        (container.style.pointerEvents = 'none'),
-        (container.style.position = 'absolute'),
-        (container.style.top = '0'),
-        (container.style.left = '0'),
-        (tippyInstance = tippy(e.dom, {
-          getReferenceClientRect: null,
-          interactive: true,
-          trigger: 'manual',
-          placement: 'left-start',
-          hideOnClick: false,
-          duration: 100,
-          zIndex: 10,
-          popperOptions: {
-            modifiers: [
-              { name: 'flip', enabled: false },
-              {
-                name: 'preventOverflow',
-                options: { rootBoundary: 'document', mainAxis: false },
-              },
-            ],
-          },
-          ...tippyOptions,
-          appendTo: container,
-          content: element,
-        })),
-        {
-          update(_t, n) {
-            if (!element || !tippyInstance) return;
-            if (
-              ((element.draggable = !x),
-              e.state.doc.eq(n.doc) || -1 === lastNodePos)
-            )
-              return;
-            let o = e.nodeDOM(lastNodePos) as HTMLElement;
-            if (((o = getOuterNodePos(e, o)), o === e.dom)) return;
-            if (1 !== (null == o ? undefined : o.nodeType)) return;
-            const r = e.posAtDOM(o, 0),
-              s = getAncestorNodeAtDepth(editor.state.doc, r);
-            if (s !== currentNode) {
-              const t = getPreviousNodeStartPosition(editor.state.doc, r);
-              ((currentNode = s),
-                (lastNodePos = t),
-                null == onNodeChange ||
-                  onNodeChange({
-                    editor: editor,
-                    node: currentNode as TNode,
-                    pos: lastNodePos,
-                  }),
-                tippyInstance.setProps({
-                  getReferenceClientRect: () => o?.getBoundingClientRect(),
-                }),
-                tippyInstance.show());
-            }
-          },
-          destroy() {
-            cleanupDrag();
-            element.removeEventListener('dragstart', onDragStart);
-            element.removeEventListener('dragend', cleanupDrag);
-            (null == tippyInstance || tippyInstance.destroy(),
-              element && removeNode(container));
-            tippyInstance = null;
-            currentNode = null;
-            lastNodePos = -1;
-          },
-        }
-      );
+      element.draggable = true;
+      element.style.pointerEvents = 'auto';
+      editor.view.dom.parentElement?.appendChild(container);
+      container.appendChild(floating);
+      floating.appendChild(element);
+      Object.assign(container.style, {
+        pointerEvents: 'none',
+        position: 'absolute',
+        top: '0',
+        left: '0',
+      });
+      viewActive = true;
+      return {
+        update(_view, prevState) {
+          if (!viewActive) return;
+          element.draggable = !locked;
+          if (view.state.doc.eq(prevState.doc) || lastNodePos === -1) return;
+          trackBlock(view, view.nodeDOM(lastNodePos));
+        },
+        destroy() {
+          cleanupDrag();
+          element.removeEventListener('dragstart', onDragStart);
+          element.removeEventListener('dragend', cleanupDrag);
+          hideFloating();
+          removeNode(container);
+          viewActive = false;
+          currentNode = null;
+          lastNodePos = -1;
+        },
+      };
     },
     props: {
       handleDOMEvents: {
-        mouseleave: (_e, event) => (
-          x ||
-            (event.target &&
-              !container.contains(event?.relatedTarget as Node) &&
-              hideDragHandle()),
-          false
-        ),
-        mousemove(e, t) {
-          if (!element || !tippyInstance || x) return false;
-          if (t.buttons === 1) {
+        mouseleave: (_view, event) => {
+          if (
+            !locked &&
+            event.target &&
+            !container.contains(event.relatedTarget as Node | null)
+          )
+            hideDragHandle();
+          return false;
+        },
+        mousemove(view, event) {
+          if (!viewActive || locked) return false;
+          if (event.buttons === 1) {
             hideDragHandle();
             return false;
           }
-
-          const n = findElementNextToCoords({
-            x: t.clientX,
-            y: t.clientY,
+          const { resultElement } = findElementNextToCoords({
+            x: event.clientX,
+            y: event.clientY,
             direction: 'right',
-            editor: editor,
+            editor,
           });
-          if (!n.resultElement) return false;
-          let o = n.resultElement;
-          if (((o = getOuterNodePos(e, o)), o === e.dom)) return false;
-          if (1 !== (null == o ? undefined : o.nodeType)) return false;
-          const r = e.posAtDOM(o, 0),
-            s = getAncestorNodeAtDepth(editor.state.doc, r);
-          if (s !== currentNode) {
-            const t = getPreviousNodeStartPosition(editor.state.doc, r);
-            ((currentNode = s),
-              (lastNodePos = t),
-              null == onNodeChange ||
-                onNodeChange({
-                  editor: editor,
-                  node: currentNode,
-                  pos: lastNodePos,
-                }),
-              tippyInstance.setProps({
-                getReferenceClientRect: () => o.getBoundingClientRect(),
-              }),
-              tippyInstance.show());
-          }
+          if (resultElement) trackBlock(view, resultElement);
           return false;
         },
       },

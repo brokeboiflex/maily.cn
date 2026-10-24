@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { useColumnsState } from './use-columns-state';
 import { Separator } from '@/components/ui/separator';
@@ -11,7 +11,7 @@ import { Select } from '../ui/select';
 import { BubbleMenuButton } from '../bubble-menu-button';
 import { deleteNode } from '../../utils/delete-node';
 import { spacing } from '../../utils/spacing';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import type { LabelKey } from '../../i18n';
 import { BUBBLE_MENU_CONTENT_CLASS } from '../ui/floating-menu';
 
@@ -21,9 +21,6 @@ type ColumnsBubbleMenuProps = {
 
 export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
   const { editor } = props;
-  if (!editor) {
-    return null;
-  }
 
   const state = useColumnsState(editor);
   const { t } = useMailyContext();
@@ -62,15 +59,13 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
         <Separator orientation="vertical" />
 
         <Select
-          icon={
-            <IconPlaceholder
-              lucide="Space"
-              tabler="IconSpace"
-              hugeicons="HorizontalResizeIcon"
-              phosphor="ArrowsOutLineHorizontal"
-              remixicon="RiSpace"
-            />
-          }
+          icon={<IconPlaceholder
+  lucide="Space"
+  tabler="IconSpace"
+  hugeicons="HorizontalResizeIcon"
+  phosphor="ArrowsOutLineHorizontal"
+  remixicon="RiSpace"
+/>}
           label={t('columnMenu.gap')}
           value={state.currentColumnsGap}
           options={[
@@ -85,21 +80,18 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
               gap: +value,
             });
           }}
-          tooltip={t('columnMenu.gap')}
         />
 
         <Separator orientation="vertical" />
 
         <BubbleMenuButton
-          icon={
-            <IconPlaceholder
-              lucide="Trash2"
-              tabler="IconTrash"
-              hugeicons="Delete02Icon"
-              phosphor="Trash"
-              remixicon="RiDeleteBinLine"
-            />
-          }
+          icon={<IconPlaceholder
+  lucide="Trash2"
+  tabler="IconTrash"
+  hugeicons="Delete02Icon"
+  phosphor="Trash"
+  remixicon="RiDeleteBinLine"
+/>}
           tooltip={t('columnMenu.delete')}
           command={() => {
             deleteNode(editor, 'columns');

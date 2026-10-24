@@ -18,7 +18,7 @@ import { LinkInputPopover } from '../ui/link-input-popover';
 import { Separator } from '../ui/divider';
 import { ColorPicker } from '../ui/color-picker';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import {
   ToggleGroupCompat,
   ToggleGroupCompatItem,
@@ -35,44 +35,54 @@ type TextBubbleContentProps = {
 export function TextBubbleContent(props: TextBubbleContentProps) {
   const { editor, showListMenu = true } = props;
 
-  const { t } = useMailyContext();
+  const { t, fontProvider } = useMailyContext();
   const state = useTextMenuState(editor);
-  const colors = editor?.storage.color.colors as Set<string>;
-  const suggestedColors = Array?.from(colors)?.reverse()?.slice(0, 6) ?? [];
+  const colors: Set<string> = editor.storage.color?.colors ?? new Set();
+  const suggestedColors = Array.from(colors).reverse().slice(0, 6);
 
   const items: BubbleMenuItem[] = [
     {
       name: 'bold',
-      isActive: () => editor?.isActive('bold')!,
-      command: () => editor?.chain().focus().toggleBold().run()!,
+      isActive: () => editor.isActive('bold'),
+      command: () => {
+        editor.chain().focus().toggleBold().run();
+      },
       icon: <BoldIcon />,
       tooltip: t('toolbar.bold'),
     },
     {
       name: 'italic',
-      isActive: () => editor?.isActive('italic')!,
-      command: () => editor?.chain().focus().toggleItalic().run()!,
+      isActive: () => editor.isActive('italic'),
+      command: () => {
+        editor.chain().focus().toggleItalic().run();
+      },
       icon: <ItalicIcon />,
       tooltip: t('toolbar.italic'),
     },
     {
       name: 'underline',
-      isActive: () => editor?.isActive('underline')!,
-      command: () => editor?.chain().focus().toggleUnderline().run()!,
+      isActive: () => editor.isActive('underline'),
+      command: () => {
+        editor.chain().focus().toggleUnderline().run();
+      },
       icon: <UnderlineIcon />,
       tooltip: t('toolbar.underline'),
     },
     {
       name: 'strike',
-      isActive: () => editor?.isActive('strike')!,
-      command: () => editor?.chain().focus().toggleStrike().run()!,
+      isActive: () => editor.isActive('strike'),
+      command: () => {
+        editor.chain().focus().toggleStrike().run();
+      },
       icon: <StrikethroughIcon />,
       tooltip: t('toolbar.strikethrough'),
     },
     {
       name: 'code',
-      isActive: () => editor?.isActive('code')!,
-      command: () => editor?.chain().focus().toggleCode().run()!,
+      isActive: () => editor.isActive('code'),
+      command: () => {
+        editor.chain().focus().toggleCode().run();
+      },
       icon: <CodeIcon />,
       tooltip: t('toolbar.code'),
     },
@@ -80,7 +90,13 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
 
   return (
     <>
-      <FontFamilyPicker editor={editor} currentFont={state.currentFont} />
+      {fontProvider && (
+        <FontFamilyPicker
+          editor={editor}
+          provider={fontProvider}
+          currentFont={state.currentFont}
+        />
+      )}
       <FontSizePicker
         value={state.currentFontSize}
         onValueChange={(value) => {
@@ -145,7 +161,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
         direction={state.textDirection}
         onDirectionChange={(direction) => {
           if (state.isFooterActive) {
-            editor?.chain().focus().setFooterTextDirection(direction).run();
+            editor.chain().focus().setFooterTextDirection(direction).run();
           } else if (state.isHeadingActive) {
             editor
               ?.chain()
@@ -153,7 +169,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
               .updateAttributes('heading', { textDirection: direction })
               .run();
           } else {
-            editor?.chain().focus().setMailyTextDirection(direction).run();
+            editor.chain().focus().setMailyTextDirection(direction).run();
           }
         }}
       />
@@ -192,12 +208,12 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
           }
 
           editor
-            ?.chain()
+            .chain()
             .extendMarkRange('link')
             .setLink({ href: value })
             .setIsUrlVariable(isVariable ?? false)
             .setUnderline()
-            .run()!;
+            .run();
         }}
         tooltip={t('toolbar.link')}
         editor={editor}
@@ -209,7 +225,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
       <ColorPicker
         color={state.currentTextColor}
         onColorChange={(color) => {
-          editor?.chain().setColor(color).run();
+          editor.chain().setColor(color).run();
         }}
         tooltip={t('toolbar.textColor')}
         suggestedColors={suggestedColors}

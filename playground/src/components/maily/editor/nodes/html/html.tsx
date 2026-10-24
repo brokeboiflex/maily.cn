@@ -1,5 +1,5 @@
 import { updateAttributes } from '../../utils/update-attribute';
-import CodeBlock from '@tiptap/extension-code-block';
+import { CodeBlock } from '@tiptap/extension-code-block';
 import { TextSelection } from '@tiptap/pm/state';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { HTMLCodeBlockView } from './html-view';

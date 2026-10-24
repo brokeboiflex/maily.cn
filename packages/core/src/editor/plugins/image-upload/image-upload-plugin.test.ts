@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
+import { StarterKit } from '@tiptap/starter-kit';
+import { Image } from '@tiptap/extension-image';
 import { Plugin } from '@tiptap/pm/state';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ImageUploadPlugin } from './image-upload-plugin';
@@ -357,5 +357,99 @@ describe('paste/drop upload ownership', () => {
     expect(discard).toHaveBeenCalledExactlyOnceWith(
       'https://example.com/old.png'
     );
+  });
+});
+
+describe('paste upload history', () => {
+  const srcs = (editor: Editor) =>
+    images(editor).map((node) => node.attrs?.src as string);
+  // Steps further apart than prosemirror-history's 500 ms group delay are
+  // separate undo events, as with a real upload.
+  const afterHistoryBoundary = () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 1000);
+  };
+  afterEach(() => vi.useRealTimers());
+
+  it('undoes a completed upload as one step and redoes it with the uploaded URL', async () => {
+    const upload = pending();
+    const { editor, plugin } = setup(() => upload.promise);
+    paste(editor, plugin);
+    afterHistoryBoundary();
+    upload.resolve('https://example.com/upload.png');
+    await settle();
+    expect(srcs(editor)).toEqual(['https://example.com/upload.png']);
+
+    editor.commands.undo();
+    expect(srcs(editor)).toEqual([]);
+    editor.commands.redo();
+    expect(srcs(editor)).toEqual(['https://example.com/upload.png']);
+    expect(JSON.stringify(editor.getJSON())).not.toContain('blob:');
+  });
+
+  it.each([
+    [
+      'completes',
+      (upload: ReturnType<typeof pending>) =>
+        upload.resolve('https://example.com/upload.png'),
+    ],
+    [
+      'fails',
+      (upload: ReturnType<typeof pending>) =>
+        upload.reject(new Error('upload failed')),
+    ],
+  ])(
+    'never redoes a revoked placeholder when the upload %s after Undo',
+    async (_outcome, settleUpload) => {
+      const upload = pending();
+      const { editor, plugin } = setup(() => upload.promise);
+      paste(editor, plugin);
+      afterHistoryBoundary();
+      editor.commands.undo();
+      expect(srcs(editor)).toEqual([]);
+      // The removed placeholder cannot take the upload: it is discarded and
+      // its blob URL revoked, so Redo must not bring the blob back.
+      settleUpload(upload);
+      await settle();
+      editor.commands.redo();
+      expect(JSON.stringify(editor.getJSON())).not.toContain('blob:');
+      expect(editor.getText()).toContain('keep');
+    }
+  );
+
+  it('never redoes a placeholder while the host discards its upload', async () => {
+    const upload = pending();
+    const { editor, plugin, discard } = setup(() => upload.promise);
+    let finishDiscard!: () => void;
+    discard.mockImplementation(
+      () => new Promise<void>((resolve) => (finishDiscard = resolve))
+    );
+    paste(editor, plugin);
+    afterHistoryBoundary();
+    editor.commands.undo();
+    upload.resolve('https://example.com/upload.png');
+    await vi.waitFor(() => expect(discard).toHaveBeenCalled());
+    // The user redoes while the host is still deleting the orphaned upload.
+    editor.commands.redo();
+    finishDiscard();
+    await settle();
+    expect(JSON.stringify(editor.getJSON())).not.toContain('blob:');
+    expect(editor.getText()).toContain('keep');
+  });
+
+  it('never restores a failed placeholder through Undo or Redo', async () => {
+    const upload = pending();
+    const { editor, plugin } = setup(() => upload.promise);
+    paste(editor, plugin);
+    afterHistoryBoundary();
+    upload.reject(new Error('upload failed'));
+    await settle();
+    expect(srcs(editor)).toEqual([]);
+
+    editor.commands.undo();
+    expect(srcs(editor)).toEqual([]);
+    editor.commands.redo();
+    expect(srcs(editor)).toEqual([]);
+    expect(editor.getText()).toContain('keep');
   });
 });

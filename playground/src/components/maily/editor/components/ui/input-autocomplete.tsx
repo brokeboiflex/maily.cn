@@ -1,5 +1,5 @@
 import { type VariableSuggestionsPopoverRef } from '../../nodes/variable/variable-suggestions-popover';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
 import { useVariableOptions } from '../../utils/node-options';
 import { useOutsideClick } from '../../utils/use-outside-click';
@@ -14,7 +14,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group';
 import { CornerDownLeft } from "lucide-react";
 

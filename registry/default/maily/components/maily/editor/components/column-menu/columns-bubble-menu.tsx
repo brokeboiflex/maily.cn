@@ -11,9 +11,6 @@ import {
 
 export function ColumnsBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const getReferenceClientRect = useCallback(() => {
     const renderContainer = getRenderContainer(editor!, 'columns');

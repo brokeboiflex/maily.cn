@@ -1,4 +1,4 @@
-import { IconPlaceholder } from '@/components/icon-placeholder';
+import { IconPlaceholder } from "@/components/icon-placeholder"
 import {
   Fragment,
   forwardRef,
@@ -9,16 +9,12 @@ import {
 import { Editor as EditorType } from '@tiptap/core';
 import { useEditorState } from '@tiptap/react';
 import { type EditorProps, type EditorViewMode } from '..';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { setTextAlignment } from '../utils/set-text-alignment';
 import { BubbleMenuButton } from './bubble-menu-button';
 import { type BubbleMenuItem } from './text-menu/text-bubble-menu';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useMailyContext } from '../provider';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useMailyContext } from '../maily-context';
 import { Toggle } from '@/components/ui/toggle';
 import {
   ToggleGroupCompat,
@@ -33,6 +29,8 @@ interface EditorMenuItem extends BubbleMenuItem {
 
 type EditorMenuBarProps = {
   compact?: boolean;
+  /** Formatting controls would mutate a read-only document; only the view mode remains. */
+  editable?: boolean;
   config: EditorProps['config'];
   editor: EditorType;
   viewMode: EditorViewMode;
@@ -168,7 +166,14 @@ const ToggleItemControl = forwardRef<HTMLButtonElement, ToggleItemControlProps>(
 ToggleItemControl.displayName = 'ToggleItemControl';
 
 export const EditorMenuBar = (props: EditorMenuBarProps) => {
-  const { editor, config, viewMode, onViewModeChange, compact = false } = props;
+  const {
+    editor,
+    config,
+    viewMode,
+    onViewModeChange,
+    compact = false,
+    editable = true,
+  } = props;
   const { t } = useMailyContext();
   const editorState = useEditorState({
     editor,
@@ -195,15 +200,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => editor.chain().focus().toggleBold().run(),
         isActive: () => editorState.bold,
         group: 'mark',
-        icon: (
-          <IconPlaceholder
-            lucide="BoldIcon"
-            tabler="IconBold"
-            hugeicons="TextBoldIcon"
-            phosphor="TextB"
-            remixicon="RiBold"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="BoldIcon"
+  tabler="IconBold"
+  hugeicons="TextBoldIcon"
+  phosphor="TextB"
+  remixicon="RiBold"
+/>,
         tooltip: t('toolbar.bold'),
       },
       {
@@ -211,15 +214,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => editor.chain().focus().toggleItalic().run(),
         isActive: () => editorState.italic,
         group: 'mark',
-        icon: (
-          <IconPlaceholder
-            lucide="ItalicIcon"
-            tabler="IconItalic"
-            hugeicons="TextItalicIcon"
-            phosphor="TextItalic"
-            remixicon="RiItalic"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="ItalicIcon"
+  tabler="IconItalic"
+  hugeicons="TextItalicIcon"
+  phosphor="TextItalic"
+  remixicon="RiItalic"
+/>,
         tooltip: t('toolbar.italic'),
       },
       {
@@ -227,15 +228,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => editor.chain().focus().toggleUnderline().run(),
         isActive: () => editorState.underline,
         group: 'mark',
-        icon: (
-          <IconPlaceholder
-            lucide="UnderlineIcon"
-            tabler="IconUnderline"
-            hugeicons="TextUnderlineIcon"
-            phosphor="TextUnderline"
-            remixicon="RiUnderline"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="UnderlineIcon"
+  tabler="IconUnderline"
+  hugeicons="TextUnderlineIcon"
+  phosphor="TextUnderline"
+  remixicon="RiUnderline"
+/>,
         tooltip: t('toolbar.underline'),
       },
       {
@@ -243,15 +242,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => editor.chain().focus().toggleStrike().run(),
         isActive: () => editorState.strike,
         group: 'mark',
-        icon: (
-          <IconPlaceholder
-            lucide="StrikethroughIcon"
-            tabler="IconStrikethrough"
-            hugeicons="TextStrikethroughIcon"
-            phosphor="TextStrikethrough"
-            remixicon="RiStrikethrough"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="StrikethroughIcon"
+  tabler="IconStrikethrough"
+  hugeicons="TextStrikethroughIcon"
+  phosphor="TextStrikethrough"
+  remixicon="RiStrikethrough"
+/>,
         tooltip: t('toolbar.strikethrough'),
       },
       {
@@ -260,15 +257,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
           editor.chain().focus().selectParentNode().deleteSelection().run(),
         isActive: () => false,
         group: 'mark',
-        icon: (
-          <IconPlaceholder
-            lucide="EraserIcon"
-            tabler="IconEraser"
-            hugeicons="EraserIcon"
-            phosphor="Eraser"
-            remixicon="RiEraserLine"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="EraserIcon"
+  tabler="IconEraser"
+  hugeicons="EraserIcon"
+  phosphor="Eraser"
+  remixicon="RiEraserLine"
+/>,
         tooltip: t('block.clearLine.title'),
       },
       {
@@ -276,15 +271,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => editor.chain().focus().setHorizontalRule().run(),
         isActive: () => editorState.horizontalRule,
         group: 'custom',
-        icon: (
-          <IconPlaceholder
-            lucide="SeparatorHorizontal"
-            tabler="IconSeparatorHorizontal"
-            hugeicons="MinusSignIcon"
-            phosphor="Minus"
-            remixicon="RiSeparator"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="SeparatorHorizontal"
+  tabler="IconSeparatorHorizontal"
+  hugeicons="MinusSignIcon"
+  phosphor="Minus"
+  remixicon="RiSeparator"
+/>,
         tooltip: t('block.divider.title'),
       },
       {
@@ -298,15 +291,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => setTextAlignment(editor, 'left'),
         isActive: () => editorState.textAlign === 'left',
         group: 'alignment',
-        icon: (
-          <IconPlaceholder
-            lucide="AlignLeft"
-            tabler="IconAlignLeft"
-            hugeicons="TextAlignLeftIcon"
-            phosphor="TextAlignLeft"
-            remixicon="RiAlignLeft"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="AlignLeft"
+  tabler="IconAlignLeft"
+  hugeicons="TextAlignLeftIcon"
+  phosphor="TextAlignLeft"
+  remixicon="RiAlignLeft"
+/>,
         tooltip: t('alignment.left'),
       },
       {
@@ -314,15 +305,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => setTextAlignment(editor, 'center'),
         isActive: () => editorState.textAlign === 'center',
         group: 'alignment',
-        icon: (
-          <IconPlaceholder
-            lucide="AlignCenter"
-            tabler="IconAlignCenter"
-            hugeicons="TextAlignCenterIcon"
-            phosphor="TextAlignCenter"
-            remixicon="RiAlignCenter"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="AlignCenter"
+  tabler="IconAlignCenter"
+  hugeicons="TextAlignCenterIcon"
+  phosphor="TextAlignCenter"
+  remixicon="RiAlignCenter"
+/>,
         tooltip: t('alignment.center'),
       },
       {
@@ -330,15 +319,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         command: () => setTextAlignment(editor, 'right'),
         isActive: () => editorState.textAlign === 'right',
         group: 'alignment',
-        icon: (
-          <IconPlaceholder
-            lucide="AlignRight"
-            tabler="IconAlignRight"
-            hugeicons="TextAlignRightIcon"
-            phosphor="TextAlignRight"
-            remixicon="RiAlignRight"
-          />
-        ),
+        icon: <IconPlaceholder
+  lucide="AlignRight"
+  tabler="IconAlignRight"
+  hugeicons="TextAlignRightIcon"
+  phosphor="TextAlignRight"
+  remixicon="RiAlignRight"
+/>,
         tooltip: t('alignment.right'),
       },
     ],
@@ -367,7 +354,7 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
         config?.toolbarClassName
       )}
     >
-      {!compact && (
+      {!compact && editable && (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {groups.map((group) => {
             const groupItems = items.filter((item) => item.group === group);
@@ -402,13 +389,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
             type="button"
           >
             <IconPlaceholder
-              lucide="Pencil"
-              tabler="IconPencil"
-              hugeicons="PencilIcon"
-              phosphor="Pencil"
-              remixicon="RiPencilLine"
-              className="size-3.5"
-            />
+  lucide="Pencil"
+  tabler="IconPencil"
+  hugeicons="PencilIcon"
+  phosphor="Pencil"
+  remixicon="RiPencilLine"
+  className="size-3.5"
+/>
             <span>{t('toolbar.viewMode.design')}</span>
           </ToggleGroupCompatItem>
           <ToggleGroupCompatItem
@@ -423,13 +410,13 @@ export const EditorMenuBar = (props: EditorMenuBarProps) => {
             type="button"
           >
             <IconPlaceholder
-              lucide="Eye"
-              tabler="IconEye"
-              hugeicons="ViewIcon"
-              phosphor="Eye"
-              remixicon="RiEyeLine"
-              className="size-3.5"
-            />
+  lucide="Eye"
+  tabler="IconEye"
+  hugeicons="ViewIcon"
+  phosphor="Eye"
+  remixicon="RiEyeLine"
+  className="size-3.5"
+/>
             <span>{t('toolbar.viewMode.render')}</span>
           </ToggleGroupCompatItem>
         </ToggleGroupCompat>

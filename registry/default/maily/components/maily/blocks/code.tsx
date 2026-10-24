@@ -15,12 +15,10 @@ export const htmlCodeBlock = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor
       .chain()
       .focus()
       .deleteRange(range)
-      // @ts-ignore
       .setHtmlCodeBlock({ language: 'html' })
       .run();
   },

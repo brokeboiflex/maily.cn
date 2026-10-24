@@ -10,7 +10,6 @@ import {
 } from './toggle-group-compat';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
 import { FLOATING_MENU_TRIGGER_CLASS } from './floating-menu';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 const EMPTY_SELECT_VALUE = '__maily-empty-value__';
 
@@ -24,7 +23,6 @@ type SelectProps = {
   value: string;
   onValueChange: (value: string) => void;
 
-  tooltip?: string;
   className?: string;
   onCloseAutoFocus?: () => void;
 
@@ -51,7 +49,6 @@ export function Select(props: SelectProps) {
     icon,
     placeholder,
     onCloseAutoFocus,
-    tooltip,
   } = props;
 
   const selectId = `mly${useId()}`;
@@ -67,7 +64,6 @@ export function Select(props: SelectProps) {
       icon={icon}
       placeholder={placeholder}
       onCloseAutoFocus={onCloseAutoFocus}
-      tooltip={tooltip}
     />
   );
 }
@@ -86,7 +82,6 @@ function SelectControl({
   icon,
   placeholder,
   onCloseAutoFocus,
-  tooltip,
 }: SelectControlProps) {
   const [open, setOpen] = useState(false);
   const wasOpenRef = useRef(false);
@@ -113,71 +108,31 @@ function SelectControl({
       </label>
 
       <Popover open={open} onOpenChange={handleOpenChange}>
-        {tooltip ? (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-flex shrink-0">
-                <PopoverTrigger asChild>
-                  <Button
-                    id={selectId}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-label={label}
-                    aria-expanded={open}
-                    className={cn(
-                      FLOATING_MENU_TRIGGER_CLASS,
-                      'max-w-max',
-                      className
-                    )}
-                  >
-                    {icon && (
-                      <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
-                        {icon}
-                      </span>
-                    )}
-                    <span className="truncate text-xs font-medium">
-                      {activeLabel}
-                    </span>
-                    <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
-                  </Button>
-                </PopoverTrigger>
+        {/* No Tooltip: floating editor surfaces can detach it from the trigger. */}
+        <PopoverTrigger asChild>
+          <Button
+            id={selectId}
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-label={label}
+            aria-expanded={open}
+            className={cn(FLOATING_MENU_TRIGGER_CLASS, 'max-w-max', className)}
+          >
+            {icon && (
+              <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
+                {icon}
               </span>
-            </TooltipTrigger>
-            <TooltipContent sideOffset={8}>{tooltip}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <PopoverTrigger asChild>
-            <Button
-              id={selectId}
-              type="button"
-              variant="ghost"
-              size="sm"
-              aria-label={label}
-              aria-expanded={open}
-              className={cn(
-                FLOATING_MENU_TRIGGER_CLASS,
-                'max-w-max',
-                className
-              )}
-            >
-              {icon && (
-                <span className="text-muted-foreground flex size-3 shrink-0 items-center justify-center [&_svg]:size-3">
-                  {icon}
-                </span>
-              )}
-              <span className="truncate text-xs font-medium">
-                {activeLabel}
-              </span>
-              <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
-            </Button>
-          </PopoverTrigger>
-        )}
+            )}
+            <span className="truncate text-xs font-medium">{activeLabel}</span>
+            <ChevronDownIcon className="text-muted-foreground size-3 shrink-0" />
+          </Button>
+        </PopoverTrigger>
         <PopoverContent
           {...BOTTOM_FLOATING_CONTENT_PROPS}
           align="start"
           sideOffset={8}
-          className="max-h-80 w-max min-w-[var(--radix-popover-trigger-width)] max-w-[calc(100vw-1rem)] gap-0 overflow-y-auto p-1"
+          className="max-h-80 w-max max-w-[calc(100vw-1rem)] min-w-[var(--radix-popover-trigger-width)] gap-0 overflow-y-auto p-1"
         >
           <ToggleGroupCompat
             selectionMode="single"
@@ -197,7 +152,7 @@ function SelectControl({
                     handleOpenChange(false);
                   }}
                   aria-label={option.label}
-                  className="h-7! justify-start whitespace-nowrap px-2 text-sm"
+                  className="h-7! justify-start px-2 text-sm whitespace-nowrap"
                   type="button"
                 >
                   {option.label}

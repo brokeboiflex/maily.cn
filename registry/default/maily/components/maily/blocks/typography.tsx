@@ -103,7 +103,6 @@ export const hardBreak = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setHardBreak().run();
   },
 });
@@ -121,7 +120,6 @@ export const blockquote = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).toggleBlockquote().run();
   },
 });
@@ -139,7 +137,6 @@ export const footer = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setFooter().run();
   },
 });
@@ -157,7 +154,6 @@ export const clearLine = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor }) => {
-    // @ts-ignore
     editor.chain().focus().selectParentNode().deleteSelection().run();
   },
 });

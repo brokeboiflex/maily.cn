@@ -25,3 +25,17 @@ export const spacing = [
     value: 64,
   },
 ];
+
+/** Spacer heights are pixel numbers; older documents stored named sizes. */
+export function normalizeSpacerHeight(
+  value: unknown,
+  fallback: number
+): number {
+  if (typeof value === 'number')
+    return Number.isFinite(value) && value >= 0 ? value : fallback;
+  if (typeof value !== 'string' || !value.trim()) return fallback;
+  const named = spacing.find((size) => size.short === value);
+  if (named) return named.value;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}

@@ -20,15 +20,21 @@ both counts. Add supported actions to `messageActions` and implement
 - `notSpam`: remove spam classification and move to Inbox.
 - `deleteForever`: permanently remove the selected message.
 
-Only Trash offers Move to Inbox. Only Spam offers Not spam. Both offer Delete
-forever when enabled. Archive, Delete and Report spam are hidden in these folders.
-After an acknowledged action the reader clears and folder rows/counts refresh;
-failed requests retain the message and use the existing error path. Existing
+Which folders offer which action is the host's choice: pass `messageActions` as
+a function of the folder, label, search and selection. The opt-in
+`defaultMailboxMessageActionsFor` applies Gmail's rules: Archive only in Inbox;
+Move to Inbox in Trash, All Mail and Starred (and in an all-mail search); Not
+spam only in Spam; Delete forever in Spam and Trash; Delete and Report spam
+everywhere except Spam and Trash. After an acknowledged action
+folder rows and counts refresh; the reader closes when the host's result says
+`removedFromView: true`. Failed requests retain the message and use the
+existing error path. Existing
 mounted-lifetime and mutation exclusion apply to the new actions.
 
 ## Intentional adaptations
 
-Maily preserves its current split-pane shell and Bounced folder. Gmail's backend
+Maily uses its no-split list-to-message shell; the legacy `bounced` folder id
+stays type-compatible but is not in the default navigation. Gmail's backend
 classification, sender learning, 30-day retention and arbitrary Move to folders
 are host responsibilities; Maily does not promise automatic expiration. Bulk selection uses the optional runBulkMessageAction capability. See
 [mailbox workflows](mailbox-workflows.md). Discarded drafts still use the separate discardDraft API.

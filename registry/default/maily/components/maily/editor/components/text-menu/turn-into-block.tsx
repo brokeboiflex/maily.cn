@@ -6,9 +6,9 @@ import {
 } from './use-turn-into-block-options';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,7 +83,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
         {...BOTTOM_FLOATING_CONTENT_PROPS}
         align="start"
         sideOffset={8}
-        className="w-max min-w-40 max-w-[calc(100vw-1rem)]"
+        className="w-max max-w-[calc(100vw-1rem)] min-w-40"
       >
         {options.map((option, index) => {
           if (isOption(option)) {

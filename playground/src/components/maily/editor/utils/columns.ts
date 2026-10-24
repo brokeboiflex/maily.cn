@@ -1,89 +1,91 @@
-import { Editor } from "@tiptap/react"
-import { Fragment, Node } from "@tiptap/pm/model"
-import { TextSelection } from "@tiptap/pm/state"
-import { v4 as uuidv4 } from "uuid"
-import { findParentNode } from "@tiptap/core"
-import { DEFAULT_COLUMN_WIDTH } from "../nodes/columns/column"
-import { setNodeAttributes } from "./update-attribute"
+import { Editor } from '@tiptap/react';
+import { Fragment, Node } from '@tiptap/pm/model';
+import { TextSelection } from '@tiptap/pm/state';
+import { createId } from './create-id';
+import { findParentNode } from '@tiptap/core';
+import { DEFAULT_COLUMN_WIDTH } from '../nodes/columns/column';
+import { setNodeAttributes } from './update-attribute';
 
 export function getColumnCount(editor: Editor) {
-  return getClosestNodeByName(editor, "columns")?.node?.childCount || 0
+  return getClosestNodeByName(editor, 'columns')?.node?.childCount || 0;
 }
 
 export function setColumnCount(editor: Editor, count: number) {
-  const columns = getClosestNodeByName(editor, "columns")
-  if (!columns || !Number.isInteger(count) || count < 1) return false
-  const { node, pos } = columns
-  if (node.childCount === count) return true
-  const { state, dispatch } = editor.view
-  const tr = state.tr
+  const columns = getClosestNodeByName(editor, 'columns');
+  if (!columns || !Number.isInteger(count) || count < 1) return false;
+  const { node, pos } = columns;
+  if (node.childCount === count) return true;
+  const { state, dispatch } = editor.view;
+  const tr = state.tr;
   if (count > node.childCount) {
     const added = Array.from({ length: count - node.childCount }, () =>
       state.schema.nodes.column.create(
-        { width: DEFAULT_COLUMN_WIDTH, columnId: uuidv4() },
+        { width: DEFAULT_COLUMN_WIDTH, columnId: createId() },
         state.schema.nodes.paragraph.create()
       )
-    )
-    const insertPos = pos + node.nodeSize - 1
-    tr.insert(insertPos, Fragment.from(added))
+    );
+    const insertPos = pos + node.nodeSize - 1;
+    tr.insert(insertPos, Fragment.from(added));
     const lastPos =
       insertPos +
-      added.slice(0, -1).reduce((size, column) => size + column.nodeSize, 0)
-    tr.setSelection(TextSelection.near(tr.doc.resolve(lastPos + 2)))
+      added.slice(0, -1).reduce((size, column) => size + column.nodeSize, 0);
+    tr.setSelection(TextSelection.near(tr.doc.resolve(lastPos + 2)));
   } else {
-    let retainedSize = 0
+    let retainedSize = 0;
     node.forEach((column, _, index) => {
-      if (index < count) retainedSize += column.nodeSize
-    })
-    const removeFrom = pos + 1 + retainedSize
-    tr.delete(removeFrom, pos + node.nodeSize - 1)
+      if (index < count) retainedSize += column.nodeSize;
+    });
+    const removeFrom = pos + 1 + retainedSize;
+    tr.delete(removeFrom, pos + node.nodeSize - 1);
     if (state.selection.from >= removeFrom) {
-      tr.setSelection(TextSelection.near(tr.doc.resolve(removeFrom - 1), -1))
+      tr.setSelection(TextSelection.near(tr.doc.resolve(removeFrom - 1), -1));
     }
   }
-  dispatch(tr)
-  return true
+  dispatch(tr);
+  return true;
 }
 
 export function getClosestNodeByName(editor: Editor, name: string) {
-  const { state } = editor.view
-  return findParentNode((node) => node.type.name === name)(state.selection)
+  const { state } = editor.view;
+  return findParentNode((node) => node.type.name === name)(state.selection);
 }
 
 export function addColumn(editor: Editor) {
   const { node: columnsNode, pos: columnsNodePos = 0 } =
-    getClosestNodeByName(editor, "columns") || {}
+    getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
-    return
+    return;
   }
 
   const { node: activeColumnNode } =
-    getClosestNodeByName(editor, "column") || {}
+    getClosestNodeByName(editor, 'column') || {};
   if (!activeColumnNode) {
-    return
+    return;
   }
 
-  const { state, dispatch } = editor.view
-  const { tr } = state
+  const { state, dispatch } = editor.view;
+  const { tr } = state;
   // Get the current columns node position and add the columns size
   // to the end of the columns node
-  const calculatedWidth = +Number(100 / (columnsNode.childCount + 1)).toFixed(2)
+  const calculatedWidth = +Number(100 / (columnsNode.childCount + 1)).toFixed(
+    2
+  );
   const newColumn = state.schema.nodes.column.create(
     {
       width: calculatedWidth,
-      columnId: uuidv4(),
+      columnId: createId(),
     },
     state.schema.nodes.paragraph.create(null)
-  )
+  );
 
-  let updatedContent: Node[] = []
-  let activeColumnIndex = 0
+  const updatedContent: Node[] = [];
+  let activeColumnIndex = 0;
   columnsNode.content.forEach((child, _, index) => {
     if (
       child.eq(activeColumnNode) &&
       child?.attrs?.columnId === activeColumnNode?.attrs?.columnId
     ) {
-      activeColumnIndex = index
+      activeColumnIndex = index;
     }
 
     updatedContent.push(
@@ -94,74 +96,76 @@ export function addColumn(editor: Editor) {
         },
         child.content
       )
-    )
-  })
+    );
+  });
 
-  updatedContent.splice(activeColumnIndex + 1, 0, newColumn)
+  updatedContent.splice(activeColumnIndex + 1, 0, newColumn);
   const newColumnPos =
     columnsNodePos +
     updatedContent
       .slice(0, activeColumnIndex + 1)
-      .reduce((acc, node) => acc + node.nodeSize, 0)
+      .reduce((acc, node) => acc + node.nodeSize, 0);
 
-  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent))
+  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent));
 
   const transaction = tr.replaceWith(
     columnsNodePos,
     columnsNodePos + columnsNode.nodeSize,
     updatedColumnsNode
-  )
+  );
 
   // Calculate the position of the new column by adding the new column's position
   const textSelection = TextSelection.near(
     transaction.doc.resolve(newColumnPos)
-  )
-  transaction.setSelection(textSelection)
+  );
+  transaction.setSelection(textSelection);
 
-  dispatch(transaction)
-  editor.view.focus()
+  dispatch(transaction);
+  editor.view.focus();
 }
 
 export function removeColumn(editor: Editor) {
   const { node: columnsNode, pos: columnsNodePos = 0 } =
-    getClosestNodeByName(editor, "columns") || {}
+    getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
-    return
+    return;
   }
 
   const { node: activeColumnNode } =
-    getClosestNodeByName(editor, "column") || {}
+    getClosestNodeByName(editor, 'column') || {};
   if (!activeColumnNode) {
-    return
+    return;
   }
 
-  const { state, dispatch } = editor.view
-  const { tr } = state
+  const { state, dispatch } = editor.view;
+  const { tr } = state;
 
   // If there is only one column, remove the entire columns node
   if (columnsNode.childCount === 1) {
     const transaction = tr.delete(
       columnsNodePos,
       columnsNodePos + columnsNode.nodeSize
-    )
-    dispatch(transaction)
-    editor.view.focus()
-    return
+    );
+    dispatch(transaction);
+    editor.view.focus();
+    return;
   }
 
-  const calculatedWidth = +Number(100 / (columnsNode.childCount - 1)).toFixed(2)
+  const calculatedWidth = +Number(100 / (columnsNode.childCount - 1)).toFixed(
+    2
+  );
 
-  let updatedContent: Node[] = []
-  let activeColumnIndex = 0
-  let isRemoved = false
+  const updatedContent: Node[] = [];
+  let activeColumnIndex = 0;
+  let isRemoved = false;
   columnsNode.content.forEach((child, _, index) => {
     const isActiveColumn =
       child.eq(activeColumnNode) &&
-      child?.attrs?.columnId === activeColumnNode?.attrs?.columnId
+      child?.attrs?.columnId === activeColumnNode?.attrs?.columnId;
     if (isActiveColumn && !isRemoved) {
-      activeColumnIndex = index
-      isRemoved = true
-      return
+      activeColumnIndex = index;
+      isRemoved = true;
+      return;
     }
 
     updatedContent.push(
@@ -172,146 +176,146 @@ export function removeColumn(editor: Editor) {
         },
         child.content
       )
-    )
-  })
+    );
+  });
 
-  const isLastColumn = activeColumnIndex === columnsNode.childCount - 1
+  const isLastColumn = activeColumnIndex === columnsNode.childCount - 1;
 
   const newColumnPos =
     columnsNodePos +
     updatedContent
       .slice(0, isLastColumn ? activeColumnIndex - 1 : activeColumnIndex)
-      .reduce((acc, node) => acc + node.nodeSize, 0)
+      .reduce((acc, node) => acc + node.nodeSize, 0);
 
-  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent))
+  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent));
 
   const transaction = tr.replaceWith(
     columnsNodePos,
     columnsNodePos + columnsNode.nodeSize,
     updatedColumnsNode
-  )
+  );
 
   // Calculate the position of the new column by adding the new column's position
   const textSelection = TextSelection.near(
     transaction.doc.resolve(newColumnPos)
-  )
-  transaction.setSelection(textSelection)
+  );
+  transaction.setSelection(textSelection);
 
-  dispatch(transaction)
-  editor.view.focus()
+  dispatch(transaction);
+  editor.view.focus();
 }
 
-export function goToColumn(editor: Editor, type: "next" | "previous") {
-  const columnsNode = getClosestNodeByName(editor, "columns")
-  const columnNode = getClosestNodeByName(editor, "column")
+export function goToColumn(editor: Editor, type: 'next' | 'previous') {
+  const columnsNode = getClosestNodeByName(editor, 'columns');
+  const columnNode = getClosestNodeByName(editor, 'column');
   if (!columnsNode || !columnNode) {
-    return false
+    return false;
   }
 
-  const { state, dispatch } = editor.view
+  const { state, dispatch } = editor.view;
   // Get the current columns node position and add the columns size
   // to the end of the columns node
-  const cols = columnsNode.node
-  let currColumnIndex = 0
+  const cols = columnsNode.node;
+  let currColumnIndex = 0;
   cols.content.forEach((child, _, index) => {
     if (
       child.eq(columnNode.node) &&
       child?.attrs?.columnId === columnNode.node?.attrs?.columnId
     ) {
-      currColumnIndex = index
+      currColumnIndex = index;
     }
-  })
+  });
 
   const nextColumnIndex =
-    type === "next" ? currColumnIndex + 1 : currColumnIndex - 1
+    type === 'next' ? currColumnIndex + 1 : currColumnIndex - 1;
   // if the next column index is out of bounds, return
   if (nextColumnIndex < 0 || nextColumnIndex >= cols.childCount) {
-    return false
+    return false;
   }
 
-  let nextColumnPos = columnsNode.pos
+  let nextColumnPos = columnsNode.pos;
   cols.content.forEach((child, _, index) => {
     if (index < nextColumnIndex) {
-      nextColumnPos += child.nodeSize
+      nextColumnPos += child.nodeSize;
     }
-  })
+  });
 
-  const tr = state.tr.setTime(Date.now())
-  const textSelection = TextSelection.near(tr.doc.resolve(nextColumnPos))
-  tr.setSelection(textSelection)
+  const tr = state.tr.setTime(Date.now());
+  const textSelection = TextSelection.near(tr.doc.resolve(nextColumnPos));
+  tr.setSelection(textSelection);
 
-  dispatch(tr)
-  return true
+  dispatch(tr);
+  return true;
 }
 
 export function updateColumnWidth(
   editor: Editor,
   index: number,
-  width: string = "auto"
+  width: string = 'auto'
 ) {
   const { node: columnsNode, pos: columnsNodePos = 0 } =
-    getClosestNodeByName(editor, "columns") || {}
+    getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
-    return false
+    return false;
   }
 
   if (!Number.isInteger(index) || index < 0 || index >= columnsNode.childCount)
-    return false
-  const { state, dispatch } = editor.view
-  const tr = state.tr
+    return false;
+  const { state, dispatch } = editor.view;
+  const tr = state.tr;
   columnsNode.forEach((column, offset, i) => {
     if (i === index) {
       setNodeAttributes(tr, columnsNodePos + 1 + offset, {
         ...column.attrs,
         width,
-      })
+      });
     }
-  })
-  if (tr.docChanged) dispatch(tr)
-  return true
+  });
+  if (tr.docChanged) dispatch(tr);
+  return true;
 }
 
 export function addColumnByIndex(editor: Editor, index: number = -1) {
   const { node: columnsNode, pos: columnsNodePos = 0 } =
-    getClosestNodeByName(editor, "columns") || {}
+    getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
-    return false
+    return false;
   }
 
   // If the index is out of bounds, append the column to the end
   // of the columns node
-  const columnIndex = index < 0 ? columnsNode.childCount : index
+  const columnIndex = index < 0 ? columnsNode.childCount : index;
   // Keep the original width of the columns
   // and set the new column width to auto
-  const { state } = editor.view
+  const { state } = editor.view;
   const newColumn = state.schema.nodes.column.create(
     {
       width: DEFAULT_COLUMN_WIDTH,
-      columnId: uuidv4(),
+      columnId: createId(),
     },
     state.schema.nodes.paragraph.create(null)
-  )
+  );
 
   // append the new column to the columns node
   // at the specified index
-  const updatedContent: Node[] = []
+  const updatedContent: Node[] = [];
   columnsNode.content.forEach((child, _, i) => {
-    updatedContent.push(child)
+    updatedContent.push(child);
     if (i === columnIndex) {
-      updatedContent.push(newColumn)
+      updatedContent.push(newColumn);
     }
-  })
+  });
 
   if (index === -1) {
-    updatedContent.push(newColumn)
+    updatedContent.push(newColumn);
   }
 
-  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent))
+  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent));
   const transaction = state.tr.replaceWith(
     columnsNodePos,
     columnsNodePos + columnsNode.nodeSize,
     updatedColumnsNode
-  )
+  );
 
   // Set the selection to the new column
   // if the index is out of bounds, set the selection
@@ -320,79 +324,79 @@ export function addColumnByIndex(editor: Editor, index: number = -1) {
     columnsNodePos +
     updatedContent
       .slice(0, columnIndex)
-      .reduce((acc, node) => acc + node.nodeSize, 0)
+      .reduce((acc, node) => acc + node.nodeSize, 0);
 
   const textSelection = TextSelection.near(
     transaction.doc.resolve(newColumnPos)
-  )
-  transaction.setSelection(textSelection)
+  );
+  transaction.setSelection(textSelection);
 
-  editor.view.dispatch(transaction)
-  return true
+  editor.view.dispatch(transaction);
+  return true;
 }
 
 export function removeColumnByIndex(editor: Editor, index: number = -1) {
   const { node: columnsNode, pos: columnsNodePos = 0 } =
-    getClosestNodeByName(editor, "columns") || {}
+    getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
-    return false
+    return false;
   }
 
-  const { state, dispatch } = editor.view
-  const { tr } = state
+  const { state, dispatch } = editor.view;
+  const { tr } = state;
 
-  const updatedContent: Node[] = []
+  const updatedContent: Node[] = [];
   columnsNode.content.forEach((child, _, i) => {
     if (i !== index) {
-      updatedContent.push(child)
+      updatedContent.push(child);
     }
-  })
+  });
 
   if (index === -1) {
-    updatedContent.pop()
+    updatedContent.pop();
   }
 
-  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent))
+  const updatedColumnsNode = columnsNode.copy(Fragment.from(updatedContent));
   const transaction = tr.replaceWith(
     columnsNodePos,
     columnsNodePos + columnsNode.nodeSize,
     updatedColumnsNode
-  )
+  );
 
   // Set the selection to the next column
   // if the index is out of bounds, set the selection
   // to the last column
   const nextColumnIndex =
-    index === columnsNode.childCount - 1 ? index - 1 : index
+    index === columnsNode.childCount - 1 ? index - 1 : index;
   const nextColumnPos =
     columnsNodePos +
     updatedContent
       .slice(0, nextColumnIndex)
-      .reduce((acc, node) => acc + node.nodeSize, 0)
+      .reduce((acc, node) => acc + node.nodeSize, 0);
 
   const textSelection = TextSelection.near(
     transaction.doc.resolve(nextColumnPos)
-  )
-  transaction.setSelection(textSelection)
+  );
+  transaction.setSelection(textSelection);
 
-  dispatch(transaction)
-  return true
+  dispatch(transaction);
+  return true;
 }
 
 export function getColumnWidths(editor: Editor): {
-  id: string
-  width: string
+  id: string;
+  width: string;
 }[] {
-  const { node: columnsNode } = getClosestNodeByName(editor, "columns") || {}
+  const { node: columnsNode } = getClosestNodeByName(editor, 'columns') || {};
   if (!columnsNode) {
-    return []
+    return [];
   }
 
-  const columnsWidth: { id: string; width: string }[] = []
+  const columnsWidth: { id: string; width: string }[] = [];
   columnsNode.content.forEach((child) => {
-    const { columnId, width } = child.attrs
-    columnsWidth.push({ id: columnId, width })
-  })
+    const { columnId, width } = child.attrs;
+    columnsWidth.push({ id: columnId, width });
+  });
 
-  return columnsWidth
+  return columnsWidth;
 }

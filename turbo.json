@@ -13,10 +13,6 @@
         ".vercel/**"
       ]
     },
-    "lint": {
-      "dependsOn": ["^build"]
-    },
-    "lint:fix": {},
     "clean": {},
     "//#format": {},
     "//#format:check": {},
@@ -29,6 +25,12 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "lint:package": {
+      "dependsOn": ["build"]
     }
   }
 }

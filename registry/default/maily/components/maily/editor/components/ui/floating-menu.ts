@@ -1,6 +1,7 @@
 import type { BubbleMenuProps } from '@tiptap/react/menus';
 import deepEql from 'fast-deep-equal';
-import { useCallback, useRef } from 'react';
+import { useCallback, useState } from 'react';
+import { useLatestRef } from '../../utils/state-hooks';
 
 export const FLOATING_MENU_CLASS =
   'bg-popover text-popover-foreground ring-foreground/10 rounded-lg p-1 shadow-md ring-1 transition-[opacity,transform] duration-100';
@@ -15,35 +16,34 @@ export const FLOATING_MENU_TRIGGER_CLASS =
 export function useStableBubbleMenuProps(
   props: BubbleMenuProps
 ): BubbleMenuProps {
-  const shouldShowRef = useRef(props.shouldShow);
-  const appendToRef = useRef(props.appendTo);
-  const getReferencedVirtualElementRef = useRef(
-    props.getReferencedVirtualElement
-  );
-  const optionsRef = useRef(props.options);
-
-  shouldShowRef.current = props.shouldShow;
-  appendToRef.current = props.appendTo;
-  getReferencedVirtualElementRef.current = props.getReferencedVirtualElement;
-  if (!deepEql(optionsRef.current, props.options)) {
-    optionsRef.current = props.options;
+  // The callbacks below read the latest props at call time.
+  const latestRef = useLatestRef(props);
+  // Keep the previous options object while its contents are unchanged.
+  const [stableOptions, setStableOptions] = useState(props.options);
+  let options = stableOptions;
+  if (!deepEql(stableOptions, props.options)) {
+    setStableOptions(props.options);
+    options = props.options;
   }
 
   const shouldShow = useCallback<NonNullable<BubbleMenuProps['shouldShow']>>(
-    (context) => shouldShowRef.current?.(context) ?? false,
-    []
+    (context) => latestRef.current.shouldShow?.(context) ?? false,
+    [latestRef]
   );
   const appendTo = useCallback<
     Extract<NonNullable<BubbleMenuProps['appendTo']>, () => HTMLElement>
   >(() => {
-    const currentAppendTo = appendToRef.current;
+    const currentAppendTo = latestRef.current.appendTo;
     return typeof currentAppendTo === 'function'
       ? currentAppendTo()
       : (currentAppendTo ?? document.body);
-  }, []);
+  }, [latestRef]);
   const getReferencedVirtualElement = useCallback<
     NonNullable<BubbleMenuProps['getReferencedVirtualElement']>
-  >(() => getReferencedVirtualElementRef.current?.() ?? null, []);
+  >(
+    () => latestRef.current.getReferencedVirtualElement?.() ?? null,
+    [latestRef]
+  );
 
   return {
     ...props,
@@ -52,6 +52,6 @@ export function useStableBubbleMenuProps(
     getReferencedVirtualElement: props.getReferencedVirtualElement
       ? getReferencedVirtualElement
       : props.getReferencedVirtualElement,
-    options: optionsRef.current,
+    options,
   };
 }

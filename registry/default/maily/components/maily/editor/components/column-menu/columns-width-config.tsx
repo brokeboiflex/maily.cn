@@ -1,7 +1,7 @@
 import { IconPlaceholder } from "@/components/icon-placeholder"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../../utils/constants';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -64,7 +64,7 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="p-0.5! w-[calc(100vw-1rem)] max-w-[300px] rounded-lg"
+        className="w-[calc(100vw-1rem)] max-w-[300px] rounded-lg p-0.5!"
         sideOffset={8}
         align="center"
       >
@@ -136,11 +136,12 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
                 <InputGroup>
                   <InputGroupInput
                     {...AUTOCOMPLETE_PASSWORD_MANAGERS_OFF}
+                    aria-label={label}
                     placeholder={t('columnMenu.autoPlaceholder')}
                     min={1}
                     max={90}
                     type="number"
-                    className="appearance-none px-1.5 text-sm tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                    className="[appearance:textfield] appearance-none px-1.5 text-sm tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                     value={value}
                     onChange={(e) => {
                       const value = e.target.value;

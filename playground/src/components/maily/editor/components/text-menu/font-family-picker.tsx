@@ -4,6 +4,7 @@ import type { Editor } from '@tiptap/core';
 import {
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -22,20 +23,16 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useMailyContext } from '../../provider';
-import { cn } from '@/lib/utils';
+import { useMailyContext } from '../../maily-context';
+import { cn } from 'cn';
 import {
-  createFontSelection,
-  fontsourceFileUrl,
   fontStack,
-  getFontsourceCatalog,
   loadEditorFont,
-  resetFontsourceCatalog,
-  resolveFontSelection,
-  type FontsourceCategory,
-  type FontsourceFont,
+  type MailyFontCategory,
+  type MailyFontFamily,
+  type MailyFontProvider,
   type MailyFontSelection,
-} from '../../fonts/fontsource';
+} from '../../fonts/font-provider';
 import { LoaderCircleIcon, CheckIcon, TypeIcon, ChevronDownIcon, RotateCwIcon } from "lucide-react";
 
 const DEFAULT_VALUE = '__maily_default_font__';
@@ -43,18 +40,20 @@ const ROW_HEIGHT = 58;
 const LIST_VERTICAL_PADDING = 12;
 
 type CatalogState =
-  | { status: 'idle' | 'loading'; fonts: FontsourceFont[] }
-  | { status: 'ready'; fonts: FontsourceFont[] }
-  | { status: 'error'; fonts: FontsourceFont[] };
+  | { status: 'idle' | 'loading'; fonts: MailyFontFamily[] }
+  | { status: 'ready'; fonts: MailyFontFamily[] }
+  | { status: 'error'; fonts: MailyFontFamily[] };
 
 type FontFamilyPickerProps = {
   editor: Editor;
+  /** The host's font provider (`MailyContext.fontProvider`). */
+  provider: MailyFontProvider;
   currentFont: MailyFontSelection | null;
   onFontChange?: (font: MailyFontSelection) => void;
   onFontUnset?: () => void;
 };
 
-function usePreviewFont(font: FontsourceFont) {
+function usePreviewFont(font: MailyFontFamily, provider: MailyFontProvider) {
   const previewFamily = `maily-preview-${font.id}`;
 
   useEffect(() => {
@@ -66,8 +65,12 @@ function usePreviewFont(font: FontsourceFont) {
       return;
     }
 
-    const selection = createFontSelection(font);
-    const url = fontsourceFileUrl(selection);
+    const selection = provider.previewSelection(font);
+    const url = provider.faceUrl(
+      selection,
+      selection.fontRegularWeight,
+      'normal'
+    );
     if (!url) {
       return;
     }
@@ -84,26 +87,31 @@ function usePreviewFont(font: FontsourceFont) {
     return () => {
       document.fonts.delete(face);
     };
-  }, [font.id, font.defSubset, font.weights, previewFamily]);
+  }, [font, previewFamily, provider]);
 
   return previewFamily;
 }
 
 function FontRow({
   font,
+  provider,
   selected,
   loading,
   categoryLabel,
   onSelect,
 }: {
-  font: FontsourceFont;
+  font: MailyFontFamily;
+  provider: MailyFontProvider;
   selected: boolean;
   loading: boolean;
   categoryLabel: string;
   onSelect: () => void;
 }) {
-  const previewFamily = usePreviewFont(font);
-  const selection = useMemo(() => createFontSelection(font), [font]);
+  const previewFamily = usePreviewFont(font, provider);
+  const selection = useMemo(
+    () => provider.previewSelection(font),
+    [font, provider]
+  );
 
   return (
     <CommandItem
@@ -134,7 +142,7 @@ function FontRow({
         >
           {font.family}
         </span>
-        <span className="text-muted-foreground block truncate text-[10px] uppercase leading-4 tracking-wide">
+        <span className="text-muted-foreground block truncate text-[10px] leading-4 tracking-wide uppercase">
           {categoryLabel}
         </span>
       </span>
@@ -149,11 +157,15 @@ function FontRow({
 
 export function FontFamilyPicker({
   editor,
+  provider,
   currentFont,
   onFontChange,
   onFontUnset,
 }: FontFamilyPickerProps) {
   const { t, editorActions } = useMailyContext();
+  // Each picker owns its channel, so one picker cannot cancel another's choice.
+  const pickerId = useId();
+  const channel = `font:${pickerId}`;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeValue, setActiveValue] = useState(
@@ -166,12 +178,27 @@ export function FontFamilyPicker({
   });
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Catalog and selection requests end with the picker.
+  const requests = useRef<AbortController | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    requests.current = controller;
+    return () => controller.abort();
+  }, [provider]);
+
   const loadCatalog = useCallback(() => {
+    const signal = requests.current?.signal;
+    if (!signal || signal.aborted) return;
     setCatalog((current) => ({ ...current, status: 'loading' }));
-    void getFontsourceCatalog()
-      .then((fonts) => setCatalog({ status: 'ready', fonts }))
-      .catch(() => setCatalog({ status: 'error', fonts: [] }));
-  }, []);
+    void provider
+      .listFamilies(signal)
+      .then((fonts) => {
+        if (!signal.aborted) setCatalog({ status: 'ready', fonts });
+      })
+      .catch(() => {
+        if (!signal.aborted) setCatalog({ status: 'error', fonts: [] });
+      });
+  }, [provider]);
 
   useEffect(() => {
     if (open && catalog.status === 'idle') {
@@ -196,6 +223,9 @@ export function FontFamilyPicker({
     );
   }, [catalog.fonts, query]);
 
+  // TanStack Virtual returns a mutable instance whose methods React Compiler
+  // cannot memoize; the compiler intentionally leaves this component unoptimized.
+  // eslint-disable-next-line react-hooks/incompatible-library -- see above
   const virtualizer = useVirtualizer({
     count: filteredFonts.length,
     getScrollElement: () => scrollRef.current,
@@ -208,7 +238,7 @@ export function FontFamilyPicker({
   }, [query, virtualizer]);
 
   const categoryLabel = useCallback(
-    (category: FontsourceCategory) => {
+    (category: MailyFontCategory) => {
       const keys = {
         'sans-serif': 'fontPicker.category.sansSerif',
         serif: 'fontPicker.category.serif',
@@ -222,10 +252,13 @@ export function FontFamilyPicker({
     [t]
   );
 
-  useLayoutEffect(() => () => editorActions?.cancel('font'), [editorActions]);
+  useLayoutEffect(
+    () => () => editorActions?.cancel(channel),
+    [editorActions, channel]
+  );
 
   const selectDefault = useCallback(() => {
-    editorActions?.cancel('font');
+    editorActions?.cancel(channel);
     setLoadingFontId(null);
     if (onFontUnset) {
       onFontUnset();
@@ -233,15 +266,17 @@ export function FontFamilyPicker({
       editor.chain().focus().unsetMailyFont().run();
     }
     setOpen(false);
-  }, [editor, onFontUnset, editorActions]);
+  }, [editor, onFontUnset, editorActions, channel]);
 
   const selectFont = useCallback(
-    async (font: FontsourceFont) => {
-      const action = editorActions?.capture('font');
+    async (font: MailyFontFamily) => {
+      const signal = requests.current?.signal;
+      if (!signal || signal.aborted) return;
+      const action = editorActions?.capture(channel);
       setLoadingFontId(font.id);
       let selection;
       try {
-        selection = await resolveFontSelection(font);
+        selection = await provider.resolveSelection(font, signal);
       } catch {
         if (action?.isOwned()) setLoadingFontId(null);
         return;
@@ -251,7 +286,7 @@ export function FontFamilyPicker({
         return;
       }
       action.run(() => {
-        loadEditorFont(selection);
+        loadEditorFont(selection, provider);
         if (onFontChange) {
           onFontChange(selection);
         } else {
@@ -261,13 +296,10 @@ export function FontFamilyPicker({
       setLoadingFontId(null);
       setOpen(false);
     },
-    [editor, onFontChange, editorActions]
+    [editor, onFontChange, editorActions, channel, provider]
   );
 
-  const retry = useCallback(() => {
-    resetFontsourceCatalog();
-    loadCatalog();
-  }, [loadCatalog]);
+  const retry = loadCatalog;
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
@@ -441,7 +473,7 @@ export function FontFamilyPicker({
                         return (
                           <div
                             key={font.id}
-                            className="absolute left-0 top-0 w-full py-0.5"
+                            className="absolute top-0 left-0 w-full py-0.5"
                             style={{
                               height: virtualItem.size,
                               transform: `translateY(${virtualItem.start}px)`,
@@ -449,6 +481,7 @@ export function FontFamilyPicker({
                           >
                             <FontRow
                               font={font}
+                              provider={provider}
                               selected={currentFont?.fontId === font.id}
                               loading={loadingFontId === font.id}
                               categoryLabel={categoryLabel(font.category)}

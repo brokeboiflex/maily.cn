@@ -1,35 +1,32 @@
 {
   "name": "@maily-to/render",
   "version": "0.2.3",
+  "type": "module",
   "private": false,
   "description": "A transformer that converts Maily content into HTML email templates.",
+  "license": "MIT",
   "sideEffects": false,
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.cts",
   "files": [
     "dist/**"
   ],
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      }
-    }
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "tsdown --watch",
     "clean": "rm -rf dist",
     "build": "tsdown",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "test:watch": "vitest",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint:package": "publint && attw --pack . --profile node16 && node ../../scripts/check-package-entries.mjs"
   },
   "repository": {
     "type": "git",
@@ -43,25 +40,26 @@
     "email"
   ],
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   },
   "devDependencies": {
-    "@babel/preset-react": "^7.27.1",
     "@maily-to/shared": "workspace:*",
-    "@tiptap/core": "^3.30.5",
-    "@types/react": "^19.1.10",
+    "@types/react": "^19.3.0",
     "tsconfig": "workspace:*",
-    "typescript": "^5.9.2"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "@antfu/utils": "^9.2.0",
-    "@react-email/components": "^0.5.1",
-    "@react-email/render": "^1.2.1",
-    "juice": "^11.0.1",
-    "node-html-parser": "^7.0.1"
+    "@antfu/utils": "^9.3.0",
+    "@tiptap/core": "^3.32.0",
+    "@tiptap/pm": "^3.32.0",
+    "csstype": "^3.2.3",
+    "juice": "^12.2.0",
+    "node-html-parser": "^9.0.5",
+    "react-email": "^6.11.3"
   },
   "peerDependencies": {
-    "react": "^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "publishConfig": {
     "access": "public"

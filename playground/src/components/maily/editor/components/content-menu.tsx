@@ -1,134 +1,127 @@
-import type { Editor } from "@tiptap/core"
+import type { Editor } from '@tiptap/core';
 import {
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
-} from "react"
+} from 'react';
 
-import type { Node } from "@tiptap/pm/model"
-import { Button } from "@/components/ui/button"
+import type { Node } from '@tiptap/pm/model';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
-import { DragHandle } from "../plugins/drag-handle/drag-handle"
-import { cn } from "@/lib/utils"
-import { captureNodeAction } from "../utils/node-action"
-import { useMailyContext } from "../provider"
-import { Plus, GripVertical, Copy, Trash2 } from "lucide-react"
+} from '@/components/ui/tooltip';
+import { DragHandle } from '../plugins/drag-handle/drag-handle';
+import { captureNodeAction } from '../utils/node-action';
+import { useMailyContext } from '../maily-context';
+import { Plus, GripVertical, Copy, Trash2 } from "lucide-react";
 
 export type ContentMenuProps = {
-  editor: Editor
-}
+  editor: Editor;
+};
 
 export function ContentMenu(props: ContentMenuProps) {
-  const { editor } = props
-  const { t } = useMailyContext()
+  const { editor } = props;
+  const { t } = useMailyContext();
 
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [currentNodePos, setCurrentNodePos] = useState<number>(-1)
-  const menuOpenRef = useRef(false)
-  const target = useRef<ReturnType<typeof captureNodeAction>>(null)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [currentNodePos, setCurrentNodePos] = useState<number>(-1);
+  const menuOpenRef = useRef(false);
+  const target = useRef<ReturnType<typeof captureNodeAction>>(null);
 
   useLayoutEffect(
     () => () => {
-      menuOpenRef.current = false
-      target.current = null
+      menuOpenRef.current = false;
+      target.current = null;
     },
     [editor]
-  )
+  );
 
   const handleNodeChange = useCallback(
     (data: { node: Node | null; editor: Editor; pos: number }) => {
-      if (menuOpenRef.current) return
-      target.current = captureNodeAction(editor, data.pos, data.node)
+      if (menuOpenRef.current) return;
+      target.current = captureNodeAction(editor, data.pos, data.node);
 
-      setCurrentNodePos(data.pos)
+      setCurrentNodePos(data.pos);
     },
     [editor]
-  )
+  );
 
   function duplicateNode() {
     target.current?.run((node, pos) => {
       editor
         .chain()
-        .setMeta("hideDragHandle", true)
+        .setMeta('hideDragHandle', true)
         .insertContentAt(pos + node.nodeSize, node.toJSON())
-        .run()
-    })
-    menuOpenRef.current = false
-    setMenuOpen(false)
+        .run();
+    });
+    menuOpenRef.current = false;
+    setMenuOpen(false);
   }
 
   function deleteCurrentNode() {
     target.current?.run((node, pos) => {
       editor
         .chain()
-        .setMeta("hideDragHandle", true)
+        .setMeta('hideDragHandle', true)
         .deleteRange({ from: pos, to: pos + node.nodeSize })
-        .run()
-    })
-    menuOpenRef.current = false
-    setMenuOpen(false)
+        .run();
+    });
+    menuOpenRef.current = false;
+    setMenuOpen(false);
   }
 
   function handleAddNewNode() {
     target.current?.run((node, pos) => {
-      const insertPos = pos + node.nodeSize
-      const empty = node.type.name === "paragraph" && node.content.size === 0
+      const insertPos = pos + node.nodeSize;
+      const empty = node.type.name === 'paragraph' && node.content.size === 0;
       editor
         .chain()
         .command(({ tr, state }) => {
           if (empty) {
-            tr.insertText("/", pos + 1)
+            tr.insertText('/', pos + 1);
           } else {
             tr.insert(
               insertPos,
               state.schema.nodes.paragraph.create(null, [
-                state.schema.text("/"),
+                state.schema.text('/'),
               ])
-            )
+            );
           }
-          return true
+          return true;
         })
         .focus(empty ? pos + 2 : insertPos + 2)
-        .run()
-    })
+        .run();
+    });
   }
 
+  // Dispatch only while the menu is open: any transaction lets TipTap's
+  // trailing-node plugin append a paragraph, even in a read-only editor.
   useEffect(() => {
-    if (menuOpen) {
-      editor.commands.setMeta("lockDragHandle", true)
-    } else {
-      editor.commands.setMeta("lockDragHandle", false)
-    }
-
+    if (!menuOpen) return;
+    editor.commands.setMeta('lockDragHandle', true);
     return () => {
-      editor.commands.setMeta("lockDragHandle", false)
-    }
-  }, [editor, menuOpen])
+      editor.commands.setMeta('lockDragHandle', false);
+    };
+  }, [editor, menuOpen]);
 
   return (
     <DragHandle
       pluginKey="ContentMenu"
       editor={editor}
-      tippyOptions={{
-        placement: "left",
-        offset: [0, 0],
-        zIndex: 99,
-      }}
+      placement="left"
+      zIndex={99}
       onNodeChange={handleNodeChange}
-      className={cn(editor.isEditable ? "visible" : "hidden")}
     >
       <TooltipProvider>
         <div className="flex items-center pr-1.5">
@@ -137,31 +130,31 @@ export function ContentMenu(props: ContentMenuProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7! cursor-grab text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground size-7! cursor-grab"
                 onClick={handleAddNewNode}
-                aria-label={t("contentMenu.addNode")}
+                aria-label={t('contentMenu.addNode')}
                 type="button"
               >
                 <Plus className="size-4 shrink-0" />
               </Button>
             </TooltipTrigger>
             <TooltipContent sideOffset={8}>
-              {t("contentMenu.addNode")}
+              {t('contentMenu.addNode')}
             </TooltipContent>
           </Tooltip>
           <DropdownMenu
             open={menuOpen}
             onOpenChange={(open) => {
-              menuOpenRef.current = open
-              setMenuOpen(open)
+              menuOpenRef.current = open;
+              setMenuOpen(open);
               if (open) {
-                const owned = target.current
+                const owned = target.current;
                 if (!owned?.isCurrent()) {
-                  menuOpenRef.current = false
-                  setMenuOpen(false)
-                  return
+                  menuOpenRef.current = false;
+                  setMenuOpen(false);
+                  return;
                 }
-                editor.commands.setNodeSelection(currentNodePos)
+                editor.commands.setNodeSelection(currentNodePos);
               }
             }}
           >
@@ -172,8 +165,8 @@ export function ContentMenu(props: ContentMenuProps) {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="relative z-1 size-7! cursor-grab text-muted-foreground hover:text-foreground"
-                      aria-label={t("contentMenu.nodeActions")}
+                      className="text-muted-foreground hover:text-foreground relative z-1 size-7! cursor-grab"
+                      aria-label={t('contentMenu.nodeActions')}
                       type="button"
                     >
                       <GripVertical className="size-4 shrink-0" />
@@ -182,7 +175,7 @@ export function ContentMenu(props: ContentMenuProps) {
                 </span>
               </TooltipTrigger>
               <TooltipContent sideOffset={8}>
-                {t("contentMenu.nodeActions")}
+                {t('contentMenu.nodeActions')}
               </TooltipContent>
             </Tooltip>
 
@@ -193,20 +186,22 @@ export function ContentMenu(props: ContentMenuProps) {
               className="w-max min-w-36"
             >
               <DropdownMenuItem onClick={duplicateNode}>
-                <Copy />
-                {t("contentMenu.duplicate")}
+                <Copy
+/>
+                {t('contentMenu.duplicate')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 variant="destructive"
                 onClick={deleteCurrentNode}
               >
-                <Trash2 />
-                {t("contentMenu.delete")}
+                <Trash2
+/>
+                {t('contentMenu.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </TooltipProvider>
     </DragHandle>
-  )
+  );
 }

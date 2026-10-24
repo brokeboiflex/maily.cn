@@ -1,4 +1,4 @@
-import TiptapImage from '@tiptap/extension-image';
+import { Image as TiptapImage } from '@tiptap/extension-image';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import { DEFAULT_SECTION_SHOW_IF_KEY } from '../section/section';
 import { ImageView } from './image-view';

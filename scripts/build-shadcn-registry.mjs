@@ -41,8 +41,8 @@ const sharedPackagePath = path.join(root, 'packages/shared/package.json');
 // only the registry output defers to the consumer. (Same idea as the lucide →
 // IconPlaceholder transform: don't hardcode a choice the consumer already owns.)
 const EXTERNALIZED_MODULES = {
-  // cn() — every shadcn project already ships an identical one at @/lib/utils.
-  'editor/utils/classname': '@/lib/utils',
+  // cn() comes from shadcn's `cn` package, as in current stock shadcn items.
+  'editor/utils/classname': 'cn',
   // shadcn UI primitives the consumer already owns. The registry defers to the
   // consumer's stock components (installed via `registryDependencies`) instead
   // of bundling Maily forks; the source files stay for standalone package builds.
@@ -60,7 +60,6 @@ const EXTERNALIZED_MODULES = {
   'editor/components/ui/input-group': '@/components/ui/input-group',
   'editor/components/ui/command': '@/components/ui/command',
   'editor/components/ui/badge': '@/components/ui/badge',
-  'editor/components/ui/resizable': '@/components/ui/resizable',
   'editor/components/ui/scroll-area': '@/components/ui/scroll-area',
   'editor/components/ui/attachment': '@/components/ui/attachment',
   'editor/components/ui/checkbox': '@/components/ui/checkbox',
@@ -91,7 +90,6 @@ const REGISTRY_DEPENDENCIES = [
   'input-group',
   'command',
   'badge',
-  'resizable',
   'scroll-area',
   'attachment',
   'checkbox',
@@ -109,6 +107,8 @@ const REGISTRY_DEPENDENCY_BY_UI_IMPORT = new Map(
 );
 
 const HOST_PACKAGE_DEPENDENCIES = new Set(['react', 'react-dom']);
+// Stock shadcn items declare these without a version; the host keeps its range.
+const UNVERSIONED_DEPENDENCIES = new Set(['cn']);
 
 // These packages are implementation details of source files replaced by the
 // consumer's stock shadcn primitives and must not leak into registry installs.
@@ -127,17 +127,19 @@ const EXTERNALIZED_PACKAGE_DEPENDENCIES = [
   '@radix-ui/react-avatar',
   '@radix-ui/react-label',
   'cmdk',
-  'react-resizable-panels',
 ];
 
 function externalizedModuleKey(relativePosixPath) {
   return relativePosixPath.replace(/\.(tsx?|jsx?)$/, '');
 }
 
-// Tests are dev-only — never ship them into the installable registry (they also
-// import vitest, which consumers don't have).
+// Tests, their fixtures and snapshots are dev-only — never ship them into the
+// installable registry (tests also import vitest, which consumers don't have).
 function isTestFile(relativePosixPath) {
-  return /\.(test|spec)(-d)?\.(tsx?|jsx?)$/.test(relativePosixPath);
+  return (
+    /\.(test|spec)(-d)?\.(tsx?|jsx?)$/.test(relativePosixPath) ||
+    /(^|\/)__(fixtures|snapshots)__\//.test(relativePosixPath)
+  );
 }
 
 const textExtensions = new Set([
@@ -562,7 +564,9 @@ function dependencyListForFiles(files, dependencyVersions) {
       );
     }
 
-    dependencies.push(`${name}@${version}`);
+    dependencies.push(
+      UNVERSIONED_DEPENDENCIES.has(name) ? name : `${name}@${version}`
+    );
   }
 
   return dependencies;

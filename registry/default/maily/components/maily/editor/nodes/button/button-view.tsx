@@ -14,10 +14,11 @@ import { FontFamilyPicker } from '../../components/text-menu/font-family-picker'
 import { FontSizePicker } from '../../components/text-menu/font-size-picker';
 import { FONT_ATTRIBUTE_KEYS } from '../../extensions/font-family';
 import { fontSelectionFromAttrs, fontStack } from '../../fonts/fontsource';
-import { useMailyContext } from '../../provider';
-import { cn } from '@/lib/utils';
+import { useMailyContext } from '../../maily-context';
+import { cn } from 'cn';
 import { useVariableOptions } from '../../utils/node-options';
 import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { type Attrs } from '@tiptap/pm/model';
 import { type CSSProperties, useMemo } from 'react';
 import {
   allowedButtonBorderRadius,
@@ -28,10 +29,10 @@ import {
 import { ButtonLabelInput } from './button-label-input';
 
 export function ButtonView(props: NodeViewProps) {
-  const { t } = useMailyContext();
+  const { t, fontProvider } = useMailyContext();
   const { compact } = useMobileEditor();
   const { node, editor, getPos } = props;
-  const updateAttributes = (attrs: Record<string, any>) =>
+  const updateAttributes = (attrs: Attrs) =>
     updateNodeViewAttributes(props, attrs);
   const {
     text,
@@ -171,7 +172,7 @@ export function ButtonView(props: NodeViewProps) {
           active={props.selected && editor.isEditable}
           align={popoverAlign}
           side="top"
-          className="p-0.5! w-max rounded-lg"
+          className="w-max rounded-lg p-0.5!"
           sideOffset={8}
         >
           <TooltipProvider>
@@ -191,23 +192,26 @@ export function ButtonView(props: NodeViewProps) {
               <Separator orientation="vertical" />
 
               <div className="flex gap-x-0.5">
-                <FontFamilyPicker
-                  editor={editor}
-                  currentFont={currentFont}
-                  onFontChange={(font) => {
-                    updateAttributes(font);
-                  }}
-                  onFontUnset={() => {
-                    updateAttributes(
-                      Object.fromEntries(
-                        FONT_ATTRIBUTE_KEYS.map((key) => [
-                          key,
-                          key === 'fontHasItalic' ? false : null,
-                        ])
-                      ) as Partial<ButtonAttributes>
-                    );
-                  }}
-                />
+                {fontProvider && (
+                  <FontFamilyPicker
+                    provider={fontProvider}
+                    editor={editor}
+                    currentFont={currentFont}
+                    onFontChange={(font) => {
+                      updateAttributes(font);
+                    }}
+                    onFontUnset={() => {
+                      updateAttributes(
+                        Object.fromEntries(
+                          FONT_ATTRIBUTE_KEYS.map((key) => [
+                            key,
+                            key === 'fontHasItalic' ? false : null,
+                          ])
+                        ) as Partial<ButtonAttributes>
+                      );
+                    }}
+                  />
+                )}
 
                 <FontSizePicker
                   value={fontSize || ''}
@@ -238,7 +242,6 @@ export function ButtonView(props: NodeViewProps) {
                       borderRadius: value,
                     });
                   }}
-                  tooltip={t('buttonMenu.borderRadius')}
                 />
 
                 <Select
@@ -256,7 +259,6 @@ export function ButtonView(props: NodeViewProps) {
                       variant: value,
                     });
                   }}
-                  tooltip={t('buttonMenu.style')}
                 />
 
                 <Select
@@ -279,7 +281,6 @@ export function ButtonView(props: NodeViewProps) {
                       paddingLeft: paddingX,
                     });
                   }}
-                  tooltip={t('buttonMenu.size')}
                   placeholder={t('buttonMenu.size')}
                 />
               </div>

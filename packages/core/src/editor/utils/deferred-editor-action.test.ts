@@ -1,5 +1,5 @@
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { describe, it, expect } from 'vitest';
 import { createDeferredEditorActions } from './deferred-editor-action';
 

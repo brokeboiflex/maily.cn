@@ -6,7 +6,7 @@ import {
 } from './paragraph/paragraph';
 
 export interface FooterOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
 declare module '@tiptap/core' {

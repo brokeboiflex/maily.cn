@@ -1,17 +1,17 @@
-import { Extension } from "@tiptap/core"
+import { Extension } from '@tiptap/core';
 import {
   resetSelectedAttributes,
   setSelectedNode,
   updateSelectedAttributes,
-} from "../utils/update-attribute"
+} from '../utils/update-attribute';
 
 export const AttributeCommands = Extension.create({
-  name: "mailyAttributeCommands",
+  name: 'mailyAttributeCommands',
   addCommands() {
     return {
       setNode: setSelectedNode,
       updateAttributes: updateSelectedAttributes,
       resetAttributes: resetSelectedAttributes,
-    }
+    };
   },
-})
+});

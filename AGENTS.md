@@ -56,7 +56,7 @@ The build step also rewrites hardcoded `lucide-react` icon JSX into a shadcn-fri
 
 The build step **externalizes modules the consumer already owns** rather than shipping a private copy. These are listed in `EXTERNALIZED_MODULES` in `scripts/build-shadcn-registry.mjs`, keyed by package-source path; for each, the source file is excluded from the emitted registry and every import of it (`@/…` or relative) is rewritten to the consumer's shadcn alias. The source file stays in `packages/core` for standalone builds — only the registry output defers to the consumer. Today this covers:
 
-- `cn` (`editor/utils/classname` → `@/lib/utils`)
+- `cn` (`editor/utils/classname` → the npm `cn` package, which current stock shadcn items import directly; it replaces the old `clsx` + `tailwind-merge` helper)
 - the `Button` primitive (`editor/components/base-button` → `@/components/ui/button` — the source export was renamed `BaseButton` → `Button` so the name matches stock shadcn, since the rewrite only swaps the import path)
 - `Input` (`editor/components/input` → `@/components/ui/input`)
 - `Textarea` (`editor/components/textarea` → `@/components/ui/textarea`)
@@ -71,11 +71,11 @@ The build step **externalizes modules the consumer already owns** rather than sh
 - `InputGroup` (`editor/components/ui/input-group` → `@/components/ui/input-group`)
 - `Command` (`editor/components/ui/command` → `@/components/ui/command`)
 - `Badge` (`editor/components/ui/badge` → `@/components/ui/badge`)
-- `ResizablePanelGroup` / `ResizablePanel` / `ResizableHandle` (`editor/components/ui/resizable` → `@/components/ui/resizable`)
 - `ScrollArea` / `ScrollBar` (`editor/components/ui/scroll-area` → `@/components/ui/scroll-area`)
 - `Attachment` and its parts (`editor/components/ui/attachment` → `@/components/ui/attachment`)
+- `Checkbox`, `Dialog`, `Sheet`, `Collapsible`, `Avatar`, `Field`, `Label` and `Empty` (`editor/components/ui/<name>` → `@/components/ui/<name>`)
 
-For an externalized component to resolve in the consumer's project, each registry item must declare the stock items its emitted files actually import in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `toggle-group`, `tooltip`, `separator`, `kbd`, `dropdown-menu`, `popover`, `tabs`, `input-group`, `command`, `badge`, `resizable`, `scroll-area`). The build derives that per-item list from generated imports. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
+For an externalized component to resolve in the consumer's project, each registry item must declare the stock items its emitted files actually import in **`registryDependencies`** (`button`, `input`, `textarea`, `toggle`, `toggle-group`, `tooltip`, `separator`, `kbd`, `dropdown-menu`, `popover`, `tabs`, `input-group`, `command`, `badge`, `scroll-area`, `attachment`, `checkbox`, `dialog`, `sheet`, `collapsible`, `avatar`, `field`, `label`, `empty`). The build derives that per-item list from generated imports. Behavior the stock primitive lacks lives at the call site instead of in the externalized component — e.g. the password-manager-off attributes (`AUTOCOMPLETE_PASSWORD_MANAGERS_OFF`) moved from the old bundled `Input` onto each `Input` in `link-card.tsx`.
 
 **Toggle state uses real primitives, not faked `data-state`.** Standalone stateful controls use stock shadcn `Toggle`, related controls use the host's stock `ToggleGroup` / `ToggleGroupItem`, and plain actions use `Button`. `toggle-group-compat.tsx` is only a thin prop adapter for the different Radix/Base controlled-value signatures; it does not render a replacement primitive. Alignment, text-direction, vertical-alignment, and the editor Design / Render topbar mode selector use Popover and/or ToggleGroup; the toolbar link control uses the same Maily link Popover as the bubble menu. The drag-handle node actions and “Turn into” selector use stock `DropdownMenu`; the HTML code/preview switch uses stock `Tabs`; Link Card labels use stock `Badge`.
 
@@ -83,7 +83,7 @@ The remaining `Select` is an editor-specific labelled/options composite that use
 
 Registry call sites must stay inside the prop/export intersection of current stock Radix and Base shadcn primitives. Do not pass Radix-only `position`, `onOpenAutoFocus`, or `onCloseAutoFocus` props through externalized `SelectContent`/`PopoverContent`, and do not depend on `PopoverAnchor`, which the Base item does not export. Preserve editor focus through Maily's controlled open-state callbacks and use `PopoverTrigger` for shared trigger composition.
 
-`MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It provides the inbox/sent/drafts surface as a backend-agnostic data-adapter component: local UI state, polling, message selection, reader, reply/forward compose seeding, and compose/draft actions live in the component, while accounts/messages/delivery/contact suggestions and optional message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell follows Gmail no-split navigation: opening a message or draft replaces the list in a shared content area; Back returns to the mounted list with its query, pagination, bulk selection and scroll position preserved. Use a desktop folder sidebar and a stock shadcn `Sheet` navigation menu below 768px of mailbox container width, plus `ScrollArea` around content overflow. Do not restore simultaneous list/reader panes or a forced desktop minimum width. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
+`MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It provides the inbox/sent/drafts surface as a backend-agnostic data-adapter component: local UI state, message selection, the reader and the composer live in the component, while accounts, messages, delivery, refresh timing, reply/forward seeding, folder action rules, contact suggestions and message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell follows Gmail no-split navigation: opening a message or draft replaces the list in a shared content area; Back returns to the mounted list with its query, pagination, bulk selection and scroll position preserved. Use a desktop folder sidebar and a stock shadcn `Sheet` navigation menu below 768px of mailbox container width, plus `ScrollArea` around content overflow. Do not restore simultaneous list/reader panes or a forced desktop minimum width. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
 
 Mailbox compose body entry is dual-mode: the plain-text `Textarea` and embedded Maily `Editor` are switched through real shadcn `ToggleGroup` primitives. Keep textarea as a supported fallback, persist rich editor output through `MailyMailboxDraftInput.html`, and continue sending `text` so data sources that only need plain text remain compatible.
 
@@ -104,8 +104,10 @@ Icon inheritance is release-tested with clean shadcn apps initialized for Lucide
 
 ## Tech stack
 
-- **React 18/19**, **TypeScript**
-- **TipTap 3.30.5 / ProseMirror** for the editor
+- **React 18/19**, **TypeScript 6** (TypeScript 7 lacks the classic compiler API that typescript-eslint and the package declaration builds need)
+- **TipTap 3.32 / ProseMirror** for the editor; **Floating UI** positions suggestion popups and the drag handle
+- **`cn`** (the npm package current stock shadcn items import) instead of `clsx` + `tailwind-merge`
+- **Node ≥ 22.12** for development; published floors follow runtime dependencies (`@maily-to/core` ≥ 22 for `cn`, `@maily-to/render` ≥ 22.12 for `juice` 12)
 - **Tailwind CSS v4** (plain, unprefixed utilities using the consumer's shadcn theme tokens — the component ships no Tailwind build or stylesheet of its own)
 - The consumer's **shadcn primitives** (Radix or Base UI style) and selected shadcn icon library
 - **Radix UI fallbacks** for standalone npm-package builds; registry installs inherit the consumer's selected shadcn primitive style
@@ -124,8 +126,15 @@ pnpm registry:build     # regenerate registry/** and registry.json from packages
 pnpm playground:sync    # registry:build + serve the built JSON into playground/public/r
 pnpm registry:consumer-test # clean Radix/Base/Bun isolated shadcn install and build matrix
 pnpm format:write       # prettier
-pnpm lint               # eslint
+pnpm format:check       # prettier, as CI runs it
+pnpm lint               # primitive audit + eslint (stock shadcn template rules)
+pnpm typecheck          # tsc across packages
+pnpm lint:package       # publint, attw and loading every published entry
 ```
+
+`.github/workflows/ci.yml` runs these gates, checks that generated registry
+output is current, and runs the playground lint/build/browser tests.
+`registry-consumers.yml` runs the clean consumer matrix.
 
 ## Local dev playground
 
@@ -165,6 +174,7 @@ must compile without consumer-side TypeScript workarounds.
 
 ## Working conventions
 
+- **No business logic in Maily.** Maily provides UI and contracts (props, callbacks, the data-source adapter, extension points) so an app can build a fully featured inbox and editor; every decision about data, delivery and send recovery, persistence or browser storage, backend timing (polling, autosave), mail conventions, folder rules, external services (fonts, CDNs) and link policy belongs to the consuming app. Where a convention is useful, export it as an opt-in default (`defaultMailboxMessageActionsFor`, `fontsourceFontProvider`, `fontsourceFontFaceUrl`) instead of applying it implicitly. In the mailbox, the one applied default is the reply/forward seed, `defaultMailboxComposeSeed`, which `createComposeSeed` replaces; it only prefills the composer and never calls the host. The renderer applies `DEFAULT_LINK_ATTRIBUTES` and `DEFAULT_META_TAGS` unless the host passes `linkAttributes` and `meta`. Built-in defaults must not call the network, write storage, or change saved JSON or sent email on their own.
 - **Read before you edit.** The editor is large and the block/extension/node wiring is intricate; trace how a block is registered and rendered before changing it.
 - **Mandatory reference-port gate.** When the user names a repo, app, screen, component, screenshot, or existing implementation as a reference, treat it as an implementation contract before writing code. First identify the exact referenced files, components, or routes; read them deeply enough to list layout primitives, state/data flow, component boundaries, user-visible behavior, dependencies, terminology, labels, and edge states; then state that contract in a working update before editing. Copy the reference structure as closely as the target stack allows. If any part cannot be copied, explicitly name why before substituting. Before the final response, compare the target against the reference and list intentional differences. Do not call the task done if a referenced primitive or pattern was replaced by an invented one.
 - **Concrete UI primitives are part of the contract.** If a referenced UI uses a concrete layout primitive or library, such as `ResizablePanelGroup`, tabs, dialogs, command menus, data tables, calendar grids, kanban boards, tree views, split panes, or virtual lists, preserve that primitive or pattern in the port unless the user explicitly asks for simplification.
@@ -173,15 +183,15 @@ must compile without consumer-side TypeScript workarounds.
 - **Do not touch shared primitive-like Maily UI for local visual complaints.** Components under `packages/core/src/editor/components/ui/*` are shared editor building blocks, not local styling scratchpads. If a screenshot shows one node/menu/popover looking wrong, fix that feature's call site or local layout first. Change a shared wrapper/composite such as Maily `Select` only when the desired behavior is explicitly global or the user asks for a primitive-level change.
 - **Keep the fork branding honest and local.** User-facing repository docs use `maily.cn` and the artwork in `assets/branding/`; do not hotlink the old `maily.to` logo or present upstream sponsors as sponsors of this fork. Preserve clear credit and links to the original `arikchakma/maily.to` project. The technical npm workspace names remain `@maily-to/*` unless a separate package-renaming task explicitly changes them.
 - **Edit packages, regenerate the registry.** Never hand-edit `registry/**` — it is build output.
-- **Keep TipTap on v3.** Canonical packages and registry consumers use the TipTap `3.30.5` line. Import React `BubbleMenu` from `@tiptap/react/menus`, configure it through Floating UI `options`, and keep its reactive props identity-stable through `useStableBubbleMenuProps`. TipTap 3 does not rerender the full React editor tree on every transaction, so chrome that displays active editor state must subscribe to that state with `useEditorState`; do not rely on a primitive's internal pressed state to hide a stale Maily prop. Tippy remains only for Maily's custom drag-handle and suggestion popups. Preserve the existing saved JSON schema during TipTap upgrades, including Maily's `textDirection` attribute and Fontsource text-style attributes.
+- **Keep TipTap on v3.** Canonical packages and registry consumers use the TipTap `3.32` line. Import React `BubbleMenu` from `@tiptap/react/menus`, configure it through Floating UI `options`, and keep its reactive props identity-stable through `useStableBubbleMenuProps`. TipTap 3 does not rerender the full React editor tree on every transaction, so chrome that displays active editor state must subscribe to that state with `useEditorState`; do not rely on a primitive's internal pressed state to hide a stale Maily prop. Tippy is gone: suggestion popups mount through TipTap Suggestion's Floating UI `props.mount` (`editor/utils/suggestion-popup.ts`, which survives plugin-view recreation), and the drag handle positions itself with Floating UI `computePosition`/`autoUpdate`. Preserve the existing saved JSON schema during TipTap upgrades, including Maily's `textDirection` attribute and Fontsource text-style attributes.
 - **Keep i18n generic.** Any new user-facing string must be overridable via the label-replacement mechanism, with an English default. Don't couple to a specific i18n framework. The mechanism lives in `packages/core/src/editor/i18n/`: `defaultLabels` (the exhaustive English dictionary in `default-labels.ts`) is both the runtime default and the authoring template; `LabelKey` is its key union; `MailyLabels = Record<LabelKey, string>` is the **complete-language** contract (not `Partial` — a missing key is a compile error, no merging). `createTranslator(labels)` returns `t(key, vars?)`, which does minimal `{token}` interpolation. **Adding any user-facing string means adding a key to `defaultLabels` and reading it via `t('…')`** — components get `t` from `useMailyContext()`; non-React consumers (the Placeholder extension, the default-block builder `getDefaultBlocks(t)`, the slash-command popup) receive `t` threaded from `Editor`. `searchTerms` and inserted seed content stay English (out of the dictionary). Note the deliberate break: block exports (`text`, `button`, …) and the placeholder are now `(t) => …` factories, not ready-made values.
 - **Keep image upload caller-driven.** The component should not assume a storage backend; it calls a handler the consumer provides and uses the returned URL.
-- **Fontsource typography stays runtime-only and self-contained in saved JSON.** The text font picker reads the complete Fontsource catalog from `https://api.fontsource.org/v1/fonts` only after it opens, normalizes and deduplicates family names by the strongest static email coverage, virtualizes the result with `@tanstack/react-virtual`, and loads preview faces only for rendered rows. Never bundle the catalog or font binaries, and do not expose implementation metadata such as variable-font capability badges in the picker. A selected text-style mark stores the Fontsource id, pinned package version, subset, regular/bold weights, italic availability, family, and email-safe fallback; the renderer constructs version-pinned jsDelivr WOFF2 URLs from those attributes and must not call Fontsource while sending an email. The font-size picker stores `fontSize` on the same TipTap `textStyle` mark and the renderer emits it inline for selected text. The global `theme.font` and `theme.fontSize` remain the defaults for unmarked text. Remote web fonts are progressive enhancement, so every granular font must retain its inline fallback stack.
+- **Fonts come from a host-supplied provider and stay self-contained in saved JSON.** Without the Editor's `fontProvider` there is no font picker and no font request; the renderer emits `@font-face` only through its `fontFaceUrl` option. The opt-in `fontsourceFontProvider` reads the complete Fontsource catalog from `https://api.fontsource.org/v1/fonts` only after the picker opens, normalizes and deduplicates family names by the strongest static email coverage, virtualizes the result with `@tanstack/react-virtual`, and loads preview faces only for rendered rows. Never bundle the catalog or font binaries, and do not expose implementation metadata such as variable-font capability badges in the picker. A selected text-style mark stores the Fontsource id, pinned package version, subset, regular/bold weights, italic availability, family, and email-safe fallback; the opt-in `fontsourceFontFaceUrl` constructs version-pinned jsDelivr WOFF2 URLs from those attributes, and the renderer must not call Fontsource while sending an email. The font-size picker stores `fontSize` on the same TipTap `textStyle` mark and the renderer emits it inline for selected text. The global `theme.font` and `theme.fontSize` remain the defaults for unmarked text. Remote web fonts are progressive enhancement, so every granular font must retain its inline fallback stack.
 - **Plain Tailwind, no prefix, no shipped CSS.** Maily is an idiomatic shadcn component: the editor source uses bare Tailwind utility classes (`bg-popover`, `text-foreground`, …) generated by the **consumer's** Tailwind, and ships **no stylesheet of its own**. There is no `mly:` prefix, no private Tailwind build, and no `@theme inline` bridge — those were removed. The component only _uses_ the consumer's shadcn theme tokens; it never defines or remaps them. When adding chrome, reach for tokens, never hardcoded colors (`bg-white`, `text-gray-*`, `soft-gray`, `midnight-gray` are gone — use `bg-background`/`bg-popover`, `text-foreground`/`text-muted-foreground`, `border-border`/`border-input`, `ring-ring`, `bg-primary`/`text-primary-foreground`, `bg-destructive`/`text-destructive`).
 - **Everything themes via the host's tokens — including the canvas.** Chrome _and_ the writing surface follow the consumer's light/dark theme. The paper uses `bg-background`/`text-foreground`; the content area is `prose` with its `--tw-prose-*` colors pinned to `var(--foreground)`/`var(--muted-foreground)`/`var(--border)` so it stays readable in every palette and mode. (The real, sent email is produced independently by `packages/render` and is unaffected by editor theming.)
-- **Styling lives on elements and extensions, not in CSS.** Element classes go in the `.tsx`; DOM that TipTap/ProseMirror generate at runtime is styled by passing Tailwind class strings into extension config (e.g. the Placeholder extension's `emptyNodeClass`/`emptyEditorClass`, node `renderHTML`/NodeView `className`) or via Tailwind v4 arbitrary variants (`[&_.ProseMirror-gapcursor]:…`) on the nearest controllable element — see `editor/index.tsx` (`EDITOR_CONTENT_CLASS`) and the NodeViews.
+- **Styling lives on elements and extensions, not in CSS.** Element classes go in the `.tsx`; DOM that TipTap/ProseMirror generate at runtime is styled by passing Tailwind class strings into extension config (e.g. the Placeholder extension's `emptyNodeClass`/`emptyEditorClass`, node `renderHTML`/NodeView `className`) or via Tailwind v4 arbitrary variants (`[&_.ProseMirror-gapcursor]:…`) on the nearest controllable element — see `editor/editor.tsx` (`EDITOR_CONTENT_CLASS`) and the NodeViews.
 - **Custom HTML stays dependency-light.** The HTML block uses TipTap's plain `CodeBlock` plus Maily's code/preview NodeView. Do not reintroduce Lowlight, Highlight.js language bundles, or another client-side syntax highlighter unless syntax highlighting becomes an explicit product requirement with measured consumer cost.
-- **A few colors stay literal on purpose** because they are email _content_ values (serialized into the email the recipient sees), not chrome: the default button colors (`#000000`/`#ffffff`) and section background/border (`#f7f7f7`/`#e2e2e2`) in the node definitions, the rose brand accent for variables, and the selection/selected-node highlight blue. Don't tokenize these.
+- **A few colors stay literal on purpose** because they are email _content_ values (serialized into the email the recipient sees), not chrome: the default button colors (`#000000`/`#ffffff`) and section background/border (`#f7f7f7`/`#e2e2e2`) in the node definitions, the rose brand accent for variables, and the selection/selected-node highlight blue. Don't tokenize these. The HTML block preview is a sandboxed iframe, which cannot inherit the canvas theme, so it mirrors the host's text color and color scheme on a transparent document and uses the renderer's default system font stack.
 - **Consumer requirement: the typography plugin.** The content area depends on `prose`, so consumers need `@plugin "@tailwindcss/typography";`. The registry item wires this automatically via its `css` key on `shadcn add`; the build script (`scripts/build-shadcn-registry.mjs`) emits that key.
 - **Default block media uses the fork's public branding.** Logo presets use `assets/branding/maily-cn-avatar.png` and the cover preset uses `assets/branding/maily-cn-hero.png`, referenced through this repository's public `raw.githubusercontent.com` URLs so rendered emails and shadcn-installed source can load them without bundler-specific asset handling.
 
@@ -196,7 +206,7 @@ See [source view](docs/mailbox-source-2026-09-17.md).
 
 ## Idempotency and resource ownership, 2026-10-08
 
-Canonical editor/menu mailbox repair evidence is in docs/idempotency-repairs-2026-10-08.md. Repeated desired column count must compare the live document before mutation. Native drag/resize listeners, clone URLs/DOM, suggestion renderers and delayed focus timers require ownership and teardown. Mailbox mutations/navigation share synchronous exclusion, and unknown sends retain the actual draft ID before dispatch; hosts must provide an immutable account ID. DraftInput.revision is the revision observed with editable content; hosts forward it unchanged and return \_revision after acknowledged writes. Do not replace unknown send recovery with new draft creation or a fresh revision lookup at save. Generate registry/default/maily, registry.json and playground/public/r from packages/core source; do not patch generated output independently. Local consumer type/build evidence excludes browser/provider delivery, publication and deployment.
+Canonical editor/menu mailbox repair evidence is in docs/idempotency-repairs-2026-10-08.md. Repeated desired column count must compare the live document before mutation. Native drag/resize listeners, clone URLs/DOM, suggestion renderers and delayed focus timers require ownership and teardown. Mailbox mutations/navigation share synchronous exclusion. DraftInput.revision is the revision observed with editable content; hosts forward it unchanged and return \_revision after acknowledged writes. Send recovery belongs to the host (draft ID and revision, or `idempotencyKey`); Maily keeps no receipts. Generate registry/default/maily, registry.json and playground/public/r from packages/core source; do not patch generated output independently. Local consumer type/build evidence excludes browser/provider delivery, publication and deployment.
 
 Deferred editor actions now use provider-owned document/selection/lifecycle
 snapshots. Use stable per-picker `useId` color channels: unrelated pickers must
@@ -207,11 +217,8 @@ layout cleanup; retain one-shot stale-target rejection. See
 
 ## Async mailbox and node ownership (2026-10-08)
 
-Mailbox async work belongs to its mounted data-source lifetime. Hosts with
-multiple authenticated actors must supply an actor/account `recoveryScope`;
-unscoped historic pending-send receipts remain retained and blocked for explicit
-reconciliation. Store the prepared draft receipt before rejecting stale send
-continuation. Image/logo uploads must match the captured immutable ProseMirror
+Mailbox async work belongs to its mounted data-source lifetime; a departed
+composition or data source never sends what it prepared. Image/logo uploads must match the captured immutable ProseMirror
 Node identity, not only equal type/attributes at the old position; stale results
 invoke the host's discard handler. See
 [ownership validation](docs/idempotence-ownership-2026-10-08.md).
@@ -222,8 +229,10 @@ Mailbox folders include `spam` and `trash`. Hosts query/count these folders and
 implement `delete` as move to Trash, `reportSpam` as move to Spam, `restore` as
 move to Inbox, `notSpam` as remove spam classification and move to Inbox, and
 `deleteForever` as irreversible deletion. Recovery/permanent deletion actions
-remain explicitly capability-gated and folder-specific. Retention and classifier
-training belong to the host. See docs/mailbox-spam-trash.md.
+remain explicitly capability-gated; which folders offer them is the host's
+choice (a `messageActions` function, or the opt-in
+`defaultMailboxMessageActionsFor`). Retention and classifier training belong to
+the host. See docs/mailbox-spam-trash.md.
 
 ## Complete mailbox workflows, 2026-10-09
 
@@ -286,7 +295,7 @@ external updates must not echo callbacks, and off-page reader IDs remain valid.
 Hosts coordinate related controlled values; external navigation resets only
 unmanaged subordinate state and must not silently discard a live composer.
 See docs/mailbox-workflows.md for the API and ownership contract. The consumer
-matrix covers Radix/Base runtime behavior and custom UI/utils aliases in Bun.
+matrix covers Radix/Base runtime behavior and a custom UI alias in Bun.
 
 Stock Radix Dialog can autofocus before its passive Escape listener registers.
 Label and unsaved-change dialogs handle Escape in their leaf content through the common
@@ -298,8 +307,8 @@ Escape in the consumer test.
 
 The Gmail no-split reference supersedes the old resizable three-panel layout.
 The selected message remains caller-controllable; Back requests a null selection
-and respects host acceptance. Compose Back follows existing dirty-draft and
-pending-send guards. Sheet is externalized to the consumer just like Dialog.
+and respects host acceptance. Compose Back follows the existing dirty-draft
+guard. Sheet is externalized to the consumer just like Dialog.
 See [mailbox workflows](docs/mailbox-workflows.md).
 
 Mailbox icon controls must use host Tooltip primitives with the same translated
@@ -375,15 +384,12 @@ in one transaction while retaining surviving content and attributes.
 
 Plugin-view setup and cleanup follow ProseMirror's recreatable view lifetime;
 ordinary menu registration must not terminate retained upload work or drag
-listeners. Uploads, intrinsic image loading and resize commits own their captured
-node/document. Temporary upload images defer intrinsic attribute writes until
-the upload is acknowledged. Failed empty image/logo uploads retain translated
-error and retry controls.
+listeners. Uploads and resize commits own their captured node/document; loading
+an image never writes its dimensions. Failed empty image/logo uploads retain
+translated error and retry controls.
 
 Compose refs and revisions belong to a data-source lifetime and compose intent.
-Retain departed acknowledged draft receipts independently, without attaching them
-to a newer composer. Multiple unresolved receipts block sending for explicit host
-reconciliation. Read success, failure and loading cleanup share query generations;
+Read success, failure and loading cleanup share query generations;
 label deletion and form completion own their selection/form sessions. Only
 acknowledged reader mutations overlay thread messages; a slower ordinary detail
 read must preserve a fresher thread. See
@@ -406,10 +412,12 @@ TipTap unmount retains editor state. Cancelled paste placeholders must be remove
 from that current retained state before URL revocation, including queued plugin
 removal followed by unmount/remount; an obsolete view cannot own that cleanup.
 
-The post-repair action audit closes the original 14 reported cases but records
-14 additional defects and a separate live-receipt reconciliation policy gap.
-See [the final audit](docs/idempotence-postrepair-audit-2026-10-10.md) before
-claiming the complete editor/mailbox action surface is idempotent or defect-free.
+The post-repair action audit closed the original 14 reported cases and recorded
+14 additional defects and a separate live-receipt reconciliation policy gap. The
+defects were repaired on 2026-10-23; the policy gap no longer applies because
+send recovery moved to the host on 2026-10-24. See
+[the final audit](docs/idempotence-postrepair-audit-2026-10-10.md) for each
+repair and its regression test.
 
 ## Playground message cursors, 2026-10-10
 
@@ -417,3 +425,75 @@ The playground message adapter uses a timestamp/immutable-ID keyset boundary,
 scoped to folder/search/label filters. Do not substitute numeric offsets for
 cursors. README adapters must forward all `listMessages` parameters unchanged.
 Thread, label and autocomplete contracts remain unchanged.
+
+## Draft capabilities, 2026-10-22
+
+Draft callbacks are optional. `create`, `edit`, `send` and `discard` are each
+available only when their callback exists and `draftCapabilities` does not set
+them to `false`. A new composition sends through `sendMessage` when the host
+provides it, otherwise through `createDraft` and `sendDraft`; a saved draft
+sends through `sendDraft`, writing first only when it has unsaved changes.
+Autosave (`autosaveDelayMs`) and polling (`pollIntervalMs`) are off unless the
+host enables them; `refresh()` on the mailbox ref re-reads the current view. Hide every control that needs a missing operation and recheck
+the committed capabilities when timers, dialogs and pipelines run. Never map
+roles or permission names in Maily. Unsaved compositions close without
+`discardDraft`; saved drafts without `edit` are read-only and send unchanged.
+Withdrawing an operation must keep the composer mounted and its unsaved content
+editable and guarded. Hosts change the prop, not `dataSource`. See
+[draft capabilities](docs/mailbox-workflows.md#draft-capabilities).
+
+## Production standards, 2026-10-23
+
+Package source passes the stock shadcn Vite template's ESLint config with zero
+warnings, including the React Compiler rules in react-hooks' recommended preset
+(`react-refresh/only-export-components` is off there, as in the template). The
+consumer matrix lints the installed copies with a freshly generated template.
+Add an `eslint-disable` only for a demonstrated external constraint, with a
+`-- reason`: TanStack Virtual's `incompatible-library` warning, and writes to external mutable objects (TipTap
+storage, the drag handle's plugin-owned DOM node). Never move such a write into
+a helper just to hide it from the rule.
+
+React state follows `editor/utils/state-hooks.ts`:
+
+- `useOwnedRef` holds lifetime-scoped mutable boxes. Never mutate a `useMemo`
+  result: the compiler treats it as frozen, and React may discard the cache.
+- `useResettableState` holds state that resets when a request key changes.
+  Do not call setState at the top of an effect for that.
+- `useLatestRef` and `useEvent` give effects the latest value or handler.
+  Never assign a ref during render.
+- Callbacks that consult controlled props depend on "is controlled" flags, not
+  on the controlled values, so a selection change does not restart reads.
+
+`shadcn add --overwrite` never deletes files and strips a file's leading
+comments. Keep public entry names stable: `editor/index.tsx` and
+`mailbox/index.tsx` are re-export barrels in front of `editor.tsx` and
+`mailbox-view.tsx`. Never put a required comment or directive before a file's
+first statement.
+
+Import dual CommonJS/ESM packages by named export, for example
+`import { Image } from '@tiptap/extension-image'`. Under `"type": "module"`,
+esbuild's CommonJS output uses Node interop, where a default import is the whole
+module. `pnpm lint:package` loads every published entry through both `import`
+and `require`. Types that appear in published declarations must come from
+dependencies: render depends on `@tiptap/core`, `@tiptap/pm` and `csstype`,
+because tsdown inlines devDependency types.
+
+Text inputs never run editor commands with `.focus()` from a change handler.
+Link popovers edit a local draft and commit once, on Enter, a chosen suggestion
+or close. A saved draft the host cannot edit renders as read-only text, not as
+disabled fields.
+
+Dependencies stay on their latest releases with three exceptions. TypeScript
+stays on 6.x, `@types/node` follows the Node 24 LTS line, and `@types/react`
+and `@types/react-dom` stay at 18 in core and the workspace root to keep the
+React 18 peer honest (`@types/react-dom` 19 requires `@types/react` 19).
+Never use deprecated packages: render imports its email components and
+`render` from `react-email`, which replaced `@react-email/components`.
+
+The playground is client-only, so `vite.config.ts` inlines
+shadcn-theme-provider's `getThemeScript()` into `index.html` (0.3.0+, which
+also stops rendering that script on the client). The options come from the
+React-free `src/theme.ts`, shared with `main.tsx`, so the stored mode and
+palette apply before the first paint. The script's palette link lands before
+the app's CSS, so `src/index.css` keeps its fallback tokens in `@layer base`,
+where an unlayered palette stylesheet always wins.

@@ -1,15 +1,16 @@
 import { type JSONContent } from '@tiptap/core';
-import { spacing } from './spacing';
+import { normalizeSpacerHeight } from './spacing';
 import { DEFAULT_SPACER_HEIGHT } from '@/extensions';
 
 /**
  * To replace deprecated node type or attributes
  * to avoid breaking changes, we can replace the deprecated node type or attributes
  * with the new one in the JSON content object.
- * @param json - previous JSON content object
+ * @param json - previous JSON content object, which is left unchanged
  * @returns JSONContent - new JSON content object
  */
-export function replaceDeprecatedNode(json: JSONContent) {
+export function replaceDeprecatedNode(input: JSONContent) {
+  const json = structuredClone(input);
   const stack = [json];
 
   while (stack.length) {
@@ -23,19 +24,12 @@ export function replaceDeprecatedNode(json: JSONContent) {
     }
 
     if (node.type === 'spacer') {
-      let height = node.attrs?.height;
-      if (
-        typeof height === 'string' &&
-        ['sm', 'md', 'lg', 'xl'].includes(height)
-      ) {
-        height =
-          spacing.find((s) => s.short === height)?.value ||
-          DEFAULT_SPACER_HEIGHT;
-      }
-
       node.attrs = {
         ...node.attrs,
-        height,
+        height: normalizeSpacerHeight(
+          node.attrs?.height,
+          DEFAULT_SPACER_HEIGHT
+        ),
       };
     }
 

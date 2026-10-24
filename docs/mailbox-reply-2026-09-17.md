@@ -17,7 +17,7 @@ value references and stock host primitives intact.
 Repeat from the repository root:
 
 ```sh
-pnpm exec prettier --write packages/core/src/mailbox/index.tsx packages/core/src/mailbox/index.test.ts scripts/build-shadcn-registry.mjs
+pnpm exec prettier --write packages/core/src/mailbox/mailbox-view.tsx packages/core/src/mailbox/index.test.ts scripts/build-shadcn-registry.mjs
 pnpm --filter @maily-to/core test src/mailbox/index.test.ts
 pnpm --filter @maily-to/core typecheck
 pnpm registry:consumer-test

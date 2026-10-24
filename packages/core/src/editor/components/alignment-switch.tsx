@@ -5,7 +5,7 @@ import {
 } from '../nodes/logo/logo';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
-import { useMailyContext } from '../provider';
+import { useMailyContext } from '../maily-context';
 import { Button } from './base-button';
 import {
   ToggleGroupCompat,
@@ -66,7 +66,7 @@ export function AlignmentSwitch(props: AlignmentSwitchProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="p-0.5! flex w-max gap-0.5 rounded-lg"
+        className="flex w-max gap-0.5 rounded-lg p-0.5!"
         sideOffset={8}
         align="center"
       >

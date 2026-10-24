@@ -1,4 +1,8 @@
-import { Editor } from '@tiptap/core';
+import {
+  combineTransactionSteps,
+  Editor,
+  getChangedRanges,
+} from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import { EditorView } from '@tiptap/pm/view';
 
@@ -24,6 +28,9 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
   const { editor, onImageUpload, onImageUploadDiscard, allowedMimeTypes } =
     options;
   const placeholders = new Map<string, () => void>();
+  // Redo can bring back a placeholder whose upload was discarded or failed
+  // after Undo removed it. Its blob URL is revoked, so that image is removed.
+  const revokedPlaceholders = new Set<string>();
   let generation = 0;
   let active = false;
   let subscribed = false;
@@ -31,6 +38,7 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
 
   const releasePlaceholder = (src: string) => {
     if (!placeholders.delete(src)) return;
+    revokedPlaceholders.add(src);
     editor.extensionStorage.imageUpload?.placeholderImages.delete(src);
     URL.revokeObjectURL(src);
   };
@@ -71,6 +79,7 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       view.state.plugins.includes(plugin);
     if (!isCurrent()) return;
     const placeholderSrc = URL.createObjectURL(file);
+    revokedPlaceholders.delete(placeholderSrc);
 
     const { tr, schema } = view.state;
     const imageNode = schema.nodes.image.create({
@@ -106,10 +115,12 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       // TipTap retains editable state across unmount. Its public commands also
       // update that state, so cleanup must not target the departed EditorView.
       const position = ownedPosition();
+      // Outside history: Undo must not bring back a revoked placeholder.
       if (position !== null)
-        editor.commands.deleteRange({
-          from: position,
-          to: position + imageNode.nodeSize,
+        editor.commands.command(({ tr }) => {
+          tr.delete(position, position + imageNode.nodeSize);
+          tr.setMeta('addToHistory', false);
+          return true;
         });
     };
     placeholders.set(placeholderSrc, removeOwnedPlaceholder);
@@ -120,19 +131,29 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
       .then(() => (isCurrent() ? onImageUpload!(file) : undefined))
       .then(async (uploadedSrc) => {
         if (uploadedSrc === undefined) return;
+        // A discarded upload releases its blob first: a Redo while the host
+        // discards must find it revoked, not still owned.
         if (!isCurrent()) {
+          releasePlaceholder(placeholderSrc);
           await onImageUploadDiscard?.(uploadedSrc);
           return;
         }
         const position = ownedPosition();
         if (position !== null) {
+          // The insertion is the undoable step; swapping in the uploaded URL is
+          // not, so history rebases over it and never revives the revoked blob.
           view.dispatch(
-            view.state.tr.setNodeMarkup(position, undefined, {
-              ...imageNode.attrs,
-              src: uploadedSrc,
-            })
+            view.state.tr
+              .setNodeMarkup(position, undefined, {
+                ...imageNode.attrs,
+                src: uploadedSrc,
+              })
+              .setMeta('addToHistory', false)
           );
-        } else await onImageUploadDiscard?.(uploadedSrc);
+        } else {
+          releasePlaceholder(placeholderSrc);
+          await onImageUploadDiscard?.(uploadedSrc);
+        }
       })
       .catch((error) => {
         if (isCurrent()) removeOwnedPlaceholder();
@@ -145,6 +166,33 @@ export function ImageUploadPlugin(options: ImageUploadPluginOptions) {
 
   const plugin = new Plugin({
     key: new PluginKey('imageUpload'),
+    appendTransaction: (transactions, oldState, newState) => {
+      if (
+        !revokedPlaceholders.size ||
+        !transactions.some((transaction) => transaction.docChanged)
+      )
+        return null;
+      const revoked = new Map<number, number>();
+      const transform = combineTransactionSteps(oldState.doc, [
+        ...transactions,
+      ]);
+      for (const { newRange } of getChangedRanges(transform)) {
+        newState.doc.nodesBetween(newRange.from, newRange.to, (node, pos) => {
+          if (
+            node.type.name === 'image' &&
+            revokedPlaceholders.has(node.attrs.src) &&
+            !placeholders.has(node.attrs.src)
+          )
+            revoked.set(pos, pos + node.nodeSize);
+        });
+      }
+      if (!revoked.size) return null;
+      const tr = newState.tr;
+      // From the end, so earlier positions stay valid.
+      for (const [from, to] of [...revoked].sort(([a], [b]) => b - a))
+        tr.delete(from, to);
+      return tr.setMeta('addToHistory', false);
+    },
     view: (view) => {
       active = true;
       if (!subscribed) {

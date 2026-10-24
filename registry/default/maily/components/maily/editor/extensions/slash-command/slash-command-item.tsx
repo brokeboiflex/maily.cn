@@ -2,7 +2,7 @@ import { IconPlaceholder } from "@/components/icon-placeholder"
 import type { Editor } from '@tiptap/core';
 import { type BlockItem } from '../../../blocks';
 import { type Ref } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { Button } from '@/components/ui/button';
 
 type SlashCommandItemProps = {

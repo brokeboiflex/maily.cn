@@ -2,15 +2,19 @@ import * as React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { expect, it, vi } from 'vitest';
 import { ContentMenu } from './content-menu';
+import type { DragHandleProps } from '../plugins/drag-handle/drag-handle';
 
 const drag = vi.hoisted(() => ({
-  update: undefined as ((data: any) => void) | undefined,
+  update: undefined as DragHandleProps['onNodeChange'],
 }));
 vi.mock('../plugins/drag-handle/drag-handle', () => ({
-  DragHandle: ({ children, onNodeChange }: any) => {
+  DragHandle: ({
+    children,
+    onNodeChange,
+  }: Pick<DragHandleProps, 'children' | 'onNodeChange'>) => {
     drag.update = onNodeChange;
     return <>{children}</>;
   },
@@ -19,17 +23,31 @@ vi.mock('../plugins/drag-handle/drag-handle', () => ({
 vi.mock('./ui/dropdown-menu', async () => {
   const { Button } = await import('./base-button');
   return {
-    DropdownMenu: ({ children, onOpenChange }: any) => (
+    DropdownMenu: ({
+      children,
+      onOpenChange,
+    }: {
+      children: React.ReactNode;
+      onOpenChange: (open: boolean) => void;
+    }) => (
       <>
         <Button onClick={() => onOpenChange(true)}>audit-open</Button>
         {children}
       </>
     ),
-    DropdownMenuContent: ({ children }: any) => <>{children}</>,
-    DropdownMenuTrigger: ({ children }: any) => <>{children}</>,
-    DropdownMenuItem: ({ children, onClick }: any) => (
-      <Button onClick={onClick}>{children}</Button>
+    DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
     ),
+    DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => (
+      <>{children}</>
+    ),
+    DropdownMenuItem: ({
+      children,
+      onClick,
+    }: {
+      children: React.ReactNode;
+      onClick?: () => void;
+    }) => <Button onClick={onClick}>{children}</Button>,
   };
 });
 

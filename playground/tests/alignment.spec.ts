@@ -1,11 +1,6 @@
 import { expect, test, type Page } from "@playwright/test"
 
-function isSandboxedPreviewScriptError(text: string) {
-  return (
-    text.startsWith("Blocked script execution in 'about:srcdoc'") &&
-    text.includes("'allow-scripts' permission is not set")
-  )
-}
+import { isExpectedConsoleError } from "./console-errors"
 
 async function useEnglish(page: Page) {
   const language = page.getByText("English", { exact: true })
@@ -143,7 +138,7 @@ test("uses ToggleGroup roving focus and never nests interactive buttons", async 
   const errors: string[] = []
   page.on("console", (message) => {
     const text = message.text()
-    if (message.type() === "error" && !isSandboxedPreviewScriptError(text)) {
+    if (message.type() === "error" && !isExpectedConsoleError(text)) {
       errors.push(text)
     }
   })
@@ -191,7 +186,7 @@ test("uses the shadcn link popover in the top toolbar instead of a browser promp
 
   await page.getByRole("button", { name: "External URL" }).first().click()
   const visibleLinkInput = page.locator(
-    "input[role='combobox'][placeholder='https://maily.to/']:visible"
+    "input[role='combobox'][aria-label='External URL']:visible"
   )
   await expect(visibleLinkInput).toBeVisible()
   await visibleLinkInput.fill("https://example.com")
@@ -201,6 +196,34 @@ test("uses the shadcn link popover in the top toolbar instead of a browser promp
     "linked text"
   )
   expect(dialogs).toEqual([])
+})
+
+test("keeps the link popover focused while a URL is typed key by key", async ({
+  page,
+}) => {
+  await page.goto("/")
+  await useEnglish(page)
+  const editor = await setEditorText(page, "linked text")
+  await page.keyboard.press("Home")
+  await page.keyboard.down("Shift")
+  await page.keyboard.press("End")
+  await page.keyboard.up("Shift")
+
+  await page.getByRole("button", { name: "External URL" }).first().click()
+  const visibleLinkInput = page.locator(
+    "input[role='combobox'][aria-label='External URL']:visible"
+  )
+  await expect(visibleLinkInput).toBeFocused()
+  await page.keyboard.type("https://example.com", { delay: 40 })
+  // Typing must stay in the input: the selected text is never replaced.
+  await expect(visibleLinkInput).toHaveValue("https://example.com")
+  await expect(editor).toContainText("linked text")
+  await expect(editor.locator("a")).toHaveCount(0)
+  await page.keyboard.press("Enter")
+
+  await expect(editor.locator('a[href="https://example.com"]')).toHaveText(
+    "linked text"
+  )
 })
 
 test("uses a Popover and ToggleGroup for vertical column alignment", async ({

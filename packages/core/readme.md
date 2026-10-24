@@ -35,13 +35,13 @@ source-owned `maily.cn` registry block.
 pnpm add @maily-to/core
 
 # for types
-pnpm add -D @tiptap/core@^3.30.5
+pnpm add -D @tiptap/core@^3.32.0
 ```
 
 In either mode, the host supplies Tailwind v4 and shadcn theme tokens; the editor
 ships no private stylesheet.
 
-The canonical editor runs on TipTap 3.30.5. Custom extensions supplied through
+The canonical editor runs on TipTap 3.32. Custom extensions supplied through
 the `extensions` prop must use the same TipTap major so they share one ProseMirror
 type and runtime identity.
 
@@ -389,4 +389,5 @@ The mailbox entrypoint supports caller-owned message storage and capabilities.
 See [mailbox workflows](../../docs/mailbox-workflows.md) for pagination, All Mail,
 Starred, attachments, Reply all, read state, bulk actions, labels, conversations,
 search, draft autosave and undo ownership. Enable only capabilities implemented
-by your data source.
+by your data source. Draft callbacks are optional, and `draftCapabilities`
+withholds draft creation, editing, sending or deletion at runtime.

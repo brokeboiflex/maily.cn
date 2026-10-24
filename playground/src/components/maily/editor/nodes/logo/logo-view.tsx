@@ -1,76 +1,93 @@
-import { type NodeViewProps } from "@tiptap/core"
-import { NodeViewWrapper } from "@tiptap/react"
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react"
-import { useState } from "react"
-import { type LogoAttributes, logoSizes } from "./logo"
-import { type ImageStatus, ImageStatusLabel } from "../image/image-view"
-import { useImageUploadOptions } from "../../extensions/image-upload/image-upload"
-import { cn } from "@/lib/utils"
-import { useMailyContext } from "../../provider"
-import { updateNodeViewAttributes } from "../../utils/update-attribute"
+import { type NodeViewProps } from '@tiptap/core';
+import { NodeViewWrapper } from '@tiptap/react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useState } from 'react';
+import { type LogoAttributes, logoSizes } from './logo';
+import { type ImageStatus, ImageStatusLabel } from '../image/image-view';
+import { useImageUploadOptions } from '../../extensions/image-upload/image-upload';
+import { cn } from 'cn';
+import { useMailyContext } from '../../maily-context';
+import { useResettableState } from '../../utils/state-hooks';
+import { updateNodeViewAttributes } from '../../utils/update-attribute';
 
 export function LogoView(props: NodeViewProps) {
-  const { t } = useMailyContext()
-  const { node, editor, getPos } = props
+  const { t } = useMailyContext();
+  const { node, editor, getPos } = props;
 
-  const uploadLock = useRef(false)
-  const uploadGeneration = useRef(0)
+  const uploadLock = useRef(false);
+  const uploadGeneration = useRef(0);
   useLayoutEffect(
     () => () => {
-      uploadGeneration.current += 1
+      uploadGeneration.current += 1;
     },
     []
-  )
-  const [status, setStatus] = useState<ImageStatus>("idle")
-  const [, setIsPlaceholderImage] = useState(false)
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  );
+  const {
+    alignment = 'center',
+    src: logoSrc,
+    isSrcVariable,
+    size = 'sm',
+  } = (node.attrs || {}) as LogoAttributes;
+
+  // A new source restarts loading.
+  const [status, setStatus] = useResettableState<ImageStatus>(
+    () => (logoSrc ? 'loading' : 'idle'),
+    [logoSrc]
+  );
+  // React reuses this view for a replacement node (for example after
+  // setContent). An in-flight upload belongs to the node that started it.
+  const uploadNode = useRef(node);
+  useLayoutEffect(() => {
+    if (uploadNode.current === node) return;
+    uploadNode.current = node;
+    if (!uploadLock.current) return;
+    uploadGeneration.current += 1;
+    uploadLock.current = false;
+    setStatus('idle');
+  }, [node, setStatus]);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const {
     onImageUpload,
     onImageUploadDiscard,
     allowedMimeTypes = [],
-  } = useImageUploadOptions(editor)
+  } = useImageUploadOptions(editor);
 
-  let {
-    alignment = "center",
-    src: logoSrc,
-    isSrcVariable,
-    size = "sm",
-  } = (node.attrs || {}) as LogoAttributes
-
-  const hasImageSrc = !!logoSrc
+  const hasImageSrc = !!logoSrc;
   const isDroppable =
     !!onImageUpload &&
     editor.isEditable &&
     !isSrcVariable &&
-    (status === "idle" || status === "error")
+    (status === 'idle' || status === 'error');
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isDroppable || !e.target.files || e.target.files.length === 0) {
-      return
+      return;
     }
 
-    const file = e.target.files[0]
-    e.target.value = ""
-    await handleImageUpload(file)
-  }
+    const file = e.target.files[0];
+    e.target.value = '';
+    // Picked files obey the host's types, as dropped files do.
+    if (!allowedMimeTypes.includes(file.type)) return;
+    await handleImageUpload(file);
+  };
 
   const handleImageUpload = useCallback(
     async (file: File) => {
-      if (!isDroppable || uploadLock.current) return
-      uploadLock.current = true
-      const generation = ++uploadGeneration.current
+      if (!isDroppable || uploadLock.current) return;
+      uploadLock.current = true;
+      const generation = ++uploadGeneration.current;
       try {
-        setStatus("loading")
-        const imageUrl = await onImageUpload(file)
-        let currentNode
+        setStatus('loading');
+        const imageUrl = await onImageUpload(file);
+        let currentNode;
         if (!editor.isDestroyed) {
           try {
-            const position = getPos()
+            const position = getPos();
             currentNode =
-              typeof position === "number"
+              typeof position === 'number'
                 ? editor.state.doc.nodeAt(position)
-                : null
+                : null;
           } catch {
             /* Deleted node views can no longer resolve a position. */
           }
@@ -85,22 +102,23 @@ export function LogoView(props: NodeViewProps) {
           currentNode.attrs.isSrcVariable !== node.attrs.isSrcVariable
         ) {
           if (generation === uploadGeneration.current && !editor.isDestroyed)
-            setStatus("idle")
-          await onImageUploadDiscard?.(imageUrl)
-          return
+            setStatus('idle');
+          await onImageUploadDiscard?.(imageUrl);
+          return;
         }
-        updateNodeViewAttributes(props, { src: imageUrl })
-        setIsPlaceholderImage(false)
-        setStatus("loaded")
+        updateNodeViewAttributes(props, { src: imageUrl });
+        setStatus('loaded');
       } catch (error) {
-        console.error("Error uploading image:", error)
-        if (generation === uploadGeneration.current) setStatus("error")
+        console.error('Error uploading image:', error);
+        if (generation === uploadGeneration.current) setStatus('error');
       } finally {
-        uploadLock.current = false
+        // A replaced node already released the lock; a newer upload owns it.
+        if (generation === uploadGeneration.current) uploadLock.current = false;
       }
     },
     [
       onImageUpload,
+      setStatus,
       onImageUploadDiscard,
       props,
       isDroppable,
@@ -108,88 +126,80 @@ export function LogoView(props: NodeViewProps) {
       getPos,
       node,
     ]
-  )
+  );
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
       if (!isDroppable) {
-        return
+        return;
       }
 
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(true)
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(true);
     },
     [isDroppable]
-  )
+  );
 
   const handleDragLeave = useCallback(
     (e: React.DragEvent) => {
       if (!isDroppable) {
-        return
+        return;
       }
 
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(false)
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(false);
     },
     [isDroppable]
-  )
+  );
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
       if (!isDroppable) {
-        return
+        return;
       }
 
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(false)
-      const files = e.dataTransfer?.files
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(false);
+      const files = e.dataTransfer?.files;
       if (!files || files?.length === 0) {
-        return
+        return;
       }
 
-      const firstFile = files[0]
+      const firstFile = files[0];
       if (!allowedMimeTypes.includes(firstFile.type)) {
-        return
+        return;
       }
 
-      await handleImageUpload(firstFile)
+      await handleImageUpload(firstFile);
     },
     [handleImageUpload, isDroppable, allowedMimeTypes]
-  )
+  );
 
   // load the image using new Image() to avoid layout shift
   // then if the image is loaded, set the status to loaded
   useEffect(() => {
-    if (!logoSrc) {
-      setStatus("idle")
-      return
-    }
+    if (!logoSrc) return;
 
-    setStatus("loading")
-    const isPlaceHolder =
-      editor?.extensionStorage?.imageUpload?.placeholderImages?.has(logoSrc) ??
-      false
-    setIsPlaceholderImage(isPlaceHolder)
-    const img = new Image()
-    img.src = logoSrc
+    const img = new Image();
+    img.src = logoSrc;
     img.onload = () => {
-      setStatus("loaded")
-    }
+      setStatus('loaded');
+    };
     img.onerror = () => {
-      setStatus("error")
-    }
+      setStatus('error');
+    };
 
     return () => {
-      img.src = ""
-      img.onload = null
-      img.onerror = null
-    }
-  }, [logoSrc])
+      img.src = '';
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [logoSrc, setStatus]);
 
-  const logoSize = logoSizes[size]
+  const logoSize = logoSizes[size];
 
   return (
     <NodeViewWrapper
@@ -197,15 +207,15 @@ export function LogoView(props: NodeViewProps) {
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
       style={{
-        overflow: "hidden",
-        position: "relative",
+        overflow: 'hidden',
+        position: 'relative',
         // Weird! Basically tiptap/prose wraps this in a span and the line height causes an annoying buffer.
-        lineHeight: "0px",
-        display: "block",
+        lineHeight: '0px',
+        display: 'block',
       }}
       className={cn(
-        "mly-image-drop-zone after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:border-primary after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
-        isDraggingOver && "mly-drag-over after:opacity-100"
+        "mly-image-drop-zone after:border-primary after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
+        isDraggingOver && 'mly-drag-over after:opacity-100'
       )}
       {...(isDroppable
         ? {
@@ -215,7 +225,7 @@ export function LogoView(props: NodeViewProps) {
           }
         : {})}
     >
-      {!hasImageSrc && status === "idle" && (
+      {!hasImageSrc && status === 'idle' && (
         <ImageStatusLabel
           status="idle"
           minHeight={logoSize}
@@ -223,17 +233,17 @@ export function LogoView(props: NodeViewProps) {
         />
       )}
 
-      {!hasImageSrc && status === "loading" && !isSrcVariable && (
+      {!hasImageSrc && status === 'loading' && !isSrcVariable && (
         <ImageStatusLabel status="loading" minHeight={logoSize} />
       )}
 
       {hasImageSrc && isSrcVariable && (
         <ImageStatusLabel status="variable" minHeight={logoSize} />
       )}
-      {hasImageSrc && status === "loading" && !isSrcVariable && (
+      {hasImageSrc && status === 'loading' && !isSrcVariable && (
         <ImageStatusLabel status="loading" minHeight={logoSize} />
       )}
-      {status === "error" && !isSrcVariable && (
+      {status === 'error' && !isSrcVariable && (
         <ImageStatusLabel status="error" minHeight={logoSize} />
       )}
 
@@ -241,32 +251,32 @@ export function LogoView(props: NodeViewProps) {
         /* shadcn-audit-ignore-next-line invisible native file input overlay */
         <input
           type="file"
-          accept="image/*"
+          accept={allowedMimeTypes.join(',')}
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0"
           multiple={false}
-          aria-label={t("imageStatus.dropImage")}
+          aria-label={t('imageStatus.dropImage')}
         />
       )}
 
-      {hasImageSrc && status === "loaded" && !isSrcVariable && (
+      {hasImageSrc && status === 'loaded' && !isSrcVariable && (
         <img
           src={logoSrc}
-          alt={t("logo.alt")}
+          alt={t('logo.alt')}
           style={{
             height: logoSize,
             width: logoSize,
-            cursor: "default",
+            cursor: 'default',
             marginBottom: 0,
             ...({
-              center: { marginLeft: "auto", marginRight: "auto" },
-              left: { marginRight: "auto" },
-              right: { marginLeft: "auto" },
+              center: { marginLeft: 'auto', marginRight: 'auto' },
+              left: { marginRight: 'auto' },
+              right: { marginLeft: 'auto' },
             }[alignment] || {}),
           }}
           draggable={editor.isEditable}
         />
       )}
     </NodeViewWrapper>
-  )
+  );
 }

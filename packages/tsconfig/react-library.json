@@ -6,7 +6,7 @@
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "module": "ESNext",
-    "target": "es6",
+    "target": "ES2022",
     "types": ["vitest/globals"]
   }
 }

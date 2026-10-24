@@ -15,7 +15,6 @@ export const button = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setButton().run();
   },
 });
@@ -33,7 +32,6 @@ export const linkCard = (t: TranslateFn): BlockItem => ({
   className="h-4 w-4"
 />,
   command: ({ editor, range }) => {
-    // @ts-ignore
     editor.chain().focus().deleteRange(range).setLinkCard().run();
   },
   render: (editor) => {

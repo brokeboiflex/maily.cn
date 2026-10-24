@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  packages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6.1.0 # the floating v6 tag predates pnpm 12 support
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (primitive audit and stock shadcn ESLint rules)
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Check published packages (publint, attw, entry loading)
+        run: pnpm lint:package
+
+      - name: Check that generated registry output is current
+        run: |
+          pnpm playground:sync
+          # Porcelain status also reports new, untracked emitted files.
+          changes="$(git status --porcelain -- registry registry.json playground/public/r)"
+          if [ -n "$changes" ]; then echo "$changes"; exit 1; fi
+
+  playground:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Vite, Vitest and Playwright run on Node; pin it like the packages job.
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install playground dependencies
+        working-directory: playground
+        run: bun install --frozen-lockfile
+
+      - name: Lint with the stock template config
+        working-directory: playground
+        run: bunx eslint . --max-warnings 0
+
+      - name: Build
+        working-directory: playground
+        run: bun run build
+
+      - name: Unit tests
+        working-directory: playground
+        run: bun run test
+
+      - name: Install Chromium
+        working-directory: playground
+        run: bunx playwright install --with-deps chromium
+
+      - name: Browser tests
+        working-directory: playground
+        run: bun run test:e2e
+
+      # Last: reinstalling also refreshes stock ui/* primitives from upstream,
+      # which must not change what the steps above test.
+      - name: Check that installed Maily copies match the registry
+        working-directory: playground
+        run: |
+          bun run dev > /tmp/vite.log 2>&1 &
+          for attempt in $(seq 1 60); do
+            curl -sf http://localhost:5173/r/maily-editor.json > /dev/null && break
+            sleep 1
+          done
+          bunx --bun shadcn@4.22.1 add @maily/maily-editor @maily/maily-mailbox @maily/maily-render --overwrite --yes
+          changes="$(git status --porcelain -- src/components/maily src/lib/maily-render)"
+          if [ -n "$changes" ]; then echo "$changes"; exit 1; fi

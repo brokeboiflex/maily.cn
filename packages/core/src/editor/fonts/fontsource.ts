@@ -1,4 +1,24 @@
-import type { JSONContent } from '@tiptap/core';
+import type {
+  FontFallback,
+  MailyFontCategory,
+  MailyFontFamily,
+  MailyFontProvider,
+  MailyFontSelection,
+} from './font-provider';
+
+export type {
+  FontFallback,
+  MailyFontCategory,
+  MailyFontFamily,
+  MailyFontProvider,
+  MailyFontSelection,
+} from './font-provider';
+export {
+  fontSelectionFromAttrs,
+  fontStack,
+  loadDocumentFonts,
+  loadEditorFont,
+} from './font-provider';
 
 export const FONTSOURCE_API_URL = 'https://api.fontsource.org/v1';
 
@@ -13,14 +33,7 @@ const FONT_CATEGORIES = new Set<FontsourceCategory>([
   'monospace',
 ]);
 
-export type FontsourceCategory =
-  | 'sans-serif'
-  | 'serif'
-  | 'display'
-  | 'handwriting'
-  | 'monospace';
-
-export type FontFallback = 'Arial' | 'Georgia' | 'monospace' | 'cursive';
+export type FontsourceCategory = MailyFontCategory;
 
 export type FontsourceFont = {
   id: string;
@@ -36,24 +49,12 @@ export type FontsourceFont = {
   type: 'google' | 'other';
 };
 
-export type MailyFontSelection = {
-  fontFamily: string;
-  fontId: string;
-  fontFallback: FontFallback;
-  fontSubset: string;
-  fontVersion: string;
-  fontRegularWeight: number;
-  fontBoldWeight: number;
-  fontHasItalic: boolean;
-};
-
 type FontsourceVersion = {
   latest: string;
 };
 
 let catalogPromise: Promise<FontsourceFont[]> | null = null;
 const versionPromises = new Map<string, Promise<string>>();
-const loadedEditorFaces = new Set<string>();
 
 function isFontsourceFont(value: unknown): value is FontsourceFont {
   if (!value || typeof value !== 'object') {
@@ -255,109 +256,46 @@ export function fontsourceFileUrl(
   return `https://cdn.jsdelivr.net/fontsource/fonts/${font.fontId}@${font.fontVersion}/${font.fontSubset}-${weight}-${style}.woff2`;
 }
 
-export function fontStack(
-  font: Pick<MailyFontSelection, 'fontFamily' | 'fontFallback'>
-): string {
-  return `'${font.fontFamily.replaceAll("'", "\\'")}', ${font.fontFallback}`;
+function isListedFont(family: MailyFontFamily): family is FontsourceFont {
+  return isFontsourceFont(family);
 }
 
-function loadFace(
-  font: MailyFontSelection,
-  weight: number,
-  style: 'normal' | 'italic'
-) {
-  if (
-    typeof document === 'undefined' ||
-    typeof FontFace === 'undefined' ||
-    !document.fonts
-  ) {
-    return;
-  }
-
-  const url = fontsourceFileUrl(font, weight, style);
-  if (!url || loadedEditorFaces.has(url)) {
-    return;
-  }
-
-  loadedEditorFaces.add(url);
-  const face = new FontFace(font.fontFamily, `url(${JSON.stringify(url)})`, {
-    style,
-    weight: String(weight),
-    display: 'swap',
-  });
-
-  document.fonts.add(face);
-  void face.load().catch(() => {
-    loadedEditorFaces.delete(url);
-    document.fonts.delete(face);
+function abortable<T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return promise;
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(signal.reason);
+    signal.addEventListener('abort', abort, { once: true });
+    promise
+      .then(resolve, reject)
+      .finally(() => signal.removeEventListener('abort', abort));
   });
 }
 
-export function loadEditorFont(font: MailyFontSelection) {
-  loadFace(font, font.fontRegularWeight, 'normal');
-
-  if (font.fontBoldWeight !== font.fontRegularWeight) {
-    loadFace(font, font.fontBoldWeight, 'normal');
-  }
-
-  if (font.fontHasItalic) {
-    loadFace(font, font.fontRegularWeight, 'italic');
-    if (font.fontBoldWeight !== font.fontRegularWeight) {
-      loadFace(font, font.fontBoldWeight, 'italic');
-    }
-  }
-}
-
-export function fontSelectionFromAttrs(
-  attrs?: Record<string, unknown> | null
-): MailyFontSelection | null {
-  if (
-    !attrs ||
-    typeof attrs.fontFamily !== 'string' ||
-    typeof attrs.fontId !== 'string' ||
-    typeof attrs.fontFallback !== 'string' ||
-    typeof attrs.fontSubset !== 'string' ||
-    typeof attrs.fontVersion !== 'string' ||
-    typeof attrs.fontRegularWeight !== 'number' ||
-    typeof attrs.fontBoldWeight !== 'number'
-  ) {
-    return null;
-  }
-
-  return {
-    fontFamily: attrs.fontFamily,
-    fontId: attrs.fontId,
-    fontFallback: attrs.fontFallback as FontFallback,
-    fontSubset: attrs.fontSubset,
-    fontVersion: attrs.fontVersion,
-    fontRegularWeight: attrs.fontRegularWeight,
-    fontBoldWeight: attrs.fontBoldWeight,
-    fontHasItalic: attrs.fontHasItalic === true,
-  };
-}
-
-export function loadDocumentFonts(content: JSONContent) {
-  const visit = (node: JSONContent) => {
-    const nodeFont = fontSelectionFromAttrs(node.attrs);
-    if (nodeFont) {
-      loadEditorFont(nodeFont);
-    }
-
-    for (const mark of node.marks ?? []) {
-      if (mark.type !== 'textStyle') {
-        continue;
-      }
-
-      const font = fontSelectionFromAttrs(mark.attrs);
-      if (font) {
-        loadEditorFont(font);
-      }
-    }
-
-    for (const child of node.content ?? []) {
-      visit(child);
-    }
-  };
-
-  visit(content);
-}
+/**
+ * The Fontsource catalog (api.fontsource.org) with version-pinned files on
+ * jsDelivr. Opt in by passing it as the editor's `fontProvider`, and pass the
+ * renderer's `fontsourceFontFaceUrl` so sent emails load the same files.
+ */
+export const fontsourceFontProvider: MailyFontProvider = {
+  listFamilies: (signal) => abortable(getFontsourceCatalog(), signal),
+  resolveSelection: (family, signal) => {
+    if (!isListedFont(family))
+      return Promise.reject(new Error('Not a Fontsource family'));
+    return abortable(resolveFontSelection(family), signal);
+  },
+  previewSelection: (family) =>
+    isListedFont(family)
+      ? createFontSelection(family)
+      : {
+          fontFamily: family.family,
+          fontId: family.id,
+          fontFallback: getFontFallback(family.category),
+          fontSubset: 'latin',
+          fontVersion: 'latest',
+          fontRegularWeight: 400,
+          fontBoldWeight: 700,
+          fontHasItalic: false,
+        },
+  faceUrl: (font, weight, style) => fontsourceFileUrl(font, weight, style),
+};

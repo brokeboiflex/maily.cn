@@ -2,7 +2,7 @@ import * as React from 'react';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Editor } from '@tiptap/core';
-import StarterKit from '@tiptap/starter-kit';
+import { StarterKit } from '@tiptap/starter-kit';
 import { redoDepth, undoDepth } from '@tiptap/pm/history';
 import { expect, it, vi } from 'vitest';
 import { Spacer } from '../../nodes/spacer';

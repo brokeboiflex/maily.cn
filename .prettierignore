@@ -3,3 +3,48 @@ coverage-merged/
 dist/
 node_modules/
 types/
+# Generated from packages/* by scripts/build-shadcn-registry.mjs.
+registry/
+playground/public/r/
+# Installed by the shadcn CLI; keep its original formatting.
+playground/src/components/ui/
+playground/src/components/maily/
+playground/src/lib/maily-render/
+# Agent design notes and lockfiles.
+.sisyphus/
+pnpm-lock.yaml
+playground/bun.lock
+
+# Archived planning documents keep their original formatting.
+docs/superpowers/
+# Playwright run artifacts.
+playground/test-results/
+playground/playwright-report/
+
+# Package fallbacks for host-owned primitives (EXTERNALIZED_MODULES in
+# scripts/build-shadcn-registry.mjs). Most are adapted from shadcn source; the
+# ignore keeps their Tailwind class order as written instead of re-sorting it.
+packages/core/src/editor/components/base-button.tsx
+packages/core/src/editor/components/input.tsx
+packages/core/src/editor/components/textarea.tsx
+packages/core/src/editor/components/popover.tsx
+packages/core/src/editor/components/ui/toggle.tsx
+packages/core/src/editor/components/ui/toggle-group.tsx
+packages/core/src/editor/components/ui/tooltip.tsx
+packages/core/src/editor/components/ui/divider.tsx
+packages/core/src/editor/components/ui/kbd.tsx
+packages/core/src/editor/components/ui/dropdown-menu.tsx
+packages/core/src/editor/components/ui/tabs.tsx
+packages/core/src/editor/components/ui/input-group.tsx
+packages/core/src/editor/components/ui/command.tsx
+packages/core/src/editor/components/ui/badge.tsx
+packages/core/src/editor/components/ui/scroll-area.tsx
+packages/core/src/editor/components/ui/attachment.tsx
+packages/core/src/editor/components/ui/checkbox.tsx
+packages/core/src/editor/components/ui/dialog.tsx
+packages/core/src/editor/components/ui/sheet.tsx
+packages/core/src/editor/components/ui/collapsible.tsx
+packages/core/src/editor/components/ui/avatar.tsx
+packages/core/src/editor/components/ui/field.tsx
+packages/core/src/editor/components/ui/label.tsx
+packages/core/src/editor/components/ui/empty.tsx

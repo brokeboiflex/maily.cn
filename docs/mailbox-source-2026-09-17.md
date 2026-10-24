@@ -10,7 +10,7 @@ with action messageSource. New labels: source.back, source.retry, source.error.
 The old generic runMessageAction callback is preserved when no source adapter
 is supplied. Existing host shadcn Button and ScrollArea are reused.
 
-Canonical files: packages/core/src/mailbox/index.tsx and index.test.ts.
+Canonical files: packages/core/src/mailbox/mailbox-view.tsx and index.test.ts.
 Format them with local Prettier, run core mailbox tests and typecheck, then
 pnpm registry:consumer-test to regenerate and exercise Radix/Base/Bun consumers.
 Consumers install the generated maily-mailbox registry item using shadcn.

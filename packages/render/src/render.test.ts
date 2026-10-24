@@ -1,5 +1,8 @@
-import { Maily, render } from './index';
+import { DEFAULT_FONT } from '@maily-to/shared';
+import { describe, expect, it, vi } from 'vitest';
+import { fontsourceFontFaceUrl, Maily, render } from './index';
 import { Preheader } from './preheader';
+import allBlocks from './__fixtures__/all-blocks.json';
 
 describe('render', () => {
   it('should replace variables with values', async () => {
@@ -217,7 +220,9 @@ describe('render', () => {
       ],
     };
 
-    const result = await render(content);
+    const result = await render(content, {
+      fontFaceUrl: fontsourceFontFaceUrl,
+    });
 
     expect(result).toContain('font-size:18px');
     expect(result).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
@@ -254,7 +259,9 @@ describe('render', () => {
       ],
     };
 
-    const result = await render(content);
+    const result = await render(content, {
+      fontFaceUrl: fontsourceFontFaceUrl,
+    });
 
     expect(result).toContain('font-size:20px');
     expect(result).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
@@ -322,29 +329,17 @@ describe('render', () => {
     expect(result).toContain('font-size:18px');
   });
 
-  it('renders the default font with its full weight range', async () => {
-    const content = {
+  it('renders the default email font without loading anything', async () => {
+    const result = await render({
       type: 'doc',
       content: [
-        {
-          type: 'heading',
-          attrs: { level: 1 },
-          content: [
-            {
-              type: 'text',
-              text: 'Bold italic heading',
-              marks: [{ type: 'bold' }, { type: 'italic' }],
-            },
-          ],
-        },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] },
       ],
-    };
+    });
 
-    const result = await render(content);
-
-    expect(result).toContain('InterVariable.woff2');
-    expect(result).toMatch(/font-weight:\s*100 900/);
-    expect(result).toContain('<em><strong>Bold italic heading</strong></em>');
+    expect(result).toContain("font-family:'Arial', sans-serif");
+    expect(result).not.toContain('@font-face');
+    expect(result).not.toContain('url(');
   });
 
   it('renders granular Fontsource families with pinned faces and fallbacks', async () => {
@@ -380,7 +375,9 @@ describe('render', () => {
       ],
     };
 
-    const result = await render(content);
+    const result = await render(content, {
+      fontFaceUrl: fontsourceFontFaceUrl,
+    });
 
     expect(result).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
     expect(result).toContain(
@@ -744,5 +741,463 @@ describe('render', () => {
 
       expect(result).toBe('Order #ORD-789 for Alice Smith');
     });
+  });
+});
+
+describe('rendered email', () => {
+  // Guards the complete HTML of every block. Review a snapshot diff as an
+  // email change: dependency upgrades can alter markup that recipients see.
+  it('matches the snapshot for every block type', async () => {
+    const html = await render(allBlocks, { preview: 'Preview text' });
+    await expect(html).toMatchFileSnapshot('__snapshots__/all-blocks.html');
+  });
+});
+
+describe('images without a source', () => {
+  it.each(['image', 'logo', 'inlineImage'])(
+    'renders no %s element for an empty source',
+    async (type) => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const node = { type, attrs: { src: '' } };
+        const html = await render({
+          type: 'doc',
+          content:
+            type === 'inlineImage'
+              ? [{ type: 'paragraph', content: [node] }]
+              : [node],
+        });
+        expect(html).not.toContain('<img');
+        expect(errors).not.toHaveBeenCalled();
+      } finally {
+        errors.mockRestore();
+      }
+    }
+  );
+});
+
+describe('image sources from payload variables', () => {
+  it.each([
+    ['a number', 42, 'src="42"'],
+    [
+      'a URL',
+      new URL('https://example.com/a.png'),
+      'src="https://example.com/a.png"',
+    ],
+  ])('renders %s as the source', async (_, value, expected) => {
+    const maily = new Maily({
+      type: 'doc',
+      content: [
+        {
+          type: 'repeat',
+          attrs: { each: 'items' },
+          content: [
+            { type: 'image', attrs: { src: 'img', isSrcVariable: true } },
+            { type: 'logo', attrs: { src: 'img', isSrcVariable: true } },
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'inlineImage',
+                  attrs: { src: 'img', isSrcVariable: true },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    maily.setPayloadValue('items', [{ img: value }]);
+    const html = await maily.render();
+    expect(html.split(expected)).toHaveLength(4);
+  });
+
+  it.each([
+    ['false', false],
+    ['an object', { url: 'https://example.com/a.png' }],
+  ])('renders no image for %s', async (_, value) => {
+    const maily = new Maily({
+      type: 'doc',
+      content: [
+        {
+          type: 'repeat',
+          attrs: { each: 'items' },
+          content: [
+            { type: 'image', attrs: { src: 'img', isSrcVariable: true } },
+            { type: 'logo', attrs: { src: 'img', isSrcVariable: true } },
+          ],
+        },
+      ],
+    });
+    maily.setPayloadValue('items', [{ img: value }]);
+    expect(await maily.render()).not.toContain('<img');
+  });
+});
+
+describe('spacer heights', () => {
+  it.each([
+    [24, '24px'],
+    ['sm', '8px'],
+    ['xl', '64px'],
+    ['12', '12px'],
+    ['bogus', '8px'],
+    ['constructor', '8px'],
+    [-4, '8px'],
+  ])('renders %j as %s', async (height, expected) => {
+    const html = await render({
+      type: 'doc',
+      content: [{ type: 'spacer', attrs: { height } }],
+    });
+    expect(html).toContain(`height:${expected}`);
+    expect(html).not.toMatch(/height:[a-z-]+px/);
+  });
+});
+
+describe('repeat payload items', () => {
+  // An item without fields (null, undefined) renders its children with an
+  // empty item scope, like primitive items do for field lookups.
+  it('renders null and undefined items with the global values and fallbacks', async () => {
+    const maily = new Maily({
+      type: 'doc',
+      content: [
+        {
+          type: 'repeat',
+          attrs: { each: 'people' },
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'Hi ' },
+                { type: 'variable', attrs: { id: 'name', fallback: 'friend' } },
+                { type: 'text', text: ' ' },
+                {
+                  type: 'text',
+                  text: 'profile',
+                  marks: [
+                    {
+                      type: 'link',
+                      attrs: { href: 'https://url', isUrlVariable: true },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    maily.setVariableValue('url', 'https://example.com/default');
+    maily.setPayloadValue('people', [
+      { name: 'Ada', url: 'https://example.com/ada' },
+      null,
+      'Grace',
+      undefined,
+    ]);
+
+    const text = await maily.render({ plainText: true });
+
+    expect(text.match(/Hi /g)).toHaveLength(4);
+    expect(text).toMatch(
+      /Hi Ada[\s\S]*Hi friend[\s\S]*Hi Grace[\s\S]*Hi friend/
+    );
+    expect(text).toContain('https://example.com/ada');
+    expect(text.match(/https:\/\/example\.com\/default/g)).toHaveLength(2);
+  });
+
+  it('treats showIfKey and nested lists of a null item as missing', async () => {
+    const maily = new Maily({
+      type: 'doc',
+      content: [
+        {
+          type: 'repeat',
+          attrs: { each: 'groups' },
+          content: [
+            {
+              type: 'paragraph',
+              attrs: { showIfKey: 'visible' },
+              content: [{ type: 'text', text: 'Shown' }],
+            },
+            {
+              type: 'repeat',
+              attrs: { each: 'members' },
+              content: [
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: 'Member' }],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    maily.setPayloadValue('groups', [null, { visible: true, members: [1, 2] }]);
+
+    const text = await maily.render({ plainText: true });
+
+    expect(text.match(/Shown/g)).toHaveLength(1);
+    expect(text.match(/Member/g)).toHaveLength(2);
+  });
+});
+
+const paragraphDoc = {
+  type: 'doc',
+  content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Hello' }] }],
+};
+
+describe('renderer state', () => {
+  it("keeps one render's theme out of later renders", async () => {
+    const theme = { container: { backgroundColor: '#ff0000' } };
+    const first = new Maily(paragraphDoc);
+    first.setTheme(theme);
+    expect(await first.render()).toContain('#ff0000');
+    expect(await render(paragraphDoc)).not.toContain('#ff0000');
+    expect(theme).toEqual({ container: { backgroundColor: '#ff0000' } });
+  });
+
+  it("does not reorder the caller's marks", async () => {
+    const marks = [
+      { type: 'link', attrs: { href: 'https://example.com' } },
+      { type: 'bold' },
+    ];
+    const before = JSON.stringify(marks);
+    const html = await render({
+      type: 'doc',
+      content: [
+        { type: 'paragraph', content: [{ type: 'text', text: 'x', marks }] },
+      ],
+    });
+    expect(JSON.stringify(marks)).toBe(before);
+    expect(html).toMatch(/<a [^>]*><strong>x<\/strong><\/a>/);
+  });
+});
+
+describe('HTML block variables', () => {
+  it('inserts variable values as text, not markup', async () => {
+    const maily = new Maily({
+      type: 'doc',
+      content: [
+        {
+          type: 'htmlCodeBlock',
+          content: [
+            { type: 'text', text: '<p>Hi ' },
+            { type: 'variable', attrs: { id: 'name' } },
+            { type: 'text', text: '</p>' },
+          ],
+        },
+      ],
+    });
+    maily.setVariableValue('name', '<img src=x onerror=alert(1)>');
+    const html = await maily.render();
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+});
+
+describe('links', () => {
+  const doc = {
+    type: 'doc',
+    content: [
+      {
+        type: 'section',
+        content: [
+          {
+            type: 'button',
+            attrs: { text: 'Go', url: 'https://example.com/button' },
+          },
+        ],
+      },
+      {
+        type: 'columns',
+        content: [
+          {
+            type: 'column',
+            content: [
+              {
+                type: 'image',
+                attrs: {
+                  src: 'https://example.com/a.png',
+                  externalLink: 'https://example.com/image',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'inlineImage',
+            attrs: {
+              src: 'https://example.com/i.png',
+              externalLink: 'https://example.com/inline',
+            },
+          },
+          {
+            type: 'text',
+            text: 'saved link',
+            marks: [
+              {
+                type: 'link',
+                attrs: {
+                  href: 'https://example.com/text',
+                  rel: 'noopener noreferrer nofollow',
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'linkCard',
+        attrs: { title: 'Card', link: 'https://example.com/card' },
+      },
+    ],
+  };
+
+  it('finds every literal link at any depth', () => {
+    expect([...new Maily(doc).getAllLinks()].sort()).toEqual([
+      'https://example.com/button',
+      'https://example.com/card',
+      'https://example.com/image',
+      'https://example.com/inline',
+      'https://example.com/text',
+    ]);
+  });
+
+  it('replaces image and inline image links with link values', async () => {
+    const maily = new Maily(doc);
+    maily.setLinkValues({
+      'https://example.com/image': 'https://t.example/image',
+      'https://example.com/inline': 'https://t.example/inline',
+    });
+    const html = await maily.render();
+    expect(html).toContain('href="https://t.example/image"');
+    expect(html).toContain('href="https://t.example/inline"');
+  });
+
+  it('uses the configured link attributes, without nofollow by default', async () => {
+    const html = await render(doc);
+    expect(html).not.toContain('nofollow');
+    expect(html).toContain('rel="noopener noreferrer"');
+
+    const custom = await render(doc, {
+      linkAttributes: { target: '_self', rel: 'noopener' },
+    });
+    expect(custom).not.toContain('target="_blank"');
+    expect(custom).toContain('target="_self"');
+    expect(custom).not.toContain('noreferrer');
+  });
+});
+
+describe('rendered defaults', () => {
+  it('leaves unset alt text empty instead of English words', async () => {
+    const html = await render({
+      type: 'doc',
+      content: [
+        { type: 'image', attrs: { src: 'https://example.com/a.png' } },
+        { type: 'logo', attrs: { src: 'https://example.com/l.png' } },
+        {
+          type: 'linkCard',
+          attrs: {
+            link: 'https://example.com',
+            image: 'https://example.com/c.png',
+          },
+        },
+      ],
+    });
+    expect(html).not.toMatch(/alt="(Image|Logo|Link Card)"/);
+    expect(html).toContain('alt=""');
+    expect(html).not.toMatch(/ title="/);
+  });
+
+  it('gives a host font no default web font', async () => {
+    const html = await render(paragraphDoc, {
+      theme: { font: { fontFamily: 'Georgia', fallbackFontFamily: 'serif' } },
+    });
+    expect(html).toContain("font-family:'Georgia', serif");
+    expect(html).not.toContain('@font-face');
+    expect(DEFAULT_FONT.webFont).toBeUndefined();
+
+    // A later font replaces an earlier one rather than keeping its web font.
+    const maily = new Maily(paragraphDoc);
+    maily.setTheme({
+      font: {
+        fontFamily: 'Brand',
+        fallbackFontFamily: 'sans-serif',
+        webFont: { url: 'https://fonts.example/brand.woff2', format: 'woff2' },
+      },
+    });
+    maily.setTheme({
+      font: { fontFamily: 'Georgia', fallbackFontFamily: 'serif' },
+    });
+    expect(await maily.render()).not.toContain('brand.woff2');
+  });
+
+  it('loads a web font only when the host gives one', async () => {
+    const html = await render(paragraphDoc, {
+      theme: {
+        font: {
+          fontFamily: 'Brand',
+          fallbackFontFamily: 'sans-serif',
+          webFont: {
+            url: 'https://fonts.example/brand.woff2',
+            format: 'woff2',
+          },
+        },
+      },
+    });
+    expect(html).toContain('https://fonts.example/brand.woff2');
+  });
+
+  it('omits the font rule for a null font', async () => {
+    const html = await render(paragraphDoc, { theme: { font: null } });
+    expect(html).not.toContain("font-family:'Arial'");
+    expect(html).not.toContain('@font-face');
+  });
+
+  it('emits no granular @font-face without fontFaceUrl', async () => {
+    const html = await render({
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            {
+              type: 'text',
+              text: 'x',
+              marks: [
+                {
+                  type: 'textStyle',
+                  attrs: {
+                    fontFamily: 'Fraunces',
+                    fontId: 'fraunces',
+                    fontFallback: 'Georgia',
+                    fontSubset: 'latin',
+                    fontVersion: '5.2.8',
+                    fontRegularWeight: 400,
+                    fontBoldWeight: 700,
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(html).toContain('font-family:&#x27;Fraunces&#x27;, Georgia');
+    expect(html).not.toContain('@font-face');
+  });
+
+  it('replaces a default meta tag with the same name', async () => {
+    const html = await render(paragraphDoc, {
+      meta: [{ name: 'color-scheme', content: 'light dark' }],
+      htmlProps: { lang: 'pl' },
+    });
+    expect(html.match(/name="color-scheme"/g)).toHaveLength(1);
+    expect(html).toContain('content="light dark"');
+    expect(html.match(/x-apple-disable-message-reformatting/g)).toHaveLength(1);
+    expect(html).toContain('lang="pl"');
   });
 });

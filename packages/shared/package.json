@@ -1,26 +1,30 @@
 {
   "name": "@maily-to/shared",
   "version": "0.0.2",
+  "type": "module",
   "private": false,
   "description": "Shared utilities for Maily",
+  "license": "MIT",
   "sideEffects": false,
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.cts",
   "files": [
     "dist/**"
   ],
   "exports": {
     ".": {
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
+      "require": "./dist/index.cjs"
     },
     "./package.json": "./package.json"
   },
   "scripts": {
     "dev": "tsdown --watch",
     "clean": "rm -rf dist",
-    "build": "tsdown"
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint:package": "publint && attw --pack . --profile node16 && node ../../scripts/check-package-entries.mjs"
   },
   "repository": {
     "type": "git",
@@ -35,10 +39,10 @@
   ],
   "devDependencies": {
     "tsconfig": "workspace:*",
-    "typescript": "^5.8.2"
+    "typescript": "^6.0.3"
   },
   "dependencies": {
-    "csstype": "^3.1.3"
+    "csstype": "^3.2.3"
   },
   "publishConfig": {
     "access": "public"

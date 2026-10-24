@@ -4,12 +4,7 @@ import { Slot } from '@radix-ui/react-slot';
 import { cn } from '@/editor/utils/classname';
 
 type BadgeVariant =
-  | 'default'
-  | 'secondary'
-  | 'destructive'
-  | 'outline'
-  | 'ghost'
-  | 'link';
+  'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link';
 
 type BadgeProps = React.ComponentProps<'span'> & {
   variant?: BadgeVariant;
@@ -40,7 +35,7 @@ function Badge({
       data-slot="badge"
       data-variant={variant}
       className={cn(
-        'group/badge rounded-4xl focus-visible:border-ring focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:size-3! inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden whitespace-nowrap border border-transparent px-2 py-0.5 text-xs font-medium transition-all focus-visible:ring-[3px] [&>svg]:pointer-events-none',
+        'group/badge focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex h-5 w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-all focus-visible:ring-[3px] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&>svg]:pointer-events-none [&>svg]:size-3!',
         variantClasses[variant],
         className
       )}

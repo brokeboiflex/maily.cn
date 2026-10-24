@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from '../ui/tooltip';
 import { useHtmlState } from './use-html-state';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
@@ -21,9 +21,6 @@ import {
 
 export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const state = useHtmlState(editor);
   const { t } = useMailyContext();
@@ -49,7 +46,8 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
         }
       : {}),
     shouldShow: ({ editor }) => {
-      return editor.isActive('htmlCodeBlock');
+      // A custom shouldShow replaces TipTap's, which checked editability.
+      return editor.isEditable && editor.isActive('htmlCodeBlock');
     },
     getReferencedVirtualElement: () => ({
       getBoundingClientRect: getReferenceClientRect,

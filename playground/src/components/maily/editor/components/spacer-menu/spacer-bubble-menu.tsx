@@ -1,41 +1,38 @@
-import { AdaptiveBubbleMenu as BubbleMenu } from "../adaptive-bubble-menu"
+import { AdaptiveBubbleMenu as BubbleMenu } from '../adaptive-bubble-menu';
 
-import { BubbleMenuButton } from "../bubble-menu-button"
+import { BubbleMenuButton } from '../bubble-menu-button';
 import {
   type BubbleMenuItem,
   type EditorBubbleMenuProps,
-} from "../text-menu/text-bubble-menu"
-import { Separator } from "@/components/ui/separator"
-import { useSpacerState } from "./use-spacer-state"
-import { ShowPopover } from "../show-popover"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { spacing } from "../../utils/spacing"
-import { useMemo } from "react"
+} from '../text-menu/text-bubble-menu';
+import { Separator } from '@/components/ui/separator';
+import { useSpacerState } from './use-spacer-state';
+import { ShowPopover } from '../show-popover';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { spacing } from '../../utils/spacing';
+import { useMemo } from 'react';
 import {
   FLOATING_BUBBLE_MENU_CLASS,
   useStableBubbleMenuProps,
-} from "../ui/floating-menu"
+} from '../ui/floating-menu';
 
 export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
-  const { editor, appendTo, ...menuProps } = props
-  if (!editor) {
-    return null
-  }
+  const { editor, appendTo, ...menuProps } = props;
 
   const items: BubbleMenuItem[] = useMemo(
     () =>
       spacing.map((space) => {
-        const { value: height, short: name } = space
+        const { value: height, short: name } = space;
         return {
           name,
-          isActive: () => editor?.isActive("spacer", { height }),
+          isActive: () => editor?.isActive('spacer', { height }),
           command: () => {
-            editor?.chain().focus().setSpacerSize(height).run()
+            editor?.chain().focus().setSpacerSize(height).run();
           },
-        }
+        };
       }),
     [editor]
-  )
+  );
 
   const bubbleMenuProps = useStableBubbleMenuProps({
     ...menuProps,
@@ -50,17 +47,17 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
       : {}),
     shouldShow: ({ editor }) => {
       if (!editor.isEditable) {
-        return false
+        return false;
       }
 
-      return editor.isActive("spacer")
+      return editor.isActive('spacer');
     },
     options: {
-      placement: "top" as const,
+      placement: 'top' as const,
     },
-  })
+  });
 
-  const state = useSpacerState(editor)
+  const state = useSpacerState(editor);
 
   return (
     <BubbleMenu {...bubbleMenuProps} className={FLOATING_BUBBLE_MENU_CLASS}>
@@ -78,11 +75,11 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {
-            editor.commands.setSpacerShowIfKey(value)
+            editor.commands.setSpacerShowIfKey(value);
           }}
           editor={editor}
         />
       </TooltipProvider>
     </BubbleMenu>
-  )
+  );
 }

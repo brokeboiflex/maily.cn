@@ -2,11 +2,12 @@ import { updateNodeViewAttributes } from '../utils/update-attribute';
 import { AdaptiveNodePopover } from '../components/adaptive-node-popover';
 import { useMobileEditor } from '../components/mobile-editor-context';
 import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { type Attrs } from '@tiptap/pm/model';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { useMailyContext } from '../provider';
-import { cn } from '@/lib/utils';
+import { useMailyContext } from '../maily-context';
+import { cn } from 'cn';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '../utils/constants';
 import { Badge } from '@/components/ui/badge';
 import { FontFamilyPicker } from '../components/text-menu/font-family-picker';
@@ -17,7 +18,7 @@ import { fontSelectionFromAttrs, fontStack } from '../fonts/fontsource';
 import type { CSSProperties } from 'react';
 
 export function LinkCardComponent(props: NodeViewProps) {
-  const { t } = useMailyContext();
+  const { t, fontProvider } = useMailyContext();
   const { compact } = useMobileEditor();
   const {
     title,
@@ -30,7 +31,7 @@ export function LinkCardComponent(props: NodeViewProps) {
     fontSize,
   } = props.node.attrs as LinkCardAttributes;
   const { getPos, editor } = props;
-  const updateAttributes = (attrs: Record<string, any>) =>
+  const updateAttributes = (attrs: Attrs) =>
     updateNodeViewAttributes(props, attrs);
   const currentFont = fontSelectionFromAttrs(props.node.attrs);
   const currentFontStack = currentFont ? fontStack(currentFont) : undefined;
@@ -133,23 +134,26 @@ export function LinkCardComponent(props: NodeViewProps) {
           sideOffset={10}
         >
           <div className="flex items-center gap-1">
-            <FontFamilyPicker
-              editor={editor}
-              currentFont={currentFont}
-              onFontChange={(font) => {
-                updateAttributes(font);
-              }}
-              onFontUnset={() => {
-                updateAttributes(
-                  Object.fromEntries(
-                    FONT_ATTRIBUTE_KEYS.map((key) => [
-                      key,
-                      key === 'fontHasItalic' ? false : null,
-                    ])
-                  ) as Partial<LinkCardAttributes>
-                );
-              }}
-            />
+            {fontProvider && (
+              <FontFamilyPicker
+                provider={fontProvider}
+                editor={editor}
+                currentFont={currentFont}
+                onFontChange={(font) => {
+                  updateAttributes(font);
+                }}
+                onFontUnset={() => {
+                  updateAttributes(
+                    Object.fromEntries(
+                      FONT_ATTRIBUTE_KEYS.map((key) => [
+                        key,
+                        key === 'fontHasItalic' ? false : null,
+                      ])
+                    ) as Partial<LinkCardAttributes>
+                  );
+                }}
+              />
+            )}
 
             <FontSizePicker
               value={fontSize || ''}

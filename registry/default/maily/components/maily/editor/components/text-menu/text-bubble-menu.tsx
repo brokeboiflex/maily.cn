@@ -30,20 +30,19 @@ export interface BubbleMenuItem {
   tooltip?: string;
 }
 
+// Menus mount only beside a created editor; a required editor keeps their
+// hooks unconditional.
 export type EditorBubbleMenuProps = Omit<
   BubbleMenuProps,
-  'appendTo' | 'children'
+  'appendTo' | 'children' | 'editor'
 > & {
+  editor: NonNullable<BubbleMenuProps['editor']>;
   appendTo?: React.RefObject<HTMLElement | null>;
 };
 
 export function TextBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo, ...menuProps } = props;
   const isPointerSelectingRef = useRef(false);
-
-  if (!editor) {
-    return null;
-  }
 
   const activeEditor = editor;
 
@@ -116,7 +115,7 @@ export function TextBubbleMenu(props: EditorBubbleMenuProps) {
       const nodeDOM = view.nodeDOM(from || 0) as HTMLElement;
       const node = nodeDOM || domAtPos;
 
-      if (isCustomNodeSelected(editor, node) || !editor.isEditable) {
+      if (isCustomNodeSelected(editor) || !editor.isEditable) {
         return false;
       }
 

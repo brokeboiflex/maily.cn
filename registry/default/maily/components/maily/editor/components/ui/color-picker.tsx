@@ -4,9 +4,9 @@ import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn } from 'cn';
 import { type ReactNode, useId, useLayoutEffect } from 'react';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import { Separator } from '@/components/ui/separator';
 import { InputGroup } from '@/components/ui/input-group';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './floating-placement';
@@ -134,7 +134,7 @@ export function ColorPicker(props: ColorPickerProps) {
           <HexColorPicker
             color={color}
             onChange={handleColorChange}
-            className="w-full! flex flex-col gap-4"
+            className="flex w-full! flex-col gap-4"
           />
           <InputGroup className="mt-4">
             <HexColorInput

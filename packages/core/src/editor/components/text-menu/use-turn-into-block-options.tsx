@@ -9,7 +9,7 @@ import {
   PilcrowIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 
 export type TurnIntoBlockOptions = {
   label: string;

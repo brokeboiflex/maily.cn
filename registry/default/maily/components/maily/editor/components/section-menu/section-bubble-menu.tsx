@@ -21,7 +21,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useSectionState } from './use-section-state';
 import { getClosestNodeByName } from '../../utils/columns';
 import { spacing } from '../../utils/spacing';
-import { useMailyContext } from '../../provider';
+import { useMailyContext } from '../../maily-context';
 import type { LabelKey } from '../../i18n';
 import {
   BUBBLE_MENU_CONTENT_CLASS,
@@ -32,9 +32,6 @@ import { BOTTOM_FLOATING_CONTENT_PROPS } from '../ui/floating-placement';
 
 export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
   const { appendTo, editor, ...menuProps } = props;
-  if (!editor) {
-    return null;
-  }
 
   const getReferenceClientRect = useCallback(() => {
     const renderContainer = getRenderContainer(editor!, 'section');
@@ -136,7 +133,6 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
                 borderRadius: Number(value),
               });
             }}
-            tooltip={t('sectionMenu.borderRadius')}
             className="capitalize"
           />
 
@@ -154,7 +150,6 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
                 borderWidth: Number(value),
               });
             }}
-            tooltip={t('sectionMenu.borderWidth')}
             className="capitalize"
           />
         </div>
@@ -175,7 +170,6 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
               marginLeft: value,
             });
           }}
-          tooltip={t('sectionMenu.margin')}
           className="capitalize"
         />
 
@@ -195,7 +189,6 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
               paddingLeft: value,
             });
           }}
-          tooltip={t('sectionMenu.padding')}
           className="capitalize"
         />
 
@@ -272,7 +265,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
               </PopoverTrigger>
               <PopoverContent
                 {...BOTTOM_FLOATING_CONTENT_PROPS}
-                className="p-0.5! w-max rounded-lg"
+                className="w-max rounded-lg p-0.5!"
                 sideOffset={8}
                 align="end"
               >

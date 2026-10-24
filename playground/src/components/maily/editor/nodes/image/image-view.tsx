@@ -5,102 +5,139 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-} from "react"
-import { type NodeViewProps, NodeViewWrapper } from "@tiptap/react"
-import { useImageUploadOptions } from "../../extensions/image-upload/image-upload"
-import { cn } from "@/lib/utils"
-import { useEvent } from "../../utils/use-event"
-import { captureNodeAction } from "../../utils/node-action"
-import { updateNodeViewAttributes } from "../../utils/update-attribute"
-import { getAspectRatio, getNewHeight } from "../../utils/aspect-ratio"
-import { useMailyContext } from "../../provider"
-import { ImageOffIcon, GrabIcon, Loader2, Ban, BracesIcon } from "lucide-react"
+} from 'react';
+import { type NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { useImageUploadOptions } from '../../extensions/image-upload/image-upload';
+import { cn } from 'cn';
+import { useEvent } from '../../utils/use-event';
+import { captureNodeAction } from '../../utils/node-action';
+import { updateNodeViewAttributes } from '../../utils/update-attribute';
+import { getAspectRatio, getNewHeight } from '../../utils/aspect-ratio';
+import { useMailyContext } from '../../maily-context';
+import { useResettableState } from '../../utils/state-hooks';
+import { ImageOffIcon, GrabIcon, Loader2, Ban, BracesIcon } from "lucide-react";
 
-const MIN_WIDTH = 20
-export const IMAGE_MAX_WIDTH = 600
-export const IMAGE_MAX_HEIGHT = 400
+const MIN_WIDTH = 20;
+// Node settings that are not <img> attributes.
+const NODE_ONLY_ATTRIBUTES = new Set([
+  'externalLink',
+  'isExternalLinkVariable',
+  'isSrcVariable',
+  'showIfKey',
+  'aspectRatio',
+  'borderRadius',
+  'lockAspectRatio',
+]);
+export const IMAGE_MAX_WIDTH = 600;
+export const IMAGE_MAX_HEIGHT = 400;
 
-export type ImageStatus = "idle" | "loading" | "loaded" | "error"
+export type ImageStatus = 'idle' | 'loading' | 'loaded' | 'error';
+
+function isUploadPlaceholder(editor: NodeViewProps['editor'], src: string) {
+  return (
+    editor?.extensionStorage?.imageUpload?.placeholderImages?.has(src) ?? false
+  );
+}
 
 export function ImageView(props: NodeViewProps) {
-  const { t } = useMailyContext()
-  const { node, selected, editor, getPos } = props
+  const { t } = useMailyContext();
+  const { node, selected, editor, getPos } = props;
 
-  const resizeCleanup = useRef<(() => void) | null>(null)
-  useLayoutEffect(() => () => resizeCleanup.current?.(), [])
-  const uploadLock = useRef(false)
-  const uploadGeneration = useRef(0)
+  const resizeCleanup = useRef<(() => void) | null>(null);
+  useLayoutEffect(() => () => resizeCleanup.current?.(), []);
+  const uploadLock = useRef(false);
+  const uploadGeneration = useRef(0);
   useLayoutEffect(
     () => () => {
-      uploadGeneration.current += 1
+      uploadGeneration.current += 1;
     },
     []
-  )
-  const [status, setStatus] = useState<ImageStatus>("idle")
-  const [isPlaceholderImage, setIsPlaceholderImage] = useState(false)
+  );
+  const { src, isSrcVariable } = node.attrs || {};
+  // Every node revision reloads its image source, so its status starts over.
+  const loadKeys = [node, src, isSrcVariable];
+  const [status, setStatus] = useResettableState<ImageStatus>(
+    () => (!src || isSrcVariable ? 'idle' : 'loading'),
+    loadKeys
+  );
+  // React reuses this view for a replacement node (for example after
+  // setContent). An in-flight upload belongs to the node that started it.
+  const uploadNode = useRef(node);
+  useLayoutEffect(() => {
+    if (uploadNode.current === node) return;
+    uploadNode.current = node;
+    if (!uploadLock.current) return;
+    uploadGeneration.current += 1;
+    uploadLock.current = false;
+    setStatus('idle');
+  }, [node, setStatus]);
+  const [isPlaceholderImage, setIsPlaceholderImage] = useResettableState(
+    () => !!src && !isSrcVariable && isUploadPlaceholder(editor, src),
+    loadKeys
+  );
 
   const {
     onImageUpload,
     onImageUploadDiscard,
     allowedMimeTypes = [],
-  } = useImageUploadOptions(editor)
+  } = useImageUploadOptions(editor);
 
-  const wrapperRef = useRef<HTMLDivElement>(null)
-  const imgRef = useRef<HTMLImageElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const [resizingStyle, setResizingStyle] = useState<
-    Pick<CSSProperties, "width" | "height"> | undefined
-  >()
+    Pick<CSSProperties, 'width' | 'height'> | undefined
+  >();
 
-  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   const handleMouseDown = useEvent(
     (event: React.MouseEvent<HTMLDivElement>) => {
       const imageParent = document.querySelector(
-        ".ProseMirror-selectednode"
-      ) as HTMLDivElement
+        '.ProseMirror-selectednode'
+      ) as HTMLDivElement;
 
       if (!imgRef.current || !imageParent || !selected) {
-        return
+        return;
       }
 
-      let position
+      let position;
       try {
-        position = getPos()
+        position = getPos();
       } catch {
-        return
+        return;
       }
       const action =
-        typeof position === "number"
+        typeof position === 'number'
           ? captureNodeAction(editor, position, node)
-          : null
-      if (!action) return
+          : null;
+      if (!action) return;
 
       const imageParentWidth = Math.max(
         imageParent.offsetWidth,
         IMAGE_MAX_WIDTH
-      )
+      );
 
-      resizeCleanup.current?.()
-      event.preventDefault()
-      const direction = event.currentTarget.dataset.direction || "--"
-      const initialXPosition = event.clientX
-      const initialYPosition = event.clientY
-      const currentWidth = imgRef.current.width
-      const currentHeight = imgRef.current.height
-      let newWidth = currentWidth
-      let newHeight = currentHeight
-      const transformX = direction[1] === "w" ? -1 : 1
-      const transformY = direction[0] === "n" ? -1 : 1
+      resizeCleanup.current?.();
+      event.preventDefault();
+      const direction = event.currentTarget.dataset.direction || '--';
+      const initialXPosition = event.clientX;
+      const initialYPosition = event.clientY;
+      const currentWidth = imgRef.current.width;
+      const currentHeight = imgRef.current.height;
+      let newWidth = currentWidth;
+      let newHeight = currentHeight;
+      const transformX = direction[1] === 'w' ? -1 : 1;
+      const transformY = direction[0] === 'n' ? -1 : 1;
 
       const cleanup = () => {
-        window.removeEventListener("mousemove", mouseMoveHandler)
-        window.removeEventListener("mouseup", removeListeners)
-        resizeCleanup.current = null
-      }
+        window.removeEventListener('mousemove', mouseMoveHandler);
+        window.removeEventListener('mouseup', removeListeners);
+        resizeCleanup.current = null;
+      };
       const removeListeners = () => {
-        cleanup()
-        const aspectRatio = getAspectRatio(newWidth, newHeight)
+        cleanup();
+        const aspectRatio = getAspectRatio(newWidth, newHeight);
         action.run(() => {
           if (
             node.attrs.width !== newWidth ||
@@ -111,31 +148,31 @@ export function ImageView(props: NodeViewProps) {
               width: newWidth,
               height: newHeight,
               aspectRatio,
-            })
-        })
-        setResizingStyle(undefined)
-      }
+            });
+        });
+        setResizingStyle(undefined);
+      };
 
       const mouseMoveHandler = (event: MouseEvent) => {
         if (!action.isCurrent()) {
-          cleanup()
-          setResizingStyle(undefined)
-          return
+          cleanup();
+          setResizingStyle(undefined);
+          return;
         }
         newWidth = Math.max(
           currentWidth + transformX * (event.clientX - initialXPosition),
           MIN_WIDTH
-        )
+        );
         newHeight = Math.max(
           currentHeight + transformY * (event.clientY - initialYPosition),
           MIN_WIDTH
-        )
+        );
 
         if (newWidth > imageParentWidth) {
-          newWidth = imageParentWidth
+          newWidth = imageParentWidth;
         }
         if (newHeight > IMAGE_MAX_HEIGHT) {
-          newHeight = IMAGE_MAX_HEIGHT
+          newHeight = IMAGE_MAX_HEIGHT;
         }
 
         // If aspect ratio is locked, calculate height based on aspect ratio
@@ -145,27 +182,27 @@ export function ImageView(props: NodeViewProps) {
             isFinite(node.attrs.aspectRatio) &&
             node.attrs.aspectRatio > 0
               ? node.attrs.aspectRatio
-              : currentWidth / currentHeight
-          newHeight = getNewHeight(newWidth, aspectRatio)
+              : currentWidth / currentHeight;
+          newHeight = getNewHeight(newWidth, aspectRatio);
         }
 
-        setResizingStyle({ width: newWidth, height: newHeight })
+        setResizingStyle({ width: newWidth, height: newHeight });
         // If mouse is up, remove event listeners
         if (!event.buttons) {
-          return removeListeners()
+          return removeListeners();
         }
-      }
+      };
 
-      resizeCleanup.current = cleanup
-      window.addEventListener("mousemove", mouseMoveHandler)
-      window.addEventListener("mouseup", removeListeners)
+      resizeCleanup.current = cleanup;
+      window.addEventListener('mousemove', mouseMoveHandler);
+      window.addEventListener('mouseup', removeListeners);
     }
-  )
+  );
 
   const dragCornerButton = useCallback(
     (direction: string) => {
       if (isPlaceholderImage) {
-        return null
+        return null;
       }
 
       return (
@@ -175,72 +212,68 @@ export function ImageView(props: NodeViewProps) {
           data-direction={direction}
           className="bg-primary"
           style={{
-            position: "absolute",
-            height: "10px",
-            width: "10px",
+            position: 'absolute',
+            height: '10px',
+            width: '10px',
             ...{ n: { top: 0 }, s: { bottom: 0 } }[direction[0]],
             ...{ w: { left: 0 }, e: { right: 0 } }[direction[1]],
             cursor: `${direction}-resize`,
           }}
         />
-      )
+      );
     },
     [handleMouseDown, isPlaceholderImage]
-  )
-
-  let {
-    alignment = "center",
-    width,
-    height,
-    src,
-    borderRadius,
-  } = node.attrs || {}
+  );
 
   const {
-    externalLink,
-    isExternalLinkVariable,
-    isSrcVariable,
-    showIfKey,
-    aspectRatio: defaultAspectRatio,
-    borderRadius: _,
-    lockAspectRatio,
-    ...attrs
-  } = node.attrs || {}
+    alignment = 'center',
+    width,
+    height,
+    borderRadius,
+  } = node.attrs || {};
 
-  const hasImageSrc = !!attrs.src
+  const attrs = Object.fromEntries(
+    Object.entries(node.attrs || {}).filter(
+      ([key]) => !NODE_ONLY_ATTRIBUTES.has(key)
+    )
+  );
+
+  const hasImageSrc = !!src;
   const isDroppable =
     !!onImageUpload &&
     editor.isEditable &&
     !hasImageSrc &&
     !isSrcVariable &&
-    (status === "idle" || status === "error")
+    (status === 'idle' || status === 'error');
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isDroppable || !e.target.files || e.target.files.length === 0) {
-      return
+      return;
     }
 
-    const file = e.target.files[0]
-    e.target.value = ""
-    await handleImageUpload(file)
-  }
+    const file = e.target.files[0];
+    e.target.value = '';
+    // Picked files obey the host's types, as dropped files do.
+    if (!allowedMimeTypes.includes(file.type)) return;
+    await handleImageUpload(file);
+  };
 
   const handleImageUpload = useCallback(
     async (file: File) => {
-      if (!isDroppable || uploadLock.current) return
-      uploadLock.current = true
-      const generation = ++uploadGeneration.current
+      if (!isDroppable || uploadLock.current) return;
+      uploadLock.current = true;
+      const generation = ++uploadGeneration.current;
       try {
-        setStatus("loading")
-        const imageUrl = await onImageUpload(file)
-        let currentNode
+        setStatus('loading');
+        const imageUrl = await onImageUpload(file);
+        let currentNode;
         if (!editor.isDestroyed) {
           try {
-            const position = getPos()
+            const position = getPos();
             currentNode =
-              typeof position === "number"
+              typeof position === 'number'
                 ? editor.state.doc.nodeAt(position)
-                : null
+                : null;
           } catch {
             /* Deleted node views can no longer resolve a position. */
           }
@@ -255,22 +288,25 @@ export function ImageView(props: NodeViewProps) {
           currentNode.attrs.isSrcVariable !== node.attrs.isSrcVariable
         ) {
           if (generation === uploadGeneration.current && !editor.isDestroyed)
-            setStatus("idle")
-          await onImageUploadDiscard?.(imageUrl)
-          return
+            setStatus('idle');
+          await onImageUploadDiscard?.(imageUrl);
+          return;
         }
-        updateNodeViewAttributes(props, { src: imageUrl })
-        setIsPlaceholderImage(false)
-        setStatus("loaded")
+        updateNodeViewAttributes(props, { src: imageUrl });
+        setIsPlaceholderImage(false);
+        setStatus('loaded');
       } catch (error) {
-        console.error("Error uploading image:", error)
-        if (generation === uploadGeneration.current) setStatus("error")
+        console.error('Error uploading image:', error);
+        if (generation === uploadGeneration.current) setStatus('error');
       } finally {
-        uploadLock.current = false
+        // A replaced node already released the lock; a newer upload owns it.
+        if (generation === uploadGeneration.current) uploadLock.current = false;
       }
     },
     [
       onImageUpload,
+      setStatus,
+      setIsPlaceholderImage,
       onImageUploadDiscard,
       props,
       isDroppable,
@@ -278,133 +314,95 @@ export function ImageView(props: NodeViewProps) {
       getPos,
       node,
     ]
-  )
+  );
 
   // load the image using new Image() to avoid layout shift
-  // then if the image is loaded, set the status to loaded
+  // Loading an image only reports its status. The document keeps the size the
+  // user chose: `auto` renders at the image's own size in the editor and in
+  // the email, so the saved width never depends on the editing device.
   useEffect(() => {
-    if (!src || isSrcVariable) {
-      setStatus("idle")
-      return
-    }
+    if (!src || isSrcVariable) return;
 
-    setStatus("loading")
-    const isPlaceHolder =
-      editor?.extensionStorage?.imageUpload?.placeholderImages?.has(src) ??
-      false
-    setIsPlaceholderImage(isPlaceHolder)
-    let active = true
-    const img = new Image()
-    img.src = src
+    let active = true;
+    const img = new Image();
+    img.src = src;
     img.onload = () => {
-      if (!active) return
-      // for some reason Apple Mail doesn't respect the width and height attributes
-      // update the dimensions to ensure that the image is not stretched
-      const { naturalWidth, naturalHeight } = img
-      const wrapper = wrapperRef?.current
-      let currentNode
+      if (!active) return;
+      let currentNode;
       if (!editor.isDestroyed) {
         try {
-          const position = getPos()
+          const position = getPos();
           currentNode =
-            typeof position === "number"
+            typeof position === 'number'
               ? editor.state.doc.nodeAt(position)
-              : null
+              : null;
         } catch {
           /* Removed node views have no position. */
         }
       }
-
-      if (
-        !wrapper ||
-        !currentNode ||
-        currentNode !== node ||
-        currentNode.attrs.src !== src ||
-        currentNode.attrs.isSrcVariable ||
-        isPlaceHolder ||
-        currentNode.attrs.width !== "auto" ||
-        currentNode.attrs.height !== "auto" ||
-        !naturalWidth
-      ) {
-        if (currentNode === node) setStatus("loaded")
-        return
-      }
-      setStatus("loaded")
-
-      const wrapperWidth = wrapper.offsetWidth
-      const aspectRatio = getAspectRatio(naturalWidth, naturalHeight)
-      const calculatedHeight = Math.min(
-        getNewHeight(wrapperWidth, aspectRatio),
-        naturalHeight
-      )
-
-      updateNodeViewAttributes(props, {
-        width: Math.min(wrapperWidth, naturalWidth),
-        height: Math.min(calculatedHeight, naturalHeight),
-        aspectRatio,
-      })
-    }
+      if (currentNode === node) setStatus('loaded');
+    };
     img.onerror = () => {
-      if (active) setStatus("error")
-    }
+      if (active) setStatus('error');
+    };
 
     return () => {
-      active = false
-      img.src = ""
-      img.onload = null
-      img.onerror = null
-    }
-  }, [node, src, isSrcVariable])
+      active = false;
+      img.src = '';
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [editor, getPos, node, src, isSrcVariable, setStatus]);
 
   const handleDragOver = useCallback(
     (e: React.DragEvent) => {
       if (!isDroppable) {
-        return
+        return;
       }
 
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(true)
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(true);
     },
     [isDroppable]
-  )
+  );
 
   const handleDragLeave = useCallback(
     (e: React.DragEvent) => {
       if (!isDroppable) {
-        return
+        return;
       }
 
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(false)
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(false);
     },
     [isDroppable]
-  )
+  );
 
   const handleDrop = useCallback(
     async (e: React.DragEvent) => {
       if (!isDroppable) {
-        return
+        return;
       }
 
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDraggingOver(false)
-      const files = e.dataTransfer?.files
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDraggingOver(false);
+      const files = e.dataTransfer?.files;
       if (!files || files?.length === 0) {
-        return
+        return;
       }
 
-      const firstFile = files[0]
+      const firstFile = files[0];
       if (!allowedMimeTypes.includes(firstFile.type)) {
-        return
+        return;
       }
 
-      await handleImageUpload(firstFile)
+      await handleImageUpload(firstFile);
     },
     [handleImageUpload, isDroppable, allowedMimeTypes]
-  )
+  );
 
   return (
     <NodeViewWrapper
@@ -412,27 +410,27 @@ export function ImageView(props: NodeViewProps) {
       draggable={editor.isEditable}
       data-drag-handle={editor.isEditable}
       className={cn(
-        "mly-image-drop-zone relative after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:border-primary after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
-        isDraggingOver && "mly-drag-over after:opacity-100"
+        "mly-image-drop-zone after:border-primary relative after:pointer-events-none after:absolute after:inset-0 after:rounded after:border-2 after:border-dashed after:opacity-0 after:transition-opacity after:duration-200 after:content-['']",
+        isDraggingOver && 'mly-drag-over after:opacity-100'
       )}
       style={{
-        ...(hasImageSrc && status === "loaded"
+        ...(hasImageSrc && status === 'loaded'
           ? {
-              width: width && width !== "auto" ? `${width}px` : undefined,
-              height: height && height !== "auto" ? `${height}px` : undefined,
+              width: width && width !== 'auto' ? `${width}px` : undefined,
+              height: height && height !== 'auto' ? `${height}px` : undefined,
               ...resizingStyle,
             }
           : {}),
-        overflow: "hidden",
-        position: "relative",
+        overflow: 'hidden',
+        position: 'relative',
         // Weird! Basically tiptap/prose wraps this in a span and the line height causes an annoying buffer.
-        lineHeight: "0px",
-        display: "block",
-        maxWidth: "100%",
+        lineHeight: '0px',
+        display: 'block',
+        maxWidth: '100%',
         ...({
-          center: { marginLeft: "auto", marginRight: "auto" },
-          left: { marginRight: "auto" },
-          right: { marginLeft: "auto" },
+          center: { marginLeft: 'auto', marginRight: 'auto' },
+          left: { marginRight: 'auto' },
+          right: { marginLeft: 'auto' },
         }[alignment as string] || {}),
       }}
       ref={wrapperRef}
@@ -444,7 +442,7 @@ export function ImageView(props: NodeViewProps) {
           }
         : {})}
     >
-      {!hasImageSrc && status === "idle" && (
+      {!hasImageSrc && status === 'idle' && (
         <ImageStatusLabel
           status="idle"
           minHeight={height}
@@ -452,7 +450,7 @@ export function ImageView(props: NodeViewProps) {
         />
       )}
 
-      {!hasImageSrc && status === "loading" && !isSrcVariable && (
+      {!hasImageSrc && status === 'loading' && !isSrcVariable && (
         <ImageStatusLabel status="loading" minHeight={height} />
       )}
 
@@ -460,10 +458,10 @@ export function ImageView(props: NodeViewProps) {
         <ImageStatusLabel status="variable" minHeight={height} />
       )}
 
-      {hasImageSrc && status === "loading" && !isSrcVariable && (
+      {hasImageSrc && status === 'loading' && !isSrcVariable && (
         <ImageStatusLabel status="loading" minHeight={height} />
       )}
-      {status === "error" && !isSrcVariable && (
+      {status === 'error' && !isSrcVariable && (
         <ImageStatusLabel status="error" minHeight={height} />
       )}
 
@@ -471,88 +469,88 @@ export function ImageView(props: NodeViewProps) {
         /* shadcn-audit-ignore-next-line invisible native file input overlay */
         <input
           type="file"
-          accept="image/*"
+          accept={allowedMimeTypes.join(',')}
           onChange={handleFileChange}
           className="absolute inset-0 opacity-0"
           multiple={false}
-          aria-label={t("imageStatus.dropImage")}
+          aria-label={t('imageStatus.dropImage')}
         />
       )}
 
-      {hasImageSrc && status === "loaded" && !isSrcVariable && (
+      {hasImageSrc && status === 'loaded' && !isSrcVariable && (
         <>
           <img
             {...attrs}
             ref={imgRef}
             style={{
               ...resizingStyle,
-              cursor: "default",
-              objectFit: "fill",
+              cursor: 'default',
+              objectFit: 'fill',
               marginBottom: 0,
               borderRadius,
               width: resizingStyle?.width
                 ? `${resizingStyle.width}px`
-                : width && width !== "auto"
+                : width && width !== 'auto'
                   ? `${width}px`
-                  : "auto",
+                  : 'auto',
               height: resizingStyle?.height
                 ? `${resizingStyle.height}px`
-                : height && height !== "auto"
+                : height && height !== 'auto'
                   ? `${height}px`
-                  : "auto",
+                  : 'auto',
             }}
             draggable={editor.isEditable}
-            className={cn(isPlaceholderImage && "animate-pulse opacity-40")}
+            className={cn(isPlaceholderImage && 'animate-pulse opacity-40')}
           />
 
           {selected && editor.isEditable && !isPlaceholderImage && (
             <>
               {/* Don't use a simple border as it pushes other content around. */}
               {[
-                { left: 0, top: 0, height: "100%", width: "1px" },
-                { right: 0, top: 0, height: "100%", width: "1px" },
-                { top: 0, left: 0, width: "100%", height: "1px" },
-                { bottom: 0, left: 0, width: "100%", height: "1px" },
+                { left: 0, top: 0, height: '100%', width: '1px' },
+                { right: 0, top: 0, height: '100%', width: '1px' },
+                { top: 0, left: 0, width: '100%', height: '1px' },
+                { bottom: 0, left: 0, width: '100%', height: '1px' },
               ].map((style, i) => (
                 <div
                   key={i}
                   className="bg-primary"
                   style={{
-                    position: "absolute",
+                    position: 'absolute',
                     ...style,
                   }}
                 />
               ))}
-              {dragCornerButton("nw")}
-              {dragCornerButton("ne")}
-              {dragCornerButton("sw")}
-              {dragCornerButton("se")}
+              {dragCornerButton('nw')}
+              {dragCornerButton('ne')}
+              {dragCornerButton('sw')}
+              {dragCornerButton('se')}
             </>
           )}
         </>
       )}
     </NodeViewWrapper>
-  )
+  );
 }
 
 type ImageStatusLabelProps = {
-  status: ImageStatus | "variable"
-  minHeight?: number | string
-  isDropZone?: boolean
-} & React.HTMLAttributes<HTMLDivElement>
+  status: ImageStatus | 'variable';
+  minHeight?: number | string;
+  isDropZone?: boolean;
+} & React.HTMLAttributes<HTMLDivElement>;
 
 export function ImageStatusLabel(props: ImageStatusLabelProps) {
-  const { t } = useMailyContext()
-  const { status, minHeight, className, style, isDropZone, ...rest } = props
+  const { t } = useMailyContext();
+  const { status, minHeight, className, style, isDropZone, ...rest } = props;
 
   return (
     <div
       {...rest}
       className={cn(
-        "flex items-center justify-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm font-medium",
+        'bg-muted flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium',
         {
-          "text-muted-foreground hover:bg-muted/60": status === "loading",
-          "text-destructive hover:bg-muted/60": status === "error",
+          'text-muted-foreground hover:bg-muted/60': status === 'loading',
+          'text-destructive hover:bg-muted/60': status === 'error',
         },
         className
       )}
@@ -565,38 +563,38 @@ export function ImageStatusLabel(props: ImageStatusLabelProps) {
         ...style,
       }}
     >
-      {status === "idle" && !isDropZone && (
+      {status === 'idle' && !isDropZone && (
         <>
           <ImageOffIcon className="size-4 stroke-[2.5]" />
-          <span>{t("imageStatus.noImage")}</span>
+          <span>{t('imageStatus.noImage')}</span>
         </>
       )}
 
-      {status === "idle" && isDropZone && (
+      {status === 'idle' && isDropZone && (
         <>
           <GrabIcon className="size-4 stroke-[2.5]" />
-          <span>{t("imageStatus.dropImage")}</span>
+          <span>{t('imageStatus.dropImage')}</span>
         </>
       )}
 
-      {status === "loading" && (
+      {status === 'loading' && (
         <>
           <Loader2 className="size-4 animate-spin stroke-[2.5]" />
-          <span>{t("imageStatus.loading")}</span>
+          <span>{t('imageStatus.loading')}</span>
         </>
       )}
-      {status === "error" && (
+      {status === 'error' && (
         <>
           <Ban className="size-4 stroke-[2.5]" />
-          <span>{t("imageStatus.error")}</span>
+          <span>{t('imageStatus.error')}</span>
         </>
       )}
-      {status === "variable" && (
+      {status === 'variable' && (
         <>
           <BracesIcon className="size-4 stroke-[2.5]" />
-          <span>{t("imageStatus.variable")}</span>
+          <span>{t('imageStatus.variable')}</span>
         </>
       )}
     </div>
-  )
+  );
 }

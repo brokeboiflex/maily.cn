@@ -122,7 +122,7 @@ do not compile the optional mailbox surface.
 ## Requirements
 
 - React 18 or 19
-- TipTap 3.30.5-compatible extensions when supplying custom `extensions`
+- TipTap 3.32-compatible (TipTap 3) extensions when supplying custom `extensions`
 - Tailwind CSS v4 with standard shadcn theme tokens
 - A project initialized with the shadcn CLI (`components.json` present)
 
@@ -224,15 +224,17 @@ Users can still paste a URL when an upload handler is not appropriate.
 
 `<MailboxView />` is an optional application-shell component for an
 inbox / sent / drafts / spam / trash surface. It owns local folder, search,
-selection, compose, draft, and polling state inside a shadcn
+selection, compose and draft UI state inside a shadcn
 responsive list-to-message shell with a mobile Sheet menu. It does not assume a backend. Wire your own API
 through the `dataSource` adapter.
 
 ```tsx
+import { useEffect, useRef } from 'react';
 import {
   MailboxView,
   defaultMailboxLabels,
   type MailyMailboxDataSource,
+  type MailyMailboxHandle,
 } from '@/components/maily/mailbox';
 
 const dataSource: MailyMailboxDataSource = {
@@ -243,18 +245,52 @@ const dataSource: MailyMailboxDataSource = {
   createDraft: (draft) => api.mail.createDraft(draft),
   updateDraft: (messageId, draft) => api.mail.updateDraft(messageId, draft),
   discardDraft: (messageId) => api.mail.discardDraft(messageId),
-  sendDraft: (messageId) => api.mail.sendDraft(messageId),
+  // `revision` is the version the user saw; reject the send if it changed.
+  sendDraft: (messageId, { revision }) =>
+    api.mail.sendDraft(messageId, { revision }),
   runMessageAction: ({ messageId, action, value }) =>
     api.mail.runMessageAction(messageId, action, value),
 };
 
-<MailboxView
-  account={{ address: 'hello@example.com' }}
-  dataSource={dataSource}
-  messageActions={['archive', 'delete', 'markUnread']}
-  labels={defaultMailboxLabels}
-/>;
+export function Inbox({ userId }: { userId: string }) {
+  const mailbox = useRef<MailyMailboxHandle>(null);
+
+  // Refresh when your backend reports new mail (push, websocket, or a timer).
+  useEffect(
+    () => api.mail.onNewMail(() => void mailbox.current?.refresh()),
+    []
+  );
+
+  return (
+    <MailboxView
+      ref={mailbox}
+      account={{ id: userId, address: 'hello@example.com' }}
+      dataSource={dataSource}
+      messageActions={['archive', 'delete', 'markUnread']}
+      labels={defaultMailboxLabels}
+    />
+  );
+}
 ```
+
+Maily holds no mail logic of its own. Delivery and send recovery, refresh
+timing, autosave, reply/forward seeding, and which actions each folder offers
+are yours:
+
+- **Sending:** provide `sendMessage(draft)` to send a new composition directly,
+  and/or `createDraft` + `sendDraft` for drafts. A failed send stays open for a
+  retry; deduplicate by draft ID and revision, or by `draft.idempotencyKey`.
+- **Refresh:** the mailbox does not poll unless you pass `pollIntervalMs`; call
+  `refresh()` on its ref when your data changes.
+- **Autosave:** off unless you pass `autosaveDelayMs` (for example `1000`).
+- **Folder actions:** an array of `messageActions` is offered everywhere; pass
+  a function of `{ surface, folder, labelId, searchScope, searching,
+messageIds }` to decide per view, or use `defaultMailboxMessageActionsFor`
+  for Gmail's folder rules. Return `{ removedFromView: true }` from
+  `runMessageAction` when a message leaves the view, so the reader closes, and
+  pass `folders` to choose which folders the navigation shows.
+- **Reply and forward:** `createComposeSeed(kind, message, context)` builds the
+  composition; `defaultMailboxComposeSeed` is the conventional default.
 
 Recipient fields support autocomplete when the host provides contacts through
 `dataSource.listContactSuggestions` or the `contactSuggestions` prop. Each
@@ -266,6 +302,24 @@ the existing draft flow; favorite, archive, delete, mark unread, report, print,
 download, show-original, and similar controls render only when the host supplies
 both `dataSource.runMessageAction` and the exact supported ids through
 `messageActions`.
+
+Draft operations are capability-gated the same way. `createDraft`,
+`updateDraft`, `sendDraft` and `discardDraft` are optional, so a read-only
+mailbox omits them. Use `draftCapabilities` to withhold `create`, `edit`, `send`
+or `discard` while mounted; Maily hides the controls that need them and never
+calls them. Your application keeps its own roles and authorization:
+
+```tsx
+<MailboxView
+  dataSource={dataSource}
+  draftCapabilities={{ create: canWrite, edit: canWrite, send: canSend }}
+/>
+```
+
+Without `edit`, saved drafts open read-only and can still be sent unchanged or
+discarded when those operations are available. Change the prop rather than the
+data source when access changes, so open compositions keep their content. See
+[draft capabilities](docs/mailbox-workflows.md#draft-capabilities).
 
 The reader displays every entry in `getMessage().attachments` below the body,
 with its filename, optional MIME type, and size in bytes formatted for display.
@@ -288,20 +342,28 @@ copy it, translate every value, and pass the complete object back as `labels`.
 
 ## Font selection
 
-Select text in the editor to choose from the complete Fontsource catalog. The
-picker fetches catalog metadata only when opened, virtualizes its results, and
-loads preview WOFF2 files only for visible rows, so the font library is not
-bundled into the installed component.
+Maily calls no font service on its own. Without a `fontProvider`, the editor
+shows no font picker and saved fonts render with their fallback stacks. To offer
+the complete Fontsource catalog, opt in on both sides:
 
-The chosen Fontsource package version, subset, weights, fallback, and family are
-stored on TipTap's `textStyle` mark. Saved editor JSON is therefore enough for
-the server-side renderer to emit version-pinned `@font-face` declarations without
-querying Fontsource while an email is being sent. Unsupported email clients use
-the family-specific email-safe fallback.
+```tsx
+import { Editor, fontsourceFontProvider } from '@/components/maily';
+import { fontsourceFontFaceUrl, render } from '@/lib/maily-render';
 
-The Fontsource API and jsDelivr font CDN must be permitted by the host
-application's content security policy for catalog previews. Sent emails still
-render readable fallback fonts when a client blocks remote web fonts.
+<Editor fontProvider={fontsourceFontProvider} />;
+
+const html = await render(json, { fontFaceUrl: fontsourceFontFaceUrl });
+```
+
+The Fontsource picker fetches catalog metadata only when opened, virtualizes its
+results, and loads preview WOFF2 files only for visible rows. The chosen package
+version, subset, weights, fallback, and family are stored on TipTap's
+`textStyle` mark, so the renderer emits version-pinned `@font-face`
+declarations without querying Fontsource while an email is being sent.
+Unsupported email clients use the family-specific email-safe fallback. With this
+provider, the Fontsource API and jsDelivr font CDN must be permitted by the host
+application's content security policy. Implement `MailyFontProvider` (and a
+`fontFaceUrl` function) to use your own font service instead.
 
 ## Renderer usage
 
@@ -312,16 +374,27 @@ import { render } from '@/lib/maily-render';
 
 const html = await render(editorJson, {
   preview: 'Inbox preview text',
-  theme: {
-    /* optional rendered-email theme overrides */
-  },
+  // Optional rendered-email theme overrides.
+  theme: { container: { backgroundColor: '#ffffff', maxWidth: '600px' } },
 });
 ```
 
 The renderer is independent of the editor's on-screen theme and produces the final
-email-client-safe HTML from the saved JSON.
+email-client-safe HTML from the saved JSON. It loads no web font by default
+(`'Arial', sans-serif`) and leaves output policy to you through `render()`
+options:
+
+- `fontFaceUrl`: `@font-face` URLs for fonts chosen in the editor (for example
+  `fontsourceFontFaceUrl`); without it, fonts use their fallback stacks.
+- `linkAttributes`: attributes for every link (default `target="_blank"` and
+  `rel="noopener noreferrer"`).
+- `meta` and `htmlProps`: replace or add `<head>` meta tags and `<html>`
+  attributes.
 
 ## Upgrading an existing full install
+
+Breaking changes and migration notes for each release are in
+[CHANGELOG.md](CHANGELOG.md).
 
 The shadcn CLI overwrites current registry files but does not delete files removed
 from a newer item. After upgrading, remove these obsolete private primitive or icon
@@ -335,6 +408,18 @@ components/maily/editor/components/icons/border-color.tsx
 components/maily/editor/components/icons/grid-lines.tsx
 components/maily/editor/components/icons/text-direction-icon.tsx
 ```
+
+This release removes two files; delete them if they still exist. Nothing
+imports them, and the first one's `@ts-ignore` fails the stock shadcn lint:
+
+```text
+components/maily/editor/extensions/tailing-node/tailing-node.ts
+components/maily/mailbox/send-recovery.ts
+```
+
+Its installs no longer depend on `tippy.js`, `uuid`, `clsx`, `tailwind-merge` or
+`react-resizable-panels`; remove them from your `package.json` if nothing else
+in your application imports them.
 
 When intentionally moving from the legacy full item to `maily-editor`, also remove
 `components/maily/mailbox/**` and `lib/maily-render/**` after confirming the
