@@ -47,6 +47,7 @@ import {
   type MailyMailboxDataSource,
   type MailyMailboxDraftCapabilities,
   type MailyMailboxMessageDetail,
+  type MailyMailboxSearchCapabilities,
 } from "@/components/maily/mailbox"
 
 declare global {
@@ -57,12 +58,15 @@ declare global {
     mailyFinishUpload: () => void
     mailyDraftCalls: string[]
     mailySetDraftCapabilities: (capabilities: MailyMailboxDraftCapabilities) => void
+    mailySearchRequests: unknown[]
+    mailySetSearchCapabilities: (capabilities: MailyMailboxSearchCapabilities) => void
   }
 }
 
 window.mailyUploadCalls = 0
 window.mailyDiscardCalls = 0
 window.mailyDraftCalls = []
+window.mailySearchRequests = []
 const uploadedImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGP4DwQACfsD/fteaysAAAAASUVORK5CYII="
 const uploadExtension = ImageUploadExtension.configure({
   onImageUpload: async () => {
@@ -181,6 +185,30 @@ function CapabilityMailbox() {
   )
 }
 
+// Records what each list read asks the host for, without undefined members.
+const searchSource: MailyMailboxDataSource = {
+  ...readOnlySource,
+  listMessages: async ({ q, search }) => {
+    window.mailySearchRequests.push(JSON.parse(JSON.stringify({ q, search })))
+    return { items: [message], nextCursor: null }
+  },
+}
+
+function SearchMailbox() {
+  const [searchCapabilities, setSearchCapabilities] =
+    useState<MailyMailboxSearchCapabilities>({ from: true, unread: true })
+  useEffect(() => {
+    window.mailySetSearchCapabilities = setSearchCapabilities
+  }, [])
+  return (
+    <MailboxView
+      account={{ id: "search-account", address: "studio@maily.cn" }}
+      dataSource={searchSource}
+      searchCapabilities={searchCapabilities}
+    />
+  )
+}
+
 export default function App() {
   return (
     <main className="grid gap-8 p-6">
@@ -212,6 +240,9 @@ export default function App() {
       </section>
       <section data-testid="capability-mailbox">
         <CapabilityMailbox />
+      </section>
+      <section data-testid="search-mailbox">
+        <SearchMailbox />
       </section>
     </main>
   )
@@ -740,6 +771,60 @@ test("draft capabilities hide unavailable controls and keep open content", async
   const calls = await page.evaluate(() => window.mailyDraftCalls)
   expect(calls).toHaveLength(settled)
   expect(calls.some((call) => call.startsWith("send:") || call.startsWith("discard:"))).toBe(false)
+
+  await expect(page.locator("button button")).toHaveCount(0)
+  expect(errors).toEqual([])
+})
+
+test("search capabilities render only enabled filters and send only their values", async ({ page }) => {
+  const errors: string[] = []
+  page.on("pageerror", (error) => errors.push(error.message))
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text())
+  })
+  await page.goto("${baseUrl}")
+  const lastRequest = () => page.evaluate(() => window.mailySearchRequests.at(-1))
+
+  // Without searchCapabilities only text search is offered.
+  const basic = page.getByTestId("readonly-mailbox")
+  await expect(basic.getByRole("button", { name: /Attachment compatibility/ })).toBeVisible()
+  await expect(basic.getByRole("textbox", { name: "Search mail", exact: true })).toBeVisible()
+  await expect(basic.getByRole("button", { name: "Advanced search", exact: true })).toHaveCount(0)
+
+  const mailbox = page.getByTestId("search-mailbox")
+  await expect(mailbox.getByRole("button", { name: /Attachment compatibility/ })).toBeVisible()
+  const trigger = mailbox.getByRole("button", { name: "Advanced search", exact: true })
+  await trigger.click()
+  const form = page.locator('[data-slot="popover-content"] form')
+  await expect(form.getByRole("textbox")).toHaveCount(1)
+  await expect(form.getByRole("checkbox")).toHaveCount(1)
+  // Pointer input inside the form must not move focus back to the search bar.
+  const from = form.getByRole("textbox", { name: "From", exact: true })
+  await from.click()
+  await expect(from).toBeFocused()
+  await from.fill("sender@example.com")
+  await form.getByText("Unread", { exact: true }).click()
+  await expect(form.getByRole("checkbox")).toBeChecked()
+  await expect(from).toHaveValue("sender@example.com")
+  await form.getByRole("button", { name: "Search", exact: true }).click()
+  await expect(form).toBeHidden()
+  await expect.poll(lastRequest).toEqual({
+    q: "from:sender@example.com is:unread",
+    search: { from: "sender@example.com", unread: true },
+  })
+
+  await page.evaluate(() => window.mailySetSearchCapabilities({ unread: true }))
+  await expect.poll(lastRequest).toEqual({ q: "is:unread", search: { unread: true } })
+  await trigger.click()
+  await expect(form.getByRole("textbox")).toHaveCount(0)
+  await expect(form.getByRole("checkbox")).toBeChecked()
+  await page.keyboard.press("Escape")
+  await expect(form).toBeHidden()
+
+  await page.evaluate(() => window.mailySetSearchCapabilities({}))
+  await expect(trigger).toHaveCount(0)
+  await expect.poll(lastRequest).toEqual({ search: {} })
+  await expect(mailbox.getByRole("button", { name: "Clear search", exact: true })).toHaveCount(0)
 
   await expect(page.locator("button button")).toHaveCount(0)
   expect(errors).toEqual([])

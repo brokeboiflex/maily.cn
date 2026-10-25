@@ -5,7 +5,11 @@ import {
   groupMailboxMessagesByThread,
 } from './conversations';
 import { getMailboxReplyAllRecipients } from './reply-all';
-import { buildMailboxSearchQuery } from './search';
+import {
+  buildMailboxSearchQuery,
+  resolveMailboxSearchFilters,
+  withEnabledSearchFilters,
+} from './search';
 
 describe('getMailboxReplyAllRecipients', () => {
   it('keeps original To and Cc placement and omits own aliases', () => {
@@ -82,6 +86,48 @@ describe('buildMailboxSearchQuery', () => {
         text: 'from:ana@example.com {to:lee OR cc:lee}',
       })
     ).toBe('from:ana@example.com {to:lee OR cc:lee}');
+  });
+});
+
+describe('mailbox search capabilities', () => {
+  it('enables only filters set to true, in form order', () => {
+    expect(resolveMailboxSearchFilters()).toEqual([]);
+    expect(
+      resolveMailboxSearchFilters({
+        unread: true,
+        from: true,
+        subject: false,
+        to: undefined,
+      })
+    ).toEqual(['from', 'unread']);
+  });
+
+  it('drops disabled filter values and keeps text, starred and labelId', () => {
+    expect(
+      withEnabledSearchFilters(
+        {
+          text: 'invoice',
+          from: 'ana@example.com',
+          to: 'team@example.com',
+          hasAttachments: false,
+          unread: true,
+          starred: true,
+          labelId: 'receipts',
+        },
+        ['to', 'unread']
+      )
+    ).toEqual({
+      text: 'invoice',
+      to: 'team@example.com',
+      unread: true,
+      starred: true,
+      labelId: 'receipts',
+    });
+  });
+
+  it('returns the same object when nothing is dropped', () => {
+    const query = { subject: 'Launch', starred: true };
+    expect(withEnabledSearchFilters(query, ['subject'])).toBe(query);
   });
 });
 

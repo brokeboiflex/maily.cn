@@ -39,6 +39,7 @@ Autosave, when the host enables it, must preserve the revision observed with edi
 | Drafts         | Optional `createDraft`, `updateDraft`, `sendDraft`, `discardDraft` and `sendMessage`; `draftCapabilities` withholds any of them at runtime. See below. |
 | Refresh        | Maily does not poll unless `pollIntervalMs` is set; call `refresh()` on the mailbox ref (`MailyMailboxHandle`) when host data changes.                 |
 | Folder actions | `messageActions` as an array is offered everywhere; a function of `{ surface, folder, labelId, searchScope, searching, messageIds }` decides per view. |
+| Search         | Text search is always offered; `searchCapabilities` enables each advanced filter the backend supports. See below.                                      |
 | Reply/forward  | `createComposeSeed(kind, message, context)` builds the composition; `defaultMailboxComposeSeed` is the conventional default.                           |
 
 Autosave is off unless the host sets `autosaveDelayMs`; it then waits that long after edits, and failures remain visible and require an explicit retry. New compose sessions show saved status only after an acknowledged write. Maily keeps no send receipts: a failed send stays open, and the host deduplicates by draft ID and revision, or by `idempotencyKey`. Attachments handed to `sendMessage` belong to the host from then on, even if the send fails. A composition handed to `sendMessage` never becomes a draft (no Save draft or autosave), so its retries go through `sendMessage` and the host can deduplicate them by key.
@@ -112,7 +113,71 @@ draft has attachments that cannot be edited here.”: saving re-sends attachment
 references, so editing it would drop them. Read-only drafts render as text
 (recipients, subject and body), not as disabled fields.
 
-The header select-all Checkbox covers the current page, and each conversation Checkbox covers its visible members. Structured search accepts text, sender, recipient, subject, date boundaries, unread, starred, attachment and label filters; the search-bar filter Popover stages common filters until Search is submitted. A search stays in the folder in view unless the host sets an all-mail `searchScope`, and it keeps the selected label.
+The header select-all Checkbox covers the current page, and each conversation Checkbox covers its visible members. Structured search accepts text, sender, recipient, subject, date boundaries, unread, starred, attachment and label filters; the search-bar filter Popover stages the enabled advanced filters until Search is submitted. A search stays in the folder in view unless the host sets an all-mail `searchScope`, and it keeps the selected label.
+
+## Search capabilities
+
+Text search is always available. Advanced filters are off until the host
+enables the ones its backend supports:
+
+```tsx
+<MailboxView
+  dataSource={dataSource}
+  searchCapabilities={{ from: true, subject: true, unread: true }}
+/>
+```
+
+| Filter           | Control             | `search` member  | `q` operator     |
+| ---------------- | ------------------- | ---------------- | ---------------- |
+| `from`           | From                | `from`           | `from:`          |
+| `to`             | To                  | `to`             | `to:`            |
+| `subject`        | Subject             | `subject`        | `subject:`       |
+| `after`          | After (YYYY/MM/DD)  | `after`          | `after:`         |
+| `before`         | Before (YYYY/MM/DD) | `before`         | `before:`        |
+| `hasAttachments` | Has attachments     | `hasAttachments` | `has:attachment` |
+| `unread`         | Unread              | `unread`         | `is:unread`      |
+
+- Only enabled filters get a control, in this order. With none enabled, the
+  advanced-search button is hidden and the search bar offers text only.
+- A disabled filter is never sent to `listMessages`, in `search` or `q`, even
+  when `searchFilters` or `defaultSearchFilters` carries a value for it. Such a
+  value does not count as an active search, so it does not apply an all-mail
+  `searchScope`.
+- When the capabilities change, the next read drops newly disabled filters.
+  Uncontrolled filter values are cleared (reported through
+  `onSearchFiltersChange` when given), so enabling a filter again starts it
+  empty. A controlled `searchFilters` value is the host's to update, like other
+  related controlled props; Maily ignores its disabled members until they are
+  enabled again. Submitting the form requests the value without them. When the
+  last filter is disabled, an open form closes.
+- Filtering stays with the backend. Maily sends the query and renders the
+  returned page; it never filters loaded rows itself. Text is forwarded as
+  typed, so a backend decides whether operators such as `from:` in text mean
+  anything.
+- `starred` and `labelId` are not form filters: label navigation sets
+  `labelId`, and a host may pass `starred` in `searchFilters`. Both pass through
+  unchanged.
+
+`MAILBOX_SEARCH_FILTERS` lists the filter names in form order.
+
+### Updating an existing install
+
+1. Update the mailbox source (or update `@maily-to/core`):
+
+   ```bash
+   npx shadcn@latest add @maily/maily-mailbox --overwrite
+   ```
+
+   The item's `registryDependencies` are unchanged and the search bar still
+   uses stock `button`, `input-group`, `input`, `popover`, `checkbox` and
+   `field`, so no new shadcn component is needed. `--overwrite` also rewrites
+   the stock items the mailbox depends on; review that diff and keep your own
+   versions of customized primitives.
+
+2. Pass `searchCapabilities` for the filters your backend supports. Without it,
+   the advanced-search button no longer appears.
+3. If you control `searchFilters`, remove disabled members when you change
+   `searchCapabilities`.
 
 ## Intentional adaptations
 
@@ -204,6 +269,7 @@ Do not switch a mounted value between controlled and uncontrolled modes.
 | `search`             | `onSearchChange`             | `defaultSearch`             |
 | `searchFilters`      | `onSearchFiltersChange`      | `defaultSearchFilters`      |
 | `searchScope`        | none: Maily never changes it | `folder`                    |
+| `searchCapabilities` | none: Maily never changes it | no advanced filters         |
 | `selectedLabelId`    | `onSelectedLabelIdChange`    | `defaultSelectedLabelId`    |
 | `selectedMessageId`  | `onSelectedMessageIdChange`  | `defaultSelectedMessageId`  |
 | `selectedMessageIds` | `onSelectedMessageIdsChange` | `defaultSelectedMessageIds` |

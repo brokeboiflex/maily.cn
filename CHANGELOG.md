@@ -48,6 +48,15 @@ Mailbox:
 - **`onSearchScopeChange` and `defaultSearchScope` are removed:** Maily never
   changes the search scope, so `searchScope` alone sets it (default
   `'folder'`).
+- **Advanced search filters are off by default.** Enable each filter your
+  backend supports with `searchCapabilities` (`from`, `to`, `subject`, `after`,
+  `before`, `hasAttachments`, `unread`). Only enabled filters get a control,
+  the advanced-search button is hidden when none is enabled, and disabled
+  values, including ones in `searchFilters` or `defaultSearchFilters`, are
+  never sent to `listMessages`. Text search is unchanged. To keep every filter:
+  `searchCapabilities={{ from: true, to: true, subject: true, after: true,
+before: true, hasAttachments: true, unread: true }}`. See
+  [search capabilities](docs/mailbox-workflows.md#search-capabilities).
 - **Smaller mailbox changes:** a host's undo token for `deleteForever` is
   offered like any other; label names have no length limit of Maily's own; the
   `react` action sends no value.
@@ -184,6 +193,8 @@ snapshot of every block's output now guards later changes.
 
 ### Added
 
+- Mailbox: `searchCapabilities`, with the `MailyMailboxSearchCapabilities` and
+  `MailyMailboxSearchFilter` types and `MAILBOX_SEARCH_FILTERS`.
 - Mailbox: `folders` chooses which folders the navigation shows;
   `sendMessage(draft)` sends a new composition without draft storage;
   `autosaveDelayMs`; a `MailyMailboxHandle` ref with `refresh()`;
@@ -237,6 +248,9 @@ snapshot of every block's output now guards later changes.
   it goes through `sendMessage` again, with the same `idempotencyKey` while
   its content is unchanged, and cannot become a second message.
 - A `refresh()` kept after the mailbox unmounts no longer calls the host.
+- The advanced-search form no longer closes when a field, checkbox or label in
+  it is clicked. It was rendered inside the search bar's `InputGroupAddon`,
+  whose click handler moved focus to the search input.
 - A pasted or dropped image redone while the host discards its upload no longer
   comes back with a revoked `blob:` source.
 - The Render preview is built only while it is shown: Design mode no longer

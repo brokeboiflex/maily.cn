@@ -442,6 +442,21 @@ Withdrawing an operation must keep the composer mounted and its unsaved content
 editable and guarded. Hosts change the prop, not `dataSource`. See
 [draft capabilities](docs/mailbox-workflows.md#draft-capabilities).
 
+## Search capabilities, 2026-10-25
+
+Text search is always available. Advanced filters (`from`, `to`, `subject`,
+`after`, `before`, `hasAttachments`, `unread`) are off unless
+`searchCapabilities` enables them. Render only enabled controls, hide the
+advanced-search trigger when none is enabled, and strip disabled members from
+both `search` and `q`, including controlled and default filter values. A
+capability change clears uncontrolled values; a controlled `searchFilters`
+value is the host's to coordinate, so a capability change does not call
+`onSearchFiltersChange` for it. Never filter
+loaded rows client-side. The form's `PopoverContent` stays outside
+`InputGroupAddon`: React bubbles portalled clicks through the component tree,
+and the addon's click handler focuses the search input and dismisses the form.
+See [search capabilities](docs/mailbox-workflows.md#search-capabilities).
+
 ## Production standards, 2026-10-23
 
 Package source passes the stock shadcn Vite template's ESLint config with zero

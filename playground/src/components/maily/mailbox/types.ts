@@ -8,7 +8,10 @@ import type { MailyMailboxContactSuggestion } from './contacts';
 import type { MailyMailboxDraftCapabilities } from './draft-capabilities';
 import type { MailyMailboxLabels } from './labels';
 import type { MailyMailboxMessageActionContext } from './message-actions';
-import type { MailyMailboxSearchQuery } from './search';
+import type {
+  MailyMailboxSearchCapabilities,
+  MailyMailboxSearchQuery,
+} from './search';
 
 /** Adapter callbacks may return a value or a Promise of it. */
 export type MaybePromise<T> = T | Promise<T>;
@@ -312,6 +315,13 @@ export type MailyMailboxViewProps = {
   search?: string;
   defaultSearch?: string;
   onSearchChange?: (search: string) => void;
+  /**
+   * Advanced filters the backend supports; each is off unless `true`. Only
+   * enabled filters get a control, and the advanced-search button is hidden
+   * when none is enabled. Disabled filter values are never sent to
+   * `listMessages`. Text search is always available.
+   */
+  searchCapabilities?: MailyMailboxSearchCapabilities;
   searchFilters?: Omit<MailyMailboxSearchQuery, 'text'>;
   defaultSearchFilters?: Omit<MailyMailboxSearchQuery, 'text'>;
   onSearchFiltersChange?: (

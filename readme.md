@@ -321,6 +321,22 @@ discarded when those operations are available. Change the prop rather than the
 data source when access changes, so open compositions keep their content. See
 [draft capabilities](docs/mailbox-workflows.md#draft-capabilities).
 
+Advanced search filters are capability-gated too. Text search is always
+available; enable each filter your backend implements (`from`, `to`,
+`subject`, `after`, `before`, `hasAttachments`, `unread`), and Maily shows only
+those controls and sends only their values to `listMessages`:
+
+```tsx
+<MailboxView
+  dataSource={dataSource}
+  searchCapabilities={{ from: true, subject: true, unread: true }}
+/>
+```
+
+Without `searchCapabilities` the advanced-search button is hidden. Filtering
+stays with your backend: Maily never filters loaded rows itself. See
+[search capabilities](docs/mailbox-workflows.md#search-capabilities).
+
 The reader displays every entry in `getMessage().attachments` below the body,
 with its filename, optional MIME type, and size in bytes formatted for display.
 Metadata-only attachments work without any additional handler. Empty attachment

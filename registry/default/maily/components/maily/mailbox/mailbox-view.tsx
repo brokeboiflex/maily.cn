@@ -125,6 +125,8 @@ import {
 import type { MailyMailboxMessageActionContext } from './message-actions';
 import {
   buildMailboxSearchQuery,
+  resolveMailboxSearchFilters,
+  withEnabledSearchFilters,
   type MailyMailboxSearchQuery,
 } from './search';
 import {
@@ -690,12 +692,40 @@ function MailboxSession(
     () => props.searchFilters,
     [filtersKey]
   );
-  const [searchFields, setSearchFields] = useControllableState(
+  // Advanced filters the host's backend supports; all are off by default.
+  const searchFiltersKey = resolveMailboxSearchFilters(
+    props.searchCapabilities
+  ).join(' ');
+  const enabledSearchFilters = useKeyedValue(
+    () => resolveMailboxSearchFilters(props.searchCapabilities),
+    [searchFiltersKey]
+  );
+  const [requestedSearchFields, setSearchFields] = useControllableState(
     controlledSearchFilters,
-    props.defaultSearchFilters ?? {},
+    withEnabledSearchFilters(
+      props.defaultSearchFilters ?? {},
+      enabledSearchFilters
+    ),
     props.onSearchFiltersChange
   );
-  const [advancedSearchOpen, setAdvancedSearchOpen] = React.useState(false);
+  // Disabled filters never reach the UI or the data source, even when a
+  // controlled value still carries them. Keyed by content, so clearing them
+  // from local state does not start another read.
+  const enabledSearchFields = withEnabledSearchFilters(
+    requestedSearchFields,
+    enabledSearchFilters
+  );
+  const searchFields = useKeyedValue(
+    () => enabledSearchFields,
+    [JSON.stringify(enabledSearchFields)]
+  );
+  const advancedSearchAvailable = enabledSearchFilters.length > 0;
+  const searchClearable = !!search || Object.keys(searchFields).length > 0;
+  // A hidden trigger closes the form, and it stays closed when one returns.
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useResettableState(
+    () => false,
+    [advancedSearchAvailable]
+  );
   const [searchDraft, setSearchDraft] = React.useState<MailyMailboxSearchQuery>(
     {}
   );
@@ -1563,6 +1593,18 @@ function MailboxSession(
     setSearchFields,
     setSelectedLabelId,
   ]);
+
+  // Narrowed capabilities clear the values they disabled, so a filter enabled
+  // again starts empty. The host coordinates a controlled value itself.
+  const previousSearchFilters = React.useRef(enabledSearchFilters);
+  React.useEffect(() => {
+    if (previousSearchFilters.current === enabledSearchFilters) return;
+    previousSearchFilters.current = enabledSearchFilters;
+    if (searchFiltersControlled) return;
+    setSearchFields((current) =>
+      withEnabledSearchFilters(current, enabledSearchFilters)
+    );
+  }, [enabledSearchFilters, searchFiltersControlled, setSearchFields]);
 
   const previousQuery = React.useRef(queryKey);
   React.useEffect(() => {
@@ -2565,9 +2607,19 @@ function MailboxSession(
             </Sheet>
           )}
           <div className="min-w-0 flex-1 p-2">
-            <InputGroup className="bg-muted/30 h-11">
-              <InputGroupAddon>
-                <IconPlaceholder
+            {/* The form renders outside InputGroupAddon: React bubbles clicks from
+                portalled content through the component tree, and the addon's
+                click handler would focus the search input and dismiss it. */}
+            <Popover
+              open={advancedSearchOpen}
+              onOpenChange={(open) => {
+                if (open) setSearchDraft(searchFields);
+                setAdvancedSearchOpen(open);
+              }}
+            >
+              <InputGroup className="bg-muted/30 h-11">
+                <InputGroupAddon>
+                  <IconPlaceholder
   lucide="Search"
   tabler="IconSearch"
   hugeicons="Search01Icon"
@@ -2575,31 +2627,32 @@ function MailboxSession(
   remixicon="RiSearchLine"
   className="size-4"
 />
-              </InputGroupAddon>
-              <InputGroupInput
-                value={search}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  setSearch(event.target.value);
-                }}
-                placeholder={t('searchPlaceholder')}
-                aria-label={t('searchPlaceholder')}
-                className="h-10 min-w-0 px-1.5 py-0 text-base"
-              />
-              <InputGroupAddon align="inline-end">
-                {(search || Object.keys(searchFields).length > 0) && (
-                  <MailboxIconButton
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="size-11"
-                    aria-label={t('search.clear')}
-                    onClick={() => {
-                      setSearch('');
-                      if (searchControlled) return;
-                      setSearchFields({});
-                    }}
-                  >
-                    <IconPlaceholder
+                </InputGroupAddon>
+                <InputGroupInput
+                  value={search}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setSearch(event.target.value);
+                  }}
+                  placeholder={t('searchPlaceholder')}
+                  aria-label={t('searchPlaceholder')}
+                  className="h-10 min-w-0 px-1.5 py-0 text-base"
+                />
+                {(searchClearable || advancedSearchAvailable) && (
+                  <InputGroupAddon align="inline-end">
+                    {searchClearable && (
+                      <MailboxIconButton
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="size-11"
+                        aria-label={t('search.clear')}
+                        onClick={() => {
+                          setSearch('');
+                          if (searchControlled) return;
+                          setSearchFields({});
+                        }}
+                      >
+                        <IconPlaceholder
   lucide="X"
   tabler="IconX"
   hugeicons="Cancel01Icon"
@@ -2607,24 +2660,18 @@ function MailboxSession(
   remixicon="RiCloseLine"
   className="size-4"
 />
-                  </MailboxIconButton>
-                )}
-                <Popover
-                  open={advancedSearchOpen}
-                  onOpenChange={(open) => {
-                    if (open) setSearchDraft(searchFields);
-                    setAdvancedSearchOpen(open);
-                  }}
-                >
-                  <PopoverTrigger asChild>
-                    <MailboxIconButton
-                      type="button"
-                      size="icon"
-                      variant="ghost"
-                      className="size-11"
-                      aria-label={t('search.advanced')}
-                    >
-                      <IconPlaceholder
+                      </MailboxIconButton>
+                    )}
+                    {advancedSearchAvailable && (
+                      <PopoverTrigger asChild>
+                        <MailboxIconButton
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="size-11"
+                          aria-label={t('search.advanced')}
+                        >
+                          <IconPlaceholder
   lucide="Filter"
   tabler="IconFilter"
   hugeicons="FilterIcon"
@@ -2632,23 +2679,61 @@ function MailboxSession(
   remixicon="RiFilter3Line"
   className="size-4"
 />
-                    </MailboxIconButton>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    align="start"
-                    className="w-80 max-w-[calc(100vw-2rem)] p-4"
+                        </MailboxIconButton>
+                      </PopoverTrigger>
+                    )}
+                  </InputGroupAddon>
+                )}
+                {refreshing && (
+                  <InputGroupAddon align="inline-end">
+                    <IconPlaceholder
+  lucide="LoaderCircleIcon"
+  tabler="IconLoader2"
+  hugeicons="Loading03Icon"
+  phosphor="CircleNotch"
+  remixicon="RiLoader2Line"
+  className="size-4 animate-spin"
+                      aria-label={t('refresh')}
+/>
+                  </InputGroupAddon>
+                )}
+              </InputGroup>
+              {advancedSearchAvailable && (
+                <PopoverContent
+                  align="start"
+                  className="w-80 max-w-[calc(100vw-2rem)] p-4"
+                >
+                  <form
+                    className="space-y-3"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setSearchFields(
+                        withEnabledSearchFilters(
+                          searchDraft,
+                          enabledSearchFilters
+                        )
+                      );
+                      setAdvancedSearchOpen(false);
+                    }}
                   >
-                    <form
-                      className="space-y-3"
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        setSearchFields(searchDraft);
-                        setAdvancedSearchOpen(false);
-                      }}
-                    >
-                      {(
-                        ['from', 'to', 'subject', 'after', 'before'] as const
-                      ).map((key) => (
+                    {enabledSearchFilters.map((key) =>
+                      key === 'hasAttachments' || key === 'unread' ? (
+                        <Field key={key} orientation="horizontal">
+                          <Checkbox
+                            id={`${labelInputId}-search-${key}`}
+                            checked={!!searchDraft[key]}
+                            onCheckedChange={(checked) => {
+                              setSearchDraft((current) => ({
+                                ...current,
+                                [key]: checked === true || undefined,
+                              }));
+                            }}
+                          />
+                          <FieldLabel htmlFor={`${labelInputId}-search-${key}`}>
+                            {t(`search.${key}`)}
+                          </FieldLabel>
+                        </Field>
+                      ) : (
                         <Field
                           key={key}
                           orientation="horizontal"
@@ -2670,47 +2755,17 @@ function MailboxSession(
                             }}
                           />
                         </Field>
-                      ))}
-                      {(['hasAttachments', 'unread'] as const).map((key) => (
-                        <Field key={key} orientation="horizontal">
-                          <Checkbox
-                            id={`${labelInputId}-search-${key}`}
-                            checked={!!searchDraft[key]}
-                            onCheckedChange={(checked) => {
-                              setSearchDraft((current) => ({
-                                ...current,
-                                [key]: checked === true || undefined,
-                              }));
-                            }}
-                          />
-                          <FieldLabel htmlFor={`${labelInputId}-search-${key}`}>
-                            {t(`search.${key}`)}
-                          </FieldLabel>
-                        </Field>
-                      ))}
-                      <div className="flex justify-end">
-                        <Button type="submit" size="sm">
-                          {t('search.submit')}
-                        </Button>
-                      </div>
-                    </form>
-                  </PopoverContent>
-                </Popover>
-              </InputGroupAddon>
-              {refreshing && (
-                <InputGroupAddon align="inline-end">
-                  <IconPlaceholder
-  lucide="LoaderCircleIcon"
-  tabler="IconLoader2"
-  hugeicons="Loading03Icon"
-  phosphor="CircleNotch"
-  remixicon="RiLoader2Line"
-  className="size-4 animate-spin"
-                    aria-label={t('refresh')}
-/>
-                </InputGroupAddon>
+                      )
+                    )}
+                    <div className="flex justify-end">
+                      <Button type="submit" size="sm">
+                        {t('search.submit')}
+                      </Button>
+                    </div>
+                  </form>
+                </PopoverContent>
               )}
-            </InputGroup>
+            </Popover>
           </div>
         </div>
         {pendingNavigation && (

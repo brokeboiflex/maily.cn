@@ -126,6 +126,7 @@ it('honors default state and does not clear an off-page controlled selection dur
       initialFolder: 'sent',
       defaultSearch: 'invoice',
       searchScope: 'allMail',
+      searchCapabilities: { from: true },
       searchFilters: { from: 'sender@example.com' },
       selectedMessageId: 'off-page',
       selectedMessageIds: ['off-page'],
@@ -146,6 +147,7 @@ it('honors default state and does not clear an off-page controlled selection dur
       initialFolder: 'sent',
       defaultSearch: 'invoice',
       searchScope: 'allMail',
+      searchCapabilities: { from: true },
       searchFilters: { from: 'sender@example.com' },
       selectedMessageId: 'off-page',
       selectedMessageIds: ['off-page'],
@@ -199,6 +201,7 @@ it('rejects controlled search without changing its scope, and accepts external f
     await f.render({
       search: 'invoice',
       searchScope: 'allMail',
+      searchCapabilities: { unread: true },
       searchFilters: { unread: true },
       selectedLabelId: 'receipts',
       onSearchChange,

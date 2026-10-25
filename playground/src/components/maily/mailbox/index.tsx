@@ -32,7 +32,12 @@ export {
   type MailyMailboxReplyAllInput,
   type MailyMailboxReplyAllRecipients,
 } from './reply-all';
-export type { MailyMailboxSearchQuery } from './search';
+export {
+  MAILBOX_SEARCH_FILTERS,
+  type MailyMailboxSearchCapabilities,
+  type MailyMailboxSearchFilter,
+  type MailyMailboxSearchQuery,
+} from './search';
 export type {
   MailyMailboxFolder,
   MailyMailboxLabel,

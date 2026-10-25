@@ -43,6 +43,7 @@ import {
   type MailyMailboxMessageAction,
   type MailyMailboxMessageActionContext,
   type MailyMailboxMessageDetail,
+  type MailyMailboxSearchCapabilities,
   type MailyMailboxSearchQuery,
   type MailyMailboxLabel,
 } from "@/components/maily/mailbox"
@@ -505,6 +506,18 @@ const playgroundLabels: MailyMailboxLabel[] = [
   { id: "label-promotions", name: "Promotions" },
   { id: "label-projects", name: "Projects" },
 ]
+
+// searchMatches below implements every advanced filter, so all are enabled.
+// A backend without one of them leaves it out (or sets it to false).
+const playgroundSearchCapabilities: MailyMailboxSearchCapabilities = {
+  from: true,
+  to: true,
+  subject: true,
+  after: true,
+  before: true,
+  hasAttachments: true,
+  unread: true,
+}
 
 function searchMatches(
   message: MailyMailboxMessageDetail,
@@ -1251,6 +1264,7 @@ export function App() {
                     mailboxView.current.labelId = labelId
                   }}
                   messageActions={playgroundMessageActionsFor}
+                  searchCapabilities={playgroundSearchCapabilities}
                   pageSize={2}
                   autosaveDelayMs={1000}
                   labels={polish ? polishMailboxLabels : undefined}

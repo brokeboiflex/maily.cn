@@ -15,6 +15,10 @@ examples. The editor is seeded with editable content; on narrow screens, the
 mailbox switches to a folder menu and one content page instead of widening the
 page. Opening a message replaces the list; Back restores the list.
 
+The mailbox enables every advanced search filter through
+`searchCapabilities`, because its in-memory adapter implements them all; the
+adapter, not Maily, applies the filters.
+
 Open “SMTP queue cleared” to check attachment metadata and individual downloads.
 Its adapter saves two actual text files, including an empty error report, through
 `dataSource.downloadAttachment`. This is local fixture data; production hosts
