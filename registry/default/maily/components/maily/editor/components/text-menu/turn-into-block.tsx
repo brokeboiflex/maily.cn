@@ -61,6 +61,10 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
                 size="sm"
                 className="h-7! gap-1 px-1.5"
                 aria-label={t('turnInto.label')}
+                // Dropdowns open on pointerdown, before the browser focuses
+                // their trigger. Move focus inside the bubble first so TipTap
+                // does not detach its anchor when the portal takes focus.
+                onPointerDown={(event) => event.currentTarget.focus()}
               >
                 <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">
                   {activeIcon}

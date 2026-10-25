@@ -1391,7 +1391,6 @@ function MailboxSession(
     setNavigationOpen(false);
     composeDirtyRef.current = false;
     setComposeOwned(false);
-    messagesGeneration.current += 1;
     composeDraftRef.current = null;
     composeRevisionRef.current = undefined;
     setFolder(next);

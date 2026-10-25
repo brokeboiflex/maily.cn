@@ -117,6 +117,41 @@ it('requests controlled navigation and reader selection without accepting a reje
   }
 });
 
+it('finishes loading after the host accepts a folder change', async () => {
+  const f = fixture();
+  try {
+    await f.render({ folder: 'inbox' });
+    await f.click('Sent');
+    await f.render({ folder: 'sent' });
+    expect(f.container.textContent).not.toContain('Loading');
+    expect(f.container.textContent).toContain('First subject');
+  } finally {
+    await f.close();
+  }
+});
+
+it('does not cancel an in-flight read when the active folder is selected again', async () => {
+  const f = fixture();
+  let resolve!: (
+    value: Awaited<ReturnType<MailyMailboxDataSource['listMessages']>>
+  ) => void;
+  f.listMessages.mockImplementation(
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      })
+  );
+  try {
+    await f.render({ folder: 'inbox' });
+    await f.click('Inbox');
+    await act(async () => resolve({ items: [f.row], nextCursor: null }));
+    expect(f.container.textContent).not.toContain('Loading');
+    expect(f.container.textContent).toContain('First subject');
+  } finally {
+    await f.close();
+  }
+});
+
 it('honors default state and does not clear an off-page controlled selection during equivalent query rerenders', async () => {
   const f = fixture();
   const onSearchFiltersChange = vi.fn();
