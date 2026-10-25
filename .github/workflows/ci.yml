@@ -30,6 +30,17 @@ jobs:
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
 
+      # Formatting covers playground files, whose Tailwind Prettier plugin
+      # loads playground/src/index.css and the packages it imports.
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.4
+
+      - name: Install playground dependencies
+        working-directory: playground
+        run: bun install --frozen-lockfile
+
       - name: Lint (primitive audit and stock shadcn ESLint rules)
         run: pnpm lint
 
