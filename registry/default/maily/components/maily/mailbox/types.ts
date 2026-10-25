@@ -1,3 +1,4 @@
+import type { Calendar } from '@/components/ui/calendar';
 import type { EditorProps } from '../editor';
 import type {
   MailyMailboxComposeSeed,
@@ -147,8 +148,6 @@ export type MailyMailboxComposeValues = {
   html?: string | null;
   attachments?: MailyMailboxUploadedAttachment[];
 };
-
-export type MailyMailboxComposeBodyMode = 'plainText' | 'mailyEditor';
 
 export type MailyMailboxMessageAction =
   | 'archive'
@@ -322,6 +321,11 @@ export type MailyMailboxViewProps = {
    * `listMessages`. Text search is always available.
    */
   searchCapabilities?: MailyMailboxSearchCapabilities;
+  /** Host-owned calendar language, accessible labels and date formatting. */
+  searchCalendarProps?: Pick<
+    React.ComponentProps<typeof Calendar>,
+    'locale' | 'labels' | 'formatters' | 'weekStartsOn' | 'dir'
+  >;
   searchFilters?: Omit<MailyMailboxSearchQuery, 'text'>;
   defaultSearchFilters?: Omit<MailyMailboxSearchQuery, 'text'>;
   onSearchFiltersChange?: (
@@ -365,8 +369,7 @@ export type MailyMailboxViewProps = {
   pageSize?: number;
   contactSuggestions?: MailyMailboxContactSuggestion[];
   contactSuggestionLimit?: number;
-  defaultComposeBodyMode?: MailyMailboxComposeBodyMode;
-  allowComposeBodyModeSwitch?: boolean;
+  /** Editor customization; variable extensions are excluded in mailbox compositions. */
   composeEditorProps?: Omit<
     EditorProps,
     'contentHtml' | 'contentJson' | 'onCreate' | 'onUpdate'

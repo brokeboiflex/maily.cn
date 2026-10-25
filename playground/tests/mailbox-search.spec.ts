@@ -23,15 +23,28 @@ test("advanced search stays open while editing and filters through the adapter",
     .getByRole("button", { name: "Advanced search", exact: true })
     .click()
   const form = page.locator('[data-slot="popover-content"] form')
-  for (const name of [
-    "From",
-    "To",
-    "Subject",
-    "After (YYYY/MM/DD)",
-    "Before (YYYY/MM/DD)",
-  ]) {
+  for (const name of ["From", "To", "Subject"]) {
     await expect(form.getByRole("textbox", { name, exact: true })).toBeVisible()
   }
+  await expect(form.locator('button[id$="-search-after"]')).toBeVisible()
+  await expect(form.locator('button[id$="-search-before"]')).toBeVisible()
+  await form.locator('button[id$="-search-after"]').click()
+  const calendar = page.locator('[data-slot="calendar"]')
+  await expect(calendar).toBeVisible()
+  const day = calendar
+    .locator("button[data-day]")
+    .filter({ hasText: /^15$/ })
+    .first()
+  await day.click()
+  await expect(calendar).toBeHidden()
+  await expect(form.locator('button[id$="-search-after"]')).not.toContainText(
+    "Choose date"
+  )
+  await form.locator('button[id$="-search-after"]').click()
+  await page.getByRole("button", { name: "Clear date", exact: true }).click()
+  await expect(form.locator('button[id$="-search-after"]')).toHaveText(
+    "Choose date"
+  )
   const attachments = form.getByRole("checkbox", { name: "Has attachments" })
   await expect(attachments).toBeVisible()
   await expect(form.getByRole("checkbox", { name: "Unread" })).toBeVisible()

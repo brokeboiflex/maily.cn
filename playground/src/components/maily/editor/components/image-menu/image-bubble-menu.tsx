@@ -11,6 +11,7 @@ import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
 import { Separator } from '@/components/ui/separator';
 import { LinkInputPopover } from '../ui/link-input-popover';
+import { useImageUploadOptions } from '../../extensions/image-upload/image-upload';
 import { Select } from '../ui/select';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ImageSize } from './image-size';
@@ -33,6 +34,7 @@ const RADIUS_LABEL_KEY: Record<string, LabelKey> = {
 };
 
 export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
+  const imageUpload = useImageUploadOptions(props.editor);
   const { editor, appendTo, ...menuProps } = props;
 
   const state = useImageState(editor);
@@ -132,6 +134,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
 />}
             editor={editor}
             isVariable={state.isSrcVariable}
+            imageUpload={imageUpload}
           />
 
           {state.isImageActive && (
@@ -201,7 +204,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   editor
                     ?.chain()
                     .updateAttributes('image', {
-                      width: String(width),
+                      width: value ? String(width) : 'auto',
                       ...(shouldUpdateHeight
                         ? {
                             height: String(
@@ -238,7 +241,7 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
                   editor
                     ?.chain()
                     .updateAttributes('image', {
-                      height: String(height),
+                      height: value ? String(height) : 'auto',
                       ...(shouldUpdateWidth
                         ? {
                             width: String(
@@ -274,8 +277,6 @@ export function ImageBubbleMenu(props: EditorBubbleMenuProps) {
             </div>
           </>
         )}
-
-        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

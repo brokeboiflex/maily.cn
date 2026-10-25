@@ -138,6 +138,7 @@ export function ColorPicker(props: ColorPickerProps) {
           />
           <InputGroup className="mt-4">
             <HexColorInput
+              aria-label={t('colorPicker.hexColor')}
               alpha={true}
               color={color}
               onChange={handleColorChange}

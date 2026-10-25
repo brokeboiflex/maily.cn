@@ -172,7 +172,7 @@ export function ButtonView(props: NodeViewProps) {
           active={props.selected && editor.isEditable}
           align={popoverAlign}
           side="top"
-          className="w-max rounded-lg p-0.5!"
+          className="w-max gap-1 p-1"
           sideOffset={8}
         >
           <TooltipProvider>
@@ -333,9 +333,6 @@ export function ButtonView(props: NodeViewProps) {
                   }}
                 />
               </div>
-
-              <Separator orientation="vertical" />
-
               <ShowPopover
                 showIfKey={showIfKey}
                 onShowIfKeyValueChange={(value) => {

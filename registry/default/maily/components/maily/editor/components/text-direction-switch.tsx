@@ -76,15 +76,11 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="flex w-max gap-0.5 rounded-lg p-0.5!"
+        className="w-max gap-1 p-1"
         sideOffset={8}
         align="center"
       >
-        <ToggleGroupCompat
-          selectionMode="single"
-          value={direction}
-          className="gap-0.5"
-        >
+        <ToggleGroupCompat selectionMode="single" value={direction} spacing={1}>
           {Object.entries(directions).map(([key, value]) => {
             return (
               <Tooltip key={key}>
@@ -97,7 +93,7 @@ export function TextDirectionSwitch(props: TextDirectionSwitchProps) {
                         onDirectionChange(key as AllowedTextDirection)
                       }
                       aria-label={value.tooltip}
-                      className="size-7! min-w-7! px-2.5"
+                      className="size-7! min-w-7! px-0"
                       type="button"
                     >
                       {value.icon}

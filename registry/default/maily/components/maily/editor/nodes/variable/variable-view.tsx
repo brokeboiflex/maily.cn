@@ -112,7 +112,7 @@ export function VariableView(props: NodeViewProps) {
           align="start"
           side="bottom"
           className={cn(
-            'max-w-[calc(100vw-2rem)] p-3',
+            'max-w-[calc(100vw-2rem)]',
             hasVariableChoices ? 'w-[28rem]' : 'w-80'
           )}
           sideOffset={8}

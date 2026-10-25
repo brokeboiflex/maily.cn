@@ -59,7 +59,7 @@ export function TurnIntoBlock(props: TurnIntoBlockProps) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="size-7! gap-1 px-1.5"
+                className="h-7! gap-1 px-1.5"
                 aria-label={t('turnInto.label')}
               >
                 <span className="flex size-3 items-center justify-center [&_svg]:size-3 [&_svg]:shrink-0 [&_svg]:stroke-[2.5]">

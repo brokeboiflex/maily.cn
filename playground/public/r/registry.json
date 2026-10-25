@@ -23,7 +23,8 @@
         "input-group",
         "command",
         "badge",
-        "collapsible"
+        "collapsible",
+        "field"
       ],
       "dependencies": [
         "@floating-ui/dom@^1.8.0",
@@ -759,7 +760,7 @@
         "@maily/maily-editor",
         "button",
         "input",
-        "textarea",
+        "toggle",
         "tooltip",
         "dropdown-menu",
         "popover",
@@ -774,7 +775,8 @@
         "avatar",
         "field",
         "label",
-        "empty"
+        "empty",
+        "calendar"
       ],
       "dependencies": [
         "cn"
@@ -836,6 +838,11 @@
           "target": "@components/maily/mailbox/reply-all.ts"
         },
         {
+          "path": "registry/default/maily/components/maily/mailbox/search-date-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/search-date-picker.tsx"
+        },
+        {
           "path": "registry/default/maily/components/maily/mailbox/search.ts",
           "type": "registry:component",
           "target": "@components/maily/mailbox/search.ts"
@@ -851,7 +858,7 @@
           "target": "@components/maily/mailbox/use-controllable-state.ts"
         }
       ],
-      "docs": "Mailbox usage:\n\nimport { MailboxView } from '@/components/maily/mailbox'\n\nThis item installs the editor dependency because rich compose mode\nembeds the Maily Editor."
+      "docs": "Mailbox usage:\n\nimport { MailboxView } from '@/components/maily/mailbox'\n\nThis item installs the editor dependency because the compose screen\nembeds the Maily Editor."
     },
     {
       "name": "maily-render",
@@ -954,7 +961,8 @@
         "avatar",
         "field",
         "label",
-        "empty"
+        "empty",
+        "calendar"
       ],
       "dependencies": [
         "@antfu/utils@^9.3.0",
@@ -1734,6 +1742,11 @@
           "path": "registry/default/maily/components/maily/mailbox/reply-all.ts",
           "type": "registry:component",
           "target": "@components/maily/mailbox/reply-all.ts"
+        },
+        {
+          "path": "registry/default/maily/components/maily/mailbox/search-date-picker.tsx",
+          "type": "registry:component",
+          "target": "@components/maily/mailbox/search-date-picker.tsx"
         },
         {
           "path": "registry/default/maily/components/maily/mailbox/search.ts",

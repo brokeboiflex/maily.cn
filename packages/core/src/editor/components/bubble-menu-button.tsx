@@ -33,7 +33,7 @@ const BubbleMenuButtonControl = forwardRef<
   BubbleMenuButtonControlProps
 >(({ item, className, ...triggerProps }, ref) => {
   const controlClassName = cn(
-    'size-7! px-2.5 disabled:cursor-not-allowed',
+    'size-7! min-w-7! px-0 disabled:cursor-not-allowed',
     item?.className,
     className
   );

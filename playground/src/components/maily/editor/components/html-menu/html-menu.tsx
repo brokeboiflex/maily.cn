@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipContent,
@@ -111,7 +110,6 @@ export function HTMLBubbleMenu(props: EditorBubbleMenuProps) {
             </Tooltip>
           </TabsList>
         </Tabs>
-        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

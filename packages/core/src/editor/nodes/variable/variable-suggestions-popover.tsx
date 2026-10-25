@@ -149,9 +149,17 @@ export const VariableSuggestionsPopover: VariableSuggestionsPopoverType =
               {t('variableMenu.navigate')}
             </span>
           </div>
-          <Kbd>
-            <CornerDownLeftIcon className="size-3 stroke-[2.5]" />
-          </Kbd>
+          <div className="flex items-center gap-1">
+            <Kbd>
+              <CornerDownLeftIcon
+                aria-hidden="true"
+                className="size-3 stroke-[2.5]"
+              />
+            </Kbd>
+            <span className="text-muted-foreground text-xs">
+              {t('variableMenu.select')}
+            </span>
+          </div>
         </div>
       </Command>
     );

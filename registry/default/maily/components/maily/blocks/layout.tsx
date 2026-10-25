@@ -2,6 +2,8 @@ import { IconPlaceholder } from "@/components/icon-placeholder"
 import type { BlockItem } from './types';
 import type { TranslateFn } from '../editor/i18n';
 import { DEFAULT_SPACER_HEIGHT } from '../editor/nodes/spacer';
+import { getVariableOptions } from '../editor/utils/node-options';
+import { hasVariables } from '../editor/utils/variable';
 
 export const columns = (t: TranslateFn): BlockItem => ({
   title: t('block.columns.title'),
@@ -47,6 +49,8 @@ export const repeat = (t: TranslateFn): BlockItem => ({
   title: t('block.repeat.title'),
   description: t('block.repeat.description'),
   searchTerms: ['repeat', 'for', 'loop'],
+  render: (editor) =>
+    hasVariables(getVariableOptions(editor).variables) ? true : null,
   icon: <IconPlaceholder
   lucide="Repeat2"
   tabler="IconRepeat"

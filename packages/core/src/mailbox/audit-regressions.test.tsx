@@ -160,7 +160,7 @@ describe('post-repair audit regressions', () => {
       })
     );
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.upload(new File(['notes'], 'notes.txt'));
       await view.clickText('Save draft');
       await view.render({ dataSource: source() });
@@ -212,7 +212,7 @@ describe('post-repair audit regressions', () => {
       account: { id: scope, address: 'me@example.com' },
     });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Probe check');
       await view.clickText('Send');
       expect(sendDraft).toHaveBeenCalledTimes(1);
@@ -251,7 +251,7 @@ describe('post-repair audit regressions', () => {
       expect(onError).toHaveBeenCalledWith(expect.any(Error), 'detail');
       expect(view.container.textContent).toContain('Original body');
       await view.click('[aria-label="Back to list"]');
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.upload(new File(['x'], 'x.txt'));
       await view.clickText('Discard');
       expect(onError).toHaveBeenCalledWith(
@@ -390,7 +390,7 @@ describe('adapter contract hardening', () => {
       await act(async () => projects!.click());
       await flush();
       expect(adapter.applied).toEqual([['message-1']]);
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.upload(new File(['a'], 'a.txt'));
       expect(adapter.uploads).toEqual(['a.txt']);
       expect(view.container.textContent).toContain('a.txt');
@@ -408,7 +408,7 @@ describe('adapter contract hardening', () => {
       .mockImplementation(() => ({ id: 'draft-1' }));
     const view = await mount(source({ createDraft }));
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Retry me');
       await view.clickText('Save draft');
       await view.clickText('Save draft');
@@ -418,7 +418,7 @@ describe('adapter contract hardening', () => {
       expect(first).toMatch(/^[0-9a-f-]{36}$/);
       expect(second).toBe(first);
       await view.click('[aria-label="Back to list"]');
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Another message');
       await view.clickText('Save draft');
       expect(createDraft.mock.calls[2][0].idempotencyKey).not.toBe(first);
@@ -436,7 +436,7 @@ describe('adapter contract hardening', () => {
       .mockImplementation(() => ({ id: 'draft-1' }));
     const view = await mount(source({ createDraft }));
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'First version');
       await view.clickText('Save draft');
       await view.edit('input[name="subject"]', 'Edited version');
@@ -458,7 +458,7 @@ describe('adapter contract hardening', () => {
       autosaveDelayMs: 1000,
     });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       const subject = view.find('input[name="subject"]') as HTMLInputElement;
       subject.focus();
       await view.edit('input[name="subject"]', 'Typing on');

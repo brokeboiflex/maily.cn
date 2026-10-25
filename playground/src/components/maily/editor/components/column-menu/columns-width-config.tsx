@@ -57,7 +57,7 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="w-[calc(100vw-1rem)] max-w-[300px] rounded-lg p-0.5!"
+        className="w-[calc(100vw-1rem)] max-w-[300px]"
         sideOffset={8}
         align="center"
       >
@@ -91,7 +91,7 @@ export function ColumnsWidthConfig(props: ColumnsWidthConfigProps) {
         <Separator orientation="horizontal" className="my-0.5" />
 
         <div
-          className="grid gap-1 p-1"
+          className="grid gap-2"
           style={{ gridTemplateColumns: `repeat(${columnsCount}, 1fr)` }}
         >
           {Array.from({ length: columnsCount }).map((_, index) => {

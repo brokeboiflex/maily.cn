@@ -87,9 +87,6 @@ export function ColumnsBubbleMenuContent(props: ColumnsBubbleMenuProps) {
             deleteNode(editor, 'columns');
           }}
         />
-
-        <Separator orientation="vertical" />
-
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

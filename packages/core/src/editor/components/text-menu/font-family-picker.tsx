@@ -430,10 +430,12 @@ export function FontFamilyPicker({
           </div>
 
           {catalog.status === 'loading' || catalog.status === 'idle' ? (
-            <div className="space-y-1 p-2" aria-label={t('fontPicker.loading')}>
+            <div className="space-y-1 p-2" role="status">
+              <span className="sr-only">{t('fontPicker.loading')}</span>
               {Array.from({ length: 6 }).map((_, index) => (
                 <div
                   key={index}
+                  aria-hidden="true"
                   className="bg-muted/60 h-[54px] animate-pulse rounded-md"
                 />
               ))}

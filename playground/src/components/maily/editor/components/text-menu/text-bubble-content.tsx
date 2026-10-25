@@ -125,7 +125,7 @@ export function TextBubbleContent(props: TextBubbleContentProps) {
                   onClick={() => item.command?.()}
                   aria-label={item.tooltip ?? item.name}
                   disabled={item.disbabled}
-                  className="size-7! min-w-7! px-2.5 disabled:cursor-not-allowed"
+                  className="size-7! min-w-7! px-0 disabled:cursor-not-allowed"
                   type="button"
                 >
                   {item.icon ? (

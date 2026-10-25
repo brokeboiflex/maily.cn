@@ -3,6 +3,16 @@
 import * as React from 'react';
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
+import { createPortal } from 'react-dom';
+import { Extension, type Editor as TiptapEditor } from '@tiptap/core';
+import {
+  VariableExtension,
+  VariablePluginKey,
+} from '../editor/nodes/variable/variable';
+import { getVariableOptions } from '../editor/utils/node-options';
+import { repeat } from '../blocks/layout';
+import { englishTranslator } from '../editor/i18n';
+import { Input } from '../editor/components/input';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -171,6 +181,114 @@ async function flush() {
 }
 
 describe('MailboxView feature contracts', () => {
+  it('ignores portalled editor form submissions and still sends explicitly', async () => {
+    const sendMessage = vi.fn();
+    const rendered = await renderMailbox(createDataSource({ sendMessage }), {
+      composeEditorProps: {
+        config: {
+          initialViewMode: 'render',
+          renderPreview: () =>
+            createPortal(
+              <form>
+                <Input aria-label="Nested editor field" />
+              </form>,
+              document.body
+            ),
+        },
+      },
+    });
+    try {
+      await rendered.click('[aria-label="New message"]');
+      const input = document.querySelector<HTMLInputElement>(
+        '[aria-label="Nested editor field"]'
+      );
+      expect(input).toBeTruthy();
+      await act(async () => input!.form!.requestSubmit());
+      expect(sendMessage).not.toHaveBeenCalled();
+      expect(
+        rendered.container.querySelector('input[name="subject"]')
+      ).toBeTruthy();
+      await rendered.clickButtonText('Send');
+      expect(sendMessage).toHaveBeenCalledTimes(1);
+      expect(
+        rendered.container.querySelector('input[name="subject"]')
+      ).toBeNull();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('prevents implicit sends from editor inputs while preserving body Enter', async () => {
+    const sendMessage = vi.fn();
+    const rendered = await renderMailbox(createDataSource({ sendMessage }), {
+      composeEditorProps: {
+        config: {
+          initialViewMode: 'render',
+          renderPreview: () => <Input aria-label="Editor input" />,
+        },
+      },
+    });
+    try {
+      await rendered.click('[aria-label="New message"]');
+      const input = rendered.container.querySelector<HTMLInputElement>(
+        '[aria-label="Editor input"]'
+      )!;
+      expect(input).toBeTruthy();
+      const enter = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => input.dispatchEvent(enter));
+      expect(enter.defaultPrevented).toBe(true);
+      expect(sendMessage).not.toHaveBeenCalled();
+      await rendered.click('[aria-label="Design"]');
+      const body = rendered.container.querySelector<HTMLElement>('.tiptap')!;
+      expect(body).toBeTruthy();
+      const bodyEnter = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        bubbles: true,
+        cancelable: true,
+      });
+      await act(async () => body.dispatchEvent(bodyEnter));
+      expect(sendMessage).not.toHaveBeenCalled();
+      expect(
+        rendered.container.querySelector('input[name="subject"]')
+      ).toBeTruthy();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
+  it('keeps mailbox variable registration empty even with caller editor extensions', async () => {
+    let editor: TiptapEditor | undefined;
+    const capture = Extension.create({
+      name: 'captureMailboxEditor',
+      onBeforeCreate() {
+        editor = this.editor;
+      },
+    });
+    const rendered = await renderMailbox(createDataSource(), {
+      composeEditorProps: {
+        extensions: [
+          capture,
+          VariableExtension.configure({
+            variables: [{ name: 'recipient.name' }],
+          }),
+        ],
+      },
+    });
+    try {
+      await rendered.click('[aria-label="New message"]');
+      expect(editor).toBeDefined();
+      expect(getVariableOptions(editor!).variables).toEqual([]);
+      expect(VariablePluginKey.get(editor!.state)).toBeUndefined();
+      expect(repeat(englishTranslator).render?.(editor!)).toBeNull();
+    } finally {
+      rendered.unmount();
+    }
+  });
+
   it('replaces the list with a message and restores its page, selection, scroll and focus on Back', async () => {
     const first = detail(row('message-1', 'First page'));
     const second = detail(row('message-2', 'Second page'));
@@ -263,7 +381,7 @@ describe('MailboxView feature contracts', () => {
   it('protects dirty compose when Back is requested', async () => {
     const rendered = await renderMailbox(createDataSource());
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.edit('input[name="subject"]', 'Unsaved draft');
       await rendered.click('[aria-label="Back to list"]');
       expect(
@@ -463,11 +581,9 @@ describe('MailboxView feature contracts', () => {
       uploadAttachment,
       discardUploadedAttachment,
     });
-    const rendered = await renderMailbox(source, {
-      defaultComposeBodyMode: 'plainText',
-    });
+    const rendered = await renderMailbox(source, {});
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.upload(new File(['file'], 'stale.txt'));
       await rendered.replaceDataSource(
         createDataSource({ uploadAttachment, discardUploadedAttachment })
@@ -492,10 +608,10 @@ describe('MailboxView feature contracts', () => {
         discardUploadedAttachment,
         sendMessage,
       }),
-      { defaultComposeBodyMode: 'plainText' }
+      {}
     );
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.upload(new File(['file'], 'sent.txt'));
       await rendered.clickButtonText('Send');
       expect(sendMessage).toHaveBeenCalledWith(
@@ -558,7 +674,7 @@ describe('MailboxView feature contracts', () => {
         discardUploadedAttachment,
         updateDraft,
       }),
-      { initialFolder: 'drafts', defaultComposeBodyMode: 'plainText' }
+      { initialFolder: 'drafts' }
     );
     try {
       await rendered.clickButtonContaining('Existing draft');
@@ -585,10 +701,10 @@ describe('MailboxView feature contracts', () => {
     const createDraft = vi.fn(() => ({ id: 'draft-1' }));
     const rendered = await renderMailbox(
       createDataSource({ sendMessage, createDraft }),
-      { defaultComposeBodyMode: 'plainText', autosaveDelayMs: 1000 }
+      { autosaveDelayMs: 1000 }
     );
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.edit('input[name="subject"]', 'Maybe delivered');
       await rendered.clickButtonText('Send');
       // The host may have delivered it. Even an edit that changes nothing it
@@ -619,11 +735,10 @@ describe('MailboxView feature contracts', () => {
     vi.useFakeTimers();
     const createDraft = vi.fn().mockRejectedValue(new Error('Host rejected'));
     const rendered = await renderMailbox(createDataSource({ createDraft }), {
-      defaultComposeBodyMode: 'plainText',
       autosaveDelayMs: 1000,
     });
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.edit('input[name="subject"]', 'Keep my edits');
       await act(async () => {
         await vi.advanceTimersByTimeAsync(1000);
@@ -650,9 +765,7 @@ describe('MailboxView feature contracts', () => {
   });
 
   it('protects dirty compose navigation until the user confirms', async () => {
-    const rendered = await renderMailbox(createDataSource(), {
-      defaultComposeBodyMode: 'plainText',
-    });
+    const rendered = await renderMailbox(createDataSource(), {});
     const portalButton = async (text: string) => {
       await act(async () => {
         const target = Array.from(
@@ -665,7 +778,7 @@ describe('MailboxView feature contracts', () => {
       });
     };
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.edit('input[name="subject"]', 'Unsaved content');
       await rendered.click('[aria-label="Sent"]');
       expect(document.body.textContent).toContain('Discard unsaved changes?');
@@ -728,10 +841,10 @@ describe('MailboxView feature contracts', () => {
     }));
     const rendered = await renderMailbox(
       createDataSource({ createDraft, updateDraft }),
-      { defaultComposeBodyMode: 'plainText' }
+      {}
     );
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.edit('input[name="subject"]', 'First version');
       await rendered.clickButtonText('Save draft');
       await rendered.edit('input[name="subject"]', 'Newer version');
@@ -759,9 +872,9 @@ describe('MailboxView feature contracts', () => {
         uploadAttachment: () => pending.promise,
         discardUploadedAttachment,
       }),
-      { defaultComposeBodyMode: 'plainText' }
+      {}
     );
-    await rendered.click('[aria-label="Compose"]');
+    await rendered.click('[aria-label="New message"]');
     await rendered.upload(new File(['file'], 'stale.txt'));
     rendered.unmount();
     const attachment = { id: 'uploaded-stale', filename: 'stale.txt' };
@@ -775,10 +888,10 @@ describe('MailboxView feature contracts', () => {
     const createDraft = vi.fn(() => ({ id: 'draft-1', _revision: 'v1' }));
     const rendered = await renderMailbox(
       createDataSource({ uploadAttachment: () => attachment, createDraft }),
-      { defaultComposeBodyMode: 'plainText' }
+      {}
     );
     try {
-      await rendered.click('[aria-label="Compose"]');
+      await rendered.click('[aria-label="New message"]');
       await rendered.upload(new File(['file'], 'file.txt'));
       await flush();
       await rendered.clickButtonText('Save draft');
@@ -1201,7 +1314,7 @@ it('releases replaced-source pending UI and keeps new operations locked after ol
     await rendered.replaceDataSource(
       createDataSource({ runMessageAction: newAction })
     );
-    await rendered.click('[aria-label="Compose"]');
+    await rendered.click('[aria-label="New message"]');
     expect(
       rendered.container.querySelector('input[name="subject"]')
     ).toBeTruthy();
@@ -1261,17 +1374,23 @@ it('rejects an initial label snapshot after a newer acknowledged label mutation'
   }
 });
 
-it('keeps the mounted editor when the active Visual editor mode is selected again', async () => {
-  const rendered = await renderMailbox(createDataSource(), {
-    defaultComposeBodyMode: 'mailyEditor',
-  });
+it('keeps the visual editor and unsaved compose mounted while collapsing the sidebar', async () => {
+  const rendered = await renderMailbox(createDataSource(), {});
   try {
-    await rendered.click('[aria-label="Compose"]');
+    await rendered.click('[aria-label="New message"]');
     await flush();
     const editor = rendered.container.querySelector<HTMLElement>('.tiptap');
     expect(editor).toBeTruthy();
     editor!.focus();
-    await rendered.clickButtonText('Visual editor');
+    await rendered.edit('input[name="subject"]', 'Keep my draft');
+    await rendered.click('[aria-label="Collapse sidebar"]');
+    expect(rendered.container.querySelector('textarea')).toBeNull();
+    expect(
+      rendered.container.querySelector<HTMLInputElement>(
+        'input[name="subject"]'
+      )?.value
+    ).toBe('Keep my draft');
+    await rendered.click('[aria-label="Expand sidebar"]');
     expect(rendered.container.querySelector('.tiptap')).toBe(editor);
   } finally {
     rendered.unmount();
@@ -1324,7 +1443,7 @@ it('closes a sent composition back to the folder in view', async () => {
     { account: { id: crypto.randomUUID(), address: 'me@example.com' } }
   );
   try {
-    await rendered.click('[aria-label="Compose"]');
+    await rendered.click('[aria-label="New message"]');
     await rendered.clickButtonText('Send');
     await flush();
     expect(sendDraft).toHaveBeenCalledWith('draft-1', { revision: undefined });

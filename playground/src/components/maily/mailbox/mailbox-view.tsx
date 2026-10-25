@@ -19,7 +19,6 @@ import type {
   MailyMailboxUploadedAttachment,
   MailyMailboxThread,
   MailyMailboxComposeValues,
-  MailyMailboxComposeBodyMode,
   MailyMailboxMessageAction,
   MailyMailboxMessageActionInput,
   MailyMailboxDataSource,
@@ -77,6 +76,7 @@ import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
+  InputGroupButton,
 } from '@/components/ui/input-group';
 import {
   Sheet,
@@ -102,12 +102,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
+import { Toggle } from '@/components/ui/toggle';
+import { SearchDatePicker } from './search-date-picker';
 import { Editor, type EditorProps } from '../editor';
-import {
-  ToggleGroupCompat,
-  ToggleGroupCompatItem,
-} from '../editor/components/ui/toggle-group-compat';
 import { cn } from 'cn';
 import { createId } from '../editor/utils/create-id';
 import { useEvent } from '../editor/utils/use-event';
@@ -439,8 +436,6 @@ function MailboxSession(
     pageSize = DEFAULT_PAGE_SIZE,
     contactSuggestions = NO_CONTACT_SUGGESTIONS,
     contactSuggestionLimit = DEFAULT_CONTACT_SUGGESTION_LIMIT,
-    defaultComposeBodyMode = 'plainText',
-    allowComposeBodyModeSwitch = true,
     composeEditorProps,
     onError,
     onSent,
@@ -649,6 +644,9 @@ function MailboxSession(
   const lastMessageTrigger = React.useRef<HTMLElement | null>(null);
   const [compact, setCompact] = React.useState(false);
   const [navigationOpen, setNavigationOpen] = React.useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const sidebarId = React.useId();
+  const rail = sidebarCollapsed && !compact;
   React.useEffect(() => {
     const element = mailboxRef.current;
     if (!element || typeof ResizeObserver === 'undefined') return;
@@ -2153,55 +2151,91 @@ function MailboxSession(
     </MailboxIconButton>
   );
   const navigation = (
-    <div className="flex shrink-0 flex-col gap-2 p-3 [&_button]:min-h-11">
+    <div
+      className={cn(
+        'flex shrink-0 flex-col gap-2 [&_button]:min-h-11',
+        rail ? 'p-2' : 'p-3'
+      )}
+    >
       {canStartComposition(draftCapabilities) && (
-        <Button
-          type="button"
-          size="icon"
-          onClick={openNewDraft}
-          className="w-full justify-start gap-2 px-2.5"
-          aria-label={t('compose.new')}
-        >
-          <Pencil className="size-4" />
-          <span className="inline min-w-0 truncate">{t('compose.new')}</span>
-        </Button>
+        <MailboxTooltip label={t('compose.new')} className="w-full">
+          <Button
+            type="button"
+            size="icon"
+            onClick={openNewDraft}
+            className={cn(
+              'w-full gap-2 px-2.5',
+              rail ? 'justify-center' : 'justify-start'
+            )}
+            aria-label={t('compose.new')}
+          >
+            <Pencil className="size-4" />
+            <span className={rail ? 'sr-only' : 'inline min-w-0 truncate'}>
+              {t('compose.new')}
+            </span>
+          </Button>
+        </MailboxTooltip>
       )}
       <nav className="flex w-full flex-col gap-0.5">
         {(props.folders ?? FOLDERS).map((item) => {
-          const active = folder === item && !selectedLabelId && !globalSearch;
+          const active =
+            !composeOpen &&
+            folder === item &&
+            !selectedLabelId &&
+            !globalSearch;
           const count = counts[item] ?? 0;
           return (
-            <Button
+            <MailboxTooltip
               key={item}
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={t(`folders.${item}`)}
-              aria-current={active ? 'page' : undefined}
-              onClick={() => selectFolder(item)}
-              className={cn(
-                'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative w-full justify-start gap-2 px-2.5',
-                active &&
-                  'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium'
-              )}
+              label={t(`folders.${item}`)}
+              className="w-full"
             >
-              {folderIcon(item, 'size-4')}
-              <span className="inline min-w-0 flex-1 truncate text-left">
-                {t(`folders.${item}`)}
-              </span>
-              {count > 0 && (
-                <span className="text-muted-foreground min-w-[2ch] text-right text-xs tabular-nums">
-                  {count}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t(`folders.${item}`)}
+                aria-current={active ? 'page' : undefined}
+                onClick={() => selectFolder(item)}
+                className={cn(
+                  'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground relative w-full gap-2 px-2.5',
+                  rail ? 'justify-center' : 'justify-start',
+                  active &&
+                    'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground font-medium'
+                )}
+              >
+                {folderIcon(item, 'size-4')}
+                <span
+                  className={
+                    rail
+                      ? 'sr-only'
+                      : 'inline min-w-0 flex-1 truncate text-left'
+                  }
+                >
+                  {t(`folders.${item}`)}
                 </span>
-              )}
-            </Button>
+                {count > 0 && (
+                  <span
+                    className={
+                      rail
+                        ? 'sr-only'
+                        : 'text-muted-foreground min-w-[2ch] text-right text-xs tabular-nums'
+                    }
+                  >
+                    {count}
+                  </span>
+                )}
+              </Button>
+            </MailboxTooltip>
           );
         })}
       </nav>
       {dataSource.listLabels && (
         <>
           <div className="mt-4 flex w-full items-center justify-between">
-            <span className="inline px-2.5 text-sm font-medium">
+            <span
+              className={rail ? 'sr-only' : 'inline px-2.5 text-sm font-medium'}
+            >
               {t('labels.heading')}
             </span>
             {dataSource.createLabel && (
@@ -2232,78 +2266,90 @@ function MailboxSession(
           <ul className="w-full space-y-0.5">
             {mailboxLabels.map((label) => (
               <li key={label.id} className="group flex items-center">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    'min-w-0 flex-1 justify-start gap-2',
-                    selectedLabelId === label.id && 'bg-accent font-medium'
-                  )}
-                  aria-label={label.name}
-                  aria-current={
-                    selectedLabelId === label.id ? 'page' : undefined
-                  }
-                  onClick={() => {
-                    const navigate = () => {
-                      selectFolder('allMail', label.id);
-                    };
-                    if (
-                      !composeLockRef.current &&
-                      allowComposeNavigation(navigate)
-                    )
-                      navigate();
-                  }}
-                >
-                  <Tag className="size-4 shrink-0" />
-                  <span className="inline min-w-0 truncate">{label.name}</span>
-                </Button>
-                {(dataSource.renameLabel || dataSource.deleteLabel) && (
-                  <Dialog
-                    open={labelForm?.label?.id === label.id}
-                    onOpenChange={(open) => {
-                      if (!open) setLabelForm(null);
+                <MailboxTooltip label={label.name} className="min-w-0 flex-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      'min-w-0 flex-1 gap-2',
+                      rail ? 'justify-center px-2.5' : 'justify-start',
+                      !composeOpen &&
+                        selectedLabelId === label.id &&
+                        'bg-accent font-medium'
+                    )}
+                    aria-label={label.name}
+                    aria-current={
+                      !composeOpen && selectedLabelId === label.id
+                        ? 'page'
+                        : undefined
+                    }
+                    onClick={() => {
+                      const navigate = () => {
+                        selectFolder('allMail', label.id);
+                      };
+                      if (
+                        !composeLockRef.current &&
+                        allowComposeNavigation(navigate)
+                      )
+                        navigate();
                     }}
                   >
-                    <DropdownMenu>
-                      <DialogTrigger asChild>
-                        <DropdownMenuTrigger asChild>
-                          <MailboxIconButton
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="inline-flex size-11 shrink-0"
-                            aria-label={`${t('actions.more')}: ${label.name}`}
-                          >
-                            <MoreVertical className="size-4" />
-                          </MailboxIconButton>
-                        </DropdownMenuTrigger>
-                      </DialogTrigger>
-                      <DropdownMenuContent align="start">
-                        {dataSource.renameLabel && (
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setLabelForm({ mode: 'rename', label });
-                              setLabelName(label.name);
-                            }}
-                          >
-                            {t('actions.renameLabel')}
-                          </DropdownMenuItem>
-                        )}
-                        {dataSource.deleteLabel && (
-                          <DropdownMenuItem
-                            onClick={() =>
-                              setLabelForm({ mode: 'delete', label })
-                            }
-                          >
-                            {t('actions.deleteLabel')}
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    {labelDialogContent}
-                  </Dialog>
-                )}
+                    <Tag className="size-4 shrink-0" />
+                    <span
+                      className={rail ? 'sr-only' : 'inline min-w-0 truncate'}
+                    >
+                      {label.name}
+                    </span>
+                  </Button>
+                </MailboxTooltip>
+                {!rail &&
+                  (dataSource.renameLabel || dataSource.deleteLabel) && (
+                    <Dialog
+                      open={labelForm?.label?.id === label.id}
+                      onOpenChange={(open) => {
+                        if (!open) setLabelForm(null);
+                      }}
+                    >
+                      <DropdownMenu>
+                        <DialogTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <MailboxIconButton
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="inline-flex size-11 shrink-0"
+                              aria-label={`${t('actions.more')}: ${label.name}`}
+                            >
+                              <MoreVertical className="size-4" />
+                            </MailboxIconButton>
+                          </DropdownMenuTrigger>
+                        </DialogTrigger>
+                        <DropdownMenuContent align="start">
+                          {dataSource.renameLabel && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setLabelForm({ mode: 'rename', label });
+                                setLabelName(label.name);
+                              }}
+                            >
+                              {t('actions.renameLabel')}
+                            </DropdownMenuItem>
+                          )}
+                          {dataSource.deleteLabel && (
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setLabelForm({ mode: 'delete', label })
+                              }
+                            >
+                              {t('actions.deleteLabel')}
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {labelDialogContent}
+                    </Dialog>
+                  )}
               </li>
             ))}
           </ul>
@@ -2322,14 +2368,38 @@ function MailboxSession(
     >
       {!compact && (
         <aside
+          id={sidebarId}
           aria-label={t('navigation.menu')}
-          className="bg-muted/30 border-border flex w-52 shrink-0 flex-col overflow-y-auto border-r"
+          className={cn(
+            'bg-muted/30 border-border flex shrink-0 flex-col overflow-hidden border-r',
+            rail ? 'w-16' : 'w-52'
+          )}
         >
-          {navigation}
+          <ScrollArea className="min-h-0 flex-1">{navigation}</ScrollArea>
         </aside>
       )}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="border-border flex shrink-0 items-center border-b">
+          {!compact && (
+            <MailboxTooltip
+              label={t(
+                sidebarCollapsed ? 'navigation.expand' : 'navigation.collapse'
+              )}
+            >
+              <Toggle
+                pressed={!sidebarCollapsed}
+                onPressedChange={(expanded) => setSidebarCollapsed(!expanded)}
+                aria-label={t(
+                  sidebarCollapsed ? 'navigation.expand' : 'navigation.collapse'
+                )}
+                aria-expanded={!sidebarCollapsed}
+                aria-controls={sidebarId}
+                className="ml-2 size-9 shrink-0 px-0"
+              >
+                <Menu className="size-4" />
+              </Toggle>
+            </MailboxTooltip>
+          )}
           {compact && (
             <Sheet open={navigationOpen} onOpenChange={setNavigationOpen}>
               <SheetTrigger asChild>
@@ -2395,11 +2465,10 @@ function MailboxSession(
                 {(searchClearable || advancedSearchAvailable) && (
                   <InputGroupAddon align="inline-end">
                     {searchClearable && (
-                      <MailboxIconButton
+                      <InputGroupButton
                         type="button"
-                        size="icon"
+                        size="icon-sm"
                         variant="ghost"
-                        className="size-11"
                         aria-label={t('search.clear')}
                         onClick={() => {
                           setSearch('');
@@ -2408,19 +2477,18 @@ function MailboxSession(
                         }}
                       >
                         <X className="size-4" />
-                      </MailboxIconButton>
+                      </InputGroupButton>
                     )}
                     {advancedSearchAvailable && (
                       <PopoverTrigger asChild>
-                        <MailboxIconButton
+                        <InputGroupButton
                           type="button"
-                          size="icon"
+                          size="icon-sm"
                           variant="ghost"
-                          className="size-11"
                           aria-label={t('search.advanced')}
                         >
                           <Filter className="size-4" />
-                        </MailboxIconButton>
+                        </InputGroupButton>
                       </PopoverTrigger>
                     )}
                   </InputGroupAddon>
@@ -2434,10 +2502,10 @@ function MailboxSession(
               {advancedSearchAvailable && (
                 <PopoverContent
                   align="start"
-                  className="w-80 max-w-[calc(100vw-2rem)] p-4"
+                  className="max-h-[min(32rem,var(--radix-popover-content-available-height,var(--available-height,calc(100dvh-2rem))))] w-[22rem] max-w-[calc(100vw-2rem)] overflow-y-auto p-4"
                 >
                   <form
-                    className="space-y-3"
+                    className="grid grid-cols-2 gap-4"
                     onSubmit={(event) => {
                       event.preventDefault();
                       setSearchFields(
@@ -2449,6 +2517,9 @@ function MailboxSession(
                       setAdvancedSearchOpen(false);
                     }}
                   >
+                    <h3 className="col-span-2 text-sm font-medium">
+                      {t('search.advanced')}
+                    </h3>
                     {enabledSearchFilters.map((key) =>
                       key === 'hasAttachments' || key === 'unread' ? (
                         <Field key={key} orientation="horizontal">
@@ -2462,20 +2533,45 @@ function MailboxSession(
                               }));
                             }}
                           />
-                          <FieldLabel htmlFor={`${labelInputId}-search-${key}`}>
+                          <FieldLabel
+                            className="font-normal"
+                            htmlFor={`${labelInputId}-search-${key}`}
+                          >
                             {t(`search.${key}`)}
                           </FieldLabel>
                         </Field>
+                      ) : key === 'after' || key === 'before' ? (
+                        <Field key={key} className="min-w-0 gap-1.5">
+                          <FieldLabel
+                            className="text-muted-foreground font-normal"
+                            htmlFor={`${labelInputId}-search-${key}`}
+                          >
+                            {t(`search.${key}`)}
+                          </FieldLabel>
+                          <SearchDatePicker
+                            id={`${labelInputId}-search-${key}`}
+                            value={searchDraft[key]}
+                            placeholder={t('search.chooseDate')}
+                            clearLabel={t('search.clearDate')}
+                            calendarProps={props.searchCalendarProps}
+                            onChange={(value) =>
+                              setSearchDraft((current) => ({
+                                ...current,
+                                [key]: value,
+                              }))
+                            }
+                          />
+                        </Field>
                       ) : (
-                        <Field
-                          key={key}
-                          orientation="horizontal"
-                          className="grid grid-cols-[6rem_1fr] items-center gap-2"
-                        >
-                          <FieldLabel htmlFor={`${labelInputId}-search-${key}`}>
+                        <Field key={key} className="col-span-2 gap-1.5">
+                          <FieldLabel
+                            className="text-muted-foreground font-normal"
+                            htmlFor={`${labelInputId}-search-${key}`}
+                          >
                             {t(`search.${key}`)}
                           </FieldLabel>
                           <Input
+                            className="h-9"
                             id={`${labelInputId}-search-${key}`}
                             value={searchDraft[key] ?? ''}
                             onChange={(
@@ -2490,7 +2586,7 @@ function MailboxSession(
                         </Field>
                       )
                     )}
-                    <div className="flex justify-end">
+                    <div className="col-span-2 flex justify-end border-t pt-3">
                       <Button type="submit" size="sm">
                         {t('search.submit')}
                       </Button>
@@ -2809,54 +2905,48 @@ function MailboxSession(
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {composeOpen ? (
               <>
-                <div className="border-border flex min-h-12 items-center border-b px-2">
-                  {backButton}
-                </div>
-                <ScrollArea className="min-h-0 flex-1">
-                  {!composeHydrated ? (
-                    <div role="status" className="p-5">
-                      {t('loading')}
-                    </div>
-                  ) : (
-                    <Compose
-                      key={composeSession}
-                      initialValues={initialComposeValues}
-                      labels={labels}
-                      loadContactSuggestions={loadContactSuggestions}
-                      defaultBodyMode={defaultComposeBodyMode}
-                      allowBodyModeSwitch={allowComposeBodyModeSwitch}
-                      editorProps={composeEditorProps}
-                      isExistingDraft={!!composeDraftId}
-                      capabilities={composeCapabilities}
-                      attachmentsReadOnly={draftHasUnreferencedAttachments}
-                      savedAttachments={
-                        composeDraftId && composeAttachments?.length
-                          ? {
-                              messageId: composeDraftId,
-                              attachments: composeAttachments,
-                            }
-                          : undefined
-                      }
-                      downloadAttachment={adapterMethods.downloadAttachment}
-                      isSaving={saving}
-                      autosaveDelayMs={autosaveDelayMs}
-                      isSending={sending}
-                      isDiscarding={discarding}
-                      ownershipToken={lifetimeRef}
-                      uploadAttachment={adapterMethods.uploadAttachment}
-                      discardUploadedAttachment={
-                        adapterMethods.discardUploadedAttachment
-                      }
-                      onError={onError}
-                      onDirtyChange={(dirty) => {
-                        composeDirtyRef.current = dirty;
-                      }}
-                      onSave={saveDraft}
-                      onSend={sendComposition}
-                      onDiscard={discardDraft}
-                    />
-                  )}
-                </ScrollArea>
+                {!composeHydrated ? (
+                  <div role="status" className="p-5">
+                    {t('loading')}
+                  </div>
+                ) : (
+                  <Compose
+                    key={composeSession}
+                    initialValues={initialComposeValues}
+                    labels={labels}
+                    loadContactSuggestions={loadContactSuggestions}
+                    backButton={backButton}
+                    editorProps={composeEditorProps}
+                    isExistingDraft={!!composeDraftId}
+                    capabilities={composeCapabilities}
+                    attachmentsReadOnly={draftHasUnreferencedAttachments}
+                    savedAttachments={
+                      composeDraftId && composeAttachments?.length
+                        ? {
+                            messageId: composeDraftId,
+                            attachments: composeAttachments,
+                          }
+                        : undefined
+                    }
+                    downloadAttachment={adapterMethods.downloadAttachment}
+                    isSaving={saving}
+                    autosaveDelayMs={autosaveDelayMs}
+                    isSending={sending}
+                    isDiscarding={discarding}
+                    ownershipToken={lifetimeRef}
+                    uploadAttachment={adapterMethods.uploadAttachment}
+                    discardUploadedAttachment={
+                      adapterMethods.discardUploadedAttachment
+                    }
+                    onError={onError}
+                    onDirtyChange={(dirty) => {
+                      composeDirtyRef.current = dirty;
+                    }}
+                    onSave={saveDraft}
+                    onSend={sendComposition}
+                    onDiscard={discardDraft}
+                  />
+                )}
               </>
             ) : selectedId ? (
               <MessageReader
@@ -2966,7 +3056,7 @@ function MessageList(props: {
             <li
               key={conversation.threadId ?? row.id}
               className={cn(
-                'flex min-w-0 items-stretch',
+                'hover:bg-accent flex min-w-0 items-stretch',
                 (active || allSelected) && 'bg-accent',
                 !row.isUnread && 'bg-muted/20'
               )}
@@ -3017,10 +3107,7 @@ function MessageList(props: {
                 type="button"
                 variant="ghost"
                 onClick={() => onSelect(row)}
-                className={cn(
-                  'hover:bg-accent grid h-auto min-h-11 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 rounded-none px-2 py-2 text-left font-normal whitespace-normal @3xl/list:grid-cols-[12rem_minmax(0,1fr)_auto]',
-                  active && 'bg-accent'
-                )}
+                className="grid h-auto min-h-11 min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 rounded-none px-2 py-2 text-left font-normal whitespace-normal hover:bg-transparent @3xl/list:grid-cols-[12rem_minmax(0,1fr)_auto] dark:hover:bg-transparent"
               >
                 <span
                   className={cn(
@@ -3926,8 +4013,7 @@ function Compose(props: {
   loadContactSuggestions: (
     q: string
   ) => MaybePromise<MailyMailboxContactSuggestion[]>;
-  defaultBodyMode: MailyMailboxComposeBodyMode;
-  allowBodyModeSwitch: boolean;
+  backButton: React.ReactNode;
   editorProps?: Omit<
     EditorProps,
     'contentHtml' | 'contentJson' | 'onCreate' | 'onUpdate'
@@ -3960,8 +4046,7 @@ function Compose(props: {
     initialValues,
     labels,
     loadContactSuggestions,
-    defaultBodyMode,
-    allowBodyModeSwitch,
+    backButton,
     editorProps,
     isExistingDraft,
     capabilities,
@@ -3982,7 +4067,6 @@ function Compose(props: {
     onDiscard,
   } = props;
   const subjectInputId = React.useId();
-  const bodyInputId = React.useId();
   const bodyLabelId = React.useId();
   const [values, setValues] =
     React.useState<MailyMailboxComposeValues>(initialValues);
@@ -3991,6 +4075,8 @@ function Compose(props: {
   );
   const [hasAcknowledgedWrite, setHasAcknowledgedWrite] =
     React.useState(isExistingDraft);
+  // Saving a new message changes persistence, not the composition's identity.
+  const [openedAsDraft] = React.useState(isExistingDraft);
   const [saveError, setSaveError] = React.useState(false);
   const [uploading, setUploading] = React.useState(false);
   const [uploadError, setUploadError] = React.useState<string | null>(null);
@@ -4162,9 +4248,6 @@ function Compose(props: {
       if (alive.current) setUploading(false);
     }
   };
-  const [bodyMode, setBodyMode] =
-    React.useState<MailyMailboxComposeBodyMode>(defaultBodyMode);
-  const [editorRevision, setEditorRevision] = React.useState(0);
   const [showCc, setShowCc] = React.useState(
     () => initialValues.cc.trim().length > 0
   );
@@ -4188,13 +4271,6 @@ function Compose(props: {
   const set = (key: keyof MailyMailboxComposeValues, value: string) =>
     setValues((prev) => ({ ...prev, [key]: value }));
 
-  const setBodyText = (value: string) =>
-    setValues((prev) => ({
-      ...prev,
-      text: value,
-      html: bodyMode === 'plainText' ? null : prev.html,
-    }));
-
   const updateFromEditor = React.useCallback(
     (editor: Parameters<NonNullable<EditorProps['onUpdate']>>[0]) => {
       // A locked composition keeps its saved values; editor normalization of
@@ -4206,16 +4282,13 @@ function Compose(props: {
     },
     [operationsRef]
   );
-  // Only an editor the user opened (compose start or a mode switch) takes focus
-  // and adopts its normalized content. A locked composition shows read-only
-  // text instead, so the editor that appears when it unlocks does neither.
-  const editorCreatedRevision = React.useRef<number | null>(null);
-  const [lockedEditorRevision, setLockedEditorRevision] = React.useState<
-    number | null
-  >(null);
-  if (!operations.editable && lockedEditorRevision !== editorRevision)
-    setLockedEditorRevision(editorRevision);
-  const editorOpenedByUser = lockedEditorRevision !== editorRevision;
+  // An initially locked draft may later unlock; mounting that editor must not
+  // normalize saved content into a write or steal focus.
+  const [editorWasLocked, setEditorWasLocked] = React.useState(
+    !operations.editable
+  );
+  if (!operations.editable && !editorWasLocked) setEditorWasLocked(true);
+  const editorOpenedByUser = !editorWasLocked;
 
   const submit = async () => {
     if (uploadLock.current || !operationsRef.current.send) return;
@@ -4251,360 +4324,353 @@ function Compose(props: {
     }
   };
 
-  const switchBodyMode = (nextMode: MailyMailboxComposeBodyMode) => {
-    if (nextMode === bodyMode) return;
-    setBodyMode(nextMode);
-    if (nextMode === 'mailyEditor') {
-      setEditorRevision((revision) => revision + 1);
-    }
-  };
-
   const editorConfig = editorProps?.config;
-  const editorBodyClassName = cn('mt-2 min-h-56', editorConfig?.bodyClassName);
-  const editorContentClassName = cn('min-h-48', editorConfig?.contentClassName);
+  // Mailbox compositions are messages, so do not register template variables.
+  const editorExtensions = React.useMemo(
+    () =>
+      editorProps?.extensions?.filter(
+        (extension) => extension.name !== 'variable'
+      ),
+    [editorProps?.extensions]
+  );
+  const editorBodyClassName = cn(
+    'm-0! min-h-56 flex-1 rounded-none border-0 px-0! py-3',
+    editorConfig?.bodyClassName
+  );
+  const editorContentClassName = cn('min-h-56', editorConfig?.contentClassName);
 
   return (
     <form
-      className="flex min-h-0 min-w-0 flex-col gap-4 p-3 [contain:inline-size] @lg/mailbox:p-5"
+      className="flex h-full min-h-0 min-w-0 flex-1 flex-col [contain:inline-size]"
       onSubmit={(event) => {
         event.preventDefault();
+        event.stopPropagation();
+        // Portalled editor forms still bubble through the React tree.
+        if (event.target !== event.currentTarget) return;
         void submit();
       }}
     >
-      <div className="flex flex-col gap-2 @lg/mailbox:flex-row @lg/mailbox:items-center @lg/mailbox:justify-between">
-        <h2 className="text-lg font-semibold">
-          {isExistingDraft
-            ? t(operations.editable ? 'compose.editDraft' : 'compose.viewDraft')
-            : t('compose.new')}
-        </h2>
-        <div className="flex flex-wrap gap-2">
-          {operations.discard && (
-            <Button
-              type="button"
-              size="sm"
-              className="min-h-11"
-              variant="ghost"
-              onClick={() => onDiscard()}
-              disabled={isSaving || isSending || isDiscarding}
-            >
-              <Trash2 className="size-4" />
-              {t('compose.discard')}
-            </Button>
+      <div className="bg-muted/40 border-border flex h-12 shrink-0 items-center gap-1 border-b px-2">
+        {backButton}
+        <h2 className="text-sm font-medium">
+          {t(
+            !operations.editable
+              ? 'compose.viewDraft'
+              : openedAsDraft
+                ? 'compose.editDraft'
+                : 'compose.new'
           )}
+        </h2>
+      </div>
+      <ScrollArea className="min-h-0 flex-1 [&>[data-slot=scroll-area-viewport]>div]:h-full">
+        <div className="flex min-h-full min-w-0 flex-col px-4 [contain:inline-size]">
+          <div
+            role="status"
+            className="text-muted-foreground text-xs not-empty:py-2"
+          >
+            {saveError
+              ? t('compose.saveError')
+              : attachmentsReadOnly && !operations.editable
+                ? t('compose.attachmentsReadOnly')
+                : (dirty || uploading) &&
+                    !operations.save &&
+                    // A new composition sent directly has no saved state to lose.
+                    !(!isExistingDraft && capabilities.sendMessage)
+                  ? t('compose.saveUnavailable')
+                  : null}
+          </div>
+          {uploadError && (
+            <p role="alert">
+              {t('compose.attachmentUploadError', { filename: uploadError })}
+            </p>
+          )}
+          {/* A read-only draft lists its saved attachments in ReadOnlyComposition. */}
+          {(operations.editable || !savedAttachments) &&
+            (values.attachments ?? []).map((attachment, index) => (
+              <Attachment key={`${attachment.id}:${index}`}>
+                <AttachmentContent>
+                  <AttachmentTitle>{attachment.filename}</AttachmentTitle>
+                </AttachmentContent>
+                {operations.editable && (
+                  <AttachmentActions>
+                    <MailboxTooltip
+                      label={t('compose.removeAttachment', {
+                        filename: attachment.filename,
+                      })}
+                    >
+                      <AttachmentAction
+                        type="button"
+                        disabled={
+                          isSaving || isSending || isDiscarding || uploading
+                        }
+                        aria-label={t('compose.removeAttachment', {
+                          filename: attachment.filename,
+                        })}
+                        onClick={() => {
+                          if (ownedUploads.current.delete(attachment.id))
+                            releaseUpload(attachment);
+                          setValues((previous) => ({
+                            ...previous,
+                            attachments: previous.attachments?.filter(
+                              (_, position) => position !== index
+                            ),
+                          }));
+                        }}
+                      >
+                        <X className="size-4" />
+                      </AttachmentAction>
+                    </MailboxTooltip>
+                  </AttachmentActions>
+                )}
+              </Attachment>
+            ))}
+          {!operations.editable ? (
+            <ReadOnlyComposition
+              values={values}
+              labels={labels}
+              savedAttachments={savedAttachments}
+              downloadAttachment={downloadAttachment}
+              onError={onError}
+            />
+          ) : (
+            // Autosave keeps fields enabled: disabling them would drop focus and
+            // keystrokes, and edits made during a save stay dirty for the next one.
+            <FieldSet disabled={isSending || isDiscarding} className="contents">
+              <RecipientField
+                id={toInputId}
+                label={t('message.to')}
+                actions={
+                  (!showCc || !showBcc) && (
+                    <div className="flex items-center gap-1">
+                      {!showCc && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => {
+                            setShowCc(true);
+                            setFocusRecipient('cc');
+                          }}
+                          className="text-muted-foreground hover:text-foreground h-auto rounded-sm px-1 py-0 text-sm font-medium hover:bg-transparent"
+                        >
+                          {t('message.cc')}
+                        </Button>
+                      )}
+                      {!showBcc && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="xs"
+                          onClick={() => {
+                            setShowBcc(true);
+                            setFocusRecipient('bcc');
+                          }}
+                          className="text-muted-foreground hover:text-foreground h-auto rounded-sm px-1 py-0 text-sm font-medium hover:bg-transparent"
+                        >
+                          {t('message.bcc')}
+                        </Button>
+                      )}
+                    </div>
+                  )
+                }
+              >
+                <RecipientAutocompleteInput
+                  autoFocus={!isExistingDraft && editorOpenedByUser}
+                  id={toInputId}
+                  value={values.to}
+                  onChange={(value) => set('to', value)}
+                  placeholder=""
+                  emptyLabel={t('contacts.noSuggestions')}
+                  loadingLabel={t('loading')}
+                  loadSuggestions={loadContactSuggestions}
+                  className="h-7 px-2.5 py-0"
+                />
+              </RecipientField>
+              {showCc && (
+                <RecipientField id={ccInputId} label={t('message.cc')}>
+                  <RecipientAutocompleteInput
+                    id={ccInputId}
+                    value={values.cc}
+                    onChange={(value) => set('cc', value)}
+                    placeholder=""
+                    emptyLabel={t('contacts.noSuggestions')}
+                    loadingLabel={t('loading')}
+                    loadSuggestions={loadContactSuggestions}
+                    autoFocus={focusRecipient === 'cc'}
+                    className="h-7 px-2.5 py-0"
+                  />
+                </RecipientField>
+              )}
+              {showBcc && (
+                <RecipientField id={bccInputId} label={t('message.bcc')}>
+                  <RecipientAutocompleteInput
+                    id={bccInputId}
+                    value={values.bcc}
+                    onChange={(value) => set('bcc', value)}
+                    placeholder=""
+                    emptyLabel={t('contacts.noSuggestions')}
+                    loadingLabel={t('loading')}
+                    loadSuggestions={loadContactSuggestions}
+                    autoFocus={focusRecipient === 'bcc'}
+                    className="h-7 px-2.5 py-0"
+                  />
+                </RecipientField>
+              )}
+              <Field className="border-border focus-within:border-ring border-b py-1">
+                <FieldLabel htmlFor={subjectInputId} className="sr-only">
+                  {t('message.subject')}
+                </FieldLabel>
+                <Input
+                  id={subjectInputId}
+                  name="subject"
+                  placeholder={t('message.subject')}
+                  className="h-9 rounded-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 dark:bg-transparent"
+                  value={values.subject}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    set('subject', event.target.value)
+                  }
+                />
+              </Field>
+              <Field
+                className="min-h-0 flex-1 gap-1.5 pt-4 pb-2"
+                aria-labelledby={bodyLabelId}
+                onKeyDown={(event) => {
+                  // Plain editor inputs can otherwise implicitly submit the
+                  // composer. Preserve nested forms and contenteditable Enter.
+                  if (
+                    event.key === 'Enter' &&
+                    event.target instanceof HTMLInputElement &&
+                    event.target.form === event.currentTarget.closest('form')
+                  ) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <Label id={bodyLabelId} className="sr-only">
+                  {t('message.body')}
+                </Label>
+                <Editor
+                  {...editorProps}
+                  extensions={editorExtensions}
+                  editable={!isSending && !isDiscarding}
+                  contentHtml={composeHtmlContent(values)}
+                  onUpdate={updateFromEditor}
+                  config={{
+                    ...editorConfig,
+                    hasMenuBar: editorConfig?.hasMenuBar ?? true,
+                    wrapClassName: cn(
+                      'flex min-h-full flex-1 flex-col',
+                      editorConfig?.wrapClassName
+                    ),
+                    bodyClassName: editorBodyClassName,
+                    contentClassName: editorContentClassName,
+                    autofocus: editorOpenedByUser
+                      ? (editorConfig?.autofocus ?? false)
+                      : false,
+                  }}
+                />
+              </Field>
+            </FieldSet>
+          )}
+        </div>
+      </ScrollArea>
+      <div className="border-border bg-background flex shrink-0 items-center gap-2 border-t px-4 py-3">
+        {operations.send && (
+          <Button
+            type="submit"
+            size="sm"
+            className="h-9 gap-2 px-4"
+            disabled={isSaving || isSending || isDiscarding || uploading}
+          >
+            {isSending ? (
+              <LoaderCircleIcon className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
+            {t('compose.send')}
+          </Button>
+        )}
+        {uploadAttachment && operations.attach && (
+          <div className="flex items-center gap-2">
+            {/* shadcn-audit-ignore-next-line invisible native file picker */}
+            <input
+              ref={uploadInput}
+              type="file"
+              multiple
+              hidden
+              onChange={(event) => {
+                const files = Array.from(event.target.files ?? []);
+                event.target.value = '';
+                void uploadFiles(files);
+              }}
+            />
+            <MailboxIconButton
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-9"
+              aria-label={t('compose.attach')}
+              disabled={uploading || isSaving || isSending || isDiscarding}
+              onClick={() => uploadInput.current?.click()}
+            >
+              {uploading ? (
+                <LoaderCircleIcon className="size-4 animate-spin" />
+              ) : (
+                <Paperclip className="size-4" />
+              )}
+            </MailboxIconButton>
+          </div>
+        )}
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          <span
+            role="status"
+            className="text-muted-foreground sr-only text-xs @lg/mailbox:not-sr-only"
+          >
+            {isSaving
+              ? t('compose.saving')
+              : !dirty && hasAcknowledgedWrite && operations.save
+                ? t(autosave ? 'compose.autosaved' : 'compose.saved')
+                : null}
+          </span>
           {operations.save && (
             <Button
               type="button"
               size="sm"
-              className="min-h-11"
-              variant="outline"
+              className="text-muted-foreground h-9 w-9 px-0 font-normal @sm/mailbox:w-auto @sm/mailbox:px-3"
+              aria-label={t('compose.saveDraft')}
+              variant="ghost"
               onClick={() => {
                 setSaveError(false);
                 void save(values);
               }}
               disabled={isSaving || isSending || isDiscarding}
             >
-              {isSaving && <LoaderCircleIcon className="size-4 animate-spin" />}
-              {t('compose.saveDraft')}
-            </Button>
-          )}
-          {operations.send && (
-            <Button
-              type="submit"
-              size="sm"
-              className="min-h-11"
-              disabled={isSaving || isSending || isDiscarding || uploading}
-            >
-              {isSending ? (
+              {isSaving ? (
                 <LoaderCircleIcon className="size-4 animate-spin" />
               ) : (
-                <Send className="size-4" />
+                <FileText className="size-4 @sm/mailbox:hidden" />
               )}
-              {t('compose.send')}
+              <span className="sr-only @sm/mailbox:not-sr-only">
+                {t('compose.saveDraft')}
+              </span>
             </Button>
           )}
-        </div>
-      </div>
-
-      <div role="status" className="text-muted-foreground text-sm">
-        {saveError
-          ? t('compose.saveError')
-          : isSaving
-            ? t('compose.saving')
-            : attachmentsReadOnly && !operations.editable
-              ? t('compose.attachmentsReadOnly')
-              : (dirty || uploading) &&
-                  !operations.save &&
-                  // A new composition sent directly has no saved state to lose.
-                  !(!isExistingDraft && capabilities.sendMessage)
-                ? t('compose.saveUnavailable')
-                : !dirty && hasAcknowledgedWrite && operations.save
-                  ? t(autosave ? 'compose.autosaved' : 'compose.saved')
-                  : null}
-      </div>
-      {uploadAttachment && operations.attach && (
-        <div className="flex flex-col gap-2">
-          {/* shadcn-audit-ignore-next-line invisible native file picker */}
-          <input
-            ref={uploadInput}
-            type="file"
-            multiple
-            hidden
-            onChange={(event) => {
-              const files = Array.from(event.target.files ?? []);
-              event.target.value = '';
-              void uploadFiles(files);
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-11"
-            disabled={uploading || isSaving || isSending || isDiscarding}
-            onClick={() => uploadInput.current?.click()}
-          >
-            {uploading ? (
-              <LoaderCircleIcon className="size-4 animate-spin" />
-            ) : (
-              <Paperclip className="size-4" />
-            )}
-            {t('compose.attach')}
-          </Button>
-          {uploadError && (
-            <p role="alert">
-              {t('compose.attachmentUploadError', { filename: uploadError })}
-            </p>
+          {operations.discard && (
+            <MailboxIconButton
+              type="button"
+              size="icon"
+              className="size-9 shrink-0"
+              aria-label={t('compose.discard')}
+              variant="ghost"
+              onClick={() => onDiscard()}
+              disabled={isSaving || isSending || isDiscarding}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">{t('compose.discard')}</span>
+            </MailboxIconButton>
           )}
         </div>
-      )}
-      {/* A read-only draft lists its saved attachments in ReadOnlyComposition. */}
-      {(operations.editable || !savedAttachments) &&
-        (values.attachments ?? []).map((attachment, index) => (
-          <Attachment key={`${attachment.id}:${index}`}>
-            <AttachmentContent>
-              <AttachmentTitle>{attachment.filename}</AttachmentTitle>
-            </AttachmentContent>
-            {operations.editable && (
-              <AttachmentActions>
-                <MailboxTooltip
-                  label={t('compose.removeAttachment', {
-                    filename: attachment.filename,
-                  })}
-                >
-                  <AttachmentAction
-                    type="button"
-                    disabled={
-                      isSaving || isSending || isDiscarding || uploading
-                    }
-                    aria-label={t('compose.removeAttachment', {
-                      filename: attachment.filename,
-                    })}
-                    onClick={() => {
-                      if (ownedUploads.current.delete(attachment.id))
-                        releaseUpload(attachment);
-                      setValues((previous) => ({
-                        ...previous,
-                        attachments: previous.attachments?.filter(
-                          (_, position) => position !== index
-                        ),
-                      }));
-                    }}
-                  >
-                    <X className="size-4" />
-                  </AttachmentAction>
-                </MailboxTooltip>
-              </AttachmentActions>
-            )}
-          </Attachment>
-        ))}
-      {!operations.editable ? (
-        <ReadOnlyComposition
-          values={values}
-          labels={labels}
-          savedAttachments={savedAttachments}
-          downloadAttachment={downloadAttachment}
-          onError={onError}
-        />
-      ) : (
-        // Autosave keeps fields enabled: disabling them would drop focus and
-        // keystrokes, and edits made during a save stay dirty for the next one.
-        <FieldSet
-          disabled={isSending || isDiscarding}
-          className="flex min-h-0 flex-1 flex-col gap-3"
-        >
-          <RecipientField
-            id={toInputId}
-            label={t('message.to')}
-            actions={
-              (!showCc || !showBcc) && (
-                <div className="flex items-center gap-1">
-                  {!showCc && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => {
-                        setShowCc(true);
-                        setFocusRecipient('cc');
-                      }}
-                      className="text-muted-foreground hover:text-foreground h-auto rounded-sm px-1 py-0 text-sm font-medium hover:bg-transparent"
-                    >
-                      {t('message.cc')}
-                    </Button>
-                  )}
-                  {!showBcc && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="xs"
-                      onClick={() => {
-                        setShowBcc(true);
-                        setFocusRecipient('bcc');
-                      }}
-                      className="text-muted-foreground hover:text-foreground h-auto rounded-sm px-1 py-0 text-sm font-medium hover:bg-transparent"
-                    >
-                      {t('message.bcc')}
-                    </Button>
-                  )}
-                </div>
-              )
-            }
-          >
-            <RecipientAutocompleteInput
-              id={toInputId}
-              value={values.to}
-              onChange={(value) => set('to', value)}
-              placeholder=""
-              emptyLabel={t('contacts.noSuggestions')}
-              loadingLabel={t('loading')}
-              loadSuggestions={loadContactSuggestions}
-              className="h-7 px-2.5 py-0"
-            />
-          </RecipientField>
-          {showCc && (
-            <RecipientField id={ccInputId} label={t('message.cc')}>
-              <RecipientAutocompleteInput
-                id={ccInputId}
-                value={values.cc}
-                onChange={(value) => set('cc', value)}
-                placeholder=""
-                emptyLabel={t('contacts.noSuggestions')}
-                loadingLabel={t('loading')}
-                loadSuggestions={loadContactSuggestions}
-                autoFocus={focusRecipient === 'cc'}
-                className="h-7 px-2.5 py-0"
-              />
-            </RecipientField>
-          )}
-          {showBcc && (
-            <RecipientField id={bccInputId} label={t('message.bcc')}>
-              <RecipientAutocompleteInput
-                id={bccInputId}
-                value={values.bcc}
-                onChange={(value) => set('bcc', value)}
-                placeholder=""
-                emptyLabel={t('contacts.noSuggestions')}
-                loadingLabel={t('loading')}
-                loadSuggestions={loadContactSuggestions}
-                autoFocus={focusRecipient === 'bcc'}
-                className="h-7 px-2.5 py-0"
-              />
-            </RecipientField>
-          )}
-          <Field>
-            <FieldLabel htmlFor={subjectInputId}>
-              {t('message.subject')}
-            </FieldLabel>
-            <Input
-              id={subjectInputId}
-              name="subject"
-              value={values.subject}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                set('subject', event.target.value)
-              }
-            />
-          </Field>
-          <Field
-            className="min-h-0 flex-1 gap-1.5"
-            aria-labelledby={bodyLabelId}
-          >
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <Label
-                id={bodyLabelId}
-                htmlFor={bodyMode === 'plainText' ? bodyInputId : undefined}
-              >
-                {t('message.body')}
-              </Label>
-              {allowBodyModeSwitch && (
-                <ToggleGroupCompat
-                  selectionMode="single"
-                  value={bodyMode}
-                  className="gap-1"
-                >
-                  <ToggleGroupCompatItem
-                    type="button"
-                    value="plainText"
-                    pressed={bodyMode === 'plainText'}
-                    onClick={() => switchBodyMode('plainText')}
-                    size="sm"
-                    className="min-h-11"
-                  >
-                    {t('compose.mode.plainText')}
-                  </ToggleGroupCompatItem>
-                  <ToggleGroupCompatItem
-                    type="button"
-                    value="mailyEditor"
-                    pressed={bodyMode === 'mailyEditor'}
-                    onClick={() => switchBodyMode('mailyEditor')}
-                    size="sm"
-                    className="min-h-11"
-                  >
-                    {t('compose.mode.mailyEditor')}
-                  </ToggleGroupCompatItem>
-                </ToggleGroupCompat>
-              )}
-            </div>
-            {bodyMode === 'mailyEditor' ? (
-              <Editor
-                {...editorProps}
-                editable={!isSending && !isDiscarding}
-                key={editorRevision}
-                contentHtml={composeHtmlContent(values)}
-                onCreate={(editor) => {
-                  // Adopt once per editor the user opened (StrictMode creates twice).
-                  if (
-                    !editorOpenedByUser ||
-                    editorCreatedRevision.current === editorRevision
-                  )
-                    return;
-                  editorCreatedRevision.current = editorRevision;
-                  updateFromEditor(editor);
-                }}
-                onUpdate={updateFromEditor}
-                config={{
-                  ...editorConfig,
-                  hasMenuBar: editorConfig?.hasMenuBar ?? true,
-                  wrapClassName: cn('min-h-0', editorConfig?.wrapClassName),
-                  bodyClassName: editorBodyClassName,
-                  contentClassName: editorContentClassName,
-                  autofocus: editorOpenedByUser
-                    ? (editorConfig?.autofocus ?? 'end')
-                    : false,
-                }}
-              />
-            ) : (
-              <Textarea
-                id={bodyInputId}
-                value={values.text}
-                onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setBodyText(event.target.value)
-                }
-                className="h-full min-h-40 resize-none"
-              />
-            )}
-          </Field>
-        </FieldSet>
-      )}
+      </div>
     </form>
   );
 }
@@ -4957,15 +5023,15 @@ function RecipientField(props: {
   return (
     <Field
       orientation="horizontal"
-      className="border-border grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 border-b py-1"
+      className="border-border has-[[data-slot=input-group-control]:focus-visible]:border-ring grid min-w-0 grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 border-b py-1"
     >
       <FieldLabel
         htmlFor={props.id}
-        className="text-muted-foreground shrink-0 font-medium"
+        className="text-muted-foreground shrink-0 font-normal"
       >
         {props.label}
       </FieldLabel>
-      <InputGroup className="bg-input/40 dark:bg-input/30 h-8 border-0 shadow-none">
+      <InputGroup className="h-9 rounded-none border-0 bg-transparent shadow-none has-[[data-slot=input-group-control]:focus-visible]:ring-0 dark:bg-transparent">
         {props.children}
         {props.actions && (
           <InputGroupAddon align="inline-end" className="pr-1">

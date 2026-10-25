@@ -139,7 +139,7 @@ current shadcn consumers. The automated matrix:
   the current upstream `scroll-area.tsx` unused React import, then rebuilds the
   complete fixture with unused-import checking relaxed;
 - launches that complete Base fixture and verifies ToggleGroup roving focus and
-  pressed state, Popover focus/Escape behavior, mailbox rich-compose switching,
+  pressed state, Popover focus/Escape behavior, mailbox visual composing,
   nested-interactive safety, and zero console/page errors in Chromium.
 
 No diagnostic in Maily source is accepted. Run `pnpm shadcn:audit`, the package
@@ -176,7 +176,7 @@ state remain component-owned. See [the API contract](docs/mailbox-workflows.md#c
 
 Label dialogs use actual DialogTrigger composition. Radix and Base runtime
 fixtures exercise creation, keyboard rename, dismissal/focus return, Checkbox,
-Avatar, Field/Empty, compose switching and the existing editor/mailbox flows.
+Avatar, Field/Empty, visual composing and the existing editor/mailbox flows.
 The Bun isolated consumer additionally installs with custom UI/utils aliases.
 
 Mailbox navigation uses the stock consumer Sheet on narrow containers. The
@@ -199,3 +199,10 @@ the existing mailbox-only diagnostic exception for this panel.
 The mobile editor accessory uses host Collapsible (registry-externalized), with
 one persistent toolbar across collapsed and expanded states. Its transform
 transition belongs to the Maily container; host primitives are unchanged.
+
+Mailbox sidebar expansion uses stock Toggle with local state and retains the
+container-aware Sheet on mobile. Search icons use InputGroupButton, and date
+filters use the host Calendar + Popover. `calendar` is externalized like other
+primitives; its standalone fallback comes from the official shadcn radix-nova
+item, with package imports adapted. The package Button exports its existing
+variant classes for that fallback. No host primitive implementation is patched.

@@ -233,9 +233,6 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
             deleteNode(editor, 'section');
           }}
         />
-
-        <Separator orientation="vertical" />
-
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {
@@ -265,7 +262,7 @@ export function SectionBubbleMenu(props: EditorBubbleMenuProps) {
               </PopoverTrigger>
               <PopoverContent
                 {...BOTTOM_FLOATING_CONTENT_PROPS}
-                className="w-max rounded-lg p-0.5!"
+                className="w-max gap-1 p-1"
                 sideOffset={8}
                 align="end"
               >

@@ -128,7 +128,7 @@ type ToggleItemControlProps = {
 const ToggleItemControl = forwardRef<HTMLButtonElement, ToggleItemControlProps>(
   ({ item, groupItem = false, className, ...triggerProps }, ref) => {
     const controlClassName = cn(
-      'size-7! min-w-7! px-2.5 disabled:cursor-not-allowed',
+      'size-7! min-w-7! px-0 disabled:cursor-not-allowed',
       className
     );
     const content = item.icon ? (

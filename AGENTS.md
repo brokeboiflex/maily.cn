@@ -85,7 +85,15 @@ Registry call sites must stay inside the prop/export intersection of current sto
 
 `MailboxView` / `InboxOutboxView` is a separate optional component under `packages/core/src/mailbox`. It provides the inbox/sent/drafts surface as a backend-agnostic data-adapter component: local UI state, message selection, the reader and the composer live in the component, while accounts, messages, delivery, refresh timing, reply/forward seeding, folder action rules, contact suggestions and message actions are supplied through `MailyMailboxDataSource` or explicit props. Its shell follows Gmail no-split navigation: opening a message or draft replaces the list in a shared content area; Back returns to the mounted list with its query, pagination, bulk selection and scroll position preserved. Use a desktop folder sidebar and a stock shadcn `Sheet` navigation menu below 768px of mailbox container width, plus `ScrollArea` around content overflow. Do not restore simultaneous list/reader panes or a forced desktop minimum width. The reader action chrome must use real shadcn `Button` and `DropdownMenu` primitives around backend-wired actions such as favorite, archive, delete, mark unread, report, download, print, and show original, but these controls must render only when the host provides both `dataSource.runMessageAction` and an explicit `messageActions` list containing the supported action ids; do not fake mailbox mutations when no consumer action handler exists. Recipient autocomplete must stay caller-owned and match contacts by email address and display name through real shadcn `Popover` + `Command` primitives; do not hardwire app-specific customer/contact APIs. Keep it free of app-specific API clients, auth, routes, and database assumptions. Add any mailbox-facing copy to `defaultMailboxLabels` and keep that exported label object exhaustive.
 
-Mailbox compose body entry is dual-mode: the plain-text `Textarea` and embedded Maily `Editor` are switched through real shadcn `ToggleGroup` primitives. Keep textarea as a supported fallback, persist rich editor output through `MailyMailboxDraftInput.html`, and continue sending `text` so data sources that only need plain text remain compatible.
+Mailbox compose uses the embedded Maily `Editor` only. Keep recipients and subject
+compact, preserve the editor's original toolbar and gutter placement, and keep
+send/attachment/draft actions in a persistent footer. Persist rich editor output through
+`MailyMailboxDraftInput.html` and continue sending `text` for plain-text adapters.
+Opening a saved text-only draft must not normalize it into an unsolicited write.
+Desktop navigation collapses to an icon rail through stock Toggle while the
+container-aware mobile Sheet remains independent. Search actions use
+`InputGroupButton`; date filters compose stock Popover + Calendar, with calendar
+localization supplied by `searchCalendarProps`.
 
 Reply threading uses RFC `messageId`, never the storage row `id`. Messages
 without that header remain replyable without `inReplyTo`. Preserve an existing
@@ -155,7 +163,7 @@ screens without a forced minimum width or outer horizontal scroller.
 installs all granular items; Base UI must pass a strict editor-only build before
 the optional mailbox is added. The complete Base fixture must then run its
 Playwright primitive checks for ToggleGroup roving focus/state, Popover focus and
-Escape behavior, attachment metadata and downloaded file contents, mailbox rich-compose switching, nested interactive DOM, and
+Escape behavior, attachment metadata and downloaded file contents, mailbox visual composing, nested interactive DOM, and
 console/page errors. The Bun fixture installs the editor and mailbox through the
 shadcn CLI, runs `bun install --linker isolated`, and must pass the strict
 TypeScript/Vite production build. Current upstream Base `scroll-area.tsx` contains

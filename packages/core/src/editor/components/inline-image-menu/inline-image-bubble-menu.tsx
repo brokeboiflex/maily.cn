@@ -5,6 +5,7 @@ import { TooltipProvider } from '../ui/tooltip';
 import { useInlineImageState } from './use-inline-image-state';
 import { LinkInputPopover } from '../ui/link-input-popover';
 import { ImageDownIcon } from 'lucide-react';
+import { useImageUploadOptions } from '../../extensions/image-upload/image-upload';
 import {
   DEFAULT_INLINE_IMAGE_HEIGHT,
   DEFAULT_INLINE_IMAGE_WIDTH,
@@ -17,6 +18,7 @@ import {
 
 export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
   const { editor, appendTo, ...menuProps } = props;
+  const imageUpload = useImageUploadOptions(editor);
 
   const state = useInlineImageState(editor);
   const { t } = useMailyContext();
@@ -64,6 +66,7 @@ export function InlineImageBubbleMenu(props: EditorBubbleMenuProps) {
             icon={<ImageDownIcon />}
             editor={editor}
             isVariable={state.isSrcVariable}
+            imageUpload={imageUpload}
           />
 
           <LinkInputPopover

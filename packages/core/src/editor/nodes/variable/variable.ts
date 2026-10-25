@@ -9,6 +9,7 @@ import {
   type VariableSuggestionsPopoverType,
 } from './variable-suggestions-popover';
 import { DefaultRenderVariable, VariableView } from './variable-view';
+import { hasVariables } from '../../utils/variable';
 
 export type Variable = {
   name: string;
@@ -279,6 +280,8 @@ export const VariableExtension = Node.create<VariableOptions, VariableStorage>({
   },
 
   addProseMirrorPlugins() {
+    if (!hasVariables(this.options.variables)) return [];
+
     return [
       Suggestion({
         editor: this.editor,

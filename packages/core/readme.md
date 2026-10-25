@@ -218,6 +218,12 @@ To render a custom block, you can pass a `render` function to the block object. 
 
 ### Variables
 
+Variable controls are disabled unless `VariableExtension.configure({ variables })`
+registers a non-empty array or a provider function. Without that registration,
+the editor hides conditional rendering and Repeat controls and does not offer
+variable suggestions. A provider function counts as registration even when a
+particular query returns no matches. Existing document attributes remain intact.
+
 By default, variables are required. You can make them optional by setting the `required` property to `false`. When a variable is optional and not provided, a placeholder will be displayed in its place.
 
 You can pass variables to the editor in two ways:
@@ -365,6 +371,12 @@ import { ImageUploadExtension } from '@maily-to/core/extensions';
 ```
 
 See the [@maily-to/render](../render) package for more information on how to render the editor content to HTML.
+
+With the handler configured, users can choose files in empty image and logo
+blocks, drop or paste images, and select **Source URL → Upload image** to replace
+an image, logo or inline image. URL entry remains available. Failed uploads leave
+the existing source unchanged and can be retried; provide `onImageUploadDiscard`
+to clean up an uploaded file if the original editing target is no longer current.
 
 <br/>
 

@@ -1,9 +1,9 @@
 import { useOwnedTimeout } from '../utils/use-owned-timeout';
 import { Editor } from '@tiptap/core';
-import { memo, useMemo, useRef, useState } from 'react';
+import { memo, useId, useMemo, useRef, useState } from 'react';
 import { cn } from '@/editor/utils/classname';
 import { useVariableOptions } from '../utils/node-options';
-import { processVariables } from '../utils/variable';
+import { hasVariables, processVariables } from '../utils/variable';
 import {
   Popover,
   PopoverContent,
@@ -18,7 +18,9 @@ import {
 import { useMailyContext } from '../maily-context';
 import { Button } from '@/editor/components/base-button';
 import { BOTTOM_FLOATING_CONTENT_PROPS } from './ui/floating-placement';
-import { Eye, InfoIcon } from 'lucide-react';
+import { Eye } from 'lucide-react';
+import { Field, FieldDescription, FieldLabel } from './ui/field';
+import { Separator } from './ui/divider';
 
 type ShowPopoverProps = {
   showIfKey?: string;
@@ -34,7 +36,8 @@ function ShowPopoverControl(props: ShowPopoverProps) {
   const opts = useVariableOptions(editor);
   const variables = opts?.variables;
   const renderVariable = opts?.renderVariable;
-  const [isUpdatingKey, setIsUpdatingKey] = useState(false);
+  const [isUpdatingKey, setIsUpdatingKey] = useState(!showIfKey);
+  const inputId = useId();
   const { schedule: scheduleTimeout, cancel: cancelTimeout } =
     useOwnedTimeout();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -49,124 +52,120 @@ function ShowPopoverControl(props: ShowPopoverProps) {
 
   const isValidWhenKey = showIfKey || autoCompleteOptions.includes(showIfKey);
 
-  return (
-    <Popover
-      onOpenChange={(open) => {
-        if (!open) cancelTimeout();
-        if (open) {
-          return;
-        }
+  if (!hasVariables(variables)) return null;
 
-        setIsUpdatingKey(false);
-      }}
-    >
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex shrink-0">
-            <PopoverTrigger asChild>
+  return (
+    <>
+      <Separator orientation="vertical" />
+      <Popover
+        onOpenChange={(open) => {
+          if (!open) cancelTimeout();
+          if (open) {
+            setIsUpdatingKey(!showIfKey);
+            return;
+          }
+
+          setIsUpdatingKey(false);
+        }}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex shrink-0">
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'size-7',
+                    showIfKey &&
+                      'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary'
+                  )}
+                  aria-label={t('showPopover.showConditionally')}
+                >
+                  <Eye className="h-3 w-3 stroke-[2.5]" />
+                </Button>
+              </PopoverTrigger>
+            </span>
+          </TooltipTrigger>
+          <TooltipContent sideOffset={8}>
+            {t('showPopover.showConditionally')}
+          </TooltipContent>
+        </Tooltip>
+        <PopoverContent
+          {...BOTTOM_FLOATING_CONTENT_PROPS}
+          className="w-64 max-w-[calc(100vw-1rem)]"
+          sideOffset={8}
+          align="end"
+        >
+          <Field>
+            <FieldLabel htmlFor={inputId}>{t('showPopover.showIf')}</FieldLabel>
+            {!isUpdatingKey && showIfKey && (
               <Button
                 type="button"
                 variant="ghost"
-                size="icon"
-                className={cn(
-                  'size-7',
-                  showIfKey &&
-                    'bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary aria-expanded:bg-primary/15 aria-expanded:text-primary'
-                )}
-                aria-label={t('showPopover.showConditionally')}
+                id={inputId}
+                className="h-auto min-h-8 justify-start overflow-hidden p-0 text-left"
+                onClick={() => {
+                  setIsUpdatingKey(true);
+                  scheduleTimeout(() => {
+                    inputRef.current?.focus();
+                  }, 0);
+                }}
               >
-                <Eye className="h-3 w-3 stroke-[2.5]" />
+                {renderVariable({
+                  variable: {
+                    name: showIfKey,
+                    valid: !!isValidWhenKey,
+                  },
+                  fallback: '',
+                  from: 'bubble-variable',
+                  editor,
+                })}
               </Button>
-            </PopoverTrigger>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent sideOffset={8}>
-          {t('showPopover.showConditionally')}
-        </TooltipContent>
-      </Tooltip>
-      <PopoverContent
-        {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="flex w-max max-w-[calc(100vw-1rem)] flex-wrap rounded-lg p-0.5!"
-        sideOffset={8}
-        align="end"
-      >
-        <div className="flex items-center gap-1.5 px-1.5 text-sm leading-none">
-          {t('showPopover.showIf')}
-          <Tooltip>
-            <TooltipTrigger
-              type="button"
-              aria-label={t('showPopover.showIfHint')}
-            >
-              <InfoIcon
-                className={cn('text-muted-foreground size-3 stroke-[2.5]')}
-              />
-            </TooltipTrigger>
-            <TooltipContent
-              sideOffset={14}
-              className="max-w-[285px]"
-              align="start"
-            >
+            )}
+            {(isUpdatingKey || !showIfKey) && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsUpdatingKey(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsUpdatingKey(false);
+                  }
+                }}
+              >
+                <InputAutocomplete
+                  id={inputId}
+                  editor={editor}
+                  value={showIfKey || ''}
+                  onValueChange={(value) => {
+                    onShowIfKeyValueChange?.(value);
+                  }}
+                  onOutsideClick={() => {
+                    setIsUpdatingKey(false);
+                  }}
+                  onSelectOption={(value) => {
+                    onShowIfKeyValueChange?.(value);
+                    setIsUpdatingKey(false);
+                  }}
+                  autoCompleteOptions={autoCompleteOptions}
+                  ref={inputRef}
+                  aria-label={t('showPopover.showIf')}
+                  aria-describedby={`${inputId}-hint`}
+                  className="h-8 w-full"
+                />
+              </form>
+            )}
+            <FieldDescription id={`${inputId}-hint`} className="text-xs">
               {t('showPopover.showIfHint')}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-
-        {!isUpdatingKey && (
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-auto p-0"
-            onClick={() => {
-              setIsUpdatingKey(true);
-              scheduleTimeout(() => {
-                inputRef.current?.focus();
-              }, 0);
-            }}
-          >
-            {renderVariable({
-              variable: {
-                name: showIfKey,
-                valid: !!isValidWhenKey,
-              },
-              fallback: '',
-              from: 'bubble-variable',
-              editor,
-            })}
-          </Button>
-        )}
-        {isUpdatingKey && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setIsUpdatingKey(false);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape') {
-                setIsUpdatingKey(false);
-              }
-            }}
-          >
-            <InputAutocomplete
-              editor={editor}
-              value={showIfKey || ''}
-              onValueChange={(value) => {
-                onShowIfKeyValueChange?.(value);
-              }}
-              onOutsideClick={() => {
-                setIsUpdatingKey(false);
-              }}
-              onSelectOption={(value) => {
-                onShowIfKeyValueChange?.(value);
-                setIsUpdatingKey(false);
-              }}
-              autoCompleteOptions={autoCompleteOptions}
-              ref={inputRef}
-              aria-label={t('showPopover.showIf')}
-            />
-          </form>
-        )}
-      </PopoverContent>
-    </Popover>
+            </FieldDescription>
+          </Field>
+        </PopoverContent>
+      </Popover>
+    </>
   );
 }
 

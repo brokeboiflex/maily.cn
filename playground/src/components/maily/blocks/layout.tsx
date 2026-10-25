@@ -1,6 +1,8 @@
 import type { BlockItem } from './types';
 import type { TranslateFn } from '../editor/i18n';
 import { DEFAULT_SPACER_HEIGHT } from '../editor/nodes/spacer';
+import { getVariableOptions } from '../editor/utils/node-options';
+import { hasVariables } from '../editor/utils/variable';
 import { ColumnsIcon, RectangleHorizontal, Repeat2, MoveVertical, Minus } from "lucide-react";
 
 export const columns = (t: TranslateFn): BlockItem => ({
@@ -33,6 +35,8 @@ export const repeat = (t: TranslateFn): BlockItem => ({
   title: t('block.repeat.title'),
   description: t('block.repeat.description'),
   searchTerms: ['repeat', 'for', 'loop'],
+  render: (editor) =>
+    hasVariables(getVariableOptions(editor).variables) ? true : null,
   icon: <Repeat2 className="h-4 w-4" />,
   command: ({ editor, range }) => {
     editor.chain().focus().deleteRange(range).setRepeat().run();

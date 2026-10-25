@@ -342,7 +342,7 @@ it('requests no folder change when a new draft is saved', async () => {
   const onFolderChange = vi.fn();
   try {
     await f.render({ folder: 'inbox', onFolderChange });
-    await f.click('Compose');
+    await f.click('New message');
     await f.click('Save draft');
     expect(onFolderChange).not.toHaveBeenCalled();
     expect(f.listMessages).toHaveBeenLastCalledWith(

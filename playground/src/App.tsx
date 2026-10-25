@@ -8,6 +8,7 @@ import {
 } from "react"
 import type { Editor as TiptapEditor, JSONContent } from "@tiptap/core"
 import { Braces, Code2, ExternalLink, Palette } from "lucide-react"
+import { pl, enUS } from "react-day-picker/locale"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -22,6 +23,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Editor, fontsourceFontProvider } from "@/components/maily"
 import {
   getVariableSuggestions,
+  ImageUploadExtension,
   VariableExtension,
 } from "@/components/maily/extensions"
 import {
@@ -57,6 +59,18 @@ import {
 } from "@/lib/mailbox-view"
 
 const playgroundBaseUrl = import.meta.env.BASE_URL
+// Local demo only: read actual file bytes without assuming a storage service.
+// Production hosts return the durable URL from their own upload endpoint.
+const playgroundImageUpload = ImageUploadExtension.configure({
+  onImageUpload: (file) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.onabort = () => reject(new Error("Image read cancelled"))
+      reader.readAsDataURL(file)
+    }),
+})
 const attachmentContents: Record<string, string> = {
   "queue-report":
     "All queued delivery attempts have cleared. The last accepted message was newsletter-candidate-42.\n",
@@ -1223,7 +1237,10 @@ export function App() {
                 // The showcase opts into the Fontsource catalog; Maily calls no
                 // font service by default.
                 fontProvider={fontsourceFontProvider}
-                extensions={[playgroundVariableExtension]}
+                extensions={[
+                  playgroundVariableExtension,
+                  playgroundImageUpload,
+                ]}
                 config={{
                   bodyClassName: "min-h-72",
                   contentClassName: emailPreviewFontClassName,
@@ -1251,6 +1268,9 @@ export function App() {
             <CardContent className="p-0">
               <div className="min-w-0">
                 <MailboxView
+                  searchCalendarProps={{
+                    locale: polish ? pl : enUS,
+                  }}
                   account={{
                     id: "playground-account",
                     address: "studio@maily.cn",
@@ -1266,8 +1286,11 @@ export function App() {
                   messageActions={playgroundMessageActionsFor}
                   searchCapabilities={playgroundSearchCapabilities}
                   pageSize={2}
-                  autosaveDelayMs={1000}
                   labels={polish ? polishMailboxLabels : undefined}
+                  composeEditorProps={{
+                    labels: polish ? polishLabels : undefined,
+                    extensions: [playgroundImageUpload],
+                  }}
                   className="max-h-none w-full rounded-none! border-0!"
                 />
               </div>

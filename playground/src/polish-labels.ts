@@ -183,10 +183,15 @@ export const polishLabels: MailyLabels = {
   "imageMenu.lockAspectRatioLock": "Zablokuj proporcje",
   "imageMenu.lockAspectRatioUnlock": "Odblokuj proporcje",
   "imageMenu.sourceUrl": "Adres źródłowy",
+  "imageUpload.upload": "Prześlij obraz",
+  "imageUpload.uploading": "Przesyłanie obrazu...",
+  "imageUpload.error":
+    "Nie udało się przesłać obrazu. Wybierz obsługiwany obraz i spróbuj ponownie.",
   "imageMenu.externalUrl": "Zewnętrzny adres URL",
   "imageMenu.width": "Sz",
   "imageMenu.height": "Wy",
   "imageMenu.unitPx": "PX",
+  "imageMenu.auto": "Auto",
   "inlineImageMenu.sourceUrl": "Adres źródłowy",
   "inlineImageMenu.externalUrl": "Zewnętrzny adres URL",
 
@@ -278,6 +283,7 @@ export const polishLabels: MailyLabels = {
   "variableMenu.title": "Zmienne",
   "variableMenu.noResult": "Brak wyników",
   "variableMenu.navigate": "Nawiguj",
+  "variableMenu.select": "Wybierz",
 
   // ── Edge-spacing micro-labels (Góra/Prawo/Dół/Lewo) ──
   "edgeSpacing.top": "G",
@@ -295,6 +301,7 @@ export const polishLabels: MailyLabels = {
   // ── Misc ──
   "colorPicker.recentlyUsed": "Ostatnio używane",
   "colorPicker.open": "Otwórz wybór koloru",
+  "colorPicker.hexColor": "Kolor szesnastkowy",
   "colorPicker.useColor": "Użyj koloru {color}",
   "inputAutocomplete.placeholder": "np. items",
 }
@@ -314,8 +321,6 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "compose.forwardFrom": "Od",
   "compose.forwardTo": "Do",
   "compose.forwardSubject": "Temat",
-  "compose.mode.plainText": "Zwykły tekst",
-  "compose.mode.mailyEditor": "Edytor wizualny",
   "compose.stay": "Kontynuuj edycję",
   "compose.attach": "Dodaj załączniki",
   "compose.removeAttachment": "Usuń załącznik {filename}",
@@ -336,6 +341,8 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "folders.sent": "Wysłane",
   "folders.drafts": "Wersje robocze",
   "folders.bounced": "Nieudane dostarczenie",
+  "navigation.expand": "Rozwiń pasek boczny",
+  "navigation.collapse": "Zwiń pasek boczny",
   "navigation.menu": "Menu główne",
   "navigation.close": "Zamknij menu",
   "navigation.back": "Wróć do listy",
@@ -399,8 +406,10 @@ export const polishMailboxLabels: MailyMailboxLabels = {
   "search.from": "Od",
   "search.to": "Do",
   "search.subject": "Temat",
-  "search.after": "Po dacie (RRRR/MM/DD)",
-  "search.before": "Przed datą (RRRR/MM/DD)",
+  "search.after": "Po dacie",
+  "search.before": "Przed datą",
+  "search.chooseDate": "Wybierz datę",
+  "search.clearDate": "Wyczyść datę",
   "search.hasAttachments": "Ma załączniki",
   "search.unread": "Nieprzeczytane",
   "search.global": "Szukaj w całej poczcie",

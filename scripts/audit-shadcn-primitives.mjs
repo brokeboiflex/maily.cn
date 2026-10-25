@@ -54,6 +54,7 @@ const dependencyNameByImport = new Map([
   ['field', 'field'],
   ['label', 'label'],
   ['empty', 'empty'],
+  ['calendar', 'calendar'],
 ]);
 
 const findings = [];

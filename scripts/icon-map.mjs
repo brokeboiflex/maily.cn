@@ -27,6 +27,13 @@
  */
 
 export const iconMap = {
+  CalendarIcon: {
+    lucide: 'CalendarIcon',
+    tabler: 'IconCalendar',
+    phosphor: 'CalendarBlank',
+    hugeicons: 'Calendar03Icon',
+    remixicon: 'RiCalendarLine',
+  },
   Undo2: {
     lucide: 'Undo2',
     tabler: 'IconArrowBackUp',

@@ -181,7 +181,7 @@ enables the ones its backend supports:
 
 ## Intentional adaptations
 
-The component remains backend-agnostic and uses a shared list/message content area and keeps the rich/plain compose switch. Provider retention, spam training and delivery remain outside Maily. Snooze, scheduled send and keyboard shortcuts are explicitly outside this change.
+The component remains backend-agnostic and uses a shared list/message content area and uses the visual editor for compose. Provider retention, spam training and delivery remain outside Maily. Snooze, scheduled send and keyboard shortcuts are explicitly outside this change.
 
 ## Playground
 
@@ -223,7 +223,7 @@ actions. Labels have a heading, create action and per-label More menu; create
 and rename use a focused Dialog. Search filters use a Popover, and unsaved
 changes use a Dialog. Host-owned shadcn Checkbox/Dialog are externalized.
 
-Intentional adaptations: visual/plain compose uses the same content area,
+Intentional adaptations: visual compose uses the same content area,
 and optional host capabilities remain. Nested/colored labels and
 select-all-across-the-entire-query are not supported by the current adapter.
 No such control is displayed. Range totals are optional for cursor-only hosts.
@@ -246,7 +246,7 @@ folder, query and selection can be host-controlled as described below.
 Label Dialogs use actual DialogTrigger composition so closing with Escape,
 Cancel or successful creation restores focus. Menu-launched rename dialogs return
 to that label's More button. Label inputs use instance-local ids. Fresh Radix and
-Base consumer runtime checks cover these flows, Checkbox state, compose switching,
+Base consumer runtime checks cover these flows, Checkbox state, visual composing,
 editor state, attachments and nested interactive DOM. The existing Base stock
 ScrollArea unused-import exception remains separate from Maily-source diagnostics.
 
@@ -416,3 +416,50 @@ the matching selected thread message and trigger a thread refresh. Ordinary
 initial detail requests do not replace a newer thread snapshot. These repairs
 leave adapter signatures and consumer-owned shadcn primitives unchanged; see
 [regressions and validation](idempotence-reaudit-2026-10-10.md).
+
+## Mailbox layout, 2026-10-25
+
+Desktop navigation has an expanded folder list and a collapsed icon rail. The
+Toggle keeps local view state; changing it preserves the mounted list and any
+open composition. Below 768px of container width, the same navigation opens in
+the stock Sheet. Returning to desktop preserves the previous sidebar state.
+
+Search uses InputGroup with compact InputGroupButton actions. The advanced form
+uses Field/Input/Checkbox and Popover + Calendar date pickers. Selected dates
+still reach the host as `YYYY/MM/DD`. The host can localize the calendar through
+`searchCalendarProps` (`locale`, `labels`, `formatters`, `weekStartsOn`, `dir`).
+Mailbox copy remains in `defaultMailboxLabels`, including `compose.new`, whose
+English default is now “New message”.
+
+The Gmail screenshot supplied for this change is the layout reference: compact
+header, recipient and subject rows, a large writing area, and
+Send/attachment/draft actions at the bottom. The embedded editor retains its
+original formatting toolbar and left gutter placement. Maily retains its embedded
+page and Back navigation, host theme and editor controls; it does not add Gmail's
+floating-window, minimize or maximize controls. The host still owns persistence
+and autosave, so Save draft remains available when supported.
+
+New-message headings remain stable when the host acknowledges a draft write;
+opening a saved draft from the list uses “Edit draft”. Folder and label highlights
+are suspended while composing and restored on Back. The playground saves only
+when requested; hosts can still opt into `autosaveDelayMs`. Save feedback sits
+beside the secondary draft actions in the footer, not above the recipient fields.
+Recipient focus uses the row divider, the editor toolbar keeps a 16px gap below
+Subject, and Send/Attach stay separate from Save/Discard.
+
+Compose now always uses the visual editor. The plain-text control, mode labels,
+`defaultComposeBodyMode`, `allowComposeBodyModeSwitch` and
+`MailyMailboxComposeBodyMode` were removed. Consumers should remove those props
+and label keys. Existing text-only drafts still open without changing their
+saved values; editing the body produces both `html` and `text`.
+
+Validation: 312 core tests and the five playground browser scenarios pass. The
+browser checks cover full-row hover, editor gutter containment, original toolbar
+placement and footer button bounds at 320, 768 and 1440px. Clean
+Radix, Base and Bun consumers install and build; the Base runtime checks cover
+collapse with an open draft and selected calendar dates reaching the adapter.
+The existing Base ScrollArea unused-import exception remains the only relaxed
+check. Package loading checks, TypeScript, lint, formatting and the primitive
+audit pass. Visual checks cover light/dark, English/Polish and 320–1440px widths.
+Registry and playground copies were regenerated and installed through the CLI;
+existing host primitive files are unchanged. This is local verification only.

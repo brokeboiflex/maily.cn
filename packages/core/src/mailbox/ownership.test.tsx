@@ -166,7 +166,7 @@ it('isolates a late old-source preparation from the new source', async () => {
     })
   );
   try {
-    await view.click('[aria-label="Compose"]');
+    await view.click('[aria-label="New message"]');
     await view.edit('input[name="subject"]', 'Old intent');
     await act(async () => {
       const input =
@@ -179,7 +179,7 @@ it('isolates a late old-source preparation from the new source', async () => {
     });
     await view.text('Send');
     await view.render({ dataSource: source({ createDraft, sendDraft }) });
-    await view.click('[aria-label="Compose"]');
+    await view.click('[aria-label="New message"]');
     await view.edit('input[name="subject"]', 'New intent');
     oldPreparation.resolve({ id: 'old-draft', _revision: 'old-v1' });
     await flush();
@@ -240,7 +240,7 @@ it('lets a newer same-query read own progress after superseding a manual refresh
   }
 });
 
-it.each(['Compose', 'Reply', 'Forward'] as const)(
+it.each(['New message', 'Reply', 'Forward'] as const)(
   'resets an observed draft revision before a new %s intent',
   async (intent) => {
     const old = {
@@ -261,7 +261,8 @@ it.each(['Compose', 'Reply', 'Forward'] as const)(
     try {
       await view.text('Original subject');
       await view.click('[aria-label="Back to list"]');
-      if (intent === 'Compose') await view.click('[aria-label="Compose"]');
+      if (intent === 'New message')
+        await view.click('[aria-label="New message"]');
       else {
         await view.render({ selectedMessageId: message.id });
         await view.click(`button[aria-label="${intent}"]`);

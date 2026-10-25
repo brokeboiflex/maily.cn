@@ -7,7 +7,6 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { getRenderContainer } from '../../utils/get-render-container';
 import { ShowPopover } from '../show-popover';
 import { type EditorBubbleMenuProps } from '../text-menu/text-bubble-menu';
-import { Separator } from '@/components/ui/separator';
 import { InputAutocomplete } from '../ui/input-autocomplete';
 import {
   Tooltip,
@@ -150,6 +149,7 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setIsUpdatingKey(false);
             }}
             onKeyDown={(e) => {
@@ -182,8 +182,6 @@ export function RepeatBubbleMenu(props: EditorBubbleMenuProps) {
             />
           </form>
         )}
-
-        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

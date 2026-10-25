@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import { Button } from '@/editor/components/base-button';
+import { cva, type VariantProps } from 'class-variance-authority';
+
 import { Input } from '@/editor/components/input';
 import { cn } from '@/editor/utils/classname';
 
@@ -58,4 +61,43 @@ function InputGroupInput({
   );
 }
 
-export { InputGroup, InputGroupAddon, InputGroupInput };
+const inputGroupButtonVariants = cva(
+  'flex items-center gap-2 text-sm shadow-none',
+  {
+    variants: {
+      size: {
+        xs: "h-6 gap-1 rounded-[calc(var(--radius)-3px)] px-1.5 [&>svg:not([class*='size-'])]:size-3.5",
+        sm: '',
+        'icon-xs':
+          'size-6 rounded-[calc(var(--radius)-3px)] p-0 has-[>svg]:p-0',
+        'icon-sm': 'size-8 p-0 has-[>svg]:p-0',
+      },
+    },
+    defaultVariants: {
+      size: 'xs',
+    },
+  }
+);
+
+const InputGroupButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<React.ComponentPropsWithoutRef<typeof Button>, 'size'> &
+    VariantProps<typeof inputGroupButtonVariants>
+>(
+  (
+    { className, type = 'button', variant = 'ghost', size = 'xs', ...props },
+    ref
+  ) => (
+    <Button
+      ref={ref}
+      type={type}
+      data-size={size}
+      variant={variant}
+      className={cn(inputGroupButtonVariants({ size }), className)}
+      {...props}
+    />
+  )
+);
+InputGroupButton.displayName = 'InputGroupButton';
+
+export { InputGroup, InputGroupAddon, InputGroupInput, InputGroupButton };

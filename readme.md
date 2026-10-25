@@ -219,6 +219,10 @@ import { ImageUploadExtension } from '@/components/maily/editor/extensions';
 ```
 
 Users can still paste a URL when an upload handler is not appropriate.
+With the handler configured, the Source URL popover also offers **Upload image**
+for image, logo and inline-image replacement. Failed uploads leave the current
+source unchanged and can be retried; stale results use `onImageUploadDiscard`
+when provided.
 
 ## Mailbox view
 

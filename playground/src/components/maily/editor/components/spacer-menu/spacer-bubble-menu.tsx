@@ -5,7 +5,6 @@ import {
   type BubbleMenuItem,
   type EditorBubbleMenuProps,
 } from '../text-menu/text-bubble-menu';
-import { Separator } from '@/components/ui/separator';
 import { useSpacerState } from './use-spacer-state';
 import { ShowPopover } from '../show-popover';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -71,7 +70,6 @@ export function SpacerBubbleMenu(props: EditorBubbleMenuProps) {
             {...item}
           />
         ))}
-        <Separator orientation="vertical" />
         <ShowPopover
           showIfKey={state.currentShowIfKey}
           onShowIfKeyValueChange={(value) => {

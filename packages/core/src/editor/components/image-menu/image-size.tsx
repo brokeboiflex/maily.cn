@@ -32,7 +32,8 @@ export function ImageSize(props: ImageSizeProps) {
               aria-label={label}
               className="h-full min-w-0 [appearance:textfield] appearance-none px-1 text-sm uppercase tabular-nums [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               type="number"
-              value={value}
+              value={value === 'auto' ? '' : value}
+              placeholder={t('imageMenu.auto')}
               onChange={(e) => onValueChange(e.target.value)}
             />
             <InputGroupAddon

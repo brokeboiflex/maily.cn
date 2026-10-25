@@ -70,6 +70,7 @@ const EXTERNALIZED_MODULES = {
   'editor/components/ui/field': '@/components/ui/field',
   'editor/components/ui/label': '@/components/ui/label',
   'editor/components/ui/empty': '@/components/ui/empty',
+  'editor/components/ui/calendar': '@/components/ui/calendar',
 };
 
 // shadcn registry items the consumer must have for the externalized imports
@@ -100,6 +101,7 @@ const REGISTRY_DEPENDENCIES = [
   'field',
   'label',
   'empty',
+  'calendar',
 ];
 
 const REGISTRY_DEPENDENCY_BY_UI_IMPORT = new Map(
@@ -723,7 +725,7 @@ function buildRegistryJson() {
           '',
           "import { MailboxView } from '@/components/maily/mailbox'",
           '',
-          'This item installs the editor dependency because rich compose mode',
+          'This item installs the editor dependency because the compose screen',
           'embeds the Maily Editor.',
         ].join('\n'),
       },

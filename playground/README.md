@@ -19,6 +19,11 @@ The mailbox enables every advanced search filter through
 `searchCapabilities`, because its in-memory adapter implements them all; the
 adapter, not Maily, applies the filters.
 
+Both editors configure `ImageUploadExtension`: choose, drop or paste an image,
+or use **Source URL → Upload image** to replace an existing image/logo. The demo
+reads file bytes into a data URL locally; it does not upload to a server.
+Production consumers supply their own `onImageUpload` handler returning a durable URL.
+
 Open “SMTP queue cleared” to check attachment metadata and individual downloads.
 Its adapter saves two actual text files, including an empty error report, through
 `dataSource.downloadAttachment`. This is local fixture data; production hosts
@@ -141,7 +146,7 @@ so the local shadcn registry URL remains unchanged.
 
 The mailbox showcase uses two-message pages and an explicit handoff reply thread.
 Try All Mail, Starred, select-all/bulk actions, advanced/global search, labels,
-attachment upload, autosave and Undo. Empty Trash and Delete all spam require
+attachment upload, explicit draft saving and Undo. Empty Trash and Delete all spam require
 confirmation and call folder-wide adapter operations. Uploaded file bytes are
 retained for sent/received downloads until their persisted references disappear.
 The adapter is in memory; reloading resets its mail, labels and uploaded files.

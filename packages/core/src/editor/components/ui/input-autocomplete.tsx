@@ -2,6 +2,7 @@ import { type VariableSuggestionsPopoverRef } from '@/editor/nodes/variable/vari
 import { cn } from '@/editor/utils/classname';
 import { AUTOCOMPLETE_PASSWORD_MANAGERS_OFF } from '@/editor/utils/constants';
 import { useVariableOptions } from '@/editor/utils/node-options';
+import { hasVariables } from '@/editor/utils/variable';
 import { useOutsideClick } from '@/editor/utils/use-outside-click';
 import type { Editor } from '@tiptap/core';
 import { CornerDownLeft } from 'lucide-react';
@@ -9,6 +10,7 @@ import {
   forwardRef,
   type CSSProperties,
   type InputHTMLAttributes,
+  type ReactNode,
   useId,
   useLayoutEffect,
   useRef,
@@ -28,6 +30,7 @@ type InputAutocompleteProps = InputHTMLAttributes<HTMLInputElement> & {
   onOutsideClick?: () => void;
   triggerChar?: string;
   placeholder?: string;
+  startAdornment?: ReactNode;
 
   editor: Editor;
 };
@@ -45,6 +48,7 @@ export const InputAutocomplete = forwardRef<
     autoCompleteOptions = [],
     triggerChar = '',
     editor,
+    startAdornment,
     ...inputProps
   } = props;
   const { t } = useMailyContext();
@@ -54,15 +58,18 @@ export const InputAutocomplete = forwardRef<
   const popoverRef = useRef<VariableSuggestionsPopoverRef>(null);
   const listboxId = `mly-autocomplete-${useId()}`;
   const [popupStyle, setPopupStyle] = useState<CSSProperties>();
+  const variableOptions = useVariableOptions(editor);
   const VariableSuggestionPopoverComponent =
-    useVariableOptions(editor)?.variableSuggestionsPopover;
+    variableOptions.variableSuggestionsPopover;
 
   useOutsideClick([containerRef, suggestionsRef], () => {
     onOutsideClick?.();
   });
 
   const isTriggeringVariable =
-    triggerChar.length > 0 && value.startsWith(triggerChar);
+    hasVariables(variableOptions.variables) &&
+    triggerChar.length > 0 &&
+    value.startsWith(triggerChar);
 
   useLayoutEffect(() => {
     if (!isTriggeringVariable) {
@@ -150,6 +157,11 @@ export const InputAutocomplete = forwardRef<
           aria-controls={isTriggeringVariable ? listboxId : undefined}
           aria-haspopup="listbox"
         />
+        {startAdornment && (
+          <InputGroupAddon align="inline-start">
+            {startAdornment}
+          </InputGroupAddon>
+        )}
         <InputGroupAddon align="inline-end" className="pr-1.5">
           <CornerDownLeft className="size-3 stroke-[2.5]" />
         </InputGroupAddon>

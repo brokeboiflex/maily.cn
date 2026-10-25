@@ -139,14 +139,6 @@ describe('filterMailboxContactSuggestions', () => {
   });
 });
 
-describe('defaultMailboxLabels', () => {
-  it('describes the rich compose mode without exposing the implementation name', () => {
-    expect(defaultMailboxLabels['compose.mode.mailyEditor']).toBe(
-      'Visual editor'
-    );
-  });
-});
-
 describe('MailboxView message actions', () => {
   it.each([null, '<original@example.com>'])(
     'uses only the RFC message ID when replying (%s)',
@@ -665,7 +657,7 @@ describe('compose hydration ownership', () => {
       resolve(draft);
       await pending;
     });
-    expect(view.container.querySelector('textarea')?.value).toBe(
+    expect(view.container.querySelector('.tiptap')?.textContent).toBe(
       'saved draft body'
     );
     view.unmount();

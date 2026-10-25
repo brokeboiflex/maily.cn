@@ -62,15 +62,11 @@ export function VerticalAlignmentSwitch(props: VerticalAlignmentSwitchProps) {
       </Tooltip>
       <PopoverContent
         {...BOTTOM_FLOATING_CONTENT_PROPS}
-        className="flex w-max gap-0.5 rounded-lg p-0.5!"
+        className="w-max gap-1 p-1"
         sideOffset={8}
         align="center"
       >
-        <ToggleGroupCompat
-          selectionMode="single"
-          value={alignment}
-          className="gap-0.5"
-        >
+        <ToggleGroupCompat selectionMode="single" value={alignment} spacing={1}>
           {Object.entries({
             top: {
               icon: <AlignVerticalDistributeStart />,
@@ -95,7 +91,7 @@ export function VerticalAlignmentSwitch(props: VerticalAlignmentSwitchProps) {
                       onAlignmentChange(value as AllowedColumnVerticalAlign)
                     }
                     aria-label={option.label}
-                    className="size-7! min-w-7! px-2.5 [&_svg]:size-3 [&_svg]:stroke-[2.5]"
+                    className="size-7! min-w-7! px-0 [&_svg]:size-3 [&_svg]:stroke-[2.5]"
                     type="button"
                   >
                     {option.icon}

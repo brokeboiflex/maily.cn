@@ -30,8 +30,8 @@ const CONTROL_LABELS = {
   from: 'From',
   to: 'To',
   subject: 'Subject',
-  after: 'After (YYYY/MM/DD)',
-  before: 'Before (YYYY/MM/DD)',
+  after: 'After',
+  before: 'Before',
   hasAttachments: 'Has attachments',
   unread: 'Unread',
 } as const;
@@ -270,7 +270,10 @@ describe('mailbox search capabilities', () => {
   it('renders and sends every filter when all are enabled', async () => {
     const f = fixture();
     try {
-      await f.render({ searchCapabilities: ALL });
+      await f.render({
+        searchCapabilities: ALL,
+        defaultSearchFilters: { after: '2026/01/01', before: '2026/12/31' },
+      });
       await f.openAdvanced();
       expect(f.visibleControls()).toEqual(
         MAILBOX_SEARCH_FILTERS.map((key) => CONTROL_LABELS[key])
@@ -278,8 +281,6 @@ describe('mailbox search capabilities', () => {
       await f.fill('from', 'ana@example.com');
       await f.fill('to', 'team@example.com');
       await f.fill('subject', 'Launch plan');
-      await f.fill('after', '2026/01/01');
-      await f.fill('before', '2026/12/31');
       await f.check('hasAttachments');
       await f.check('unread');
       await f.submit();

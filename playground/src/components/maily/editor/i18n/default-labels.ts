@@ -178,10 +178,15 @@ export const defaultLabels = {
   'imageMenu.lockAspectRatioLock': 'Lock aspect ratio',
   'imageMenu.lockAspectRatioUnlock': 'Unlock aspect ratio',
   'imageMenu.sourceUrl': 'Source URL',
+  'imageUpload.upload': 'Upload image',
+  'imageUpload.uploading': 'Uploading image...',
+  'imageUpload.error':
+    'Could not upload this image. Choose a supported image and try again.',
   'imageMenu.externalUrl': 'External URL',
   'imageMenu.width': 'W',
   'imageMenu.height': 'H',
   'imageMenu.unitPx': 'PX',
+  'imageMenu.auto': 'Auto',
   'inlineImageMenu.sourceUrl': 'Source URL',
   'inlineImageMenu.externalUrl': 'External URL',
 
@@ -273,6 +278,7 @@ export const defaultLabels = {
   'variableMenu.title': 'Variables',
   'variableMenu.noResult': 'No result',
   'variableMenu.navigate': 'Navigate',
+  'variableMenu.select': 'Select',
 
   // ── Edge-spacing micro-labels (T/R/B/L) ──
   'edgeSpacing.top': 'T',
@@ -290,6 +296,7 @@ export const defaultLabels = {
   // ── Misc ──
   'colorPicker.recentlyUsed': 'Recently used',
   'colorPicker.open': 'Open Color Picker',
+  'colorPicker.hexColor': 'Hex color',
   'colorPicker.useColor': 'Use {color}',
   'inputAutocomplete.placeholder': 'e.g. items',
 } as const;

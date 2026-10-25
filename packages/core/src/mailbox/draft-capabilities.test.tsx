@@ -335,7 +335,7 @@ describe('read-only and fully enabled mailboxes', () => {
   it('renders a read-only mailbox from an adapter without draft callbacks', async () => {
     const view = await mount(readOnlySource());
     try {
-      expect(view.find('[aria-label="Compose"]')).toBeNull();
+      expect(view.find('[aria-label="New message"]')).toBeNull();
       await view.openRow('Quarterly update');
       expect(view.container.textContent).toContain('Numbers are attached.');
       for (const label of ['Reply', 'Reply all', 'Forward'])
@@ -377,7 +377,7 @@ describe('read-only and fully enabled mailboxes', () => {
       }
     );
     try {
-      expect(view.find('[aria-label="Compose"]')).toBeNull();
+      expect(view.find('[aria-label="New message"]')).toBeNull();
       await view.openRow('Quarterly update');
       expect(view.find('[aria-label="Archive"]')).toBeTruthy();
       expect(view.find('[aria-label="Reply"]')).toBeNull();
@@ -416,12 +416,12 @@ describe('read-only and fully enabled mailboxes', () => {
     const callbacks = draftCallbacks();
     const view = await mount(readOnlySource(callbacks));
     try {
-      expect(view.find('[aria-label="Compose"]')).toBeTruthy();
+      expect(view.find('[aria-label="New message"]')).toBeTruthy();
       await view.openRow('Quarterly update');
       for (const label of ['Reply', 'Reply all', 'Forward'])
         expect(view.find(`[aria-label="${label}"]`), label).toBeTruthy();
       await view.click('[aria-label="Reply"]');
-      expect(view.heading()).toBe('Compose');
+      expect(view.heading()).toBe('New message');
       for (const text of ['Discard', 'Save draft', 'Send'])
         expect(view.button(text), text).toBeTruthy();
       await view.clickText('Send');
@@ -453,7 +453,7 @@ describe('sending', () => {
     const callbacks = draftCallbacks();
     const view = await mount(readOnlySource(callbacks), { account: undefined });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'No account');
       await view.clickText('Send');
       expect(callbacks.sendDraft).toHaveBeenCalledWith('created-draft', {
@@ -529,7 +529,7 @@ describe('sending', () => {
     const onError = vi.fn();
     const view = await mount(readOnlySource({ sendMessage }), { onError });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Try again');
       await view.clickText('Send');
       expect(onError).toHaveBeenCalledWith(expect.any(Error), 'sendDraft');
@@ -563,7 +563,7 @@ describe('autosave', () => {
       autosaveDelayMs: undefined,
     });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Not saved yet');
       await advance(60_000);
       expect(callbacks.createDraft).not.toHaveBeenCalled();
@@ -594,7 +594,7 @@ describe('autosave', () => {
       autosaveDelayMs: false,
     });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Stay here');
       await view.clickText('Save draft');
       await view.clickText('Send');
@@ -615,20 +615,20 @@ it('leaves no unsaved-change guard after Discard or a synchronous Send closes th
   const callbacks = draftCallbacks();
   const view = await mount(readOnlySource(callbacks));
   try {
-    await view.click('[aria-label="Compose"]');
+    await view.click('[aria-label="New message"]');
     await view.edit('input[name="subject"]', 'Throwaway');
     await view.clickText('Discard');
     expect(callbacks.discardDraft).not.toHaveBeenCalled();
     await view.click('[aria-label="Sent"]');
     expect(document.querySelector('[role="dialog"]')).toBeNull();
 
-    await view.click('[aria-label="Compose"]');
+    await view.click('[aria-label="New message"]');
     await view.edit('input[name="subject"]', 'Sent at once');
     await view.clickText('Send');
     expect(callbacks.sendDraft).toHaveBeenCalledWith('created-draft', {
       revision: 'c1',
     });
-    await view.click('[aria-label="Compose"]');
+    await view.click('[aria-label="New message"]');
     expect(document.querySelector('[role="dialog"]')).toBeNull();
     expect(view.subject()).toBe('');
   } finally {
@@ -644,7 +644,7 @@ describe('mixed draft capabilities', () => {
       draftCapabilities: { send: false, discard: false },
     });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       expect(view.button('Send')).toBeNull();
       expect(view.button('Save draft')).toBeTruthy();
       // An unsaved composition closes locally without discardDraft.
@@ -652,7 +652,7 @@ describe('mixed draft capabilities', () => {
       await view.clickText('Discard');
       expect(view.find('form')).toBeNull();
 
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'For approval');
       await advance(1000);
       expect(callbacks.createDraft).toHaveBeenCalledTimes(1);
@@ -684,7 +684,7 @@ describe('mixed draft capabilities', () => {
       draftCapabilities: { create: false, edit: false, discard: false },
     });
     try {
-      expect(view.find('[aria-label="Compose"]')).toBeNull();
+      expect(view.find('[aria-label="New message"]')).toBeNull();
       await view.openRow('Quarterly update');
       expect(view.find('[aria-label="Reply"]')).toBeNull();
       await view.click('[aria-label="Back to list"]');
@@ -735,7 +735,7 @@ describe('mixed draft capabilities', () => {
       draftCapabilities: { edit: false },
     });
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Send now');
       await advance(5000);
       expect(callbacks.createDraft).not.toHaveBeenCalled();
@@ -747,7 +747,7 @@ describe('mixed draft capabilities', () => {
         revision: 'c1',
       });
 
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Saved once');
       await view.clickText('Save draft');
       await flush();
@@ -775,7 +775,7 @@ describe('mixed draft capabilities', () => {
       draftCapabilities: { create: false, send: false, discard: false },
     });
     try {
-      expect(view.find('[aria-label="Compose"]')).toBeNull();
+      expect(view.find('[aria-label="New message"]')).toBeNull();
       await view.click('[aria-label="Drafts"]');
       await view.openRow('Prepared draft');
       expect(view.heading()).toBe('Edit draft');
@@ -801,7 +801,7 @@ describe('capability changes while a composition is open', () => {
     const callbacks = draftCallbacks();
     const view = await mount(readOnlySource(callbacks));
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Keep this text');
       await view.render({ draftCapabilities: { create: false } });
       await advance(5000);
@@ -814,7 +814,7 @@ describe('capability changes while a composition is open', () => {
       expect(view.button('Save draft')).toBeNull();
       expect(view.button('Send')).toBeNull();
       expect(view.button('Discard')).toBeTruthy();
-      expect(view.find('[aria-label="Compose"]')).toBeNull();
+      expect(view.find('[aria-label="New message"]')).toBeNull();
 
       await view.click('[aria-label="Back to list"]');
       expect(document.body.textContent).toContain('Discard unsaved changes?');
@@ -895,7 +895,6 @@ describe('capability changes while a composition is open', () => {
     vi.useFakeTimers();
     const callbacks = draftCallbacks();
     const view = await mount(readOnlySource(callbacks), {
-      defaultComposeBodyMode: 'mailyEditor',
       draftCapabilities: { edit: false },
     });
     // The hidden Render view has its own read-only ProseMirror.
@@ -927,18 +926,16 @@ describe('capability changes while a composition is open', () => {
   it('switches an opened visual editor to read-only text and back when edit changes', async () => {
     vi.useFakeTimers();
     const callbacks = draftCallbacks();
-    const view = await mount(readOnlySource(callbacks), {
-      defaultComposeBodyMode: 'mailyEditor',
-    });
+    const view = await mount(readOnlySource(callbacks), {});
     const surface = () => view.find('[aria-hidden="false"] .tiptap');
     try {
       await view.click('[aria-label="Drafts"]');
       await view.openRow('Prepared draft');
       await advance(50);
-      // Control: an editor the user opens is editable and takes focus.
+      // The default editor is editable without delayed autofocus stealing field focus.
       const opened = surface();
       expect(opened?.getAttribute('contenteditable')).toBe('true');
-      expect(opened?.contains(document.activeElement)).toBe(true);
+      expect(opened?.contains(document.activeElement)).toBe(false);
       await advance(5000);
       const writes = callbacks.updateDraft.mock.calls.length;
 
@@ -946,10 +943,8 @@ describe('capability changes while a composition is open', () => {
       await advance(50);
       expect(view.readOnly()).toBe(true);
       expect(surface()).toBeNull();
-      // The editor stored HTML, which renders in the sandboxed message frame.
-      expect(view.find('form iframe')?.getAttribute('srcdoc')).toContain(
-        'Prepared body'
-      );
+      // Opening the visual editor must not rewrite a saved text draft.
+      expect(view.readOnlyText()).toContain('Prepared body');
 
       await view.render({ draftCapabilities: {} });
       await advance(50);
@@ -988,7 +983,7 @@ describe('capability changes while a composition is open', () => {
     callbacks.createDraft.mockImplementation(() => created.promise as never);
     const view = await mount(readOnlySource(callbacks));
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Not yet');
       const subjectInput = view.find('input[name="subject"]');
       await view.clickText('Send');
@@ -1001,7 +996,7 @@ describe('capability changes while a composition is open', () => {
       // for the new ID is empty and must not replace the written content.
       expect(view.find('input[name="subject"]')).toBe(subjectInput);
       expect(view.subject()).toBe('Not yet');
-      expect(view.heading()).toBe('Edit draft');
+      expect(view.heading()).toBe('New message');
       expect(view.button('Send')).toBeNull();
       expect(view.container.textContent).toContain(
         'Could not send the message.'
@@ -1015,9 +1010,9 @@ describe('capability changes while a composition is open', () => {
     const callbacks = draftCallbacks();
     const view = await mount(readOnlySource(callbacks));
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Still mine');
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       expect(document.body.textContent).toContain('Discard unsaved changes?');
       await view.render({ draftCapabilities: { create: false } });
       await view.clickText(
@@ -1045,7 +1040,7 @@ describe('capability changes while a composition is open', () => {
     );
     const view = await mount(readOnlySource({ ...callbacks, listMessages }));
     try {
-      await view.click('[aria-label="Compose"]');
+      await view.click('[aria-label="New message"]');
       await view.edit('input[name="subject"]', 'Same session');
       const reads = listMessages.mock.calls.length;
       const capabilities: MailyMailboxDraftCapabilities[] = [

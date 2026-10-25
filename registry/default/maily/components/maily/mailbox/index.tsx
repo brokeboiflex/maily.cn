@@ -55,7 +55,6 @@ export type {
   MailyMailboxUploadedAttachment,
   MailyMailboxThread,
   MailyMailboxComposeValues,
-  MailyMailboxComposeBodyMode,
   MailyMailboxMessageAction,
   MailyMailboxMessageActionInput,
   MailyMailboxMessageActionResult,
